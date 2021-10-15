@@ -1,2 +1,2 @@
 # FrEDI: The Framework for Evaluating Damages and Impacts
-Use the U.S. Environmental CIRA Framework for Evaluating Damages and Impacts to project economic impacts from climate change and sea level rise through the 21st century
+The data provided in this folder corresponds to the Technical Documentation on the Framework for Evaluating Damages and Impacts - FrEDI v2.0
