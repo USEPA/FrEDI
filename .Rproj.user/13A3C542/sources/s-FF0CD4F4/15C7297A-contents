@@ -1,9 +1,0 @@
-install.packages("devtools")
-#remove.packages("")
-library(devtools)
-library(dplyr)
-
-
-install.packages("C:/Users/chartin/OneDrive - Environmental Protection Agency (EPA)/Documents/GitHub/FrEDI", repo=NULL, type = "source")
-
-require(FrEDI)
