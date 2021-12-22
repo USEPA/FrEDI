@@ -8,7 +8,7 @@ devtools::install.packages("path_to_repo", repo=NULL, type="source)
 require(FrEDI)
 ```
 
-## load custom scenarios (temperature, population, GDP)
+## Load custom scenarios (temperature, population, GDP)
 
 ```
 scenariosPath <- system.file(package="FrEDI") %>% 
