@@ -34,5 +34,5 @@ customScenarioInputs <- import_inputs(
 ### The user can specify different aggregation levels
 
 ```
-run_fredi(inputsList= customScenarioInputs,  aggregate_impacts(columns = c("annual_impacts"), aggLevels=c("all")))
+run_fredi(inputsList= customScenarioInputs,  aggLevels = "all"))
 ```
