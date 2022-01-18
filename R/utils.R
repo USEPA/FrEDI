@@ -198,11 +198,20 @@ get_econAdjValues <- function(
 ### The physical and economic scalars refer to the time series column from which the Annual Sectors tab
 ###   in the Excel tool draws values.
 calcScalars <- function(
-  data   ### Initial results dataframe
+  data,   ### Initial results dataframe
+  elasticity = NULL ### An elasticity to use to adjust values
 ){
   ###### Calculate physical scalar ######
   ### Physical scalars are the product of the physical scalar, the physical adjustment, and the damage adjustment
   df_x   <- data %>% mutate(physScalar = physScalarValue * physAdjValue * damageAdjValue )
+
+
+  ###### Adjust Elasticity ######
+  if(!is.null(elasticity)){
+    if(is.numeric(elasticity)){
+      df_x   <- df_x %>% mutate(exp0 = elasticity)
+    }
+  }
 
   ###### Calculate economic adjustment ######
   ### Economic multipliers are the economic multiplier value divided by the adjustment
