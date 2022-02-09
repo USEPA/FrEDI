@@ -6,3 +6,16 @@ inst/doc
 .Rproj.user
 
 .Rhistory
+
+analysis/*
+
+createSystemData/.Rproj.user/*
+createSystemData/.Rproj.user
+createSystemData/.Rhistory
+
+FrEDI/.Rproj.user/*
+FrEDI/.Rproj.user
+FrEDI/.Rhistory
+
+
+
