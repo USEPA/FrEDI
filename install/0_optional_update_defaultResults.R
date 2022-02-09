@@ -15,14 +15,14 @@ list.dirs(package_sourceDir, recursive = F)
 ###### Test and Update Data ######
 ### Uncomment to generate and test example data
 devtools::load_all(package_sourceDir)
-defaultResults <- tempBin()
+defaultResults <- run_fredi()
 
 ###### Save Default Scenario ######
-# savePath <- package_sourceDir %>% file.path("data", "defaultResults.RData")
-# save(defaultResults, file=savePath)
+savePath <- package_sourceDir %>% file.path("data", "defaultResults.RData")
+save(defaultResults, file=savePath)
 
-devtools::load_all(package_sourceDir)
-defaultResults %>% filter(model_type=="SLR") %>% get_plots() %>% (function(x){x$heatmaps$SLR})
+# devtools::load_all(package_sourceDir)
+# defaultResults %>% filter(model_type=="SLR") %>% get_plots() %>% (function(x){x$heatmaps$SLR})
 ###### Save Reference SLR Values ######
 # scenPath <- package_sourceDir %>% file.path("inst", "extdata", "scenarios")
 # tempPath <- file.path(scenPath, "GCAM_scenario.csv")

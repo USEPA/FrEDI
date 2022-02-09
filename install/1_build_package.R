@@ -39,4 +39,4 @@ if(!exists("detach_package")){
   detach_path %>% source
 }
 
-detach_package(ciraTempBin)
+detach_package(FrEDI)

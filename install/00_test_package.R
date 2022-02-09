@@ -14,12 +14,14 @@ list.dirs(package_sourceDir, recursive = F)
 ###### Test Functions ######
 ### Uncomment to generate and test example data
 load_all(package_sourceDir)
+load(file.path(package_sourceDir, "R", "sysdata.rdata"))
 testx <- run_fredi()
 
-load_all(package_sourceDir)
 # plotx <- get_plots(testx)
-# # (testx %>% filter(region=="National Total") %>% filter(model_type=="GCM") %>% mutate(impact_billions = annual_impacts/10^9))$impact_billions %>% range(na.rm=T)
-plotx <- testx %>% filter(sector=="Air Quality") %>% get_plots(plotTypes = "ribbon")
+# check_sector <- "Air Quality"
+check_sector <- "CIL Extreme Temperature"
+testx %>% filter(!is.na(annual_impacts)) %>% nrow
+plotx <- testx %>% filter(sector==check_sector) %>% get_plots(plotTypes = "ribbon")
 plotx$ribbon$`Air Quality`$regional
 # plotx$heatmaps$GCM
 # plotx <- testx %>% filter(region=="National Total") %>% filter(model_type=="SLR") %>% get_plots(plotTypes = "heatmaps")
@@ -37,7 +39,7 @@ testx %>% filter(region=="National Total") %>%
   # filter(model_type=="GCM") %>%
   # filter(sector=="Coastal Properties") %>%
   filter(year %in% seq(2010, 2090, by=5)) %>%
-  filter(sector=="Air Quality") %>%
+  filter(sector==check_sector) %>%
   # filter(annual_impacts!=0) %>%
   mutate(impact_billions=annual_impacts/10^9) %>%
   # arrange(desc(group_name)) %>%
