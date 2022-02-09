@@ -109,7 +109,7 @@ run_fredi <- function(
   ###### Create file paths ######
   ### Assign data objects to objects in this namespace
   ### Configuration and data list
-  for(i in 1:length(tempBin_config)) assign(names(tempBin_config)[i], tempBin_config[[i]])
+  for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
   for(i in 1:length(rDataList     )) assign(names(rDataList)[i], rDataList[[i]])
 
   ###### Present values ######

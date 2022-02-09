@@ -18,30 +18,30 @@ createSystemData <- function(
   projectPath <- ifelse(is.null(projectPath), ".", projectPath)
   ### Excel configuration file
   extDataPath <- file.path(projectPath, "inst", "extdata")
-  excelName   <- ifelse(is.null(excelName), "ciraTempBinData.xlsx", excelName)
+  excelName   <- ifelse(is.null(excelName), "FrEDI_config.xlsx", excelName)
   extDataFile <- extDataPath %>% file.path(excelName)
   
   ### Output file
   sysDataPath <- projectPath %>% file.path("data")
-  sysDataFile <- sysDataPath %>% file.path("sysdata.rda")
+  sysDataFile <- sysDataPath %>% file.path("sysdata.rdata")
   sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
   
   ###### Configuration Data ######
   ### Read in configuration data
   ### Assign data tables to objects in the list
-  configFile <- projectPath %>% file.path("R", "tempBin_config.R")
+  configFile <- projectPath %>% file.path("R", "fredi_config.R")
   source(configFile)
   # configFile %>% file.exists %>% print
-  # tempBin_config %>% print
-  # tempBin_config %>% names %>% print
-  for(i in 1:length(tempBin_config)){
-    assign(names(tempBin_config)[i], tempBin_config[[i]])
+  # fredi_config %>% print
+  # fredi_config %>% names %>% print
+  for(i in 1:length(fredi_config)){
+    assign(names(fredi_config)[i], fredi_config[[i]])
   }
   
   ###### Import Functions from ciraTempBin ######
-  interpolate_annual  <- utils::getFromNamespace("interpolate_annual", "ciraTempBin")
-  match_scalarValues  <- utils::getFromNamespace("match_scalarValues", "ciraTempBin")
-  get_impactFunctions <- utils::getFromNamespace("get_impactFunctions", "ciraTempBin")
+  interpolate_annual  <- utils::getFromNamespace("interpolate_annual", "FrEDI")
+  match_scalarValues  <- utils::getFromNamespace("match_scalarValues", "FrEDI")
+  get_impactFunctions <- utils::getFromNamespace("get_impactFunctions", "FrEDI")
   
   ###### Load input data ######
   ###### This section reads in data from the data file and returns a list of tables
@@ -231,7 +231,7 @@ createSystemData <- function(
     if(outPathExists){
 
       trySave <- try(
-        save(tempBin_config, rDataList, file=sysDataFile),
+        save(fredi_config, rDataList, file=sysDataFile),
         silent=T
       )
     } ### End if outPathExists
