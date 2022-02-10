@@ -110,7 +110,7 @@ run_fredi <- function(
   ### Assign data objects to objects in this namespace
   ### Configuration and data list
   for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
-  for(i in 1:length(rDataList     )) assign(names(rDataList)[i], rDataList[[i]])
+  for(i in 1:length(rDataList   )) assign(names(rDataList)[i], rDataList[[i]])
 
   ###### Present values ######
   ### Default base year and rate defined in config
