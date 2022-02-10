@@ -5,6 +5,4 @@
 ^\..\.Rproj\.user$
 ^.*\.Rhistory$
 ^\.Rhistory\.user$
-^.*\.Rhistory
-^.*\install
-^.*\install/*
+^install$
