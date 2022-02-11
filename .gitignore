@@ -12,6 +12,7 @@ analysis/*
 createSystemData/.Rproj.user/*
 createSystemData/.Rproj.user
 createSystemData/.Rhistory
+createSystemData/inst/extdata/~$*
 
 FrEDI/.Rproj.user/*
 FrEDI/.Rproj.user
