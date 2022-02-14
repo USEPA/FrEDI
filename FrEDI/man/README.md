@@ -11,9 +11,6 @@ require(FrEDI)
 ## Load custom scenarios (temperature, population, GDP)
 
 ```
-scenariosPath <- system.file(package="FrEDI") %>% 
-  file.path("extdata","scenarios")
-
 tempInputFile <- "user_specified.csv"
 popInputFile  <- scenariosPath %>% 
   file.path("pop_scenario.csv") 
