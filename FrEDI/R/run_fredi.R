@@ -11,6 +11,8 @@
 #' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
 # @param primaryTypes = F whether to filter to primary impacts
+#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting economic values.
+#### ADD MORE INFO ABOUT ELASTICITY
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
@@ -92,6 +94,7 @@ run_fredi <- function(
   pv         = FALSE, ### T/F value indicating Whether to calculate net present value
   baseYear   = 2010, ### Default = 2010
   rate       = 0.03, ### Ratio, defaults to 0.03
+  elasticity = NULL, ### Override value for elasticity for economic values
   silent     = TRUE  ### Whether to message the user
 ){
 
@@ -106,8 +109,8 @@ run_fredi <- function(
   ###### Create file paths ######
   ### Assign data objects to objects in this namespace
   ### Configuration and data list
-  for(i in 1:length(tempBin_config)) assign(names(tempBin_config)[i], tempBin_config[[i]])
-  for(i in 1:length(rDataList     )) assign(names(rDataList)[i], rDataList[[i]])
+  for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
+  for(i in 1:length(rDataList   )) assign(names(rDataList)[i], rDataList[[i]])
 
   ###### Present values ######
   ### Default base year and rate defined in config
@@ -475,12 +478,18 @@ run_fredi <- function(
   ### Filter initial results to specified sectors
   ### Join to the updated base scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
+  if(!is.null(elasticity)){if(!is.numeric(elasticity)){
+    message("\t", "Incorrect value type provided for argument 'elasticity'...")
+    message("\t\t", "Using default elasticity values.")
+  }}
+
   initialResults <- df_results0 %>%
     filter(sector %in% sectorList) %>%
     left_join(updatedScenario, by = c("year", "region")) %>%
     match_scalarValues(df_mainScalars, scalarType="physScalar") %>%
     get_econAdjValues(scenario = updatedScenario, multipliers=co_econMultipliers[,1]) %>%
-    calcScalars; rm("df_mainScalars") ### df_mainScalars no longer needed
+    calcScalars(elasticity = elasticity)
+  rm("df_mainScalars") ### df_mainScalars no longer needed
 
   ### Message the user
   if(msgUser) message("\t", messages_tempBin[["updateScalars"]]$success)

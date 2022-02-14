@@ -86,7 +86,7 @@ temps2slr <- function(
   ###### Initial Values ######
   ### Reference year 2000 and equilibrium temperature offset for 2000
   ### Assign reference year from config file (max_year)
-  temps2slr_constants <- tempBin_config$temps2slr
+  temps2slr_constants <- fredi_config$temps2slr
   for(i in 1:length(temps2slr_constants)){
     assign(names(temps2slr_constants)[i], temps2slr_constants[[i]])
   }

@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^doc$
+^Meta$
+^\..\.Rproj\.user$
+^.*\.Rhistory$
+^\.Rhistory\.user$
+^install$

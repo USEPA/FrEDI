@@ -46,23 +46,22 @@ Load packages
 require(tidyverse)
 require(openxlsx)
 require(devtools)
-# require(ciraTempBin)
-# require(kable)
-# require(kableExtra)
 ```
 
 
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20210923"
+mostRecentDate <- "20220208"
+# c_newSectors   <- c()
+c_newSectors   <- c("CIL Extreme Temperature")
 ```
 
 
 
 ```{r declare paths}
 ### Set system paths
-projectPath <- getwd()
+projectPath      <- getwd()
 today            <- format(Sys.Date(), "%Y%m%d")
 ### Project configuration
 configPath       <- projectPath %>% paste("config", sep="/")
@@ -73,22 +72,22 @@ codeNames        <- codePath %>% list.files(".R")
 configLogPath    <- codePath %>% paste("configLog", sep="/")
 
 ### Names for archive and use versions
-configFileName   <- "tempBin_config"
-configArchName   <- configLogPath %>% paste(configFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
-configUseName    <- codePath %>% paste(configFileName, sep="/") %>% paste0(".rda")
+configFileName   <- "fredi_config"
+configArchName   <- configLogPath %>% paste(configFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rdata")
+configUseName    <- codePath %>% paste(configFileName, sep="/") %>% paste0(".rdata")
 
 ### Output path
 dataOutPath      <- projectPath %>% paste("data", sep="/")
 dataOutLog       <- dataOutPath %>% paste("dataLog", sep="/")
 sysFileName      <- "sysdata"
-sysArchName      <- dataOutLog %>% paste(sysFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
-excelFileName    <- mostRecentDate %>% paste("ciraTempBinData.xlsx", sep="_")
-sysUseName       <- dataOutPath %>% paste(sysFileName, sep="/") %>% paste0(".rda")
+sysArchName      <- dataOutLog %>% paste(sysFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rdata")
+excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
+sysUseName       <- dataOutPath %>% paste(sysFileName, sep="/") %>% paste0(".rdata")
 
 ### Path to CIRA project
 projectParentDir <- projectPath %>% paste("..", sep="/")
 projectParentDir %>% list.files
-ciraPath         <- find.package("ciraTempBin", lib.loc=projectParentDir)
+ciraPath         <- find.package("FrEDI", lib.loc=projectParentDir)
 ```
 
 ### Configuration Files
@@ -104,7 +103,7 @@ configFiles; for(i in configFiles){ source(paste(configPath, i, sep="/")) }
 List configuration files
 
 ```{r}
-configLogPath %>% list.files("rda")
+configLogPath %>% list.files("rdata")
 ```
 
 Update archive:
@@ -116,7 +115,7 @@ tempBinConfig(outPath = configArchName)
 Confirm copy was saved:
 
 ```{r}
-configLogPath %>% list.files("rda")
+configLogPath %>% list.files("rdata")
 ```
 
 <!-- If a copy was saved, overwrite the config file: -->
@@ -125,7 +124,7 @@ configLogPath %>% list.files("rda")
 <!-- # tempBinConfig(outPath = configUseName) -->
 <!-- ``` -->
 
-### Create Tool Configuration Data
+## Create Tool Configuration Data
 
 
 Load configuration data
@@ -145,7 +144,7 @@ codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 
 Test system data
 
-```{r}
+```{r test_systemData0}
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
 test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
@@ -153,9 +152,10 @@ time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
 
+Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
-```{r}
-(test_systemData$slrImpacts %>% filter(sector=="HTF"))$adaptation %>% unique
+```{r check outputs}
+# (test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
 # test_systemData$slrImpacts %>% names
 # test_systemData$df_results0$sector_label %>% unique
 ```
@@ -179,18 +179,18 @@ time_create     <- time2 - time1; time_create
 
 ## Update R Tool
 
-Manually update the sysdata.rda file in the Rtool.
+**Manually update the sysdata.rdata file in the Rtool.**
 
-After copying and pasting the system data to the Rtool, try detaching ciraTempBin and then loading the package functions. 
+After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
 
 
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 ciraPath %>% paste("R", sep="/") %>% load_all
-# df_defaults <- tempBin()
-# df_defaults <- tempBin(aggLevels = "all")
-df_defaults <- tempBin(aggLevels = "all")
+# df_defaults <- run_fredi()
+# df_defaults <- run_fredi(aggLevels = "all")
+df_defaults <- run_fredi(aggLevels = "none")
 df_defaults %>% glimpse
 # df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
 # df_defaults$sector %>% unique

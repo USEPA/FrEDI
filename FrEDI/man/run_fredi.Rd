@@ -12,6 +12,7 @@ run_fredi(
   pv = FALSE,
   baseYear = 2010,
   rate = 0.03,
+  elasticity = NULL,
   silent = TRUE
 )
 }
@@ -29,6 +30,8 @@ run_fredi(
 \item{rate}{Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to \code{rate=0.03} (i.e., 3\% per year).}
 
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
+
+\item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting economic values.}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation, model (GCM or SLR scenario), and region.

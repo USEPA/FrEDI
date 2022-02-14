@@ -104,8 +104,8 @@ get_plots <- function(
 
   ###### Load Config File ######
   ### Assign data objects to objects in this namespace
-  for(i in 1:length(tempBin_config)){
-    assign(names(tempBin_config)[i], tempBin_config[[i]])
+  for(i in 1:length(fredi_config)){
+    assign(names(fredi_config)[i], fredi_config[[i]])
   } ### End iterate over i
   for(i in 1:length(rDataList     )) assign(names(rDataList)[i], rDataList[[i]])
 
@@ -224,7 +224,7 @@ get_plots <- function(
 
 
   ###### Image Constants ######
-  getPlots_constants <- tempBin_config$get_plots
+  getPlots_constants <- fredi_config$get_plots
   for(i in 1:length(getPlots_constants)){
     assign(names(getPlots_constants)[i], getPlots_constants[[i]])
   }
