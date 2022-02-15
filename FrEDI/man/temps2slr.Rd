@@ -18,7 +18,7 @@ Outputs a dataframe with two columns: \code{year}, which has the years from the 
 This pre-processing helper function converts a vector of global temperatures to global mean sea level rise (GMSL). This function adapts the method described by Kopp et al. (2016) (see references, below).
 }
 \details{
-This function converts a temperature scenario (global temperatures in degrees Celsius) into an SLR scenario to use for estimate impacts of global mean sea level rise (GMSL) on affected sectors. \code{\link[ciraTempBin:temps2slr]{ciraTempBin::temps2slr()}} implements the method described by Kopp et al., 2016, "Temperature-driven global sea-level variability in the Common Era" (see references, below).
+This function converts a temperature scenario (global temperatures in degrees Celsius) into an SLR scenario to use for estimate impacts of global mean sea level rise (GMSL) on affected sectors. \code{\link[=temps2slr]{temps2slr()}} implements the method described by Kopp et al., 2016, "Temperature-driven global sea-level variability in the Common Era" (see references, below).
 
 Kopp et al.'s "semiempirical" sea-level model relates the rate of global sea level (GSL) rise \eqn{\frac{dh}{dt}}{dh/dt} to global mean temperature \eqn{T(t)}, an equilibrium temperature \eqn{T_0(t)}{Te(t)}, and a small residual trend arising from the long-term response to earlier climate change \eqn{\phi(t)}{\phi(t)}:
 
