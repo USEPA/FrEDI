@@ -23,7 +23,7 @@ createSystemData <- function(
   
   ### Output file
   sysDataPath <- projectPath %>% file.path("data")
-  sysDataFile <- sysDataPath %>% file.path("sysdata.rdata")
+  sysDataFile <- sysDataPath %>% file.path("sysdata.rda")
   sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
   
   ###### Configuration Data ######
