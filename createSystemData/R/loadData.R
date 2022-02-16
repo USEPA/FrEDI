@@ -162,12 +162,12 @@ loadData <- function(
     filter(
       model %in% co_models$model_id, ### All models
       sector %in% co_sectors$sector_id
-      ) %>%
-    ### Refactor impact years, impact types
-    mutate(
-      impactYear = impactYear %>% replace_na("N/A"),
-      impactType = impactType %>% replace_na("NA")
-    ) %>%
+      )
+  
+  ### Refactor impact years, impact types
+  data_scaledImpacts <- data_scaledImpacts %>%
+    mutate(impactYear = impactYear %>% as.character %>% replace_na("N/A")) %>%
+    mutate(impactType = impactType %>% replace_na("NA")) %>%
     ### Refactor adaptation
     mutate(
       sector_adaptation = sector %>% paste(adaptation, sep="_"),
@@ -219,7 +219,7 @@ loadData <- function(
     select(-c("region_slr")) %>%
     ### Refactor impact years, impact types
     mutate(
-      impactYear = impactYear %>% replace_na("N/A"),
+      impactYear = impactYear %>% as.character %>% replace_na("N/A"),
       impactType = impactType %>% replace_na("NA")
     ) %>%
     ### Refactor adaptation

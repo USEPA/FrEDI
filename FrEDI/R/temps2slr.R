@@ -9,7 +9,7 @@
 #' @param years A numeric vector of years (common era) corresponding to the temperatures provided to `temps`. The temperature series and corresponding years must begin in 2000 or earlier.
 #'
 #' @details
-#' This function converts a temperature scenario (global temperatures in degrees Celsius) into an SLR scenario to use for estimate impacts of global mean sea level rise (GMSL) on affected sectors. [ciraTempBin::temps2slr()] implements the method described by Kopp et al., 2016, "Temperature-driven global sea-level variability in the Common Era" (see references, below).
+#' This function converts a temperature scenario (global temperatures in degrees Celsius) into an SLR scenario to use for estimate impacts of global mean sea level rise (GMSL) on affected sectors. [FrEDI::temps2slr()] implements the method described by Kopp et al., 2016, "Temperature-driven global sea-level variability in the Common Era" (see references, below).
 #'
 #' Kopp et al.'s "semiempirical" sea-level model relates the rate of global sea level (GSL) rise \eqn{\frac{dh}{dt}}{dh/dt} to global mean temperature \eqn{T(t)}, an equilibrium temperature \eqn{T_0(t)}{Te(t)}, and a small residual trend arising from the long-term response to earlier climate change \eqn{\phi(t)}{\phi(t)}:
 #'

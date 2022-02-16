@@ -52,9 +52,8 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220208"
-# c_newSectors   <- c()
-c_newSectors   <- c("CIL Extreme Temperature")
+mostRecentDate <- "20220215"
+c_newSectors   <- c("Agriculture")
 ```
 
 
@@ -73,16 +72,16 @@ configLogPath    <- codePath %>% paste("configLog", sep="/")
 
 ### Names for archive and use versions
 configFileName   <- "fredi_config"
-configArchName   <- configLogPath %>% paste(configFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rdata")
-configUseName    <- codePath %>% paste(configFileName, sep="/") %>% paste0(".rdata")
+configArchName   <- configLogPath %>% paste(configFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
+configUseName    <- codePath %>% paste(configFileName, sep="/") %>% paste0(".rda")
 
 ### Output path
 dataOutPath      <- projectPath %>% paste("data", sep="/")
 dataOutLog       <- dataOutPath %>% paste("dataLog", sep="/")
 sysFileName      <- "sysdata"
-sysArchName      <- dataOutLog %>% paste(sysFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rdata")
+sysArchName      <- dataOutLog %>% paste(sysFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
 excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
-sysUseName       <- dataOutPath %>% paste(sysFileName, sep="/") %>% paste0(".rdata")
+sysUseName       <- dataOutPath %>% paste(sysFileName, sep="/") %>% paste0(".rda")
 
 ### Path to CIRA project
 projectParentDir <- projectPath %>% paste("..", sep="/")
@@ -103,19 +102,19 @@ configFiles; for(i in configFiles){ source(paste(configPath, i, sep="/")) }
 List configuration files
 
 ```{r}
-configLogPath %>% list.files("rdata")
+configLogPath %>% list.files("rda")
 ```
 
 Update archive:
 
 ```{r}
-tempBinConfig(outPath = configArchName)
+frediConfig(outPath = configArchName)
 ```
 
 Confirm copy was saved:
 
 ```{r}
-configLogPath %>% list.files("rdata")
+basename(configArchName) %in% (configLogPath %>% list.files("rda"))
 ```
 
 <!-- If a copy was saved, overwrite the config file: -->
