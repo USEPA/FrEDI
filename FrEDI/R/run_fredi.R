@@ -685,8 +685,8 @@ run_fredi <- function(
       aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)
     }
     agg_results_names <- df_results %>% names
-
-    df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    df_results <- df_results %>% as.data.frame %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    # df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
 
     rm("aggGroupByCols", "agg_results_names")
   }
