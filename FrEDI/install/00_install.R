@@ -44,6 +44,10 @@ packageFile_dir    <- package_location %>% file.path( "..")
 packageFile_name   <- "FrEDI_2.1.1.tar.gz"
 packageFile_path   <- packageFile_dir %>% file.path(packageFile_name)
 packageFile_exists <- packageFile_path %>% file.exists
+
+r_libPath       <- .libPaths()[1]; r_libPath
+package_name    <- "FrEDI"
+package_libPath <- paste(r_libPath, package_name, sep="/"); package_libPath
 ### Package destination
 packageDest        <- r_libPath %>% file.path(packageFile_name)
 if(packageFile_exists){
