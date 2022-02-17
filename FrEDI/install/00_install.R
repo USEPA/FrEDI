@@ -44,6 +44,9 @@ packageFile_dir    <- package_location %>% file.path( "..")
 packageFile_name   <- "FrEDI_2.1.1.tar.gz"
 packageFile_path   <- packageFile_dir %>% file.path(packageFile_name)
 packageFile_exists <- packageFile_path %>% file.exists
+r_libPath          <- .libPaths()[1]; r_libPath
+package_name       <- "FrEDI"
+package_libPath    <- paste(r_libPath, package_name, sep="/"); package_libPath
 ### Package destination
 packageDest        <- r_libPath %>% file.path(packageFile_name)
 if(packageFile_exists){
@@ -62,6 +65,19 @@ if(packageFile_exists){
 
 }
 
+
+# ?devtools::install_github()
+# ?with_libpaths
+withr::with_libpaths(
+  new = .libPaths()[1],
+  devtools::install_github(
+    repo   = "https://github.com/USEPA/FrEDI",
+    subdir = "FrEDI",
+    type   = "source",
+    force  = TRUE,
+    ref = "new_labor"
+  )
+)
 ###### Test Package ######
 ###### - Build package, reinstall, and restart R
 ###### - Build Package but don't include vignettes

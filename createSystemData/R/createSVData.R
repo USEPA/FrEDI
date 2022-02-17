@@ -3,17 +3,18 @@
 createSVData <- function(
   projectPath = getwd(), ### Path to project
   # excelName   = NULL, ### name of excel file with config information
-  outPath     = file.path(getwd(), "data"),
-  save        = NULL,
-  impacts     = F,
+  outPath     = file.path(getwd(), "..", "FrEDI", "R"),
   sectorsList = NULL,
-  demoinfo    = F, ### Whether to run demographic info
-  pop         = F, ### Whether to run population functions
+  sv          = T, ### Whether to run demographic info
+  pop         = F, ### Whether to run population functions,
+  impacts     = F,
+  format      = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
   silent      = NULL,  ### Whether to message the user
-  save           = F, ### Whether to save
-  return         = T  ### Whether to return
+  save        = F, ### Whether to save
+  return      = T  ### Whether to return
 ){
+  paste0("Running createSVData():", "\n") %>% message
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   silent  <- ifelse(is.null(silent), F, silent)
@@ -21,19 +22,26 @@ createSVData <- function(
   save    <- ifelse(is.null(save), F, save)
   
   ### Conditions
-  load_demoInfo <- (pop | impacts) ### Load `demoinfo`` if pop or `impacts`
+  load_demoInfo <- (pop | impacts | format) ### Load `demoinfo`` if pop or `impacts`
   # load_popInfo  <- (pop | impacts) ### Load `demoinfo`` if pop or `impacts`
 
   ###### Create File Paths ######
   projectPath <- ifelse(is.null(projectPath), ".", projectPath)
   ### Excel configuration file
-  extDataPath <- file.path(projectPath, "inst", "extdata", 'sv')
+  extDataPath <- projectPath %>% file.path("inst", "extdata", "sv")
+  outPath_sv  <- outPath %>% file.path("sv")
+  outPath_imp <- outPath %>% file.path("sv", "svImpactLists")
+  ### r Object Extension
+  rDataExt     <- "rdata"
+  ### SV demo data
+  sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
+  sv_filePath <- outPath_sv %>% file.path(sv_fileName)
+  svData      <- NULL ### Initialize svData
   
-  
-  ### Output file
-  sysDataPath <- projectPath %>% file.path("data")
-  sysDataFile <- sysDataPath %>% file.path("sysdata.rdata")
-  sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
+  # ### Output file
+  # sysDataPath <- projectPath %>% file.path("data")
+  # sysDataFile <- sysDataPath %>% file.path("sysdata.rdata")
+  # sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
   
   ###### Configuration Data ######
   # ### Read in configuration data
@@ -45,52 +53,57 @@ createSVData <- function(
   # }
   
   ###### Import Functions from ciraTempBin ######
-  interpolate_annual  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
+  calc_countyPop  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
   
   ###### Initialize Return List ######
-  returnList <- list()
+  if(return){
+    returnList <- list()  
+  }
   
   ###### SV Demographic Data ######
   ### Create or load SV demographic data
-  if(demo){
-    get_svDataList(save = save, return = return)
-  } else if(load_demoinfo){
-    sv_fileName <- "svDataList.rda"
-    sv_filePath <- file.path(outPath, sv_fileName)
+  if(sv){
+    svDataList  <- get_svDataList(save = save, return = return, outPath=outPath_sv, msg0="\t")
+  } else if(load_demoInfo){ ### Load svDataList
     load(sv_filePath)
   } else{
-    svDataList <- NULL
-  }; returnList[["svDataList"]] <- svDataList
-  ### Assign list elements to list names if present
-  if(!is.null("svDataList")){
-    for(name_i in 1:names(svDataList)){
-      assign(name_i, svDataList[[name_i]])
-    }; rm("svDataList")
+    svDataList  <- NULL
   }
   
   ###### Population Data ######
   ### Create or load population scenario/projection list
   if(pop){
-    svPopList <- get_svPopList(svData = svData, save = save, return = return)
+    svPopList <- get_svPopList(
+      svData  = svDataList$svData, 
+      save    = save, 
+      return  = return, 
+      outPath = outPath_sv, 
+      msg0    = "\t"
+      )
   } else{
     svPopList <- NULL
-  }; returnList[["svPopList"]] <- svPopList
+  }
   
   ###### Impacts Functions List ######
   # codePath %>% file.path(paste("get_svImpactsList", "R", sep=".")) %>% source
   # c_svSectors <- svSectorInfo$sector %>% unique
   if(impacts){
     ### Filter sector info to sectors specified by user
+    svSectorInfo <- svDataList$svSectorInfo
     if(!is.null(sectorsList)){
       svSectorInfo <- svSectorInfo %>% filter(sector %in% sectorsList)
     }
+    # svDataList %>% names %>% print
+    # svSectorInfo %>% names %>% print
     ### Iterate over sectors
-    for(sector_i in 1:nrow(svSectorInfo)){
+    for(i in 1:nrow(svSectorInfo)){
       ### File names
-      infileName_i  <- df_sectorInfo$inputDataFile[i]
-      adapt_abbr_i  <- df_sectorInfo$adapt_abbr[i]
-      sector_i      <- df_sectorInfo$sector[i]
-      adapt_i       <- df_sectorInfo$adapt_label[i]
+      infileName_i  <- svSectorInfo$inputDataFile[i]
+      adapt_abbr_i  <- svSectorInfo$adapt_abbr[i]
+      sector_i      <- svSectorInfo$sector[i]
+      adapt_i       <- svSectorInfo$adapt_label[i]
+      fileExt_i     <- svSectorInfo$impactList_fileExt[i]
+      
       infile_i      <- infileName_i %>% 
         paste0(ifelse(is.na(adapt_abbr_i), "", " - ")) %>% 
         paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i)) %>% 
@@ -98,42 +111,61 @@ createSVData <- function(
       # (infile_i %in% (excelDataPath %>% list.files)) %>% print
       
       outfile_i     <- "impactsList" %>%
-        paste(impactList_fileExt[i], sep="_") %>%
-        paste0(ifelse(is.na(adapt_abbr_i)), "", "adapt_abbr") %>% paste("rda", sep=".")
+        paste(fileExt_i, sep="_") %>%
+        paste0(ifelse(is.na(adapt_abbr_i)), "", "adapt_abbr") %>% 
+        paste(rDataExt, sep=".")
       
       ### Create impacts list
       impactsList <- get_svImpactsList(
-        dataFile = infile_i, createList = T, save=save, return = return
+        dataFile   = infile_i, 
+        dataPath   = extDataPath %>% file.path("impacts"),
+        svData     = svDataList$svData, 
+        createList = T, 
+        save       = save, 
+        return     = return, 
+        outPath    = outPath_imp, 
+        msg0       = "\t"
+        # dataFile = infile_i, createList = T, save=F, return = T
       )
-      ### Impacts list name
-      # impactsList %>% names %>% length
-      ### Save impacts list
-      if(save){
-        outfilePath_i <- file.path(dataPath, outfile_i)
-        outfileDir_i  <- outfilePath_i %>% dirname
-        dir_i_exists  <- outfileDir_i %>% dir.exists
-        
-        if(!dir_i_exists){
-          paste0("\t", "`outfileDir_i='", outfileDir_i, "' not found...") %>% message
-          paste0("\t", "Exiting without saving...") %>% message
-        } else{
-          paste0("\t", "Saving impacts list for ", sector_i, ", ", adapt_i, " to '", outfile_i, "'...") %>% message
-          save(impactsList, file = outfilePath_i)  
-        }
-      } ### End if save
-      # rm("impactsList")
-    } else{
-      impactsList <- NULL
-    }
-    # ### Remove impacts list and function
-    # rm("impactsList", "get_svImpactsList")
-  }; returnList[["impactsList"]] <- impactsList
+    } 
+  } #; returnList[["impactsList"]] <- impactsList
+  else{
+    impactsList <- NULL
+  }
+  
+  ###### Formatting ######
+  ### For Excel formatting. openxlsx
+  format_styles <- svDataList$df_formatTypes$styleName %>% 
+    lapply(function(style_i){
+      i       <- which(df_formatTypes$styleName == style_i)
+      style_i <- createStyle(
+        fgFill       = svDataList$df_formatTypes$fgFill[i], 
+        halign       = svDataList$df_formatTypes$halign[i], 
+        border       = svDataList$df_formatTypes$border[i], 
+        borderColour = svDataList$df_formatTypes$borderColour[i],
+        fontColour   = svDataList$df_formatTypes$fontColour[i]
+      )
+      return(style_i)
+    }) %>%
+    (function(x){
+      names(x) <- df_formatTypes$styleName
+      return(x)
+    })
+  
+  
+  ### Return svDataList
+  if(return){
+    returnList[["svDataList"]]    <- svDataList
+    returnList[["svPopList"]]     <- svPopList
+    returnList[["impactsList"]]   <- impactsList
+    returnList[["format_styles"]] <- format_styles
+  }
   
   ###### Return object ######
   message("\n\n", "Finished", ".")
 
   if(return){
-    return(rDataList)
+    return(returnList)
   }
   
 } ### End function

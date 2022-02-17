@@ -1,0 +1,167 @@
+---
+title: "Configure R Tool Data"
+author: "Industrial Economics, Inc."
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  rmarkdown::html_document:
+    theme: spacelab
+    toc: true
+    toc_float: true
+---
+
+<style>
+/* Simplified version of Bootstrap's responsive table CSS */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table-responsive > table {
+    width: 100%;
+}
+</style>
+
+
+```{r knitr setup, include=FALSE}
+### The following parameters declare the options for compiling the Markdown document.
+knitr::opts_chunk$set(
+  include = T,     ### Evaluate and depict outputs of code chunks in the compiled document
+  echo    = T,     ### Echo the commands of the code chunks in the compiled document
+  message = FALSE, ### Don't include command-line messages output from evaluating code chunks
+  cache   = FALSE, ### Don't cache the evaluation of code chunks
+  warning = FALSE,  ### Don't include warnings from evaluating code chunks
+  table.format = "html" 
+)
+```
+
+## Overview
+
+The purpose of this package is to configure the R tool
+
+Load packages 
+
+```{r loadPackages}
+### Packages
+require(tidyverse)
+require(openxlsx)
+require(devtools)
+```
+
+
+Paths
+
+
+
+```{r declare paths}
+### Set system paths
+projectPath      <- getwd()
+today            <- format(Sys.Date(), "%Y%m%d")
+### Code path
+codePath         <- projectPath %>% paste("R", sep="/")
+codeNames        <- codePath %>% list.files(".R")
+### FrEDI path
+frediPath        <- projectPath %>% file.path("..", "FrEDI")
+```
+
+
+## Create SV Configuration Data
+
+
+
+Load all R code
+
+```{r}
+load_all(frediPath)
+```
+
+Load configuration functions
+
+```{r load config}
+### Load all functions
+codeNames; for(name_i in codeNames){ 
+  # name_i %>% print
+  source(paste(codePath, name_i, sep="/")) 
+}
+
+```
+
+Test system data
+
+```{r test_systemData0}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+### Uncomment following two lines to create and save data and check the outputs
+time1           <- Sys.time()
+# test_svData     <- createSVData(save=F, sv = T, pop = T)
+# test_svData     <- createSVData(save=T, sv = F, pop=T)
+test_svData     <- createSVData(save=T, sv = F, pop=F, impacts=T, return=F)
+time2           <- Sys.time()
+time_create     <- time2 - time1; time_create
+```
+
+Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+
+```{r check outputs}
+# (test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
+# test_systemData$slrImpacts %>% names
+# test_systemData$df_results0$sector_label %>% unique
+```
+
+
+
+If above works, overwrite previous config
+
+```{r save and overwrite data}
+### Uncomment following two lines to create and save data and check the outputs
+time1           <- Sys.time()
+test_svData     <- createSVData(save=T, sv = T, pop = T)
+time2           <- Sys.time()
+time_create     <- time2 - time1; time_create
+```
+
+
+
+
+
+## Update R Tool
+
+**Manually update the sysdata.rdata file in the Rtool.**
+
+After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
+
+
+Try the package: 167,184 rows
+
+```{r df_defaults, message=T}
+ciraPath %>% paste("R", sep="/") %>% load_all
+# df_defaults <- run_fredi()
+# df_defaults <- run_fredi(aggLevels = "all")
+df_defaults <- run_fredi(aggLevels = "none")
+df_defaults %>% glimpse
+# df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
+# df_defaults$sector %>% unique
+# df_defaults %>% dim
+```
+
+
+```{r}
+ciraPath %>% paste("R", sep="/") %>% load_all
+df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
+# df_defaults$sector %>% unique
+# df_defaults %>% dim
+```
+
+
+
+Create plots
+
+
+
+```{r plot types, fig.height=10, fig.width=16}
+### Create only heatmaps
+# ciraPath %>% paste("R", sep="/") %>% load_all()
+# defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
+defPlots <- df_defaults2 %>% get_plots(plotTypes="heatmaps")
+defPlots$heatmaps$SLR
+```
+
