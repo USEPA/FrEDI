@@ -11,14 +11,14 @@ package_location %>% list.files
 list.files(package_location)
 list.dirs(package_location, recursive = F)
 
-###### Test Functions ######
-### Uncomment to generate and test example data
-load_all(package_location)
-testx <- run_fredi(aggLevels = "none")
-testx <- run_fredi(aggLevels = "none", sectorList = "Agriculture") %>% filter(year %in% seq(2000, 2090, by=5))
-# ### Uncomment to update and save default results
-# ###### Update and Save Default Scenario ######
-# rm("testx")
+# ###### Test Functions ######
+# ### Uncomment to generate and test example data
+# load_all(package_location)
+# # testx <- run_fredi(aggLevels = "none")
+# # testx <- run_fredi(aggLevels = "none", sectorList = "Agriculture") %>% filter(year %in% seq(2000, 2090, by=5))
+# # ### Uncomment to update and save default results
+# # ###### Update and Save Default Scenario ######
+# # rm("testx")
 # defaultResults <- run_fredi()
 # savePath <- package_location %>% file.path("data", "defaultResults.RData")
 # save(defaultResults, file=savePath)
@@ -65,6 +65,19 @@ if(packageFile_exists){
   install.packages(packageDest, repos=NULL, type="source", lib=r_libPath)
 
 }
+
+# ?devtools::install_github()
+# ?with_libpaths
+withr::with_libpaths(
+  new = .libPaths()[1],
+  devtools::install_github(
+    repo   = "https://github.com/USEPA/FrEDI",
+    subdir = "FrEDI",
+    type   = "source",
+    force  = TRUE
+    # ref = "main"
+  )
+)
 
 ###### Test Package ######
 ###### - Build package, reinstall, and restart R
