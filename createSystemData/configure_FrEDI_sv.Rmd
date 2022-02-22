@@ -92,9 +92,9 @@ Test system data
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-# test_svData     <- createSVData(save=F, sv = T, pop = T)
+# test_svData     <- createSVData(save=T, sv = T, pop = F)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
-test_svData     <- createSVData(save=T, sv = F, pop=F, impacts=T, return=F)
+test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```

@@ -1,22 +1,108 @@
 ###### Overview ######
 ### This file contains helper functions for the FrEDI SV module.
+###### calc_countyPop ######
+### Created 2022.02.14. Last updated 2021.02.14
+### This function attempts to load a user-specified input file
+### Use this function to calculate tract level impacts
 
+calc_countyPop <- function(
+  regPop,  ### Dataframe of population projection
+  funList, ### Dataframe of population projections
+  years = seq(2000, 2099, 1)
+  
+){
+  c_regions <- regPop$region %>% unique
+  ### Iterate over regions
+  x_popProj <-
+    c_regions %>%
+    lapply(function(region_i){
+      ### Subset population projection to a specific region
+      ### Get states in the region
+      ### Get unique years
+      df_i     <- regPop %>% filter(region==region_i)
+      states_i <- funList[[region_i]] %>% names
+      years_i  <- df_i$year %>% unique %>% sort
+      
+      ### Iterate over states
+      regionPop_i <- states_i %>%
+        lapply(function(state_j){
+          ### Function for state j
+          fun_j   <- funList[[region_i]][[state_j]]$state2region
+          
+          # state_j %>% print
+          df_j <-
+            data.frame(
+              x = years_i,
+              y = fun_j(years_i)
+            ) %>%
+            rename(
+              year    = x,
+              ratioState2RegionPop = y
+            ) %>%
+            mutate(
+              state   = state_j,
+              region  = region_i
+            )
+          
+          ### Get list of counties in the state
+          geoids_j      <- funList[[region_i]][[state_j]]$county2state %>% names
+          statePop_j    <- geoids_j %>%
+            lapply(function(geoid_k){
+              
+              fun_k <- funList[[region_i]][[state_j]]$county2state[[geoid_k]]
+              if(!is.null(fun_k)){
+                y_k <- fun_k(years_i)
+              } else{
+                y_k <- NA
+              }
+              df_k  <- data.frame(
+                year = years_i,
+                ratioCounty2StatePop = y_k
+              ) %>%
+                mutate(
+                  state   = state_j,
+                  geoid10 = geoid_k
+                )
+              return(df_k)
+            }) %>%
+            (function(z){do.call(rbind, z)})
+          
+          df_j <- df_j %>%
+            left_join(
+              statePop_j, by = c("state", "year")
+            )
+          
+          return(df_j)
+        }) %>%
+        (function(y){
+          do.call(rbind, y)
+        })
+      
+      df_i <- df_i %>%
+        left_join(
+          regionPop_i, by = c("region", "year")
+        ) %>%
+        mutate(
+          state_pop  = region_pop * ratioState2RegionPop,
+          county_pop = state_pop  * ratioCounty2StatePop
+        )
+      return(df_i)
+    }) %>%
+    (function(x){
+      do.call(rbind, x)
+    }) %>%
+    as.data.frame
+  
+  return(x_popProj)
+}
 ###### get_svDataList ######
 get_svDataList <- function(
   dataPath       = file.path(getwd(), "inst", "extdata", "sv"), ### Path to data file...default relative to current working directory
   dataFile       = "SVdemographic.xlsx", ### Data file name...defaults to "SVdemographic.xlsx"
-  dataSheet      = "svDemoData", ### Defaults to "svDemoData"
-  dataTableName  = dataSheet, ### Defaults to `dataSheet`` value
-  dataInfoSheet  = "Controls", ### Where to find the table with info on columns in svDemoData
-  dataInfoName   = "svDemoInfo", ### Table name for table with info on columns in svDemoData
-  dataSectorName = "sectorInfo",
-  dataAdaptName  = "coAdapt",
-  dataFormatName = "co_formatting",
-  dataTypesName  = "co_formatTypes",
-  gcamSheet      = "GCAM",
-  gcamName       = "gcamScenarios",
-  outPath        = file.path(getwd(), "data"), ### Where to save rdata objects
-  # saveFile      = "svDemoData.rdata",
+  tableSheet     = "tableNames", ### Defaults to "svDemoData"
+  tableName      = tableSheet, ### Defaults to `dataSheet`` value
+  outPath        = file.path(getwd(), "R"), ### Where to save rdata objects
+  saveFile       = "svDataList",
   rDataExt       = "rdata", ### R data extension
   save           = F,
   return         = T,
@@ -28,7 +114,10 @@ get_svDataList <- function(
   msg0 %>% paste0("Running get_svDataList():", "\n") %>% message
   msg1 <- msg0 %>% paste0("\t")
   ###### File paths ######
+  ### File path. Split into standard directory and file name if not standard
   dataFilePath   <- dataPath %>% file.path(dataFile)
+  dataFile       <- dataFilePath %>% basename
+  dataPath       <- dataFilePath %>% dirname
   
   ### Check if file exists and if it doesn't, exit
   dataPathFiles  <- dataPath %>% list.files
@@ -40,141 +129,103 @@ get_svDataList <- function(
   }
 
   ### Otherwise, get information about the file
-  dataFileSheets <- dataFilePath %>% getSheetNames
-
   ### Check that `dataInfoSheet` and `dataSheet` exists:
-  dataInfoSheetExists <- dataInfoSheet %in% dataFileSheets
-  if(!dataInfoSheetExists){
+  dataFileSheets   <- dataFilePath %>% getSheetNames
+  tableSheetExists <- tableSheet %in% dataFileSheets
+  if(!tableSheetExists){
     msg1 %>% paste0("Loading data from `dataFile='", dataFile, "'` in `dataPath='", dataPath, "'`") %>% message
-    msg1 %>% paste0("`dataInfoSheet='", dataInfoSheet, "'` not found in `dataFile='", dataFile, "'`") %>% message
+    msg1 %>% paste0("`tableSheet='", tableSheet, "'` not found in `dataFile='", dataFile, "'`") %>% message
     msg1 %>% paste0("\n\t", "Exiting...") %>% message
     return()
   } ### End if !dataInfoSheetExists
 
-  dataSheetExists <- dataSheet %in% dataFileSheets
-  if(!dataSheetExists){
-    msg1 %>% paste0("Loading data from `dataFile='", dataFile, "'` in `dataPath='", dataPath, "'`") %>% message
-    msg1 %>% paste0("`dataSheet='", dataSheet, "'` not found in `dataFile='", dataFile, "'`") %>% message
-    msg1 %>% paste0("\n\t", "Exiting...") %>% message
-    return()
-  } ### End if !dataSheetExists
-
-  gcamSheetExists <- gcamSheet %in% dataFileSheets
-  if(!gcamSheetExists){
-    msg1 %>% paste0("Loading data from `dataFile='", dataFile, "'` in `dataPath='", dataPath, "'`") %>% message
-    msg1 %>% paste0("`gcamSheet='", gcamSheet, "'` not found in `dataFile='", dataFile, "'`") %>% message
-    msg1 %>% paste0("\n\t", "Exiting...") %>% message
-    return()
-  } ### End if !dataSheetExists
-
   ###### Load the Excel Workbook ######
   wb_data          <- dataFilePath %>% loadWorkbook
-  dataInfoTables   <- wb_data %>% getTables(sheet = dataInfoSheet)
-  dataDriverTables <- wb_data %>% getTables(sheet = gcamSheet)
-  dataDataTables   <- wb_data %>% getTables(sheet = dataSheet); rm("wb_data")
+  c_tables         <- wb_data %>% getTables(sheet = tableSheet); rm("wb_data")
+  tableExists      <- tableName %in% c_tables
+  which_table      <- (tableName == c_tables) %>% which
 
-  ###### Get the data info table ######
-  msg1 %>% paste0("Loading data from `dataInfoSheet='", dataInfoSheet, "'`...") %>% message
+  ###### Get the table of tables ######
   ### If the files exist then get info about the tables
   ### - Load the Excel Workbook
   ### - Get table names on `dataInfoSheet` and remove the Excel workbook to free up space
   ### - Check that `dataInfoName` is one of the tables on the worksheet
   ### - If it isn't, exit
-  df_infoTables <-
-    data.frame(
-      inputArg  = c("dataInfoName", "dataSectorName", "dataAdaptName", "dataFormatName", "dataTypesName"),
-      tableName = c(dataInfoName, dataSectorName, dataAdaptName, dataFormatName, dataTypesName),
-      tableType = c("dataInfoTable", "dataSectorInfo", "dataAdaptInfo", "dataFormatInfo", "dataFormatTypes")
-    )
-
-  for(i in 1:nrow(df_infoTables)){
-    table_i       <- df_infoTables$tableName[i]
-    inputArg_i    <- df_infoTables$inputArg[i]
-    tableType_i   <- df_infoTables$tableType[i]
-    tableExists_i <- table_i %in% dataInfoTables
-
-    ### Check if table exists
-    if(!tableExists_i){
-      msg1 %>% paste0("Loading data from `dataFile='", dataFile, "'` in `dataPath='", dataPath, "'`") %>% message
-      msg1 %>% paste0("Data table `", inputArg_i, "='", table_i, "'` not found on `dataInfoSheet='", dataInfoSheet, "'`") %>% message
-      msg1 %>% paste0("\n\t", "Exiting...") %>% message
-      return()
-    } ### End if !dataSheetExists
-
-    ### If it exists, then load the data:
-    ### - Figure out which of the tables is the info table
-    ### - Get the range for the table (name in the character vector), then split it and extract from the resulting list
-    ### - Extract the column letters from the range and then convert to numbers
-    ### - Extract the rows from the range
-    which_infoTable <- (table_i == dataInfoTables) %>% which
-    range_infoTable <- names(dataInfoTables)[which_infoTable] %>% str_split(":") %>% unlist
-    # cols_infoTable  <- range_infoTable %>% str_extract("([:alpha:]*)") %>% convertFromExcelRef
-    cols_infoTable  <- range_infoTable %>% str_extract("([:alpha:]*)")
-    ### Get rows
-    rows_infoTable  <- 1:2 %>% lapply(function(j){
-      col_j <- cols_infoTable[j]
-      row_j <- gsub(col_j, "", range_infoTable[j])
-      return(row_j)
-    }) %>% unlist %>% as.numeric
-    ### Convert columns to numeric
-    cols_infoTable <- cols_infoTable %>% convertFromExcelRef
-    ### Finally, read in the table
-    # cols_infoTable %>% print
-    # rows_infoTable %>% print
-    df_table_i <- dataFilePath %>% read.xlsx(
-      sheet = dataInfoSheet,
-      rows  = rows_infoTable[1]:rows_infoTable[2],
-      cols  = cols_infoTable[1]:cols_infoTable[2],
-      rowNames = T
-    )
-    assign(tableType_i, df_table_i)
-    # dataInfoTable %>% names %>% print
+  msg1 %>% paste0("Loading list of tables from `tableSheet='", tableSheet, "'`...") %>% message
+  if(!tableExists){
+    msg1 %>% paste0("`tableName='", tableName, "'` not found on `tableSheet='", tableSheet, "'`") %>% message
+    msg1 %>% paste0("\n\t", "Exiting...") %>% message
   }
-
-  ###### SV Group Types ######
-  c_svGroupTypes <- (dataInfoTable %>% filter(colType %in% c("sv", "minority")))$colName
-  c_svWeightCols <- (dataInfoTable %>% filter(colType == "weight"))$colName
-  ###### Sector-Adaptation Info ######
-  svSectorInfo <- dataSectorInfo %>% left_join(dataAdaptInfo, by = "sector_abbr")
-
-
-  ###### GCAM Scenarios ######
-  msg1 %>% paste0("Loading data from `gcamSheet='", gcamSheet, "'`...") %>% message
-  gcamExists     <- gcamName %in% dataDriverTables
-
-  ### Check if table exists
+  
   ### If it exists, then load the data:
   ### - Figure out which of the tables is the info table
   ### - Get the range for the table (name in the character vector), then split it and extract from the resulting list
   ### - Extract the column letters from the range and then convert to numbers
   ### - Extract the rows from the range
-  if(!gcamExists){
-    msg1 %>% paste0("Loading data from `dataFile='", dataFile, "'` in `dataPath='", dataPath, "'`") %>% message
-    msg1 %>% paste0("Data table `", gcamName, "='", gcamName, "'` not found on `gcamSheet='", gcamSheet, "'`") %>% message
-    msg1 %>% paste0("\n\t", "Exiting...") %>% message
-    return()
-  } ### End if !dataSheetExists
-
-  which_gcamTable <- (gcamName == dataDriverTables) %>% which
-  range_gcam      <- names(dataDriverTables)[which_gcamTable] %>% str_split(":") %>% unlist
-  cols_gcam       <- range_gcam %>% str_extract("([:alpha:]*)")
-  ### Get rows
-  rows_gcam  <- 1:2 %>% lapply(function(j){
-    col_j <- cols_gcam[j]
-    row_j <- gsub(col_j, "", range_gcam[j])
-    return(row_j)
+  range_table <- names(c_tables)[which_table] %>% str_split(":") %>% unlist
+  cols_table  <- range_table %>% str_extract("([:alpha:]*)")
+  rows_table  <- 1:2 %>% lapply(function(j){
+      col_j <- cols_table[j]
+      row_j <- gsub(col_j, "", range_table[j])
+      return(row_j)
   }) %>% unlist %>% as.numeric
   ### Convert columns to numeric
-  cols_gcam <- cols_gcam %>% convertFromExcelRef
+  cols_table <- cols_table %>% convertFromExcelRef
   ### Finally, read in the table
-  # cols_infoTable %>% print
-  # rows_infoTable %>% print
-  gcamScenarios <- dataFilePath %>% read.xlsx(
-    sheet = gcamSheet,
-    rows  = rows_gcam[1]:rows_gcam[2],
-    cols  = cols_gcam[1]:cols_gcam[2],
+  # c(cols_infoTable %>% paste(collapse=", "), rows_infoTable %>% paste(collapse=", ") %>% print
+  tableNames <- dataFilePath %>% read.xlsx(
+    sheet = tableSheet,
+    rows  = rows_table[1]:rows_table[2],
+    cols  = cols_table[1]:cols_table[2],
     rowNames = T
   ) %>%
+    select(-c("id_col", "Notes"))
+  
+  
+  ###### Load the tables ######
+  ### Load tables and assign to list
+  svDataList <- list()
+  for(i in 1:nrow(tableNames)){
+    name_i  <- tableNames$Table.Name[i]
+    sheet_i <- tableNames$Worksheet[i]
+    row1_i  <- tableNames$header_row[i]
+    rows_i  <- row1_i + (0:tableNames$num_rows[i])
+    cols_i  <- tableNames$first_col[i]:tableNames$last_col[i]
+    
+    ### Read in table
+    table_i <- dataFilePath %>% read.xlsx(
+      sheet = sheet_i,
+      rows  = rows_i,
+      cols  = cols_i,
+      rowNames = F
+    )
+    ### Exclude columns
+    exclude_i <- tableNames$excludeCol_ids[i]
+    if(!is.na(exclude_i)){
+      exclude_i <- paste0("c(", exclude_i, ")")
+      exclude_i <- eval(parse(text=exclude_i))
+      table_i   <- table_i[,-c(exclude_i)]
+    }
+    ### Add table to list
+    name_i      <- tableNames$rTableName[i]
+    svDataList[[name_i]] <- table_i
+  }; rm("name_i", "sheet_i", "row1_i", "rows_i", "cols_i", "table_i", "exclude_i")
+
+  ###### SV Group Types ######
+  ### Group types, weight columns, sector-adaptation info
+  c_svGroupTypes <- (svDataList[["svDemoInfo"]] %>% filter(colType %in% c("sv", "minority")))$colName
+  c_svWeightCols <- (svDataList[["svDemoInfo"]] %>% filter(colType == "weight"))$colName
+  svSectorInfo   <-  svDataList[["sectorInfo"]] %>% left_join(svDataList[["coAdapt"]], by = "sector_abbr")
+  
+  svDataList[["c_svGroupTypes"]] <- c_svGroupTypes
+  svDataList[["c_svWeightCols"]] <- c_svWeightCols
+  svDataList[["svSectorInfo"  ]] <- svSectorInfo
+  rm("c_svGroupTypes", "c_svWeightCols", "svSectorInfo")
+
+
+  ###### Format GCAM Scenarios ######
+  msg1 %>% paste0("Formatting GCAM scenarios...") %>% message
+  gcamScenarios <- svDataList$gcamScenarios %>%
     gather(
       key = "scenario", value = "temp_C_conus", -c("year")
     ) %>%
@@ -207,83 +258,73 @@ get_svDataList <- function(
           do.call(rbind, y)
         })
     })
+  svDataList[["gcamScenarios"  ]] <- gcamScenarios; rm("gcamScenarios")
 
-  ###### Get the data table ######
-  ### If the files exist then get info about the tables
-  ### - Load the Excel Workbook
-  ### - Get table names on `dataInfoSheet` and remove the Excel workbook to free up space
-  ### - Check that `dataInfoName` is one of the tables on the worksheet
-  ### - If it isn't, exit
+  ###### Format the SV Data ######
+  msg1 %>% paste0("Formatting SV data...") %>% message
+  c_svDataTables <- c("svData", "svDataCoastal")
 
-  ###### Read in the SV Data Table ######
-  msg1 %>% paste0("Loading data from `dataSheet='", dataSheet, "'`...") %>% message
-  dataTable <- dataFilePath %>% read.xlsx(
-    sheet    = dataSheet,
-    startRow = 1,
-    cols     = 1 + 1:nrow(dataInfoTable),
-    na.strings = c("NA", "NaN")
-  ) %>%
-    ### Rename columns: Reorder columns, rename columns
-    (function(x){
-      x        <- x[,dataInfoTable$colOrder_excel]
-      names(x) <- dataInfoTable$colName
-      return(x)
-    }) %>%
-    ### Replace NA values with 0
-    (function(x){
-      colNames_x <- (dataInfoTable %>% filter(colType=="minority"))$colName
-      x          <- x %>% mutate_at(.vars=all_of(colNames_x), replace_na, 0)
-      return(x)
-    }) %>%
-    ### Standardize county number
-    mutate(fips_num = fips %>% as.numeric) %>%
-    mutate(fips     = fips %>% as.character) %>%
-    ### Remove "County", "Parish", and "city"
-    rename(svCounty = county) %>%
-    mutate(
-      county   = svCounty %>% (function(x){gsub(" County", "", x)}),
-      county   = county   %>% (function(x){gsub(" Parish", "", x)}),
-      county   = county   %>% (function(x){gsub(" city", "", x)})
-    ) %>%
-    mutate(
-      nChars     = fips %>% nchar,
-      geoid10    = fips %>% substr(1, ifelse(nChars > 10, 5, 4))
-    ) %>%
-    select(-c("nChars"))
-
-  # "got here" %>% print
-  ###### Summarize the County Data ######
-  data_countyPop <- dataTable %>%
-    group_by_at(.vars=c("state", "geoid10")) %>%
-    summarize_at(.vars=c("tract_pop"), sum, na.rm=T) %>%
-    rename(county_pop = tract_pop)
-  # svCountyPop %>% glimpse
-
-  ###### Join County Data with Main Data######
-  # "got here2" %>% print
-  dataTable <- dataTable %>%
-    left_join(
-      data_countyPop, by = c("state", "geoid10")
-    ) %>%
-    mutate(ratioTract2CountyPop = tract_pop / county_pop)
-
-
-  ###### Rename the Data ######
-  ### Object names
-  # svDataList    <- list()
-  # svDataList[["svDemoInfo"]] <- dataInfoTable
-  svDataList    <- list(
-    svDemoInfo      = dataInfoTable,
-    c_svGroupTypes  = c_svGroupTypes,
-    c_svWeightCols  = c_svWeightCols,
-    svSectorInfo    = dataSectorInfo,
-    df_formatInfo   = dataFormatInfo,
-    df_formatTypes  = dataFormatTypes,
-    gcamScenarios   = gcamScenarios,
-    svData          = dataTable
-  )
+  for(name_i in c_svDataTables){
+    msg1 %>% paste0("\t", "Formatting ", name_i ,"...") %>% message
+    # name_i %>% print
+    table_i    <- svDataList[[name_i]] #; names(table_i) %>% print
+    info_i     <- svDataList[["svDemoInfo"]]; #info_i %>% names %>% print
+    orderCol_i <- ifelse(name_i=="svData", "colOrder_excel", "colOrder_coastal")
+    
+    ### Exclude missing columns
+    order_i    <- info_i[,orderCol_i] %>% as.vector
+    which_i    <- (!is.na(order_i)) %>% which
+    info_i     <- info_i[which_i,]
+    
+    ### Order columns
+    order_i    <- order_i[which_i]
+    info_i     <- info_i[order_i,]
+    # info_i$colName %>% print
+    names(table_i) <- info_i$colName
+    
+    ### Standardize formatting
+    table_i <- table_i    %>%
+      ### Remove "County", "Parish", and "city"
+      rename(svCounty = county) %>%
+      mutate(
+        county   = svCounty %>% (function(x){gsub(" County", "", x)}),
+        county   = county   %>% (function(x){gsub(" Parish", "", x)}),
+        county   = county   %>% (function(x){gsub(" city", "", x)})
+      ) %>%
+      ### Standardize county number
+      mutate(fips_num = fips %>% as.numeric) %>%
+      mutate(fips     = fips %>% as.character) %>%
+      mutate(
+        nChars     = fips %>% nchar,
+        geoid10    = fips %>% substr(1, ifelse(nChars > 10, 5, 4))
+      ) %>%
+      select(-c("nChars", "fips_num"))
+    
+    ### Replace NA, NaN values with 0
+    cols_i  <- (info_i %>% filter(colType=="minority"))$colName #; cols_i %>% print
+    table_i <- table_i    %>%
+      mutate_at(.vars=all_of(cols_i), as.numeric) %>%
+      mutate_at(.vars=all_of(cols_i), replace_na, 0) %>%
+      filter_at(.vars=all_of(cols_i), ~ (!is.na(.x)))
+    
+    ###### Summarize the County Data ######
+    ### Calculate county population
+    # "got here" %>% print
+    countyPop_i <- table_i %>%
+      group_by_at(.vars=c("state", "geoid10")) %>%
+      summarize_at(.vars=c("tract_pop"), sum, na.rm=T) %>%
+      rename(county_pop = tract_pop)
+    
+    ###### Join County Data with Main Data######
+    # "got here2" %>% print
+    table_i <- table_i %>%
+      left_join(countyPop_i, by = c("state", "geoid10")) %>%
+      mutate(ratioTract2CountyPop = tract_pop / county_pop)
+    
+    ###### Update List ######
+    svDataList[[name_i]]    <- table_i
+  }; rm("table_i", "info_i", "countyPop_i")
   
-
   ###### Save the Data ######
   if(save){
     msg1 %>% paste0("Saving data to `outPath='", outPath, "'`...") %>% message
@@ -312,10 +353,11 @@ get_svPopList <- function(
   dataTable  = "iclusData",
   infoSheet  = "Controls",
   infoTable  = "iclusDataInfo",
+  # svDataList = NULL,
   svData     = NULL,
   outFile    = "svPopData",
-  outPath    = file.path(getwd(), "data"),
-  rDataExt   = "rdata", ### R data extension
+  outPath    = file.path(getwd(), "R"),
+  rDataExt   = "rda", ### R data extension
   save       = F,
   return     = T,
   msg0       = ""
@@ -417,21 +459,13 @@ get_svPopList <- function(
     }
   }; rm("wb_data")
   # "got here" %>% print
+  
   ###### Load Data ######
-  # iclusDataInfo <- dataFilePath %>%
-  #   read.xlsx(
-  #     sheet = infoSheet, rows = infoRows, cols = infoCols, rowNames = T
-  #   ) %>%
   iclusDataInfo <- iclusDataInfo %>%
     rename(iclusDataType = colType) %>%
     select(-c("colName_excel", "baseYear", "colOrder_excel"))
 
   # "got here" %>% print
-  # iclusData <- dataFilePath %>%
-  #   read.xlsx(
-  #     sheet    = dataSheet, rowNames = T
-  #   ) %>%
-  # (iclusData$iclusCounty == "") %>% which %>% length %>% print
   iclusData <- iclusData %>%
     rename_all(tolower) %>%
     gather(
@@ -447,30 +481,21 @@ get_svPopList <- function(
     rename(county_pop  = iclus_pop) %>%
     filter(year>=2000) %>%
     mutate(geoid10 = geoid10 %>% as.character)
-  
-  
-  
   # (iclusData$iclusCounty == "") %>% which %>% length %>% print
 
   ###### Check Against SV Data ######
   msg1 %>% paste0("Checking data against SV data...") %>% message
-  ### Load sv data "svData"
-  if(is.null(svData)){
+  ### Load sv data  
+  if(is.null(svDataList)){
     df_sv_path <- outPath %>% file.path("svDataList.rda")
     load(df_sv_path)
-    svData <- svDataList$svData; rm("svDataList")
+    svData    <- svDataList[["svData"]]; rm("svDataList")
+    # svDataList    <- svDataList[[c("svData", "svDataCoastal")]]
+    # svDataCoastal <- svDataList$svDataCoastal; rm("svDataList")
   }
-  svData <- svData %>%
-    mutate(geoid10 = geoid10 %>% as.character)
+  # svData <- svData %>% mutate(geoid10 = geoid10 %>% as.character)
   x_regions <- svData$region %>% unique
-  
-  # (iclusData %>% filter(state=="District of Columbia"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # 
-  # (iclusData %>% filter(state=="Rhode Island"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
+
   ### Join with SV data
   iclus_rows1 <- iclusData %>% nrow
   iclusData   <- iclusData %>%
@@ -487,14 +512,6 @@ get_svPopList <- function(
     filter(region %in% x_regions)
   iclus_rows2 <- iclusData %>% nrow
   msg1 %>% paste0("\t", "Removing observations for ", iclus_rows2 - iclus_rows1, " tracts with missing information...") %>% message
-
-  # (iclusData %>% filter(state=="District of Columbia"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  
-  # (iclusData %>% filter(state=="Rhode Island"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
   
   ###### Regional population summary ######
   ### Regional population summary (160 rows)
@@ -520,7 +537,6 @@ get_svPopList <- function(
         }) %>%
         (function(i){do.call(rbind, i)})
     })
-  # iclus_region_pop$region_pop %>% is.na %>% which %>% length %>% print
   
   ###### State population summary ######
   ### State population summary (1020 rows)
@@ -553,10 +569,6 @@ get_svPopList <- function(
       ratioStatePop2Region = state_pop / region_pop
     )
   
-  # iclus_state_pop$state %>% unique %>% print
-  # c(iclus_state_pop$ratioStatePop2Region %>% is.na %>% which %>% length,
-  #   iclus_state_pop$ratioStatePop2Region %>% is.nan %>% which %>% length) %>% print
-  
   ###### County population summary ######
   msg1 %>% paste0("\t", "Calculating county population ratios...") %>% message
   ### Join with region info and calculate ratio
@@ -567,15 +579,6 @@ get_svPopList <- function(
     ) %>%
     filter(!is.na(ratioCountyPop2State))
   
-  # 
-  # (iclusData %>% filter(state=="District of Columbia"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="District of Columbia"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # 
-  # (iclusData %>% filter(state=="Rhode Island"))$county %>% unique %>% paste(collapse=", ") %>% print
-  # (iclusData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  # (svData %>% filter(state=="Rhode Island"))$geoid10 %>% unique %>% paste(collapse=", ") %>% print
-  
 
   ###### Create population projections ######
   ### Create and save a list of population projections
@@ -583,9 +586,6 @@ get_svPopList <- function(
   x_sysTime1  <- Sys.time()
   popProjList <- list()
 
-  # testx <- iclusData %>% group_by_at(.vars=c("region", "state", "geoid10", "year")) %>% summarize(n=n(), .groups="keep")
-  # testx$n %>% max %>% print
-  # iclusData %>% names %>% print
   x_regions   <- iclusData$region %>% unique
   msg1 %>% paste0("\t", "Creating functions...") %>% message
   for(i in 1:length(x_regions)){
@@ -605,11 +605,6 @@ get_svPopList <- function(
       df_j       <- iclus_state_pop %>% filter(state==state_j)
       geoids_j   <- (df_i %>% filter(state==state_j))$geoid10 %>% unique
       counties_j <- (df_i %>% filter(state==state_j))$county %>% unique
-      # if(state_j == "District of Columbia" | state_j == "Rhode Island"){
-      #   paste0(j, ": ", state_j, ": ", paste(geoids_j, collapse=", ")) %>% print
-      # } else{
-      #   msg1 %>% paste0("\t\t\t", state_j, "...") %>% message
-      # }
       
       ### Initialize list
       popProjList[[region_i]][[state_j]] <- list()
@@ -624,7 +619,6 @@ get_svPopList <- function(
       popProjList[[region_i]][[state_j]][["county2state"]] <- list()
       
       ### Get projections by counties and initialize list
-      
       for(k in 1:length(geoids_j)){
         geoid_k  <- geoids_j[k] %>% as.character
         df_k     <- df_i %>% filter(state==state_j) %>% filter(as.character(geoid10) == geoid_k)
@@ -701,10 +695,10 @@ get_svPopList <- function(
 
 get_svImpactsList <- function(
   dataFile   = NULL,
-  dataPath   = file.path(getwd(), "inst", "extdata", "sv", "impacts"),
+  dataPath   = file.path(getwd(), "inst", "extdata",  "sv", "impacts"),
   outFile    = NULL,
-  outPath    = file.path(getwd(), "R", "sv", "impactLists"),
-  rDataExt   = "rdata", ### R data extension
+  outPath    = file.path(getwd(), "data", "sv", "impactLists"),
+  rDataExt   = "rda", ### R data extension
   createList = F,
   # modelType = "gcm",
   svData     = NULL,
@@ -854,9 +848,14 @@ get_svImpactsList <- function(
     msg1 %>% paste0("Saving impacts list...") %>% message
     ### Check that the directory exists
     if(dir.exists(outPath) & !is.null(outFile)){
+      outname     <- outFile
       outFileName <- outFile %>% paste(rDataExt, sep=".")
       outFilePath <- outPath %>% file.path(outFileName)
+      
+      # assign(outname, impactsList)
+      # assign(parse(text=outname), impactsList)
       save(impactsList, file=outFilePath)
+      # save(eval(parse(text=outname)), file=outFilePath)
       msg1 %>% paste0("\t", "Impacts list saved.") %>% message
     } else{
       fail_msg <- ifelse(

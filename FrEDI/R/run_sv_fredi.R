@@ -6,57 +6,16 @@
 #'
 #' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing dataframes of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over the period 2010 to 2090. Note: temperature and sea level rise inputs should start in 2000 or earlier.
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
-#' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national", "modelaverage", "impactyear", "impacttype", "all")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
-#' @param pv A `TRUE/FALSE` value indicating Whether to calculate present values for the annual impacts. Defaults to `pv=TRUE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
-#' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
-#' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
-# @param primaryTypes = F whether to filter to primary impacts
-#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting economic values.
 #### ADD MORE INFO ABOUT ELASTICITY
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
-#' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
-#'
-#' Users can run [FrEDI::run_fredi()] for all the sectors (default) or run FrEDI for specific sectors specified as a character vector to the `sectorsList` argument (run [FrEDI::get_sectorInfo()] to see a list of available sectors).
-#'
-#' #' Users can run FrEDI with the default scenario or have the option to specify custom inputs as a list of scenarios. The output of [FrEDI::run_fredi()] is an R data frame object containing annual average impacts, by year, for each sector, adaptation, impact type, model (GCM or SLR scenario), and region.
-#'
-#' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). [FrEDI::run_fredi()] uses default scenarios for temperature, population, and GDP when no inputs are specified (i.e., `inputsList=NULL`) or for empty elements of the inputs list. If the user does not specify an input scenario for GMSL (i.e., `inputsList=list(slrInput=NULL)`, [FrEDI::run_fredi()] first converts the CONUS temperature scenario to global temperatures and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters. For more information on the conversion of CONUS temperatures to global temperatures, see [FrEDI::convertTemps()]. For more information on the conversion of global temperatures to GMSL, see [FrEDI::temps2slr()].
-#'
-#' Values for input scenarios must be within reasonable ranges. If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()]. Temperature and GMSL inputs must begin in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier.
-#'
-#' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps(from="global")] or by specifying [FrEDI::import_inputs(temptype="global")] when importing a temperature scenario from a CSV file.
-#' * Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
-#' * Population and gross domestic product (GDP) values must be greater than or equal to zero.
-#'
-#' If `inputsList=NULL`, [FrEDI::run_fredi()] uses defaults for all scenarios. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing dataframes with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that are `NULL` or missing. In other words, running `run_fredi(inputsList=list())` returns the same outputs as running [FrEDI::run_fredi()]. For help importing custom scenarios from CSV files, refer to the pre-processing function [FrEDI::import_inputs()].
-#'
-#' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (requires at least two non-missing values). Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline). In other words, the temperature (in degrees Celsius) is set to zero for the year 1995 and GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit="degrees Celsius"` and `driverUnit="cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type="GCM"` and `model_type="SLR"` for temperature- and SLR-driven sectors, respectively).
-#'
-#' The population scenario must provide annual regional values for population, with national totals calculated from regional values. FrEDI uses the national population scenario and the GDP scenario to calculate GDP per capita. Values for regional population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results dataframe in columns `"reg_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
-#'
-#' Annual impacts for each sector, adaptation, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers.
-#'
-#' [FrEDI::run_fredi()] aggregates or summarizes results to levels of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelaverage"`), summing over all impact types (`aggLevels="impacttype"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default) or no aggregation levels (`aggLevels="none"`).
-#'
-#' For each of the `aggLevels`, [FrEDI::run_fredi()] performs the following summarization (using [FrEDI::aggregate_impacts()]):
-#'
-#' \tabular{ll}{
-#' \strong{Aggregation Level} \tab \strong{Description} \cr
-#' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
-#' `modelaverage` \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`, `"impactYear"`, `"model_type"`, `"region"`, and `"year"` and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as `NA`. The rows of model averages (with column `model="Average"` are then added as rows to the results dataframe. \cr
-#' `impactType` \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`, `"impactYear"`,`"model_type"`, `"model"`, `"region"`, and `"year"` and summed across impact types. Mutates column `impactType="all"` for all values. Years which have missing column data for all impact types return as `NA`. If results are aggregated across impact types, information about physical impacts (columns `"physicalmeasure"` and `"physical_impacts"`) are dropped.\cr
-#' `impactYear` \tab Annual results for sectors with only one impact year estimate (i.e., `impactYear == "N/A"`) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns `"sector", "adaptation", "impactType, "model_type", "model", "region", "year"` and interpolated across years with the 2010 run assigned to year 2010 and the 2090 run assigned to year 2090. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear="Interpolation"` for all values. \cr
-#' }
-#'
-#' Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting `pv=TRUE` (defauts to `pv=FALSE`). If `pv=TRUE`, discounted impacts are calculated using a base year and annual discount rate as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set base year and annual discount rate using `baseYear` (defaults to `baseYear=2010`) and `rate` (defaults to 3% i.e., `rate=0.03`), respectively.
-#'
+#' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. [FrEDI::run_fredi_sv()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
 #' @return
-#' The output of [FrEDI::run_fredi()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation, model (GCM or SLR scenario), and region.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation, model (GCM or SLR scenario), and region.
 #'
 #' @examples
 #' ### Run function with defaults (same as `defaultResults` dataset)
-#' df_defaults <- run_fredi()
+#' sv_defaults <- run_fredi_sv()
 #'
 #' ### Path to example scenarios
 #' scenariosPath <- system.file(package="FrEDI") %>% file.path("extdata","scenarios")
@@ -84,12 +43,12 @@
 #' @export
 #' @md
 #'
-###### run_fredi ######
+###### run_fredi_sv ######
 ### This function creates a dataframe of sector impacts for default values or scenario inputs.
 ### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi_sv <- function(
   inputsList = list(tempInput=NULL, slrInput, popInput=NULL), ### List of inputs
-  sectorList = NULL, ### Vector of sectors to get results for
+  sector = NULL, ### Vector of sectors to get results for
   return     = T,
   output2xl  = F,
   outpath    = "~",
@@ -100,41 +59,26 @@ run_fredi_sv <- function(
   ### Level of messaging (default is to message the user)
   silent  <- ifelse(is.null(silent), T, silent)
   msgUser <- !silent
+  # svDataPath <- "." %>% file.path
 
   ###### Sectors List ######
   ### Sector names
-  sector_names  <- co_sectors$sector_id
-  sector_labels <- co_sectors$sector_label
-  ### Initialize sector list if the sectors list is null
-  if(is.null(sectorList)){
-    sectorList       <- sector_names
-  } else{
-    ### Compare inputs to names and labels in the data
-    ### Subset to sector list in sector names
-    which_sectors    <- which(
-      (tolower(sector_names) %in% tolower(sectorList)) |
-        (tolower(sector_labels) %in% tolower(sectorList))
-    )
-    sectorList       <- sector_names[which_sectors]
-    ### Message users about missing sectors
-    which_notSectors <- which(!(
-      (tolower(sectorList) %in% tolower(sector_names)) |
-        (tolower(sectorList) %in% tolower(sector_labels))
-    ) )
-    missing_sectors  <- sectorList[which_notSectors]
-    ### Message the user
-    if(length(missing_sectors)>=1){
-      message(
-        "Warning! Error in `sectorList`.",
-        "\n\t", "Impacts are not available for the following: '",
-        "\n\t\t", paste(missing_sectors, collapse= "', '"), "'...",
-        "\n\t", "Available sectors: '",
-        "\n\t\t", paste(sector_names, collapse= "', '"), "'"
-      )
-    }
+  if(is.null(sector)){
+    sector_msg1 <- paste0("Please select a sector: ", "\n") %>% print
+    sector_msg2 <- 1:nrow(sectorInfo) %>% lapply(function(i){
+      sector_i  <- sectorInfo$sector[i]
+      msg_i     <- paste0("\t", i, ". ", sector_i, "\n")
+      return(msg_i)
+    }) %>% unlist %>% paste(collapse="")
+    sector_msg3  <- sector_msg1 %>% paste0(sector_msg2)
+    sector_input <- readline(prompt = sector_msg3) %>% as.numeric
+    sector       <- sectorInfo$sector[sector_input]
+    rm("sector_msg1", "sector_msg2", "sector_msg3", "sector_input")
   }
-  ### Number of sectors
-  num_sectors  <- sectorList %>% length
+  paste0("Running FrEDI SV for sector ", sector) %>% message
+  ### Sector info
+  which_sector <- (sectorInfo$sector == sector) %>% which
+  c_modelType  <- sectorInfo$modelType[which_sector]
 
   ###### Load Inputs ######
   ### Create logicals and initialize inputs list
@@ -148,8 +92,10 @@ run_fredi_sv <- function(
   }
   ### Iterate over the input list
   # if(!is.null(inputsList)){
+  co_inputScenarioInfo %>% head %>% print
   ### Assign inputs to objects
   for(i in 1:num_inputNames){
+    which_i     <- co_inputScenarioInfo
     inputInfo_i <- co_inputScenarioInfo[i,]
     ### Input name and label
     input_i     <- inputInfo_i$inputName %>% unique
@@ -229,62 +175,55 @@ run_fredi_sv <- function(
 
     tempInput <- tempInput %>%
       ### Select appropriate columns
-      select(c("year", "temp_C")) %>%
+      select(c("year", "temp_C", "scenario")) %>%
       ### Remove missing values of years, temperatures
       filter(!is.na(temp_C) & !(is.na(year))) %>%
       ### Filter to appropriate years
-      filter( year >  refYear_temp & year <= maxYear) %>%
-      ### Zero out series at the temperature reference year
-      (function(x){
-        data.frame(year= refYear_temp, temp_C = 0) %>% rbind(x)
-      })
+      filter( year >  refYear_temp & year <= maxYear)
 
-    ### Create a copy
-    temp_df  <- tempInput %>%
-      ### Add a dummy value for National Total
-      mutate(region="National Total") %>%
-      ### Interpolate annual values
-      (function(x){
-        minYear_x <- x$year %>% min
+    temp_df <- c_temp_scenarios %>% lapply(function(scenario_i){
+      input_i <- tempInput %>%
+        ### Filter to scenario i
+        filter(scenario==scenario_i) %>%
+        ### Zero out series at the temperature reference year
+        (function(x){
+          data.frame(year= refYear_temp, temp_C = 0) %>% rbind(x)
+        }) %>%
+        ### Add a dummy value for National Total
+        mutate(region="National Total") %>%
+        select(-c("scenario"))
 
-        interpYrs <- refYear_temp:maxYear
 
-        # newInterpYrs <- c(seq(refYear_temp, minYear_x-1), interpYrs)
-        # newInterpYrs %>% print
+      ### Interpolate
+      df_i <-     input_i %>%
+        ### Interpolate annual values
+        (function(x){
+          minYear_x <- x$year %>% min
 
-        x_interp  <- x %>% interpolate_annual(
-          years  = interpYrs,
-          column = "temp_C",
-          rule   = 1:2
-        ) %>%
-          select(-c("region"))
-        return(x_interp)
-      }) %>%
-      rename(temp_C_conus = temp_C) %>%
-      mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
+          interpYrs <- refYear_temp:maxYear
+
+          x_interp  <- x %>% interpolate_annual(
+            years  = interpYrs,
+            column = "temp_C",
+            rule   = 1:2
+          ) %>%
+            select(-c("region"))
+          return(x_interp)
+        }) %>%
+        rename(temp_C_conus = temp_C) %>%
+        mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus")) %>%
+        mutate(scenario = scenario_i) %>%
+        mutate(scenario = scenario_i)
+      return(df_i)
+    }) %>%
+      (function(x){do.call(rbind, x)})
   }
   else{
     ### No need to interpolate these values since they're already interpolated
-    message("Creating temperature scenario from defaults...")
-    # tempInput <- co_defaultScenario %>% filter(region==co_regions$region_dot[1])
-
-    # co_defaultTemps %>% nrow %>% print
-    temp_df <- co_defaultTemps %>%
-      ### Filter to appropriate years
-      filter( year >  refYear_temp & year <= maxYear) %>%
-      ### Convert to CONUS
-      mutate(temp_C_conus = temp_C_global %>% convertTemps(from="global")) %>%
-      select(c("year", "temp_C_conus")) %>%
-      ### Filter to appropriate years
-      filter( year >  refYear_temp & year <= maxYear) %>%
-      ### Zero out series at the temperature reference year
-      (function(x){
-        data.frame(year= refYear_temp, temp_C_conus = 0) %>% rbind(x)
-      }) %>%
-      ### Recalculate global temps
-      mutate(temp_C_global=temp_C_conus %>% convertTemps(from="conus"))
+    message("No temperature scenario provided...")
+    message("Exiting...")
+    return()
   }
-  # temp_df %>% nrow %>% print
 
   ###### SLR Scenario ######
   ### Year where SLR impacts are zero
@@ -296,7 +235,7 @@ run_fredi_sv <- function(
     slrInput  <-
       slrInput %>%
       ### Select appropriate columns
-      select(c("year", "slr_cm")) %>%
+      select(c("year", "slr_cm", "scenario")) %>%
       ### Filter values
       filter(!is.na(slr_cm) & !is.na(year)) %>%
       filter( year >  refYear_slr, year <= maxYear) %>%
@@ -307,26 +246,39 @@ run_fredi_sv <- function(
 
     ### Add dummy region and interpolate values
     # slr_df_years <-
-    slr_df <- slrInput %>%
-      mutate(region="National Total") %>%
-      ### Interpolate annual values
-      (function(x){
-        minYear_x <- x$year %>% min
-        interpYrs <- refYear_slr:maxYear
+    slr_df <- c_slr_scenarios %>% lapply(function(scenario_i){
+        input_i <- slrInput %>%
+          ### Filter to scenario i
+          filter(scenario==scenario_i) %>%
+          ### Zero out series at the temperature reference year
+          (function(x){
+            data.frame(year= refYear_slr, slr_cm = 0) %>% rbind(x)
+          }) %>%
+          ### Add a dummy value for National Total
+          mutate(region="National Total") %>%
+          select(-c("scenario"))
 
-        # newInterpYrs <- c(seq(refYear_slr, minYear_x-1), interpYrs)
-        # newInterpYrs %>% print
 
-        x_interp  <- x %>% interpolate_annual(
-          # years  = newInterpYrs,
-          years  = interpYrs,
-          column = "slr_cm",
-          rule   = 1:2
-        ) %>%
-          select(-c("region"))
-        return(x_interp)
-      })
+        ### Interpolate
+        df_i <-     input_i %>%
+          ### Interpolate annual values
+          (function(x){
+            minYear_x <- x$year %>% min
 
+            interpYrs <- refYear_slr:maxYear
+
+            x_interp  <- x %>% interpolate_annual(
+              years  = interpYrs,
+              column = "slr_cm",
+              rule   = 1:2
+            ) %>%
+              select(-c("region"))
+            return(x_interp)
+          }) %>%
+          mutate(scenario = scenario_i)
+        return(df_i)
+      }) %>%
+      (function(x){do.call(rbind, x)})
   }
   ### Else if doesn't have SLR update
   else{
@@ -340,26 +292,29 @@ run_fredi_sv <- function(
         temps2slr(temps = x$temp_C_global, years = x$year)
       })
   }
-  driverScenario <- temp_df
-  # slr_df %>% nrow %>% print
-  # slr_df %>% head %>% print
 
 
-  ###### Socioeconomic Scenario ######
-  ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
-  ### Reformat GDP inputs if provided, or use defaults
+  ###### Region Population Scenario ######
   ### Population inputs
   if(has_popUpdate){
-    message("Creating Population scenario from user inputs...")
+    message("Creating population scenario from user inputs...")
 
   } else{
-    message("Creating Population scenario from defaults...")
-    pop_df        <- pop_default %>% select("year", "reg_pop", "region") %>%
-      filter( year >= minYear) %>% filter( year <= maxYear)
-    national_pop  <- national_pop_default %>%
+    message("Using default population scenario...")
+    utils::getFromNamespace("svPopList", "FrEDI")
+    pop_df <- svPopList$iclus_region_pop %>%
       filter( year >= minYear) %>% filter( year <= maxYear)
   }
+  ### Interpolate
+  pop_df    <- pop_df$region %>% unique %>% lapply(function(region_i){
+    pop_i <- pop_df %>% filter(region==region_i)
+    df_i  <- approx(pop_i$year, pop_i$reg_pop, xout=list_years_by5) %>%
+      as.data.frame %>%
+      mutate(year=x, reg_pop=y)
+  }) %>%
+    rename(region_pop = reg_pop)
 
+  ###### County Population Scenario ######
   if(!exists("popProjList")){load(file.path(dataPath, popProj_file))}
   df_popProj <-
     calc_countyPop(
