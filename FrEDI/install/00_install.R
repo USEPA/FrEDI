@@ -41,7 +41,7 @@ devtools::build(pkg=package_location)
 ###### Copy New Package ######
 ### Copy package
 packageFile_dir    <- package_location %>% file.path( "..")
-packageFile_name   <- "FrEDI_2.1.1.tar.gz"
+packageFile_name   <- "FrEDI_2.2.0.tar.gz"
 packageFile_path   <- packageFile_dir %>% file.path(packageFile_name)
 packageFile_exists <- packageFile_path %>% file.exists
 
