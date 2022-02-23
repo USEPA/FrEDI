@@ -781,7 +781,7 @@ aggregate_impacts <- function(
   ###### Order Columns ######
   ### Order the data frame and ungroup
   ### Column indices of columns used in ordering
-  return_names  <- df_return %>% names #; "got here9" %>% print
+  return_names  <- df_return %>% names
   orderColNames <- c(groupByCols, "year") %>% (function(y){y[which(y %in% return_names)]}) #; "got here10" %>% print
   df_return     <- df_return %>% arrange_at(.vars=c(all_of(orderColNames)))
 
