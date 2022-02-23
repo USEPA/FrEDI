@@ -280,163 +280,169 @@ run_fredi_sv <- function(
       }) %>%
       (function(x){do.call(rbind, x)})
   }
-  ### Else if doesn't have SLR update
+  ### If there is no SLR scenario, calculate from temperatures
+  ### First convert temperatures to global temperatures
+  ### Then convert global temps to SLR
   else{
-    ### If there is no SLR scenario, calculate from temperatures
-    ### First convert temperatures to global temperatures
-    ### Then convert global temps to SLR
     message("Creating SLR scenario from temperature scenario...")
-
     slr_df <- temp_df %>%
       (function(x){
         temps2slr(temps = x$temp_C_global, years = x$year)
       })
   }
-
+  ### Subset to desired years
+  temp_df <- temp_df %>% filter(year %in% list_years_by5)
+  slr_df  <- slr_df %>% filter(year %in% list_years_by5)
 
   ###### Region Population Scenario ######
   ### Population inputs
   if(has_popUpdate){
     message("Creating population scenario from user inputs...")
-
+    ### Interpolate
+    popInput  <- popInput %>%
+      filter( year >= minYear) %>% filter( year <= maxYear)
+    pop_df    <- pop_df$region %>% unique %>% lapply(function(region_i){
+      pop_i <- pop_df %>% filter(region==region_i)
+      df_i  <- approx(pop_i$year, pop_i$reg_pop, xout=list_years_by5) %>%
+        as.data.frame %>%
+        mutate(year=x, reg_pop=y)
+    }) %>%
+      rename(region_pop = reg_pop)
+    rm("popInput")
   } else{
     message("Using default population scenario...")
     utils::getFromNamespace("svPopList", "FrEDI")
     pop_df <- svPopList$iclus_region_pop %>%
       filter( year >= minYear) %>% filter( year <= maxYear)
   }
-  ### Interpolate
-  pop_df    <- pop_df$region %>% unique %>% lapply(function(region_i){
-    pop_i <- pop_df %>% filter(region==region_i)
-    df_i  <- approx(pop_i$year, pop_i$reg_pop, xout=list_years_by5) %>%
-      as.data.frame %>%
-      mutate(year=x, reg_pop=y)
-  }) %>%
-    rename(region_pop = reg_pop)
+
 
   ###### County Population Scenario ######
-  if(!exists("popProjList")){load(file.path(dataPath, popProj_file))}
   df_popProj <-
     calc_countyPop(
-      regPop  = region_pop,
-      funList = popProjList,
-      years   = c_scenYears
-    ); rm("popProjList")
+      regPop  = pop_df,
+      funList = svPopList$popProjList,
+      years   = list_years_by5
+    ); #rm("popProjList")
 
-  ###### Scaled Impacts ######
-  ### Filter initial results to specified sectors
-  ### Join to the updated base scenario
-  ### Calculate physical scalars and economic multipliers then calculate scalars
+  # ###### Scaled Impacts ######
+  # ### Calculate scaled impacts
+  # df_impacts_j <-
+  #   calc_tractScaledImpacts(
+  #     funList      = impactsList,
+  #     driverValues = temps_j
+  #   ); if(exists("impactsList")){rm("impactsList")}
+  #
+  # # ### Load the SV data if not loaded; remove after running
+  # # if(!exists("svData")){load(svFile_j)}
+  # ### Calculate total impacts
+  # df_impacts_j      <- df_impacts_j %>%
+  #   calc_tractImpacts(
+  #     popData = df_popProj,
+  #     # svInfo  = svData,
+  #     svFile  = svFile_j,
+  #     sector  = sector_i
+  #   ) #; if(exists("svData")){rm("svData")}
 
-
-
-
-  ###### Other Impacts  ######
-  ### Physical impacts = physScalar * scaled_impacts
-  ### Annual impacts = phys-econ scalar value by the scaled impacts
-  df_impacts <- df_impacts %>%
-    filter(year>=minYear) %>%
-    mutate(physical_impacts = physScalar     * scaled_impacts * !is.na(physicalmeasure)) %>%
-    mutate(annual_impacts   = physEconScalar * scaled_impacts) %>%
-    as.data.frame
-
-  ###### Format Results ######
-  ### SV Path, Excel path info
-  pathSV          <- file.path(dataPath, svData_file)
-  # excel_wb_path   <- resultsPath   %>% file.path(paste(excelTemplateFile, "xlsx", sep="."))
-  excel_wb_path   <- resultsPath   %>% file.path(paste("FrEDI SV Graphics Template Unformatted", "xlsx", sep="."))
-  # excel_wb_path   <- resultsPath   %>% file.path(paste("test_formatting", "xlsx", sep="."))
-  excel_wb_exists <- excel_wb_path %>% file.exists; excel_wb_exists %>% print
-  excel_wb_sheets <- c("FrEDI Outputs 1", "FrEDI Outputs 2")
-  ### Initialize list
-  df_regImpacts <- list()
-  sysTime3      <- Sys.time()
-  # df_formatInfo2 <- df_formatInfo[1:12,]
-  # df_formatInfo2 <- df_formatInfo[14:23,]
-  df_formatInfo2 <- df_formatInfo
-  # for(i in 2:nrow(df_sectorInfo)){
-  for(i in 4:4){
-    sector_i       <- c_sectorList[i]
-    df_info_i      <- df_sectorInfo %>% filter(sector == sector_i)
-    adapt_i        <- df_info_i$adapt_abbr
-    adaptLabel_i   <- df_info_i$adapt_label
-    adapt_i   %>% print
-
-    ###### Outfile Info ######
-    outFile_i    <- df_info_i$outputsFile[1]; outFile_i %>% print
-    outPath_i    <- resultsPath %>% file.path(paste(outFile_i, "xlsx", sep="."))
-    outPath_dir_exists_i <- outPath_i %>% dirname %>% dir.exists
-    outPath_exists_i     <- outPath_i %>% file.exists
-    overwrite_i          <- ifelse(outPath_exists_i, T, F)
-
-    ###### Workbook Info ######
-    df_readme1_i <- data.frame(x=c(sector_i, as.character(Sys.Date())))
-    if(length(adaptLabel_i)==1){
-      adaptLabel_i <- paste(sector_i, "All Impacts", sep=", ")
-      df_readme2_i <- data.frame(x=c(adaptLabel_i, "N/A"))
-    } else{
-      df_readme2_i <- data.frame(x=adaptLabel_i)
-    }
-    ### Open the workbook and write  ReadMe info
-    if(excel_wb_exists){
-      excel_wb      <- excel_wb_path %>% loadWorkbook()
-
-      ### Write sector, date/time, and adaptation info to workbook
-      ### sector & date/time info
-      excel_wb %>%
-        writeData(
-          x = df_readme1_i, sheet = "ReadMe", startCol = 3, startRow = 3, colNames = F
-        )
-
-      ####### Write adaptation info
-      excel_wb %>%
-        writeData(
-          x = df_readme2_i, sheet = "ReadMe", startCol = 3, startRow = 7, colNames = F
-        )
-
-      ###### Add Styles ######
-      # https://rdrr.io/cran/openxlsx/man/addStyle.html
-      for(k in 1:nrow(df_formatInfo2)){
-        # k %>% print
-
-        df_info_k <- df_formatInfo2[k,] %>% as.data.frame
-        format_k  <- df_info_k$styleName[1]
-        sheet_k   <- df_info_k$worksheet[1] #; sheet_k %>% print
-        style_k   <- list_styles[[format_k]]
-
-
-        rows_k    <- (df_info_k$first_row[1]):(df_info_k$end_row[1])
-        cols_k    <- (df_info_k$first_col[1]):(df_info_k$end_col[1])
-
-        excel_wb %>% addStyle(
-          style = style_k,
-          sheet = sheet_k, rows = rows_k, cols = cols_k,
-          gridExpand = T, stack = T
-        )
-      }; rm("df_info_k", "style_k", "sheet_k", "rows_k", "cols_k")
-    } ### End if excel_wb_exists
-
-    ###### Save Data ######
-    if(excel_wb_exists){
-      ### Save data
-      if(outPath_dir_exists_i){
-        "Saving workbook..." %>% message
-        excel_wb %>% saveWorkbook(file=outPath_i, overwrite = overwrite_i)
-      } ### End if outPath_dir_exists
-    } ### End if excel_wb_exists
-  } ### end i
-  ### Remove iteration objects
-  # rm("sector_i", "df_info_i", "adapt_i", "adaptLabel_i", "df_readme1_i", "df_readme2_i")
-  # rm("outFile_i", "outPath_i", "outPath_dir_exists_i", "outPath_exists_i", "overwrite_i", "excel_wb")
-  ### System time
-  sysTime4 <- Sys.time()
-  sysTime4 - sysTime3
-
-  ###### Convert to Dataframe ######
-  df_results   <- df_results %>% ungroup %>% as.data.frame
-  ###### Return Object ######
-  message("\n", "Finished", ".")
-  return(df_results)
+#
+#
+#   ###### Format Results ######
+#   ### SV Path, Excel path info
+#   pathSV          <- file.path(dataPath, svData_file)
+#   # excel_wb_path   <- resultsPath   %>% file.path(paste(excelTemplateFile, "xlsx", sep="."))
+#   excel_wb_path   <- resultsPath   %>% file.path(paste("FrEDI SV Graphics Template Unformatted", "xlsx", sep="."))
+#   # excel_wb_path   <- resultsPath   %>% file.path(paste("test_formatting", "xlsx", sep="."))
+#   excel_wb_exists <- excel_wb_path %>% file.exists; excel_wb_exists %>% print
+#   excel_wb_sheets <- c("FrEDI Outputs 1", "FrEDI Outputs 2")
+#   ### Initialize list
+#   df_regImpacts <- list()
+#   sysTime3      <- Sys.time()
+#   # df_formatInfo2 <- df_formatInfo[1:12,]
+#   # df_formatInfo2 <- df_formatInfo[14:23,]
+#   df_formatInfo2 <- df_formatInfo
+#   # for(i in 2:nrow(df_sectorInfo)){
+#   for(i in 4:4){
+#     sector_i       <- c_sectorList[i]
+#     df_info_i      <- df_sectorInfo %>% filter(sector == sector_i)
+#     adapt_i        <- df_info_i$adapt_abbr
+#     adaptLabel_i   <- df_info_i$adapt_label
+#     adapt_i   %>% print
+#
+#     ###### Outfile Info ######
+#     outFile_i    <- df_info_i$outputsFile[1]; outFile_i %>% print
+#     outPath_i    <- resultsPath %>% file.path(paste(outFile_i, "xlsx", sep="."))
+#     outPath_dir_exists_i <- outPath_i %>% dirname %>% dir.exists
+#     outPath_exists_i     <- outPath_i %>% file.exists
+#     overwrite_i          <- ifelse(outPath_exists_i, T, F)
+#
+#     ###### Workbook Info ######
+#     df_readme1_i <- data.frame(x=c(sector_i, as.character(Sys.Date())))
+#     if(length(adaptLabel_i)==1){
+#       adaptLabel_i <- paste(sector_i, "All Impacts", sep=", ")
+#       df_readme2_i <- data.frame(x=c(adaptLabel_i, "N/A"))
+#     } else{
+#       df_readme2_i <- data.frame(x=adaptLabel_i)
+#     }
+#     ### Open the workbook and write  ReadMe info
+#     if(excel_wb_exists){
+#       excel_wb      <- excel_wb_path %>% loadWorkbook()
+#
+#       ### Write sector, date/time, and adaptation info to workbook
+#       ### sector & date/time info
+#       excel_wb %>%
+#         writeData(
+#           x = df_readme1_i, sheet = "ReadMe", startCol = 3, startRow = 3, colNames = F
+#         )
+#
+#       ####### Write adaptation info
+#       excel_wb %>%
+#         writeData(
+#           x = df_readme2_i, sheet = "ReadMe", startCol = 3, startRow = 7, colNames = F
+#         )
+#
+#       ###### Add Styles ######
+#       # https://rdrr.io/cran/openxlsx/man/addStyle.html
+#       for(k in 1:nrow(df_formatInfo2)){
+#         # k %>% print
+#
+#         df_info_k <- df_formatInfo2[k,] %>% as.data.frame
+#         format_k  <- df_info_k$styleName[1]
+#         sheet_k   <- df_info_k$worksheet[1] #; sheet_k %>% print
+#         style_k   <- list_styles[[format_k]]
+#
+#
+#         rows_k    <- (df_info_k$first_row[1]):(df_info_k$end_row[1])
+#         cols_k    <- (df_info_k$first_col[1]):(df_info_k$end_col[1])
+#
+#         excel_wb %>% addStyle(
+#           style = style_k,
+#           sheet = sheet_k, rows = rows_k, cols = cols_k,
+#           gridExpand = T, stack = T
+#         )
+#       }; rm("df_info_k", "style_k", "sheet_k", "rows_k", "cols_k")
+#     } ### End if excel_wb_exists
+#
+#     ###### Save Data ######
+#     if(excel_wb_exists){
+#       ### Save data
+#       if(outPath_dir_exists_i){
+#         "Saving workbook..." %>% message
+#         excel_wb %>% saveWorkbook(file=outPath_i, overwrite = overwrite_i)
+#       } ### End if outPath_dir_exists
+#     } ### End if excel_wb_exists
+#   } ### end i
+#   ### Remove iteration objects
+#   # rm("sector_i", "df_info_i", "adapt_i", "adaptLabel_i", "df_readme1_i", "df_readme2_i")
+#   # rm("outFile_i", "outPath_i", "outPath_dir_exists_i", "outPath_exists_i", "overwrite_i", "excel_wb")
+#   ### System time
+#   sysTime4 <- Sys.time()
+#   sysTime4 - sysTime3
+#
+#   ###### Convert to Dataframe ######
+#   df_results   <- df_results %>% ungroup %>% as.data.frame
+#   ###### Return Object ######
+#   message("\n", "Finished", ".")
+#   return(df_results)
 
 } ### End function
 

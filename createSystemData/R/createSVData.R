@@ -118,6 +118,7 @@ createSVData <- function(
       
       outName_i     <- "impactsList" %>%
         paste(fileExt_i, sep="_") %>%
+        paste0(ifelse(is.na(adapt_abbr_i), "", "_")) %>%
         paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i))
       
       outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
