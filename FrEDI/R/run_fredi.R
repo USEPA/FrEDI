@@ -11,8 +11,7 @@
 #' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
 # @param primaryTypes = F whether to filter to primary impacts
-#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting economic values.
-#### ADD MORE INFO ABOUT ELASTICITY
+#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
@@ -25,7 +24,7 @@
 #'
 #' Values for input scenarios must be within reasonable ranges. If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()]. Temperature and GMSL inputs must begin in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier.
 #'
-#' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps(from="global")] or by specifying [FrEDI::import_inputs(temptype="global")] when importing a temperature scenario from a CSV file.
+#' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using `FrEDI::convertTemps(from="global")` or by specifying `FrEDI::import_inputs(temptype="global")` when importing a temperature scenario from a CSV file.
 #' * Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
 #' * Population and gross domestic product (GDP) values must be greater than or equal to zero.
 #'
@@ -686,8 +685,8 @@ run_fredi <- function(
       aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)
     }
     agg_results_names <- df_results %>% names
-
-    df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    df_results <- df_results %>% as.data.frame %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    # df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
 
     rm("aggGroupByCols", "agg_results_names")
   }
