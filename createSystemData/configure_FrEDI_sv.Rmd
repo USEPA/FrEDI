@@ -72,7 +72,7 @@ frediPath        <- projectPath %>% file.path("..", "FrEDI")
 Load all R code
 
 ```{r}
-load_all(frediPath)
+# load_all(frediPath)
 ```
 
 Load configuration functions
@@ -92,9 +92,9 @@ Test system data
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-# test_svData     <- createSVData(save=T, sv = T, pop = F)
+# test_svData     <- createSVData(save=T, sv = T, pop = T)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
-test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=T)
+test_svData     <- createSVData(save=F, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=F)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -102,10 +102,40 @@ time_create     <- time2 - time1; time_create
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
-# (test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
-# test_systemData$slrImpacts %>% names
-# test_systemData$df_results0$sector_label %>% unique
+
+# test_svData$svDataList$
+# test_svData$svDataList$svData$race_amInd %>% class
+# test_svData$svDataList$svDataCoastal$race_amInd %>% class
+# test_svData$svDataList$svDataCoastal %>% filter(is.nan(race_amInd)) %>% nrow
+
+
+# load(file.path(frediPath, "R", "svDataList.rda"))
+load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+
+other_tracts <- svDataList$svData$fips %>% unique
+other_tracts %>% length
+other_tracts %>% head
+
+
+
+coastal_tracts <- svDataList$svDataCoastal$fips %>% unique
+coastal_tracts %>% length
+coastal_tracts %>% head
+
+imp_tracts <- impactsList_coastalProp_withAdapt %>% names
+imp_tracts %>% length
+imp_tracts %>% head
 ```
+
+
+```{r}
+# for(name_i in names(test_svData$svDataList$svData)){
+#   paste0(name_i, ": ", paste(test_svData$svDataList$svData[,name_i] %>% class, collapse=", ")) %>% print
+# }
+```
+
+
+
 
 
 

@@ -34,7 +34,7 @@ createSVData <- function(
   outPath_sv  <- outPath
   outPath_imp <- outPath %>% file.path("..", "data", "sv")
   ### r Object Extension
-  rDataExt     <- "rdata"
+  rDataExt     <- "rda"
   ### SV demo data
   # sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
   sv_fileName <- "svDataList" %>% paste("rda", sep=".")
@@ -125,9 +125,10 @@ createSVData <- function(
       
       ### SV Data
       if(sector_i == "Coastal Properties"){
-        svData <- svDataList$svDataCoastal  
+        paste0("Using coastal properties data") %>% print
+        svInfo <- svDataList$svDataCoastal  
       } else{
-        svData <- svDataList$svData  
+        svInfo <- svDataList$svData  
       }
       
       ### Create impacts list
@@ -135,8 +136,9 @@ createSVData <- function(
         dataFile   = infile_i, 
         dataPath   = extDataPath %>% file.path("impacts"),
         outFile    = outName_i,
-        svData     = svData, 
+        svInfo     = svInfo, 
         createList = T, 
+        sector     = sector_i,
         save       = save, 
         return     = return, 
         outPath    = outPath_imp, 

@@ -5,96 +5,96 @@
 ### This function attempts to load a user-specified input file
 ### Use this function to calculate tract level impacts
 
-calc_countyPop <- function(
-  regPop,  ### Dataframe of population projection
-  funList, ### Dataframe of population projections
-  years = seq(2000, 2099, 1)
-  
-){
-  c_regions <- regPop$region %>% unique
-  ### Iterate over regions
-  x_popProj <-
-    c_regions %>%
-    lapply(function(region_i){
-      ### Subset population projection to a specific region
-      ### Get states in the region
-      ### Get unique years
-      df_i     <- regPop %>% filter(region==region_i)
-      states_i <- funList[[region_i]] %>% names
-      years_i  <- df_i$year %>% unique %>% sort
-      
-      ### Iterate over states
-      regionPop_i <- states_i %>%
-        lapply(function(state_j){
-          ### Function for state j
-          fun_j   <- funList[[region_i]][[state_j]]$state2region
-          
-          # state_j %>% print
-          df_j <-
-            data.frame(
-              x = years_i,
-              y = fun_j(years_i)
-            ) %>%
-            rename(
-              year    = x,
-              ratioState2RegionPop = y
-            ) %>%
-            mutate(
-              state   = state_j,
-              region  = region_i
-            )
-          
-          ### Get list of counties in the state
-          geoids_j      <- funList[[region_i]][[state_j]]$county2state %>% names
-          statePop_j    <- geoids_j %>%
-            lapply(function(geoid_k){
-              
-              fun_k <- funList[[region_i]][[state_j]]$county2state[[geoid_k]]
-              if(!is.null(fun_k)){
-                y_k <- fun_k(years_i)
-              } else{
-                y_k <- NA
-              }
-              df_k  <- data.frame(
-                year = years_i,
-                ratioCounty2StatePop = y_k
-              ) %>%
-                mutate(
-                  state   = state_j,
-                  geoid10 = geoid_k
-                )
-              return(df_k)
-            }) %>%
-            (function(z){do.call(rbind, z)})
-          
-          df_j <- df_j %>%
-            left_join(
-              statePop_j, by = c("state", "year")
-            )
-          
-          return(df_j)
-        }) %>%
-        (function(y){
-          do.call(rbind, y)
-        })
-      
-      df_i <- df_i %>%
-        left_join(
-          regionPop_i, by = c("region", "year")
-        ) %>%
-        mutate(
-          state_pop  = region_pop * ratioState2RegionPop,
-          county_pop = state_pop  * ratioCounty2StatePop
-        )
-      return(df_i)
-    }) %>%
-    (function(x){
-      do.call(rbind, x)
-    }) %>%
-    as.data.frame
-  
-  return(x_popProj)
-}
+# calc_countyPop <- function(
+#   regPop,  ### Dataframe of population projection
+#   funList, ### Dataframe of population projections
+#   years = seq(2000, 2099, 1)
+#   
+# ){
+#   c_regions <- regPop$region %>% unique
+#   ### Iterate over regions
+#   x_popProj <-
+#     c_regions %>%
+#     lapply(function(region_i){
+#       ### Subset population projection to a specific region
+#       ### Get states in the region
+#       ### Get unique years
+#       df_i     <- regPop %>% filter(region==region_i)
+#       states_i <- funList[[region_i]] %>% names
+#       years_i  <- df_i$year %>% unique %>% sort
+#       
+#       ### Iterate over states
+#       regionPop_i <- states_i %>%
+#         lapply(function(state_j){
+#           ### Function for state j
+#           fun_j   <- funList[[region_i]][[state_j]]$state2region
+#           
+#           # state_j %>% print
+#           df_j <-
+#             data.frame(
+#               x = years_i,
+#               y = fun_j(years_i)
+#             ) %>%
+#             rename(
+#               year    = x,
+#               ratioState2RegionPop = y
+#             ) %>%
+#             mutate(
+#               state   = state_j,
+#               region  = region_i
+#             )
+#           
+#           ### Get list of counties in the state
+#           geoids_j      <- funList[[region_i]][[state_j]]$county2state %>% names
+#           statePop_j    <- geoids_j %>%
+#             lapply(function(geoid_k){
+#               
+#               fun_k <- funList[[region_i]][[state_j]]$county2state[[geoid_k]]
+#               if(!is.null(fun_k)){
+#                 y_k <- fun_k(years_i)
+#               } else{
+#                 y_k <- NA
+#               }
+#               df_k  <- data.frame(
+#                 year = years_i,
+#                 ratioCounty2StatePop = y_k
+#               ) %>%
+#                 mutate(
+#                   state   = state_j,
+#                   geoid10 = geoid_k
+#                 )
+#               return(df_k)
+#             }) %>%
+#             (function(z){do.call(rbind, z)})
+#           
+#           df_j <- df_j %>%
+#             left_join(
+#               statePop_j, by = c("state", "year")
+#             )
+#           
+#           return(df_j)
+#         }) %>%
+#         (function(y){
+#           do.call(rbind, y)
+#         })
+#       
+#       df_i <- df_i %>%
+#         left_join(
+#           regionPop_i, by = c("region", "year")
+#         ) %>%
+#         mutate(
+#           state_pop  = region_pop * ratioState2RegionPop,
+#           county_pop = state_pop  * ratioCounty2StatePop
+#         )
+#       return(df_i)
+#     }) %>%
+#     (function(x){
+#       do.call(rbind, x)
+#     }) %>%
+#     as.data.frame
+#   
+#   return(x_popProj)
+# }
 ###### get_svDataList ######
 get_svDataList <- function(
   dataPath       = file.path(getwd(), "inst", "extdata", "sv"), ### Path to data file...default relative to current working directory
@@ -103,7 +103,7 @@ get_svDataList <- function(
   tableName      = tableSheet, ### Defaults to `dataSheet`` value
   outPath        = file.path(getwd(), "R"), ### Where to save rdata objects
   saveFile       = "svDataList",
-  rDataExt       = "rdata", ### R data extension
+  rDataExt       = "rda", ### R data extension
   save           = F,
   return         = T,
   msg0           = ""
@@ -220,7 +220,7 @@ get_svDataList <- function(
   svDataList[["c_svGroupTypes"]] <- c_svGroupTypes
   svDataList[["c_svWeightCols"]] <- c_svWeightCols
   svDataList[["svSectorInfo"  ]] <- svSectorInfo
-  rm("c_svGroupTypes", "c_svWeightCols", "svSectorInfo")
+  # rm("c_svGroupTypes", "c_svWeightCols", "svSectorInfo")
 
 
   ###### Format GCAM Scenarios ######
@@ -279,6 +279,7 @@ get_svDataList <- function(
     ### Order columns
     order_i    <- order_i[which_i]
     info_i     <- info_i[order_i,]
+    nchar_i    <- ifelse(name_i=="svData", 10, 11)
     # info_i$colName %>% print
     names(table_i) <- info_i$colName
     
@@ -296,12 +297,16 @@ get_svDataList <- function(
       mutate(fips     = fips %>% as.character) %>%
       mutate(
         nChars     = fips %>% nchar,
-        geoid10    = fips %>% substr(1, ifelse(nChars > 10, 5, 4))
+        # geoid10    = fips %>% substr(1, ifelse(nChars > 10, 5, 4))
+        geoid10    = fips %>% substr(1, ifelse(nChars > nchar_i, 5, 4))
       ) %>%
       select(-c("nChars", "fips_num"))
     
+    
     ### Replace NA, NaN values with 0
-    cols_i  <- (info_i %>% filter(colType=="minority"))$colName #; cols_i %>% print
+    # cols_i  <- (info_i %>% filter(colType=="minority"))$colName #; cols_i %>% print
+    cols_i  <- c(c_svGroupTypes, c_svWeightCols)
+    cols_i  <- cols_i[cols_i %in% names(table_i)]
     table_i <- table_i    %>%
       mutate_at(.vars=all_of(cols_i), as.numeric) %>%
       mutate_at(.vars=all_of(cols_i), replace_na, 0) %>%
@@ -486,7 +491,7 @@ get_svPopList <- function(
   ###### Check Against SV Data ######
   msg1 %>% paste0("Checking data against SV data...") %>% message
   ### Load sv data  
-  if(is.null(svDataList)){
+  if(is.null(svData)){
     df_sv_path <- outPath %>% file.path("svDataList.rda")
     load(df_sv_path)
     svData    <- svDataList[["svData"]]; rm("svDataList")
@@ -497,21 +502,28 @@ get_svPopList <- function(
   x_regions <- svData$region %>% unique
 
   ### Join with SV data
-  iclus_rows1 <- iclusData %>% nrow
+  c_ids1 <- iclusData$county %>% unique %>% length
+  # c_ids1 <- iclusData$geoid10 %>% unique %>% length
+  # iclus_rows1 <- iclusData %>% nrow
   iclusData   <- iclusData %>%
     left_join(
       svData %>%
-        group_by_at(.vars=c("region", "state", "geoid10")) %>%
+        group_by_at(.vars=c("region", "state", "county")) %>%
+        # group_by_at(.vars=c("region", "state", "geoid10")) %>%
         summarise(n=n(), .groups="keep") %>%
         select(-c("n")),
-      by = c("state", "geoid10")
+      # by = c("state", "geoid10")
+      by = c("state", "county")
     ) %>%
     ### Filter to relevant states, regions, tracts
     filter(!is.na(region)) %>%
     filter(!is.na(state)) %>%
     filter(region %in% x_regions)
-  iclus_rows2 <- iclusData %>% nrow
-  msg1 %>% paste0("\t", "Removing observations for ", iclus_rows2 - iclus_rows1, " tracts with missing information...") %>% message
+  # iclus_rows2 <- iclusData %>% nrow
+  # msg1 %>% paste0("\t", "Removing observations for ", iclus_rows2 - iclus_rows1, " tracts with missing information...") %>% message
+  # c_ids2 <- iclusData$geoid10 %>% unique %>% length
+  c_ids2 <- iclusData$county %>% unique %>% length
+  msg1 %>% paste0("\t", "Removing observations for ", c_ids1 - c_ids2, " counties with missing information...") %>% message
   
   ###### Regional population summary ######
   ### Regional population summary (160 rows)
@@ -619,10 +631,15 @@ get_svPopList <- function(
       popProjList[[region_i]][[state_j]][["county2state"]] <- list()
       
       ### Get projections by counties and initialize list
+      
       for(k in 1:length(geoids_j)){
         geoid_k  <- geoids_j[k] %>% as.character
         df_k     <- df_i %>% filter(state==state_j) %>% filter(as.character(geoid10) == geoid_k)
         county_k <- (df_k$iclusCounty %>% unique)[1]
+      # for(k in 1:length(counties_j)){
+      #   county_k <- counties_j[k] %>% as.character
+      #   df_k     <- df_i %>% filter(state==state_j) %>% filter(county == county_k)
+      #   # geoid_k <- (df_k$iclusCounty %>% unique)[1]
         
         ### Create list and add to state
         x_k <- df_k$year
@@ -632,7 +649,8 @@ get_svPopList <- function(
         if(all_na_k){
           # df_k %>% names %>% print
           
-          paste0(state_j, ", ", geoid_k, "=NA for all values") %>% print
+          paste0(state_j, ", ", county_k, "=NA for all values") %>% print
+          # paste0(state_j, ", ", geoid_k, "=NA for all values") %>% print
           # counties_j %>% paste(collapse=", ") %>% print
           # fun_k    <- NA
         }
@@ -642,6 +660,7 @@ get_svPopList <- function(
             y = df_k$ratioCountyPop2State
           )
           popProjList[[region_i]][[state_j]][["county2state"]][[geoid_k]] <- fun_k
+          # popProjList[[region_i]][[state_j]][["county2state"]][[county_k]] <- fun_k
         }
       }
     }
@@ -701,7 +720,9 @@ get_svImpactsList <- function(
   rDataExt   = "rda", ### R data extension
   createList = F,
   # modelType = "gcm",
-  svData     = NULL,
+  # svData     = NULL,
+  sector     = NULL,
+  svInfo     = NULL,
   save       = F,
   return     = T,
   msg0       = ""
@@ -762,21 +783,29 @@ get_svImpactsList <- function(
   ###### Check data against sv data ######
   msg1 %>% paste0("Checking data against SV data...") %>% message
   ### Load sv data "svData"
-  if(is.null(svData)){
+  if(is.null(svInfo)){
     ### Load sv data "svData"
     df_sv_path <- outPath %>% file.path("svDataList.rda")
     load(df_sv_path)
-    svData <- svDataList$svData; rm("svDataList")
+    if(sector == "Coastal Properties"){
+      svInfo <- svDataList$svDataCoastal  
+    } else{
+      svInfo <- svDataList$svData  
+    }
+    
   }
   ### Join with SV data
   df_data <- df_data %>%
     left_join(
-      svData %>% select(c("region", "state", "county", "fips")),
+      svInfo %>% select(c("region", "state", "county", "fips")),
       by = "fips"
-    )
+    ); rm("svInfo")
   ###### Remove missing values ######
-  tracts_na  <- (df_data %>% filter(is.na(county)))$fips %>% unique %>% length
-  tracts_nan <- (df_data %>% filter(is.nan(sv_impact) | is.infinite(sv_impact)))$fips %>% unique %>% length
+  tracts_data <- df_data$fips %>% unique %>% length
+  msg1 %>% paste0("\t", "Data has ", tracts_data, " tracts...") %>% message
+  
+  tracts_na   <- (df_data %>% filter(is.na(county)))$fips %>% unique %>% length
+  tracts_nan  <- (df_data %>% filter(is.nan(sv_impact) | is.infinite(sv_impact)))$fips %>% unique %>% length
   # tracts_inf <- (df_data %>% filter(is.infinite(sv_impact)))$fips %>% unique %>% length
   ### Counties
   if(tracts_na>0){
@@ -843,7 +872,7 @@ get_svImpactsList <- function(
   deltaTime <- (sysTime2 - sysTime1)
 
   msg1 %>% paste0("\t", "Created impact list in ", deltaTime) %>% message
-
+  ###### Save the impacts list ######
   if(save){
     msg1 %>% paste0("Saving impacts list...") %>% message
     ### Check that the directory exists
@@ -852,10 +881,10 @@ get_svImpactsList <- function(
       outFileName <- outFile %>% paste(rDataExt, sep=".")
       outFilePath <- outPath %>% file.path(outFileName)
       
-      # assign(outname, impactsList)
-      # assign(parse(text=outname), impactsList)
-      save(impactsList, file=outFilePath)
-      # save(eval(parse(text=outname)), file=outFilePath)
+      ### Assign list, save to file, and remove list
+      assign(outname, impactsList); rm("impactsList")
+      save(list=ls(pattern="impactsList_"), file=outFilePath)
+      # eval(substitute(rm(x), list(x=outname)))
       msg1 %>% paste0("\t", "Impacts list saved.") %>% message
     } else{
       fail_msg <- ifelse(
@@ -865,13 +894,18 @@ get_svImpactsList <- function(
       )
       fail_msg %>% message
       msg1 %>% paste0("\t", "Returning impacts list and exiting without saving...") %>% message
-      return(impactsList)
+      # return(eval(parse(text=outname)))
     }
   }
   if(return){
     msg1 %>% paste0("\t", "Returning impacts list and exiting...") %>% message
     msg1 %>% paste0("Finished.", "\n") %>% message
-    return(impactsList)
+    
+    if(exists("impactsList")){
+      return(impactsList)
+    } else{
+      return(eval(parse(text=outname)))  
+    }
   } else{
     msg1 %>% paste0("Finished.", "\n") %>% message
   }
