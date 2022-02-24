@@ -11,17 +11,17 @@ package_location %>% list.files
 list.files(package_location)
 list.dirs(package_location, recursive = F)
 
-# ###### Test Functions ######
-# ### Uncomment to generate and test example data
-# load_all(package_location)
-# # testx <- run_fredi(aggLevels = "none")
-# # testx <- run_fredi(aggLevels = "none", sectorList = "Agriculture") %>% filter(year %in% seq(2000, 2090, by=5))
-# # ### Uncomment to update and save default results
-# # ###### Update and Save Default Scenario ######
-# # rm("testx")
-# defaultResults <- run_fredi()
-# savePath <- package_location %>% file.path("data", "defaultResults.RData")
-# save(defaultResults, file=savePath)
+###### Test Functions ######
+### Uncomment to generate and test example data
+load_all(package_location)
+# testx <- run_fredi(aggLevels = "none")
+# testx <- run_fredi(aggLevels = "none", sectorList = "Agriculture") %>% filter(year %in% seq(2000, 2090, by=5))
+# ### Uncomment to update and save default results
+# ###### Update and Save Default Scenario ######
+# rm("testx")
+defaultResults <- run_fredi()
+savePath       <- package_location %>% file.path("data", "defaultResults.RData")
+save(defaultResults, file=savePath)
 
 # ### Uncomment to update documentation
 ###### Update Documentation ######
