@@ -111,8 +111,8 @@ createSVData <- function(
       fileExt_i     <- svSectorInfo$impactList_fileExt[i]
       
       infile_i      <- infileName_i %>% 
-        paste0(ifelse(is.na(adapt_i), "", " - ")) %>% 
-        paste0(ifelse(is.na(adapt_i), "", adapt_i)) %>% 
+        paste0(ifelse(is.na(adapt_abbr_i), "", " - ")) %>% 
+        paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i)) %>% 
         paste("csv", sep=".")
       # (infile_i %in% (excelDataPath %>% list.files)) %>% print
       

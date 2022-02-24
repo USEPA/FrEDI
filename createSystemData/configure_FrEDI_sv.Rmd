@@ -68,13 +68,6 @@ frediPath        <- projectPath %>% file.path("..", "FrEDI")
 ## Create SV Configuration Data
 
 
-
-Load all R code
-
-```{r}
-# load_all(frediPath)
-```
-
 Load configuration functions
 
 ```{r load config}
@@ -98,7 +91,7 @@ test_sector <- c("Air Quality")
 time1           <- Sys.time()
 # test_svData     <- createSVData(save=T, sv = T, pop = T)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
-test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=F)
+test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = test_sector, format=F)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -115,40 +108,42 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 
 load(file.path(frediPath, "R", "svDataList.rda"))
 load(file.path(frediPath, "R", "svPopData.rda"))
-load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+# load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+load(file.path(frediPath, "data", "sv", "impactsList_airQuality.rda"))
 
 
-other_tracts <- svDataList$svData$fips %>% unique
-other_tracts %>% length
-other_tracts %>% head
-
-
-
-coastal_tracts <- svDataList$svDataCoastal$fips %>% unique
-coastal_tracts %>% length
-coastal_tracts %>% head
-
-imp_tracts <- impactsList_coastalProp_withAdapt %>% names
-imp_tracts %>% length
-imp_tracts %>% head
+# other_tracts <- svDataList$svData$fips %>% unique
+# other_tracts %>% length
+# other_tracts %>% head
+# 
+# 
+# 
+# coastal_tracts <- svDataList$svDataCoastal$fips %>% unique
+# coastal_tracts %>% length
+# coastal_tracts %>% head
+# 
+# imp_tracts <- impactsList_coastalProp_withAdapt %>% names
+# imp_tracts %>% length
+# imp_tracts %>% head
 ```
 
 
-Look at `svDataCoastal` (17,824 rows, 22 columns):
+Look at `svTestData` (17,824 rows, 22 columns):
 
 * 17824 unique ids
 * 318 unique geoids or 300 unique geoids
 
 
-```{r svDataCoastal}
+```{r svTestData}
 ### Standardize names
-# svDataCoastal <- svDataList$svDataCoastal %>%
+# svTestData <- svDataList$svDataCoastal %>%
 #   mutate(nChar  = fips %>% nchar) %>%
 #   mutate(fips2  = paste0(ifelse(nChar > 11, "", 0), fips)) %>%
 #   mutate(nChar2 = fips2 %>% nchar) %>%
 #   mutate(geoid102 = fips2 %>% substr(1, 5))
-svDataCoastal <- svDataList$svDataCoastal
-svDataCoastal %>% glimpse
+# svTestData <- svDataList$svDataCoastal
+svTestData <- svDataList$svData
+svTestData %>% glimpse
 ```
 
 Information about the ids and regions for `svDataCoastal`:
@@ -157,11 +152,11 @@ Information about the ids and regions for `svDataCoastal`:
 * 300 unique geoids
 
 ```{r}
-svDataCoastal$region %>% unique
-test_sv_fips  <- svDataCoastal$fips     %>% unique; test_sv_fips  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
-test_sv_geos  <- svDataCoastal$geoid10  %>% unique; test_sv_geos  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
-# svDataCoastal$nChar %>% range %>% c(svDataCoastal$nChar2 %>% range)
-# test_sv_geos2 <- svDataCoastal$geoid102 %>% unique; test_sv_geos2 %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+svTestData$region %>% unique
+test_sv_fips  <- svTestData$fips     %>% unique; test_sv_fips  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+test_sv_geos  <- svTestData$geoid10  %>% unique; test_sv_geos  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+# svTestData$nChar %>% range %>% c(svTestData$nChar2 %>% range)
+# test_sv_geos2 <- svTestData$geoid102 %>% unique; test_sv_geos2 %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
 ```
 
 
@@ -200,11 +195,8 @@ test_pop_geos[test_pop_geos %in% test_sv_geos] %>% length ### All 300 ids presen
 Join with `svDataCoastal` (318460 rows):
 
 ```{r popCoastal}
-popCoastal <- svDataList$svDataCoastal %>% 
-  # select(-c("county_pop")) %>%
-  left_join(test_pop, by = c("region", "state", "geoid10"))
+popCoastal <- svTestData %>% left_join(test_pop, by = c("region", "state", "geoid10"))
 popCoastal %>% glimpse
-
 ```
 
 
@@ -233,13 +225,14 @@ Check for the impact projections (174 720 rows)
 ```{r impCoastal}
 # load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
 impCoastal <- calc_tractScaledImpacts(
-        funList      = impactsList_coastalProp_withAdapt,
-        driverValues = svDataList$gcamScenarios %>% 
-          filter(scenario == "ECS_3.0_ref_0") %>% 
-          select(c("year", "temp_C_conus")) %>%
-          rename(driverValue = temp_C_conus) %>%
-          mutate(driverUnit = "degrees Celsius")
-      )
+        # funList      = impactsList_coastalProp_withAdapt,
+  funList      = impactsList_airQuality,
+  driverValues = svDataList$gcamScenarios %>% 
+    filter(scenario == "ECS_3.0_ref_0") %>% 
+    select(c("year", "temp_C_conus")) %>%
+    rename(driverValue = temp_C_conus) %>%
+    mutate(driverUnit = "degrees Celsius")
+)
 impCoastal %>% glimpse
 ```
 
