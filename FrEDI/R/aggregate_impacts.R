@@ -8,7 +8,7 @@
 #' @param data      Dataframe of results FrEDI (outputs from [FrEDI::run_fredi()])
 #' @param columns   Character vector of columns for which to aggregate results (defaults to `columns=c("annual_impacts"`)).
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelAverage"`, `"impactYear"`, `"impactType"`, `"all")`. Defaults to all levels (i.e., `aggLevels="all"`).
-#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, "`adaptation"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`.
+#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, `"adaptation"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable.
 #'
 #' @details
 #' This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelAverage"`), summing over all impact types (`aggLevels="impactType"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default).
@@ -16,7 +16,7 @@
 #'
 #' Before aggregating impacts for national totals and/or model averages, [FrEDI::aggregate_impacts()] will drop any pre-summarized results  (i.e., values for which `region="National Total"` and/or for which `model="average"`, respectively) that are already present in the data `and then reaggregate at those levels.
 #'
-#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization:
+#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization (note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable):
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
 #' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
