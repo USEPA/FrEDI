@@ -80,7 +80,7 @@ Load configuration functions
 ```{r load config}
 ### Load all functions
 codeNames; for(name_i in codeNames){ 
-  # name_i %>% print
+  name_i %>% print
   source(paste(codePath, name_i, sep="/")) 
 }
 
@@ -94,7 +94,8 @@ for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 time1           <- Sys.time()
 # test_svData     <- createSVData(save=T, sv = T, pop = T)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
-test_svData     <- createSVData(save=F, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=F)
+test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=F)
+# test_svData     <- createSVData(save=T, sv = T, pop=T, impacts = T, impactSectors = c("Coastal Properties"), format=F)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -109,8 +110,10 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 # test_svData$svDataList$svDataCoastal %>% filter(is.nan(race_amInd)) %>% nrow
 
 
-# load(file.path(frediPath, "R", "svDataList.rda"))
+load(file.path(frediPath, "R", "svDataList.rda"))
+load(file.path(frediPath, "R", "svPopData.rda"))
 load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+
 
 other_tracts <- svDataList$svData$fips %>% unique
 other_tracts %>% length
@@ -128,30 +131,159 @@ imp_tracts %>% head
 ```
 
 
+Look at `svDataCoastal` (17,824 rows, 22 columns):
+
+* 17824 unique ids
+* 318 unique geoids or 300 unique geoids
+
+
+```{r svDataCoastal}
+### Standardize names
+# svDataCoastal <- svDataList$svDataCoastal %>%
+#   mutate(nChar  = fips %>% nchar) %>%
+#   mutate(fips2  = paste0(ifelse(nChar > 11, "", 0), fips)) %>%
+#   mutate(nChar2 = fips2 %>% nchar) %>%
+#   mutate(geoid102 = fips2 %>% substr(1, 5))
+svDataCoastal <- svDataList$svDataCoastal
+svDataCoastal %>% glimpse
+```
+
+Information about the ids and regions for `svDataCoastal`:
+
+* 17824 unique FIPS
+* 300 unique geoids
+
 ```{r}
-# for(name_i in names(test_svData$svDataList$svData)){
-#   paste0(name_i, ": ", paste(test_svData$svDataList$svData[,name_i] %>% class, collapse=", ")) %>% print
-# }
+svDataCoastal$region %>% unique
+test_sv_fips  <- svDataCoastal$fips     %>% unique; test_sv_fips  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+test_sv_geos  <- svDataCoastal$geoid10  %>% unique; test_sv_geos  %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+# svDataCoastal$nChar %>% range %>% c(svDataCoastal$nChar2 %>% range)
+# test_sv_geos2 <- svDataCoastal$geoid102 %>% unique; test_sv_geos2 %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+```
+
+
+### Test Population
+
+Create county projections (59014 rows, 9 columns):
+
+
+```{r test pop}
+### Load function and `svPopList`
+# frediPath %>% file.path("R", "utils_sv.R") %>% source
+# # load_all(frediPath)
+# load(file.path(frediPath, "R", "svPopData.rda"))
+test_pop <- 
+    calc_countyPop(
+      regPop  = svPopList$iclus_region_pop,
+      funList = svPopList$popProjList,
+      years   = seq(2010, 2090, by=5)
+    ); 
+test_pop %>% glimpse
+```
+
+Examine test population info:
+
+* 3106 unique geoids
+* 270 / 3106 geoids in `svDataCoastal`
+
+```{r}
+test_pop$region %>% unique
+test_pop_geos <- test_pop$geoid10 %>% unique; test_pop_geos %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+test_pop_geos[test_pop_geos %in% test_sv_geos] %>% length ### All 300 ids present
 ```
 
 
 
+Join with `svDataCoastal` (318460 rows):
 
+```{r popCoastal}
+popCoastal <- svDataList$svDataCoastal %>% 
+  # select(-c("county_pop")) %>%
+  left_join(test_pop, by = c("region", "state", "geoid10"))
+popCoastal %>% glimpse
 
-
-If above works, overwrite previous config
-
-```{r save and overwrite data}
-### Uncomment following two lines to create and save data and check the outputs
-time1           <- Sys.time()
-test_svData     <- createSVData(save=T, sv = T, pop = T)
-time2           <- Sys.time()
-time_create     <- time2 - time1; time_create
 ```
 
 
+Check whether there are any missing values: 39 missing population values. 
+
+* 1122 missing values, 39 tracts with missing information
+* All missing values are in Virginia
+* Missing values have the the same as those already missing in the population projections. Checks out!
+
+```{r df_check_na_pop}
+df_check_na_pop <- popCoastal %>% filter(is.na(county_pop))
+df_check_na_pop %>% nrow
+(df_check_na_pop %>% nrow) == (popCoastal %>% filter(is.na(county_pop)) %>% nrow)
+
+df_check_na_pop$state %>% unique
+
+df_check_na_pop_ids <- df_check_na_pop$geoid10 %>% unique
+df_check_na_pop_ids %>% length
+(df_check_na_pop_ids %in% ((popCoastal %>% filter(is.na(county_pop)))$geoid10 %>% unique)) %>% all
+# df_check_na_pop_ids
+```
 
 
+Check for the impact projections (174 720 rows)
+
+```{r impCoastal}
+# load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+impCoastal <- calc_tractScaledImpacts(
+        funList      = impactsList_coastalProp_withAdapt,
+        driverValues = svDataList$gcamScenarios %>% 
+          filter(scenario == "ECS_3.0_ref_0") %>% 
+          select(c("year", "temp_C_conus")) %>%
+          rename(driverValue = temp_C_conus) %>%
+          mutate(driverUnit = "degrees Celsius")
+      )
+impCoastal %>% glimpse
+```
+
+Examine missing info: No missing values
+
+* Impacts data has 1920 unique FIPS
+* Compare with SV block group data with 17824 unique values
+
+```{r df_check_na_imp}
+df_check_na_imp <- impCoastal %>% filter(is.na(sv_impact)); df_check_na_imp %>% nrow
+ids_imp_na      <- df_check_na_imp$fips %>% unique; ids_imp_na %>% length
+
+test_imp_fips   <- impCoastal$fips %>% unique; test_imp_fips %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+test_sv_fips %>% (function(x){paste0(length(x), ": ", paste(head(x), collapse=", "))})
+```
+
+Join with population info: 318 460 rows...same as `popCoastal`
+
+```{r}
+popImp <- popCoastal %>% left_join(impCoastal, by = c("year", "fips"))
+popImp %>% glimpse
+```
+
+
+Check for missing values:
+
+* 281980 rows with missing data
+* 15904 unique FIPS with missing data
+
+```{r df_combined_na}
+df_combined_na <- popImp %>% filter(is.na(sv_impact))
+df_combined_na %>% nrow
+ids_combined_na <- df_combined_na$fips %>% unique
+ids_combined_na %>% length
+```
+
+Check for non-missing values:
+
+* 36480 rows
+* 1920 unique FIPS with non-missing data...matches those with population information
+
+```{r df_combined_notna}
+df_combined_notna <- popImp %>% filter(!is.na(sv_impact))
+df_combined_notna %>% nrow
+ids_combined_notna <- df_combined_notna$fips %>% unique
+ids_combined_notna %>% length
+```
 
 ## Update R Tool
 
@@ -163,35 +295,16 @@ After copying and pasting the system data to the Rtool, try detaching the packag
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
-ciraPath %>% paste("R", sep="/") %>% load_all
-# df_defaults <- run_fredi()
-# df_defaults <- run_fredi(aggLevels = "all")
-df_defaults <- run_fredi(aggLevels = "none")
-df_defaults %>% glimpse
-# df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
-# df_defaults$sector %>% unique
-# df_defaults %>% dim
-```
-
-
-```{r}
-ciraPath %>% paste("R", sep="/") %>% load_all
-df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
-# df_defaults$sector %>% unique
-# df_defaults %>% dim
+# frediPath %>% list.files()
+frediPath %>% load_all
+test_sv <- run_fredi_sv(sector="Coastal Properties", projectPath=frediPath)
+test_sv %>% glimpse
 ```
 
 
 
-Create plots
 
 
 
-```{r plot types, fig.height=10, fig.width=16}
-### Create only heatmaps
-# ciraPath %>% paste("R", sep="/") %>% load_all()
-# defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
-defPlots <- df_defaults2 %>% get_plots(plotTypes="heatmaps")
-defPlots$heatmaps$SLR
-```
+
 

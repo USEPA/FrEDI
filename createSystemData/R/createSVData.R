@@ -124,12 +124,18 @@ createSVData <- function(
       outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
       
       ### SV Data
-      if(sector_i == "Coastal Properties"){
-        paste0("Using coastal properties data") %>% print
-        svInfo <- svDataList$svDataCoastal  
+      if(!is.null(svDataList)){
+        if(sector_i == "Coastal Properties"){
+          paste0("Using coastal properties data") %>% print
+          svInfo <- svDataList$svDataCoastal  
+        } else{
+          svInfo <- svDataList$svData  
+        }
+        # svInfo$fips %>% unique %>% head %>% print
       } else{
-        svInfo <- svDataList$svData  
+        svInfo <- NULL
       }
+      
       
       ### Create impacts list
       impactsList <- get_svImpactsList(

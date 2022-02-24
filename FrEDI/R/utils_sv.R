@@ -7,103 +7,103 @@
 ### This function attempts to load a user-specified input file
 ### Use this function to calculate tract level impacts
 
-# calc_countyPop <- function(
-#   regPop,  ### Dataframe of population projection
-#   funList, ### Dataframe of population projections
-#   # years = seq(2000, 2099, 1)
-#   years = seq(2010, 2090, by=5)
-#
-# ){
-#   c_regions <- regPop$region %>% unique
-#   ### Iterate over regions
-#   x_popProj <-
-#     c_regions %>%
-#     lapply(function(region_i){
-#       ### Subset population projection to a specific region
-#       ### Get states in the region
-#       ### Get unique years
-#       df_i     <- regPop %>% filter(region==region_i)
-#       states_i <- funList[[region_i]] %>% names
-#       years_i  <- df_i$year %>% unique %>% sort
-#
-#       ### Iterate over states
-#       regionPop_i <- states_i %>%
-#         lapply(function(state_j){
-#           ### Function for state j
-#           fun_j   <- funList[[region_i]][[state_j]]$state2region
-#
-#           # state_j %>% print
-#           df_j <-
-#             data.frame(
-#               x = years_i,
-#               y = fun_j(years_i)
-#             ) %>%
-#             rename(
-#               year    = x,
-#               ratioState2RegionPop = y
-#             ) %>%
-#             mutate(
-#               state   = state_j,
-#               region  = region_i
-#             )
-#
-#           ### Get list of counties in the state
-#           # counties_j    <- funList[[region_i]][[state_j]]$county2state %>% names
-#           # statePop_j    <- counties_j %>%
-#           #   lapply(function(county_k){
-#           #     fun_k <- funList[[region_i]][[state_j]]$county2state[[county_k]]
-#
-#           geoids_j      <- funList[[region_i]][[state_j]]$county2state %>% names
-#           statePop_j    <- geoids_j %>%
-#             lapply(function(geoid_k){
-#               fun_k <- funList[[region_i]][[state_j]]$county2state[[geoid_k]]
-#
-#               if(!is.null(fun_k)){
-#                 y_k <- fun_k(years_i)
-#               } else{
-#                 y_k <- NA
-#               }
-#               df_k  <- data.frame(
-#                   year = years_i,
-#                   ratioCounty2StatePop = y_k
-#                 ) %>%
-#                 mutate(
-#                   state   = state_j,
-#                   # county  = county_k
-#                   geoid10 = geoid_k
-#                 )
-#               return(df_k)
-#             }) %>%
-#             (function(z){do.call(rbind, z)})
-#
-#           df_j <- df_j %>%
-#             left_join(
-#               statePop_j, by = c("state", "year")
-#             )
-#
-#           return(df_j)
-#         }) %>%
-#         (function(y){
-#           do.call(rbind, y)
-#         })
-#
-#       df_i <- df_i %>%
-#         left_join(
-#           regionPop_i, by = c("region", "year")
-#         ) %>%
-#         mutate(
-#           state_pop  = region_pop * ratioState2RegionPop,
-#           county_pop = state_pop  * ratioCounty2StatePop
-#         )
-#       return(df_i)
-#     }) %>%
-#     (function(x){
-#       do.call(rbind, x)
-#     }) %>%
-#     as.data.frame
-#
-#   return(x_popProj)
-# }
+calc_countyPop <- function(
+  regPop,  ### Dataframe of population projection
+  funList, ### Dataframe of population projections
+  # years = seq(2000, 2099, 1)
+  years = seq(2010, 2090, by=5)
+
+){
+  c_regions <- regPop$region %>% unique
+  ### Iterate over regions
+  x_popProj <-
+    c_regions %>%
+    lapply(function(region_i){
+      ### Subset population projection to a specific region
+      ### Get states in the region
+      ### Get unique years
+      df_i     <- regPop %>% filter(region==region_i)
+      states_i <- funList[[region_i]] %>% names
+      years_i  <- df_i$year %>% unique %>% sort
+
+      ### Iterate over states
+      regionPop_i <- states_i %>%
+        lapply(function(state_j){
+          ### Function for state j
+          fun_j   <- funList[[region_i]][[state_j]]$state2region
+
+          # state_j %>% print
+          df_j <-
+            data.frame(
+              x = years_i,
+              y = fun_j(years_i)
+            ) %>%
+            rename(
+              year    = x,
+              ratioState2RegionPop = y
+            ) %>%
+            mutate(
+              state   = state_j,
+              region  = region_i
+            )
+
+          ### Get list of counties in the state
+          # counties_j    <- funList[[region_i]][[state_j]]$county2state %>% names
+          # statePop_j    <- counties_j %>%
+          #   lapply(function(county_k){
+          #     fun_k <- funList[[region_i]][[state_j]]$county2state[[county_k]]
+
+          geoids_j      <- funList[[region_i]][[state_j]]$county2state %>% names
+          statePop_j    <- geoids_j %>%
+            lapply(function(geoid_k){
+              fun_k <- funList[[region_i]][[state_j]]$county2state[[geoid_k]]
+
+              if(!is.null(fun_k)){
+                y_k <- fun_k(years_i)
+              } else{
+                y_k <- NA
+              }
+              df_k  <- data.frame(
+                  year = years_i,
+                  ratioCounty2StatePop = y_k
+                ) %>%
+                mutate(
+                  state   = state_j,
+                  # county  = county_k
+                  geoid10 = geoid_k
+                )
+              return(df_k)
+            }) %>%
+            (function(z){do.call(rbind, z)})
+
+          df_j <- df_j %>%
+            left_join(
+              statePop_j, by = c("state", "year")
+            )
+
+          return(df_j)
+        }) %>%
+        (function(y){
+          do.call(rbind, y)
+        })
+
+      df_i <- df_i %>%
+        left_join(
+          regionPop_i, by = c("region", "year")
+        ) %>%
+        mutate(
+          state_pop  = region_pop * ratioState2RegionPop,
+          county_pop = state_pop  * ratioCounty2StatePop
+        )
+      return(df_i)
+    }) %>%
+    (function(x){
+      do.call(rbind, x)
+    }) %>%
+    as.data.frame
+
+  return(x_popProj)
+}
 
 ###### calc_tractScaledImpacts ######
 ### Use this function to calculate tract level impacts
@@ -208,7 +208,7 @@ calc_tractImpacts <- function(
   ###### Column Names  ######
   ### Other info
   # c_svDropCols        <- c("svCounty", "nca_abbr", "county_pop")
-  c_svDataDropCols    <- c("svCounty", "nca_abbr", "county_pop", "tract_pop")
+  c_svDataDropCols    <- c("svCounty")
   c_svOtherDropCols   <- c(
     "state", "county", "geoid10",
     "ratioTract2CountyPop", "ratioState2RegionPop", "ratioCounty2StatePop",
@@ -245,14 +245,17 @@ calc_tractImpacts <- function(
   x_impacts   <- svInfo %>%
     mutate(none = 1) %>%
     select(-c(all_of(c_svDataDropCols))) %>%
-    filter(geoid10 %in% pop_ids) %>%
+    # filter(geoid10 %in% pop_ids) %>%
+    # left_join(
+    #   popData %>% filter(geoid10 %in% sv_ids), by = all_of(c_svJoinPopCols)
+    # ) %>%
     left_join(
-      popData %>% filter(geoid10 %in% sv_ids), by = all_of(c_svJoinPopCols)
+      popData, by = all_of(c_svJoinPopCols)
     ) %>%
-    ### Filter out those with missing population info
-    filter(!is.na(county_pop)) %>%
+    # ### Filter out those with missing population info
+    # filter(!is.na(county_pop)) %>%
     as.data.frame; rm("svInfo", "popData"); Sys.sleep(sleep)
-  x_impacts %>% nrow %>% print
+  # x_impacts %>% nrow %>% print
 
   ### - Join with the impacts by fips number
   ### - Filter out that with missing data (!is.na(driverUnit))
