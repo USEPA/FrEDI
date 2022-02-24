@@ -86,7 +86,7 @@ sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
 projectParentDir <- projectPath %>% paste("..", sep="/")
 projectParentDir %>% list.files
 # frediPath         <- find.package("FrEDI", lib.loc=projectParentDir)
-frediPath         <- projectPath %>% file.path("FrEDI")
+frediPath         <- projectPath %>% file.path("..", "FrEDI")
 ```
 
 ### Configuration Files
@@ -117,21 +117,7 @@ Confirm copy was saved:
 basename(configArchName) %in% (configLogPath %>% list.files("rda"))
 ```
 
-<!-- If a copy was saved, overwrite the config file: -->
-
-<!-- ```{r tempBinConfig} -->
-<!-- # tempBinConfig(outPath = configUseName) -->
-<!-- ``` -->
-
 ## Create Tool Configuration Data
-
-
-Load configuration data
-
-```{r load configuration file}
-# load(configUseName)
-```
-
 
 
 Load all R functions and configuration files
@@ -150,6 +136,7 @@ test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
+
 
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
@@ -182,7 +169,7 @@ time_create     <- time2 - time1; time_create
 
 After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
 
-```{r}
+```{r file.copy}
 file.copy(
   from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
   to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
@@ -190,26 +177,37 @@ file.copy(
 )
 ```
 
+Change the following code if there are new sectors
+
+```{r new_sectors}
+new_sectors <- "CIL Crime"
+# new_sectors <- NULL
+```
+
+
+
 
 
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
-new_sectors    <- "CIL Crime"
-frediPath %>% paste("R", sep="/") %>% load_all
+frediPath %>% load_all
 df_defaults <- run_fredi(sectorList = new_sectors, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
 df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
-write.csv(df_defaults, file = file.path(frediPath, "..", "analysis", "qc", today, paste0(today, "_qc_outputs.csv")), row.names=F)
 ```
 
 
-```{r}
-frediPath %>% paste("R", sep="/") %>% load_all
-df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
-# df_defaults$sector %>% unique
-# df_defaults %>% dim
-```
+Use the following code to save the results:
 
+* Name the output path and create it if it doesn't exist.
+* Then save the outputs file.
+
+
+```{r saveOutputsPath}
+saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
+if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
+write.csv(df_defaults, file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+```
 
 
 Create plots
