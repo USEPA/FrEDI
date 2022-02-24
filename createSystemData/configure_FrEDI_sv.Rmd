@@ -88,14 +88,17 @@ codeNames; for(name_i in codeNames){
 
 Test system data
 
+
+
 ```{r test_systemData0}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
+test_sector <- c("Air Quality")
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
 # test_svData     <- createSVData(save=T, sv = T, pop = T)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
 test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = c("Coastal Properties"), format=F)
-# test_svData     <- createSVData(save=T, sv = T, pop=T, impacts = T, impactSectors = c("Coastal Properties"), format=F)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
