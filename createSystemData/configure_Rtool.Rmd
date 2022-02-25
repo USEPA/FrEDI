@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220224"
+mostRecentDate <- "20220225"
 ```
 
 
@@ -177,6 +177,8 @@ file.copy(
 )
 ```
 
+### Test function
+
 Change the following code if there are new sectors
 
 ```{r new_sectors}
@@ -218,7 +220,65 @@ Create plots
 ### Create only heatmaps
 # frediPath %>% paste("R", sep="/") %>% load_all()
 # defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
-defPlots <- df_defaults2 %>% get_plots(plotTypes="heatmaps")
+defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
 defPlots$heatmaps$SLR
 ```
+
+
+### Update Default Outputs
+
+Use the following section to update R defaults
+
+```{r defaultResults}
+# ###### Update and Save Default Scenario ######
+defaultResults <- run_fredi()
+save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.RData"))
+```
+
+### Update Documentation
+
+Use the following code to update documentation
+
+```{r updateDocs}
+###### Update Documentation ######
+###### - Build Manual
+###### - Add and build vignettes
+###### - Generate Documentation
+roxygen2::roxygenise(frediPath)
+devtools::document(pkg = frediPath)
+devtools::build_manual(pkg = frediPath)
+devtools::build_vignettes(pkg = frediPath)
+```
+
+
+
+### Build the Package
+
+Use the following code to build the package
+
+```{r bldPackage}
+###### Build Package ######
+###### - Build Package but don't include vignettes
+devtools::build(pkg=frediPath)
+```
+
+
+### Copy Package Build to Library
+
+```{r package paths}
+### Copy the file
+packageName      <- "FrEDI"
+packageVersion   <- "2.2.0"
+packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
+packageFile_path <- frediPath %>% file.path("..", packageFile_name)
+packageDest      <- .libPaths()[1]
+packageDest_path <- packageDest %>% file.path(packageFile_name)
+```
+
+Copy file
+
+```{r copy package}
+file.copy(from = packageFile_path, to = packageDest, overwrite = T)
+```
+
 
