@@ -231,7 +231,7 @@ Use the following section to update R defaults
 
 ```{r defaultResults}
 # ###### Update and Save Default Scenario ######
-defaultResults <- run_fredi()
+defaultResults <- FrEDI::run_fredi()
 save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.RData"))
 ```
 
