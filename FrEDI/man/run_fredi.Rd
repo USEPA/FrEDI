@@ -21,7 +21,7 @@ run_fredi(
 
 \item{sectorList}{A character vector indicating a selection of sectors for which to calculate results (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). If \code{NULL}, all sectors are included.}
 
-\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \code{c("national", "modelaverage", "impactyear", "impacttype", "all")}. Defaults to all levels (i.e., \code{aggLevels="all"}). Uses the same aggregation levels as \code{\link[=aggregate_impacts]{aggregate_impacts()}}.}
+\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \verb{c("national"}, \code{"modelaverage"}, \code{"impactyear"}, \code{"impacttype"}, \verb{"all")}. Defaults to all levels (i.e., \code{aggLevels="all"}). Uses the same aggregation levels as \code{\link[=aggregate_impacts]{aggregate_impacts()}}.}
 
 \item{pv}{A \code{TRUE/FALSE} value indicating Whether to calculate present values for the annual impacts. Defaults to \code{pv=TRUE}. Present values (i.e., discounted impacts) are calculated as \code{discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)}. Set an annual discounting rate and a base year using \code{baseYear} and \code{rate}.}
 
@@ -31,13 +31,13 @@ run_fredi(
 
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 
-\item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality).}
+\item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If \code{elasticity=NULL} (default), \code{\link[=run_fredi]{run_fredi()}} uses default elasticities.}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation, model (GCM or SLR scenario), and region.
 }
 \description{
-This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation, impact type, model (GCM or SLR scenario), and region.
+This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation (or variation), impact type, model (GCM or SLR scenario), and region.
 }
 \details{
 This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. \code{\link[=run_fredi]{run_fredi()}} is the main function in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information).
@@ -65,7 +65,7 @@ Annual impacts for each sector, adaptation, impact type, and impact year combina
 
 \code{\link[=run_fredi]{run_fredi()}} aggregates or summarizes results to levels of aggregation specified by the user (passed to \code{aggLevels}) using the post-processing helper function \code{\link[=aggregate_impacts]{aggregate_impacts()}}. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels="national"}), averaging across model types and models (\code{aggLevels="modelaverage"}), summing over all impact types (\code{aggLevels="impacttype"}), and interpolate between impact year estimates (\code{aggLevels="impactYear"}). Users can specify all aggregation levels at once by specifying \code{aggLevels="all"} (default) or no aggregation levels (\code{aggLevels="none"}).
 
-For each of the \code{aggLevels}, \code{\link[=run_fredi]{run_fredi()}} performs the following summarization (using \code{\link[=aggregate_impacts]{aggregate_impacts()}}):
+For each of the \code{aggLevels}, \code{\link[=run_fredi]{run_fredi()}} performs the following summarization using \code{\link[=aggregate_impacts]{aggregate_impacts()}} (note that the \code{"adaptation"} column referred to below contains information about the adaptation or variation name or \verb{“N/A”}, as applicable):
 
 \tabular{ll}{
 \strong{Aggregation Level} \tab \strong{Description} \cr

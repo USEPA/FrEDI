@@ -8,7 +8,7 @@
 #' @param data      Dataframe of results FrEDI (outputs from [FrEDI::run_fredi()])
 #' @param columns   Character vector of columns for which to aggregate results (defaults to `columns=c("annual_impacts"`)).
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelAverage"`, `"impactYear"`, `"impactType"`, `"all")`. Defaults to all levels (i.e., `aggLevels="all"`).
-#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, "`adaptation"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`.
+#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, `"adaptation"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable.
 #'
 #' @details
 #' This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelAverage"`), summing over all impact types (`aggLevels="impactType"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default).
@@ -16,7 +16,7 @@
 #'
 #' Before aggregating impacts for national totals and/or model averages, [FrEDI::aggregate_impacts()] will drop any pre-summarized results  (i.e., values for which `region="National Total"` and/or for which `model="average"`, respectively) that are already present in the data `and then reaggregate at those levels.
 #'
-#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization:
+#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization (note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable):
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
 #' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
@@ -53,12 +53,12 @@ aggregate_impacts <- function(
 ){
   ###### Defaults ######
   ### Not used currently; preserving it in messaging logicals for the future
-  msgUser    <- T
+  msgUser <- T
   ### Modes...specifically SLR interpolation only
-  xMode <- ifelse(is.null(mode), "all", mode) %>% tolower
+  xMode   <- ifelse(is.null(mode), "all", mode) %>% tolower
 
   ###### Ungroup Data ######
-  data <- data %>% ungroup #; names(data) %>% print
+  data    <- data %>% ungroup #; names(data) %>% print
 
   ###### SLR Info ######
   # assign("slr_cm", rDataList[["slr_cm"]])
@@ -240,9 +240,10 @@ aggregate_impacts <- function(
   adaptation0   <- (data %>% filter(sector==sector0))$adaptation %>% unique %>% first
   region0       <- (data %>% filter(sector==sector0))$region %>% unique %>% first
   model0        <- (data %>% filter(sector==sector0))$model %>% unique %>% first
+  impactType0   <- (data %>% filter(sector==sector0))$impactType %>% unique %>% first
   ### Base Scenario and regional population
-  baseScenario  <- data %>% filter(sector == sector0, adaptation == adaptation0, region == region0, model == model0)
-  regionalPop   <- data %>% filter(sector == sector0, adaptation == adaptation0, model == model0)
+  baseScenario  <- data %>% filter(sector == sector0, adaptation == adaptation0, region == region0, model == model0, impactType == impactType0)
+  regionalPop   <- data %>% filter(sector == sector0, adaptation == adaptation0, model == model0, impactType == impactType0)
 
   ### Filter to impact types
   if(impactTypesAgg){
@@ -269,9 +270,7 @@ aggregate_impacts <- function(
   ###### Driver Scenario ######
   ### Get unique model types, sectors, adaptations, and models
   modelTypesList <- data$model_type %>% unique
-
   # data$model_type %>% unique %>% print
-
   sectors1       <- modelTypesList %>%
     lapply(function(model_type_i){
       (data %>% filter(model_type==model_type_i))$sector %>% unique %>% first
@@ -280,6 +279,10 @@ aggregate_impacts <- function(
     lapply(function(sector_i){
       (data %>% filter(sector==sector_i))$adaptation %>% unique %>% first
     }) %>% unlist%>% c()
+  # impactTypes1   <- sectors1 %>%
+  #   lapply(function(sector_i){
+  #     (data %>% filter(sector==sector_i))$impactType %>% unique %>% first
+  #   }) %>% unlist%>% c()
   models1     <- sectors1 %>%
     lapply(function(sector_i){
       (data %>% filter(sector==sector_i))$model %>% unique %>% first
@@ -292,28 +295,28 @@ aggregate_impacts <- function(
     }) %>% (function(x){do.call(rbind, x)})
 
   ### Filter to impact types
-  if(impactTypesAgg){
-    impactTypes1  <- sectors1 %>%
-      lapply(function(sector_i){
-        (driverScenario %>% filter(sector==sector_i))$impactType %>% unique %>% first
-      }) %>% unlist
-    driverScenario  <- 1:length(sectors1) %>%
-      lapply(function(i){
-        driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactType == impactTypes1[i])
-      }) %>% (function(x){do.call(rbind, x)})
-  }
+  # if(impactTypesAgg){
+  impactTypes1  <- sectors1 %>%
+    lapply(function(sector_i){
+      (driverScenario %>% filter(sector==sector_i))$impactType %>% unique %>% first
+    }) %>% unlist
+  driverScenario  <- 1:length(sectors1) %>%
+    lapply(function(i){
+      driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactType == impactTypes1[i])
+    }) %>% (function(x){do.call(rbind, x)})
+  # }
 
   ### Filter to impact years
-  if(impactYearsAgg){
-    impactYear1  <- sectors1 %>%
-      lapply(function(sector_i){
-        (driverScenario %>% filter(sector==sector_i))$impactYear %>% unique %>% first
-      }) %>% unlist
-    driverScenario  <- 1:length(sectors1) %>%
-      lapply(function(i){
-        driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactYear == impactYear1[i])
-      }) %>% (function(x){do.call(rbind, x)})
-  }
+  # if(impactYearsAgg){
+  impactYear1  <- sectors1 %>%
+    lapply(function(sector_i){
+      (driverScenario %>% filter(sector==sector_i))$impactYear %>% unique %>% first
+    }) %>% unlist
+  driverScenario  <- 1:length(sectors1) %>%
+    lapply(function(i){
+      driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactYear == impactYear1[i])
+    }) %>% (function(x){do.call(rbind, x)})
+  # }
 
 
   ### Select columns
@@ -654,7 +657,6 @@ aggregate_impacts <- function(
     } ### End if model_type_i %in% c_models
   } ### End if "model" %in% aggLevels
 
-
   ###### National Totals ######
   if(nationalAgg){
     if(msgUser) message("\t", "Calculating national totals...")
@@ -686,7 +688,6 @@ aggregate_impacts <- function(
     ### Remove values
     rm("df_national")
   } ### End if national
-
 
   ###### Impact Type ######
   ### Summarize by Impact Type
@@ -769,7 +770,7 @@ aggregate_impacts <- function(
   df_return <- df_aggImpacts %>%
     left_join(co_sector_adaptations %>% select(-c(all_of(sectorAdapt_drop))), by = sectorAdapt_join) %>%
     left_join(driverScenario, by = c("year", "model_type")) %>%
-    left_join(df_base      , by = c("year", "region")); # nrow(df_return)  %>% print
+    left_join(df_base      , by = c("year", "region"))
 
   ###### Reformat sectorprimary and includeaggregate, which were converted to character
   c_aggColumns <- c("sectorprimary", "includeaggregate") %>% (function(y){y[which(y %in% names(df_return))]})
@@ -781,7 +782,7 @@ aggregate_impacts <- function(
   ### Order the data frame and ungroup
   ### Column indices of columns used in ordering
   return_names  <- df_return %>% names
-  orderColNames <- c(groupByCols, "year") %>% (function(y){y[which(y %in% return_names)]})
+  orderColNames <- c(groupByCols, "year") %>% (function(y){y[which(y %in% return_names)]}) #; "got here10" %>% print
   df_return     <- df_return %>% arrange_at(.vars=c(all_of(orderColNames)))
 
   ###### Return ######

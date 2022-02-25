@@ -2,16 +2,16 @@
 #' Project annual average climate change impacts throughout the 21st century for available sectors
 #'
 #' @description
-#' This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors (see [FrEDI::get_sectorInfo()]). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation, impact type, model (GCM or SLR scenario), and region.
+#' This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors (see [FrEDI::get_sectorInfo()]). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation (or variation), impact type, model (GCM or SLR scenario), and region.
 #'
 #' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing dataframes of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over the period 2010 to 2090. Note: temperature and sea level rise inputs should start in 2000 or earlier.
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
-#' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national", "modelaverage", "impactyear", "impacttype", "all")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
+#' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
 #' @param pv A `TRUE/FALSE` value indicating Whether to calculate present values for the annual impacts. Defaults to `pv=TRUE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
 #' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
 # @param primaryTypes = F whether to filter to primary impacts
-#' @param elasticity A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Sectors and impacts that have economic values adjusted by VSL are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality).
+#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
@@ -38,7 +38,7 @@
 #'
 #' [FrEDI::run_fredi()] aggregates or summarizes results to levels of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelaverage"`), summing over all impact types (`aggLevels="impacttype"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default) or no aggregation levels (`aggLevels="none"`).
 #'
-#' For each of the `aggLevels`, [FrEDI::run_fredi()] performs the following summarization (using [FrEDI::aggregate_impacts()]):
+#' For each of the `aggLevels`, [FrEDI::run_fredi()] performs the following summarization using [FrEDI::aggregate_impacts()] (note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable):
 #'
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
@@ -685,8 +685,8 @@ run_fredi <- function(
       aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)
     }
     agg_results_names <- df_results %>% names
-
-    df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    df_results <- df_results %>% as.data.frame %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    # df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
 
     rm("aggGroupByCols", "agg_results_names")
   }
