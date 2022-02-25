@@ -4,7 +4,7 @@
 #' @description
 #' This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for available sectors (see [FrEDI::get_sectorInfo()]). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation, impact type, model (GCM or SLR scenario), and region.
 #'
-#' @param inputsList A list of named elements named elements (`names(inputsList)= c("driverInput",  "popInput")`), each containing dataframes of custom scenarios for drivers (temperature or global mean sea level rise) and/or regional population scenarios, respectively. Scenarios must be defined over the period 2010 to 2090. Note: driver inputs (temperature and sea level rise) should start in 2000 or earlier. Population inputs should start in 2010 or earlier.
+#' @param inputsList A list of named elements named elements (`names(inputsList)= c("driverInput",  "popInput")`), each containing dataframes of custom scenarios for drivers (temperature or global mean sea level rise) and/or regional population scenarios, respectively. Scenarios must be defined over the period 2010 to 2090. Note: driver inputs (temperature and sea level rise) should start in 2000 or earlier. Population inputs should start in 2010 or earlier. Temperature inputs must be in degrees Celsius for the CONUS region. If starting from global temperature change, first use [FrEDI::converTemps()] to convert global temperatures to CONUS temperatures.
 # ADD SENTENCE ABOUT CHECKING MODEL TYPE
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
 #### ADD MORE INFO ABOUT ELASTICITY
@@ -48,11 +48,12 @@
 ### This function creates a dataframe of sector impacts for default values or scenario inputs.
 ### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi_sv <- function(
-  inputsList = list(tempInput=NULL, slrInput=NULL, popInput=NULL), ### List of inputs
-  sector = NULL, ### Vector of sectors to get results for
+  inputsList = list(driverInput=NULL, popInput=NULL), ### List of inputs
+  sector     = NULL, ### Vector of sectors to get results for
   return     = T,
   output2xl  = F,
   outpath    = "~",
+  # tempType   = "conus", ###
   silent     = TRUE,  ### Whether to message the user
   projectPath = NULL
 ){
@@ -99,98 +100,159 @@ run_fredi_sv <- function(
   # df_sectorInfo <- svSectorInfo %>% filter(sector==sector)
   which_sector  <- (svSectorInfo$sector == c_sector) %>% which #; which_sector %>% print
   df_sectorInfo <- svSectorInfo[which_sector,]
-  # df_sectorInfo %>% print
-  # c_adaptLabels <- svSectorInfo$adapt_label
-  # c_adaptAbbr   <- svSectorInfo$adapt_abbr
 
   ###### Load Inputs ######
+  # ### Message the user
+  # if(is.null(inputsList)){
+  #   inputsList <- list()
+  # } else{
+  #   msg1 %>% message("Checking input values...")
+  # }
   ### Create logicals and initialize inputs list
-  # which_inputs    <- co_inputScenarioInfo$inputName %in% c("driverInput", "popInput")
-  # list_inputs     <- c("driverInput", "popInput")
-  list_inputs     <- c("tempInput", "slrInput", "popInput")
+  list_inputs     <- c("driverInput", "popInput")
   num_inputNames  <- list_inputs %>% length
+  # ### Which inputs are needed
+  # needsTemp <- ifelse(c_modelType=="gcm", T, ifelse(c_modelType=="slr" & (!has_slrInput), T, F))
+  # needsSLR  <- ifelse(c_modelType=="slr", T, F)
 
-  if( is.null(inputsList)){
-    inputsList <- list()
-  } else{
-    message("Checking input values...")
+  ###### Check Driver Inputs ######
+  driverInput     <- inputsList[["driverInput"]]
+  ### Initialize whether to check for inputs
+  check_slrInput  <- ifelse(c_modelType=="slr", T, F)
+  check_tempInput <- TRUE
+  ### Initialize whether inputs exist
+  has_driverInput <- ifelse(is.null(driverInput), F, T)
+  has_slrInput    <- FALSE
+  has_tempInput   <- FALSE
+  ### Scenario columns
+  tempCols        <- c("year", "temp_C", "scenario")
+  slrCols         <- c("year", "slr_cm", "scenario")
+  ### Scenario ranges
+  tempRange       <- c(0, 10)
+  slrRange        <- c(0, 250)
+
+  ### Check inputs
+  if(has_driverInput){
+    msg1 %>% message("Checking `driverInput` values...")
+    ### Check that the input is a dataframe
+    class_driverInput <- driverInput %>% class
+    if(!("data.frame" %in% class_driverInput)){
+      msg2 %>% message("Error: `driverInput` must have `class='data.frame'`!", "\n")
+      msg2 %>% message("Exiting...")
+      return()
+    }
+    ### Info about driverInputs
+    driverInputCols <- driverInput %>% names
+
+    ### Check input years
+    if(!("year" %in% driverInputCols)){
+      msg2 %>% message("Error: `driverInput` must have column='year' present`!", "\n")
+      msg2 %>% message("Exiting...")
+      return()
+    }
+
+    ### Check for SLR inputs
+    if(check_slrInput){
+      msg2 %>% message("Checking `driverInput` values for SLR scenario...")
+      ### Check for SLR columns
+      slrCols_inInput <- (slrCols %in% driverInputCols)
+      if(all(slrCols_inInput)){
+        msg1 %>% message("All SLR scenario columns present...")
+        has_slrInput    <- TRUE
+        check_tempInput <- FALSE
+
+        ### Check input SLR heights
+        checkIssues <- (driverInput$slr_cm < slrRange[1]) | (driverInput$slr_cm > slrRange[2])
+        anyIssues   <- checkIssues %>% any
+        if(anyIssues){
+          msg2 %>% message("Error: values for 'slr_cm' must be in the allowable range of [", slrRange[1], ",", slrRange[2], "]!", "\n")
+          msg2 %>% message("Exiting...")
+          return()
+        }
+
+      } else{
+        ### Instead of exiting, check for temperature
+        msg1 %>% message("Warning: `driverInput` is missing the following SLR scenario input columns:")
+        msg2 %>% message("'", paste(slrCols[!slrCols_inInput], collapse="', '"),"'...", "\n")
+        msg1 %>% message("Looking for temperature scenario instead", "...", "\n")
+      }
+    }
+    ### Otherwise, check temperature inputs
+    if(check_tempInput){
+      msg1 %>% message("Checking `driverInput` values for temperature scenario...")
+      ### Check for temperature columns
+      tempCols_inInput <- (tempCols %in% driverInputCols)
+      if(all(tempCols_inInput)){
+        msg1 %>% message("All temperature scenario columns present...")
+        has_tempInput    <- TRUE
+
+        ### Check input temperatures
+        checkIssues <- (driverInput$slr_cm < slrRange[1]) | (driverInput$slr_cm > slrRange[2])
+        anyIssues   <- checkIssues %>% any
+        if(anyIssues){
+          msg2 %>% message("Error: values for 'temp_C' must be in the allowable range of [", tempRange[1], ",", tempRange[2], "]!", "\n")
+          msg2 %>% message("Exiting...")
+          return()
+        }
+
+      } else{
+        msg2 %>% message("Error in temperature scenario input...")
+        msg2 %>% message("`driverInput` is missing columns: '", paste(tempCols[!tempCols_inInput], collapse=", '"),"'...", "\n")
+        msg2 %>% message("Exiting...")
+        return()
+      }
+    }
   }
-  # ### Iterate over the input list
-  # # if(!is.null(inputsList)){
-  # # co_inputScenarioInfo %>% head %>% print
-  # ### Assign inputs to objects
-  # for(i in 1:num_inputNames){
-  #   which_i     <- co_inputScenarioInfo
-  #   inputInfo_i <- co_inputScenarioInfo[i,]
-  #   ### Input name and label
-  #   input_i     <- inputInfo_i$inputName %>% unique
-  #   msgName_i   <- inputInfo_i$inputType %>% unique
-  #   ### Input run_fredi argument
-  #   inputName_i <- inputInfo_i$tempBinListName %>% unique
-  #   ### Min and Max Values
-  #   min_i       <- inputInfo_i$inputMin %>% unique
-  #   max_i       <- inputInfo_i$inputMax %>% unique
-  #   ###### Column Info ######
-  #   region_i    <- inputInfo_i$region %>% unique
-  #   valueCol_i  <- inputInfo_i$valueCol %>% unique
-  #   ### Initialize column names
-  #   numCols_i   <- colNames_i <- c("year", valueCol_i) #; print(colNames_i)
-  #   ### Add region column
-  #   if(region_i == 1){
-  #     colNames_i  <- c(colNames_i[1], "region", colNames_i[2])
-  #   }
-  #   has_i        <- paste0("has_", input_i, "Update")
-  #   # has_update_i <- is.null(inputsList[[inputName_i]])
-  #   df_input_i   <- inputsList[[inputName_i]]
-  #   has_update_i <- !is.null(df_input_i)
-  #   ###### Assign inputs to objects ######
-  #   assign(has_i,    has_update_i)
-  #   assign(inputName_i, df_input_i)
-  #
-  #   ### Iterate over the input list and check flags for inputs that are not null
-  #   if(has_update_i){
-  #     msg1 %>% message( "Checking input values for ", msgName_i, "...")
-  #     ### Values
-  #     values_i       <- df_input_i[,valueCol_i]
-  #     ### Substitute NULL for missing values for min and max
-  #     if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
-  #     ### Check the status
-  #     flag_i         <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
-  #     ### Return and message the user if there is a flag:
-  #     flagStatus_i   <- flag_i$flagged
-  #     flagRows_i     <- flag_i$rows
-  #     ### If flag, message user and return flagStatus_i
-  #     if(flagStatus_i){
-  #       ### Message labels
-  #       numrows_i    <- flagRows_i %>% length
-  #       years_i      <- df_input_i$year[flagRows_i]
-  #       yearsLabel_i <- paste(years_i, collapse=",")
-  #       rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
-  #       ### Create message and message user
-  #       msg1_i       <- "Error in importing inputs for" %>% paste(msgName_i) %>% paste0(":")
-  #       msg2_i       <- inputName_i %>% paste("has", numrows_i,  "values outside of defined range", rangeLabel_i)
-  #       msg3_i       <- "Please correct values" %>% paste(msgName_i, "values for years", yearsLabel_i)
-  #
-  #       message(msg2, msg1_i); message(msg3, msg2_i); message(msg3,  msg3_i, "..."); message("Exiting...", "\n")
-  #       ### Return list with error and flagged rows
-  #       returnList <- list(
-  #         error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
-  #         flagged_rows = flagRows_i
-  #       )
-  #
-  #       ### Return list and not an inputs list if an error occurred
-  #       return(returnList)
-  #     } ### End if flagged_i
-  #   } ### End if !is.null(df_i)
-  # } ### End iterate over inputs
-  # # }
 
-  ###### Which Inputs Are Needed ######
-  has_popUpdate <- has_slrUpdate <- has_tempUpdate <- F;
-  # c(has_tempUpdate, has_slrUpdate, has_popUpdate) %>% print
-  needsTemp <- ifelse(c_modelType=="gcm", T, ifelse(c_modelType=="slr" & (!has_slrUpdate), T, F))
-  needsSLR  <- ifelse(c_modelType=="slr", T, F)
-  # c(needsTemp, needsSLR) %>% print
+
+  ###### Check Population Inputs ######
+  popInput     <- inputsList[["popInput"]]
+  has_popInput <- ifelse(is.null(popInput), F, T)
+  popCols      <- c("year", "reg_pop")
+  if(has_popInput){
+    msg1 %>% message("Checking `popInput` values...")
+    ### Check that the input is a dataframe
+    class_driverInput <- driverInput %>% class
+    if(!("data.frame" %in% class_driverInput)){
+      msg2 %>% message("Error: `popInput` must have `class='data.frame'`!", "\n")
+      msg2 %>% message("Exiting...")
+      return()
+    }
+    ### Info about popInputs
+    popInputCols <- popInput %>% names
+    ### Check for popInput columns
+    popCols_inInput <- (popCols %in% popInputCols)
+    if(all(popCols_inInput)){
+      msg1 %>% message("All population scenario columns present...")
+      has_popInput    <- TRUE
+
+      ### Check input Population values: population >= 0
+      checkIssues <- (popInput$reg_pop < 0)
+      anyIssues   <- checkIssues %>% any
+      if(anyIssues){
+        msg2 %>% message("Error: Values for 'reg_pop' in `popInput` must be greater than zero!")
+        msg2 %>% message("Exiting...")
+        return()
+      }
+
+      ### Check input Population values: no repeating years
+      checkYears <- (popInput$year %>% unique)
+      anyIssues  <- (checkYears %>% length) < (popInput %>% nrow)
+      if(anyIssues){
+        msg2 %>% message("Error: duplicate years present in `popInput`!")
+        msg2 %>% message("Exiting...")
+        return()
+      }
+
+    } else{
+      ### Instead of exiting, message the user
+      msg1 %>% message("Warning: `popInput` is missing the following input columns:")
+      msg2 %>% message("'", paste(popCols[!popCols_inInput], collapse="', '"),"'...", "\n")
+      msg1 %>% message("Using default regional population scenario", "...", "\n")
+      has_popInput    <- FALSE
+    }
+  }
+
 
   ###### Temperature Scenario ######
   ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
@@ -201,7 +263,7 @@ run_fredi_sv <- function(
   ### - Filter to appropriate years
   if(needsTemp){
     refYear_temp <- (rDataList$co_modelTypes %>% filter(modelUnitType=="temperature"))$modelRefYear[1]
-    if(has_tempUpdate){
+    if(has_tempInput){
       msg1 %>% message("Creating temperature scenario from user inputs...")
       tempInput <- tempInput %>%
         select(c("year", "temp_C", "scenario")) %>%
@@ -261,7 +323,7 @@ run_fredi_sv <- function(
   ### - Filter to appropriate years
   if(needsSLR){
     refYear_slr <- (rDataList$co_modelTypes %>% filter(modelUnitType=="slr"))$modelRefYear %>% unique
-    if(has_slrUpdate){
+    if(has_slrInput){
       msg1 %>% message("Creating SLR scenario from user inputs...")
       slrInput  <- slrInput %>%
         select(c("year", "slr_cm", "scenario")) %>%
@@ -345,7 +407,7 @@ run_fredi_sv <- function(
 
   ###### Region Population Scenario ######
   ### Population inputs
-  if(has_popUpdate){
+  if(has_popInput){
     msg1 %>% message("Creating population scenario from user inputs...")
     popInput  <- popInput %>%
       select(c("year", "reg_pop")) %>%
