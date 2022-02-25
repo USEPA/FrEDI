@@ -3,18 +3,18 @@
 createSVData <- function(
   projectPath = getwd(), ### Path to project
   # excelName   = NULL, ### name of excel file with config information
-  outPath     = file.path(getwd(), "..", "FrEDI", "R"),
-  
-  sv          = T, ### Whether to run demographic info
-  pop         = F, ### Whether to run population functions,
-  impacts     = F,
+  # outPath     = file.path(getwd(), "..", "FrEDI", "R"),
+  outPath     = file.path(getwd(), "data", "sv"),
+  sv            = T, ### Whether to run demographic info
+  pop           = F, ### Whether to run population functions,
+  impacts       = F,
   impactSectors = NULL,
-  format      = T, ### Whether to update formatting styles
+  format        = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
-  rDataExt    = ".rda", ### r Object Extension
-  silent      = NULL,  ### Whether to message the user
-  save        = F, ### Whether to save
-  return      = T  ### Whether to return
+  rDataExt      = ".rda", ### r Object Extension
+  silent        = NULL,  ### Whether to message the user
+  save          = F, ### Whether to save
+  return        = T  ### Whether to return
 ){
   paste0("Running createSVData():", "\n") %>% message
   ###### Set up the environment ######
@@ -31,7 +31,7 @@ createSVData <- function(
   ### Excel configuration file
   extDataPath <- projectPath %>% file.path("inst", "extdata", "sv")
   outPath_sv  <- outPath
-  outPath_imp <- outPath %>% file.path("sv")
+  outPath_imp <- outPath %>% file.path("impactsLists")
   
   ### SV demo data
   sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
@@ -46,10 +46,29 @@ createSVData <- function(
     returnList <- list()  
   }
   
+  # ###### Import sysdata.rda ######
+  # ### Whether to import system data
+  # update_sysdata <- save & (sv | pop | format)
+  # # list_sysdata   <- NULL
+  # if(update_sysdata){
+  #   # load(outPath %>% file.path("sysdata.rda"))
+  #   path_sysdata <- outPath %>% file.path("sysdata.rda")
+  #   list_sysdata <- path_sysdata %>% list.rda()
+  # }
+  
   ###### SV Demographic Data ######
   ### Create or load SV demographic data
   if(sv){
-    svDataList  <- get_svDataList(save = save, return = return, outPath=outPath_sv, msg0="\t")
+    svDataList  <- get_svDataList(
+      save    = save, 
+      return  = return, 
+      outPath = outPath_sv,
+      msg0    = "\t"
+    )
+    ### Add to list of objects in sysdata
+    if(save){
+      list_sysdata[["svDataList"]] <- svDataList
+    }
   } else if(load_demoInfo){ ### Load svDataList
     load(sv_filePath)
   } else{
@@ -66,8 +85,40 @@ createSVData <- function(
       outPath = outPath_sv, 
       msg0    = "\t"
       )
+    ### Add to list of objects in sysdata
+    if(save){
+      list_sysdata[["svPopList"]] <- svPopList
+    }
   } else{
     svPopList <- NULL
+  }
+  
+  ###### Formatting ######
+  ### For Excel formatting. openxlsx
+  df_formatTypes <- svDataList$df_formatTypes
+  format_styles <- df_formatTypes$styleName %>% 
+    lapply(function(style_i){
+      i       <- which(df_formatTypes$styleName == style_i)
+      style_i <- createStyle(
+        fgFill       = df_formatTypes$fgFill[i], 
+        halign       = df_formatTypes$halign[i], 
+        border       = df_formatTypes$border[i], 
+        borderColour = df_formatTypes$borderColour[i],
+        fontColour   = df_formatTypes$fontColour[i]
+      )
+      return(style_i)
+    }) %>%
+    (function(x){
+      names(x) <- df_formatTypes$styleName
+      return(x)
+    })
+  if(save){
+    formatFile <- "format_styles" %>% paste("rda", sep=".")
+    formatPath <- outPath_sv %>% file.path(formatFile)
+    save(format_styles, file=formatPath)
+    
+    ### Add to list of objects in sysdata
+    list_sysdata[[format_styles]] <- format_styles
   }
   
   ###### Impacts Functions List ######
@@ -131,50 +182,31 @@ createSVData <- function(
         msg0       = "\t"
         # dataFile = infile_i, createList = T, save=F, return = T
       )
+      
     } 
   } #; returnList[["impactsList"]] <- impactsList
   else{
     impactsList <- NULL
   }
+
   
-  ###### Formatting ######
-  ### For Excel formatting. openxlsx
-  df_formatTypes <- svDataList$df_formatTypes
-  format_styles <- df_formatTypes$styleName %>% 
-    lapply(function(style_i){
-      i       <- which(df_formatTypes$styleName == style_i)
-      style_i <- createStyle(
-        fgFill       = df_formatTypes$fgFill[i], 
-        halign       = df_formatTypes$halign[i], 
-        border       = df_formatTypes$border[i], 
-        borderColour = df_formatTypes$borderColour[i],
-        fontColour   = df_formatTypes$fontColour[i]
-      )
-      return(style_i)
-    }) %>%
-    (function(x){
-      names(x) <- df_formatTypes$styleName
-      return(x)
-    })
-  if(save){
-    formatFile <- "format_styles" %>% paste("rda", sep=".")
-    formatPath <- outPath_sv %>% file.path(formatFile)
-    save(format_styles, file=formatPath)
+  ###### Update sysdata object ######
+  if(update_sysdata){
+    ### Names
+    names_sysdata   <- list_sysdata %>% names
+    pattern_sysdata <- paste(names_sysdata, collapse = "|")
+    # save(list=ls(pattern = pattern_sysdata), file=path_sysdata)
+    eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=path_sysdata)))
   }
   
-  
+  ###### Return object ######
+  message("\n\n", "Finished", ".")
   ### Return svDataList
   if(return){
     returnList[["svDataList"]]    <- svDataList
     returnList[["svPopList"]]     <- svPopList
     returnList[["impactsList"]]   <- impactsList
     returnList[["format_styles"]] <- format_styles
-  }
-  
-  ###### Return object ######
-  message("\n\n", "Finished", ".")
-
-  if(return){
     return(returnList)
   }
   

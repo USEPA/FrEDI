@@ -104,7 +104,7 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 # test_svData$svDataList$svData$race_amInd %>% class
 # test_svData$svDataList$svDataCoastal$race_amInd %>% class
 # test_svData$svDataList$svDataCoastal %>% filter(is.nan(race_amInd)) %>% nrow
-
+admisc::obj.rda(file.path(frediPath, "R", "svDataList.rda"))
 
 load(file.path(frediPath, "R", "svDataList.rda"))
 load(file.path(frediPath, "R", "svPopData.rda"))
