@@ -628,7 +628,7 @@ get_svImpactsList <- function(
   dataFile   = NULL,
   dataPath   = file.path(getwd(), "inst", "extdata",  "sv", "impacts"),
   outFile    = NULL,
-  outPath    = file.path(getwd(), "data", "sv", "impactLists"),
+  outPath    = file.path(getwd(), "sv"),
   rDataExt   = "rda", ### R data extension
   createList = F,
   # modelType = "gcm",

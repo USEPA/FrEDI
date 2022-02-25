@@ -11,6 +11,7 @@ createSVData <- function(
   impactSectors = NULL,
   format      = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
+  rDataExt    = ".rda", ### r Object Extension
   silent      = NULL,  ### Whether to message the user
   save        = F, ### Whether to save
   return      = T  ### Whether to return
@@ -24,39 +25,21 @@ createSVData <- function(
   
   ### Conditions
   load_demoInfo <- (pop | impacts | format) ### Load `demoinfo`` if pop or `impacts`
-  # load_popInfo  <- (pop | impacts) ### Load `demoinfo`` if pop or `impacts`
 
   ###### Create File Paths ######
   projectPath <- ifelse(is.null(projectPath), ".", projectPath)
   ### Excel configuration file
   extDataPath <- projectPath %>% file.path("inst", "extdata", "sv")
-  # outPath_sv  <- outPath %>% file.path("sv")
   outPath_sv  <- outPath
-  outPath_imp <- outPath %>% file.path("..", "data", "sv")
-  ### r Object Extension
-  rDataExt     <- "rda"
+  outPath_imp <- outPath %>% file.path("sv")
+  
   ### SV demo data
-  # sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
-  sv_fileName <- "svDataList" %>% paste("rda", sep=".")
+  sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
   sv_filePath <- outPath_sv %>% file.path(sv_fileName)
-  # svData      <- NULL ### Initialize svData
-  
-  # ### Output file
-  # sysDataPath <- projectPath %>% file.path("data")
-  # sysDataFile <- sysDataPath %>% file.path("sysdata.rdata")
-  # sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
-  
-  ###### Configuration Data ######
-  # ### Read in configuration data
-  # ### Assign data tables to objects in the list
-  # configFile <- projectPath %>% file.path("R", "fredi_config.R")
-  # source(configFile)
-  # for(i in 1:length(fredi_config)){
-  #   assign(names(fredi_config)[i], fredi_config[[i]])
-  # }
   
   ###### Import Functions from ciraTempBin ######
   # calc_countyPop  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
+  outPath %>% file.path("utils_sv.R") %>% source
   
   ###### Initialize Return List ######
   if(return){
@@ -93,14 +76,11 @@ createSVData <- function(
   if(impacts){
     ### Filter sector info to sectors specified by user
     svSectorInfo <- svDataList$svSectorInfo; 
-    # impactSectors %>% print 
-    # svSectorInfo %>% names %>% print
-    # svSectorInfo$sector
+    
     if(!is.null(impactSectors)){
       svSectorInfo <- svSectorInfo %>% filter(sector %in% impactSectors)
     }
-    # svSectorInfo %>% print # svDataList %>% names %>% print
-    # svSectorInfo %>% names %>% print
+
     ### Iterate over sectors
     for(i in 1:nrow(svSectorInfo)){
       ### File names
@@ -200,9 +180,5 @@ createSVData <- function(
   
 } ### End function
 
-
-### Uncomment following two lines to create and save data and check the outputs
-# test_systemData <- createSystemData(save=F)
-# rm("createSystemData")
 
 

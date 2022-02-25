@@ -109,7 +109,7 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 load(file.path(frediPath, "R", "svDataList.rda"))
 load(file.path(frediPath, "R", "svPopData.rda"))
 # load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
-load(file.path(frediPath, "data", "sv", "impactsList_airQuality.rda"))
+load(file.path(frediPath, "sv", "impactsList_airQuality.rda"))
 
 
 # other_tracts <- svDataList$svData$fips %>% unique
@@ -223,7 +223,7 @@ df_check_na_pop_ids %>% length
 Check for the impact projections (174 720 rows)
 
 ```{r impCoastal}
-# load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+# load(file.path(frediPath, "sv", "impactsList_coastalProp_withAdapt.rda"))
 impCoastal <- calc_tractScaledImpacts(
         # funList      = impactsList_coastalProp_withAdapt,
   funList      = impactsList_airQuality,
