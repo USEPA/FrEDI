@@ -11,7 +11,7 @@ createSVData <- function(
   impactSectors = NULL,
   format        = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
-  rDataExt      = ".rda", ### r Object Extension
+  rDataExt      = "rda", ### r Object Extension
   silent        = NULL,  ### Whether to message the user
   save          = F, ### Whether to save
   return        = T  ### Whether to return
@@ -39,7 +39,8 @@ createSVData <- function(
   
   ###### Import Functions from ciraTempBin ######
   # calc_countyPop  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
-  outPath %>% file.path("utils_sv.R") %>% source
+  # outPath     = file.path(getwd(), "..", "FrEDI", "R"),
+  getwd() %>% file.path("..", "FrEDI", "R", "utils_sv.R") %>% source
   
   ###### Initialize Return List ######
   if(return){
@@ -95,14 +96,14 @@ createSVData <- function(
   
   ###### Formatting ######
   ### For Excel formatting. openxlsx
-  df_formatTypes <- svDataList$df_formatTypes
-  format_styles <- df_formatTypes$styleName %>% 
+  df_formatTypes <- svDataList$co_formatTypes
+  format_styles  <- df_formatTypes$styleName %>%
     lapply(function(style_i){
       i       <- which(df_formatTypes$styleName == style_i)
       style_i <- createStyle(
-        fgFill       = df_formatTypes$fgFill[i], 
-        halign       = df_formatTypes$halign[i], 
-        border       = df_formatTypes$border[i], 
+        fgFill       = df_formatTypes$fgFill[i],
+        halign       = df_formatTypes$halign[i],
+        border       = df_formatTypes$border[i],
         borderColour = df_formatTypes$borderColour[i],
         fontColour   = df_formatTypes$fontColour[i]
       )
@@ -116,10 +117,27 @@ createSVData <- function(
     formatFile <- "format_styles" %>% paste("rda", sep=".")
     formatPath <- outPath_sv %>% file.path(formatFile)
     save(format_styles, file=formatPath)
-    
-    # ### Add to list of objects in sysdata
-    # list_sysdata[[format_styles]] <- format_styles
   }
+  # df_formatTypes <- svDataList$co_formatTypes
+  # format_styles  <- list()
+  # for(i in 1:nrow(df_formatTypes)){
+  #   styleName_i <- df_formatTypes$styleName[i]
+  #   
+  #   style_i <- createStyle(
+  #     fgFill       = df_formatTypes$fgFill[i], 
+  #     halign       = df_formatTypes$halign[i], 
+  #     border       = df_formatTypes$border[i], 
+  #     borderColour = df_formatTypes$borderColour[i],
+  #     fontColour   = df_formatTypes$fontColour[i]
+  #   )
+  #   
+  #   format_styles[[styleName_i]] <- style_i
+  # }
+  # if(save){
+  #   formatFile <- "format_styles" %>% paste("rda", sep=".")
+  #   formatPath <- outPath_sv %>% file.path(formatFile)
+  #   save(format_styles, file=formatPath)
+  # }
   
   ###### Impacts Functions List ######
   # codePath %>% file.path(paste("get_svImpactsList", "R", sep=".")) %>% source

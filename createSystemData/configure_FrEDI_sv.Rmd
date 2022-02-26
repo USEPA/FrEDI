@@ -91,7 +91,8 @@ test_sector <- c("Air Quality")
 time1           <- Sys.time()
 # test_svData     <- createSVData(save=T, sv = T, pop = T)
 # test_svData     <- createSVData(save=T, sv = F, pop=T)
-test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = test_sector, format=F)
+# test_svData     <- createSVData(save=T, sv = F, pop=F, impacts = T, impactSectors = test_sector, format=F)
+test_svData     <- createSVData(save=T, sv = F, format=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -108,6 +109,16 @@ for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 update_sysdata(sv=T, impacts=F, save=T)
 ```
 
+Check formats
+
+
+```{r}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+test_svData     <- createSVData(save=T, sv = F, format=T)
+# load(file.path(projectPath, "data", "sv", "format_styles.rda"))
+# format_styles %>% glimpse
+```
+
 
 
 
@@ -121,11 +132,12 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 # test_svData$svDataList$svDataCoastal$race_amInd %>% class
 # test_svData$svDataList$svDataCoastal %>% filter(is.nan(race_amInd)) %>% nrow
 
+load(file.path(projectPath, "data", "sv", "svPopData.rda"))
+load(file.path(projectPath, "data", "sv", "svDataList.rda"))
+load(file.path(projectPath, "data", "sv", "svPopData.rda"))
 
-load(file.path(frediPath, "R", "svDataList.rda"))
-load(file.path(frediPath, "R", "svPopData.rda"))
-# load(file.path(frediPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
-load(file.path(frediPath, "sv", "impactsList_airQuality.rda"))
+# load(file.path(projectPath, "data", "sv", "impactsList_coastalProp_withAdapt.rda"))
+load(file.path(projectPath, "data", "sv", "impactsLists", "impactsList_airQuality.rda"))
 
 
 # other_tracts <- svDataList$svData$fips %>% unique

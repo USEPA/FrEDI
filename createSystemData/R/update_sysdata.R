@@ -62,7 +62,7 @@ update_sysdata <- function(
       pattern_sysdata <- paste(names_sysdata, collapse = "|")
       eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
     }
-    sysDataPath2 %>% obj.rda() %>% print
+    sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
   }
 
 
