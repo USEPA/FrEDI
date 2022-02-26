@@ -85,7 +85,7 @@ sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
 ### Path to fredi project
 projectParentDir <- projectPath %>% file.path("..")
 projectParentDir %>% list.files
-frediPath        <- projectParentDir %>% file.path("..", "FrEDI")
+frediPath        <- projectParentDir %>% file.path("FrEDI")
 ```
 
 ### Configuration Files
@@ -268,7 +268,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "2.2.0"
+packageVersion   <- "2.3.0"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
