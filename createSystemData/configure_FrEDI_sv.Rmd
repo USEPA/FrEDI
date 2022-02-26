@@ -96,6 +96,22 @@ time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
 
+
+
+Update system data
+
+```{r}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+# admisc::obj.rda(file.path(frediPath, "R", "svDataList.rda"))
+# admisc::obj.rda(file.path(frediPath, "R", "svPopData.rda"))
+# admisc::obj.rda(file.path(frediPath, "R", "format_styles.rda"))
+update_sysdata(sv=T, impacts=F, save=T)
+```
+
+
+
+
+
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
@@ -104,7 +120,7 @@ Use the following code chunk to view/check outputs for the new sector (all data 
 # test_svData$svDataList$svData$race_amInd %>% class
 # test_svData$svDataList$svDataCoastal$race_amInd %>% class
 # test_svData$svDataList$svDataCoastal %>% filter(is.nan(race_amInd)) %>% nrow
-admisc::obj.rda(file.path(frediPath, "R", "svDataList.rda"))
+
 
 load(file.path(frediPath, "R", "svDataList.rda"))
 load(file.path(frediPath, "R", "svPopData.rda"))

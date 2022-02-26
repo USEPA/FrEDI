@@ -65,10 +65,10 @@ createSVData <- function(
       outPath = outPath_sv,
       msg0    = "\t"
     )
-    ### Add to list of objects in sysdata
-    if(save){
-      list_sysdata[["svDataList"]] <- svDataList
-    }
+    # ### Add to list of objects in sysdata
+    # if(save){
+    #   list_sysdata[["svDataList"]] <- svDataList
+    # }
   } else if(load_demoInfo){ ### Load svDataList
     load(sv_filePath)
   } else{
@@ -85,10 +85,10 @@ createSVData <- function(
       outPath = outPath_sv, 
       msg0    = "\t"
       )
-    ### Add to list of objects in sysdata
-    if(save){
-      list_sysdata[["svPopList"]] <- svPopList
-    }
+    # ### Add to list of objects in sysdata
+    # if(save){
+    #   list_sysdata[["svPopList"]] <- svPopList
+    # }
   } else{
     svPopList <- NULL
   }
@@ -117,8 +117,8 @@ createSVData <- function(
     formatPath <- outPath_sv %>% file.path(formatFile)
     save(format_styles, file=formatPath)
     
-    ### Add to list of objects in sysdata
-    list_sysdata[[format_styles]] <- format_styles
+    # ### Add to list of objects in sysdata
+    # list_sysdata[[format_styles]] <- format_styles
   }
   
   ###### Impacts Functions List ######
@@ -190,14 +190,14 @@ createSVData <- function(
   }
 
   
-  ###### Update sysdata object ######
-  if(update_sysdata){
-    ### Names
-    names_sysdata   <- list_sysdata %>% names
-    pattern_sysdata <- paste(names_sysdata, collapse = "|")
-    # save(list=ls(pattern = pattern_sysdata), file=path_sysdata)
-    eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=path_sysdata)))
-  }
+  # ###### Update sysdata object ######
+  # if(update_sysdata){
+  #   ### Names
+  #   names_sysdata   <- list_sysdata %>% names
+  #   pattern_sysdata <- paste(names_sysdata, collapse = "|")
+  #   # save(list=ls(pattern = pattern_sysdata), file=path_sysdata)
+  #   eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=path_sysdata)))
+  # }
   
   ###### Return object ######
   message("\n\n", "Finished", ".")
