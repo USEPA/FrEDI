@@ -52,8 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220215"
-c_newSectors   <- c("Agriculture")
+mostRecentDate <- "20220225"
 ```
 
 
@@ -63,30 +62,31 @@ c_newSectors   <- c("Agriculture")
 projectPath      <- getwd()
 today            <- format(Sys.Date(), "%Y%m%d")
 ### Project configuration
-configPath       <- projectPath %>% paste("config", sep="/")
+configPath       <- projectPath %>% file.path("config")
 configFiles      <- configPath %>% list.files(".R")
 ### Code path
-codePath         <- projectPath %>% paste("R", sep="/")
+codePath         <- projectPath %>% file.path("R")
 codeNames        <- codePath %>% list.files(".R")
-configLogPath    <- codePath %>% paste("configLog", sep="/")
+configLogPath    <- codePath %>% file.path("configLog")
 
 ### Names for archive and use versions
 configFileName   <- "fredi_config"
-configArchName   <- configLogPath %>% paste(configFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
-configUseName    <- codePath %>% paste(configFileName, sep="/") %>% paste0(".rda")
+configArchName   <- configLogPath %>% file.path(configFileName) %>% paste(today, sep="_") %>% paste0(".rda")
+configUseName    <- codePath %>% file.path(configFileName) %>% paste0(".rda")
 
 ### Output path
-dataOutPath      <- projectPath %>% paste("data", sep="/")
-dataOutLog       <- dataOutPath %>% paste("dataLog", sep="/")
+dataOutPath      <- projectPath %>% file.path("data")
+dataOutLog       <- dataOutPath %>% file.path("dataLog")
 sysFileName      <- "sysdata"
-sysArchName      <- dataOutLog %>% paste(sysFileName, sep="/") %>% paste(today, sep="_") %>% paste0(".rda")
+sysArchName      <- dataOutLog %>% file.path(sysFileName) %>% paste(today, sep="_") %>% paste0(".rda")
 excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
-sysUseName       <- dataOutPath %>% paste(sysFileName, sep="/") %>% paste0(".rda")
+sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
 
 ### Path to CIRA project
 projectParentDir <- projectPath %>% paste("..", sep="/")
 projectParentDir %>% list.files
-ciraPath         <- find.package("FrEDI", lib.loc=projectParentDir)
+# frediPath         <- find.package("FrEDI", lib.loc=projectParentDir)
+frediPath         <- projectPath %>% file.path("..", "FrEDI")
 ```
 
 ### Configuration Files
@@ -117,21 +117,7 @@ Confirm copy was saved:
 basename(configArchName) %in% (configLogPath %>% list.files("rda"))
 ```
 
-<!-- If a copy was saved, overwrite the config file: -->
-
-<!-- ```{r tempBinConfig} -->
-<!-- # tempBinConfig(outPath = configUseName) -->
-<!-- ``` -->
-
 ## Create Tool Configuration Data
-
-
-Load configuration data
-
-```{r load configuration file}
-# load(configUseName)
-```
-
 
 
 Load all R functions and configuration files
@@ -150,6 +136,7 @@ test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
+
 
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
@@ -182,28 +169,47 @@ time_create     <- time2 - time1; time_create
 
 After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
 
+```{r file.copy}
+file.copy(
+  from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
+  to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
+  overwrite = T
+)
+```
+
+### Test function
+
+Change the following code if there are new sectors
+
+```{r new_sectors}
+new_sectors <- "CIL Crime"
+# new_sectors <- NULL
+```
+
+
+
+
 
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
-ciraPath %>% paste("R", sep="/") %>% load_all
-# df_defaults <- run_fredi()
-# df_defaults <- run_fredi(aggLevels = "all")
-df_defaults <- run_fredi(aggLevels = "none")
-df_defaults %>% glimpse
-# df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
-# df_defaults$sector %>% unique
-# df_defaults %>% dim
+frediPath %>% load_all
+df_defaults <- run_fredi(sectorList = new_sectors, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 ```
 
 
-```{r}
-ciraPath %>% paste("R", sep="/") %>% load_all
-df_defaults2 <- df_defaults %>% aggregate_impacts(aggLevels="all")
-# df_defaults$sector %>% unique
-# df_defaults %>% dim
-```
+Use the following code to save the results:
 
+* Name the output path and create it if it doesn't exist.
+* Then save the outputs file.
+
+
+```{r saveOutputsPath}
+saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
+if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
+write.csv(df_defaults, file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+```
 
 
 Create plots
@@ -212,9 +218,67 @@ Create plots
 
 ```{r plot types, fig.height=10, fig.width=16}
 ### Create only heatmaps
-# ciraPath %>% paste("R", sep="/") %>% load_all()
+# frediPath %>% paste("R", sep="/") %>% load_all()
 # defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
-defPlots <- df_defaults2 %>% get_plots(plotTypes="heatmaps")
+defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
 defPlots$heatmaps$SLR
 ```
+
+
+### Update Default Outputs
+
+Use the following section to update R defaults
+
+```{r defaultResults}
+# ###### Update and Save Default Scenario ######
+defaultResults <- FrEDI::run_fredi()
+save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.RData"))
+```
+
+### Update Documentation
+
+Use the following code to update documentation
+
+```{r updateDocs}
+###### Update Documentation ######
+###### - Build Manual
+###### - Add and build vignettes
+###### - Generate Documentation
+roxygen2::roxygenise(frediPath)
+devtools::document(pkg = frediPath)
+devtools::build_manual(pkg = frediPath)
+devtools::build_vignettes(pkg = frediPath)
+```
+
+
+
+### Build the Package
+
+Use the following code to build the package
+
+```{r bldPackage}
+###### Build Package ######
+###### - Build Package but don't include vignettes
+devtools::build(pkg=frediPath)
+```
+
+
+### Copy Package Build to Library
+
+```{r package paths}
+### Copy the file
+packageName      <- "FrEDI"
+packageVersion   <- "2.2.0"
+packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
+packageFile_path <- frediPath %>% file.path("..", packageFile_name)
+packageDest      <- .libPaths()[1]
+packageDest_path <- packageDest %>% file.path(packageFile_name)
+```
+
+Copy file
+
+```{r copy package}
+file.copy(from = packageFile_path, to = packageDest, overwrite = T)
+```
+
 

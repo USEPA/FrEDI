@@ -20,7 +20,7 @@ aggregate_impacts(
 
 \item{columns}{Character vector of columns for which to aggregate results (defaults to \verb{columns=c("annual_impacts"})).}
 
-\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \verb{groupByCols=``c("sector"}, "\verb{adaptation"}, \code{"impactYear"}, \code{"impactType"}, \code{"model_type"}, \code{"model"}, \verb{"region")}.}
+\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \verb{groupByCols=``c("sector"}, \code{"adaptation"}, \code{"impactYear"}, \code{"impactType"}, \code{"model_type"}, \code{"model"}, \verb{"region")}. Note that the \code{"adaptation"} column referred to below contains information about the adaptation or variation name or \verb{“N/A”}, as applicable.}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), summarized at the specified aggregation and grouping levels.
@@ -34,7 +34,7 @@ This post-processing helper function aggregates and summarizes temperature binni
 
 Before aggregating impacts for national totals and/or model averages, \code{\link[=aggregate_impacts]{aggregate_impacts()}} will drop any pre-summarized results  (i.e., values for which \code{region="National Total"} and/or for which \code{model="average"}, respectively) that are already present in the data `and then reaggregate at those levels.
 
-For each of the \code{aggLevels}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} performs the following summarization:
+For each of the \code{aggLevels}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} performs the following summarization (note that the \code{"adaptation"} column referred to below contains information about the adaptation or variation name or \verb{“N/A”}, as applicable):
 \tabular{ll}{
 \strong{Aggregation Level} \tab \strong{Description} \cr
 \code{national} \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"adaptation"}, \code{"impactType"},  \code{"impactYear"}, \code{"model_type"}, \code{"model"}, and \code{"year"}) and summed across regions. Years which have missing column data for all regions return as \code{NA}. The rows of the dataframe of national values (with column \code{region="National Total"}) are then added as rows to the results. \cr
