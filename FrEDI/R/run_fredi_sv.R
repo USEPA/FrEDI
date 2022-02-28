@@ -569,12 +569,10 @@ run_fredi_sv <- function(
       msg2 %>% paste0("Warning: Excel template '", inFileName, "' not found in '", inFilePath, "'...") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
-      if(return){return(df_results)}
     } else if(!outDirExists){
       msg2 %>% paste0("Warning: `outpath='", outpath, "' does not exist...", "\n") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
-      if(return){return(df_results)}
     } else if(outFileExists & !overwrite){
       msg2 %>% paste0("Warning: Excel file '", outFileName,"' already exists!") %>% message
       overwritePrompt <- paste0("Overwrite existing file (y/n)?")
@@ -586,7 +584,6 @@ run_fredi_sv <- function(
     if(!overwrite){
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
-      if(return){return(df_results)}
     } else{
       ### Open the workbook and write  ReadMe info
       excel_wb      <- excel_wb_path %>% loadWorkbook()
@@ -649,7 +646,6 @@ run_fredi_sv <- function(
   ###### Return Object ######
   message("\n", "Finished", ".")
   df_results   <- df_results %>% ungroup %>% as.data.frame
-  if(return){return(df_results)}
 } ### End function
 
 

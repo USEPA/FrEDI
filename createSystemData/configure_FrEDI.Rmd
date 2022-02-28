@@ -162,7 +162,7 @@ time_create     <- time2 - time1; time_create
 
 
 
-## Update R Tool
+
 
 **Manually update the sysdata.rdata file in the Rtool.**
 
@@ -176,13 +176,16 @@ file.copy(
 )
 ```
 
+
+## Update R Tool [#updateRtool]
+
 ### Test function
 
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-new_sectors <- "CIL Crime"
-# new_sectors <- NULL
+# new_sectors <- "CIL Crime"
+new_sectors <- NULL
 ```
 
 
@@ -246,8 +249,8 @@ Use the following code to update documentation
 ###### - Generate Documentation
 roxygen2::roxygenise(frediPath)
 devtools::document(pkg = frediPath)
-devtools::build_manual(pkg = frediPath)
-devtools::build_vignettes(pkg = frediPath)
+# devtools::build_manual(pkg = frediPath)
+# devtools::build_vignettes(pkg = frediPath)
 ```
 
 
@@ -282,3 +285,30 @@ file.copy(from = packageFile_path, to = packageDest, overwrite = T)
 ```
 
 
+### Update SV
+
+Use the following code to compile the SV configuration data
+
+```{r test_systemData0}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
+test_sector <- c("Air Quality")
+### Uncomment following two lines to create and save data and check the outputs
+time1           <- Sys.time()
+# test_svData     <- createSVData(save=T, sv = T, pop = T, impacts=T, format=T)
+test_svData     <- createSVData(save=T, sv = F, format=T)
+time2           <- Sys.time()
+time_create     <- time2 - time1; time_create
+```
+
+
+
+Use the following code to update the FrEDI system data
+
+```{r}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+update_sysdata(sv=T, impacts=F, save=T)
+```
+
+
+After running, [update the R tool](#updateRtool).
