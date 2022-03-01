@@ -1,5 +1,84 @@
 ###### Overview ######
 ### This file contains helper functions for the FrEDI SV module.
+###### get_sv_sectorInfo ######
+#' This function provides information about the sectors in the FrEDI SV Module.
+#'
+#' @description
+#' This helper function returns a character vector with the names of sectors in the FrEDI SV module (default) *or* a dataframe of those sectors with related information (`description=TRUE`). If `description=TRUE`, [FrEDI::get_sv_sectorInfo] will return a dataframe with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), available adaptations. Users can use [FrEDI::get_sv_sectorInfo] to determine which sectors can be passed to the [FrEDI::run_sv_fredi()] `sector` argument and/or to determine whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#'
+#' @param description=FALSE. Logical value indicating whether to include information about each sector. Returns a dataframe if `description=TRUE` and returns a character vector of sector names if `description=FALSE` (default).
+#' @param gcmOnly=FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.
+#' @param slrOnly=FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.
+#'
+#' @details
+#' This helper function returns a character vector with the names of sectors in FrEDI (default) *or* a dataframe of those sectors with related information (`description=TRUE`). If `description=TRUE`, [FrEDI::get_sv_sectorInfo] will return a dataframe with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), and available adaptations. Users can use [FrEDI::get_sv_sectorInfo] to determine which sectors can be passed to the [FrEDI::run_sv_fredi()] `sector` argument and/or to determine whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#'
+#' If `description=FALSE` (default), this helper function returns a character vector of names of sectors that can be passed to the [FrEDI::run_sv_fredi()] `sector` argument. If `description=TRUE`, `get_sv_sectorInfo()` returns a dataframe of sectors with related information, such as whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#'
+#' Users can specify whether to return only GCM sectors *or* SLR sectors by setting `gcmOnly=TRUE` or `slrOnly=TRUE`, respectively. [FrEDI::get_sv_sectorInfo()] will return the sectors in the form specified by `description` (see above).
+#'
+#' @return
+#'
+#' * If `description=FALSE` (default), outputs a character vector containing the names of sectors available for the FrEDI SV Module.
+#' * If `description=TRUE`, `, outputs a dataframe containing the names of sectors available for the FrEDI SV Module in one column, with information about the sector model type, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ),  impact units (e.g., mortality, etc.), and available adaptations in the remaining columns.
+#'
+#' @examples
+#'
+#' ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
+#' get_sv_sectorInfo()
+#'
+#' ### Return a dataframe of all of the sectors in the FrEDI SV Module (sector names and additional information)
+#' get_sv_sectorInfo(description=T, gcmOnly=T)
+#'
+#' ### Return a character vector with only the names of the temperature-driven sectors:
+#' get_sv_sectorInfo(gcmOnly=T)
+#'
+#'
+#' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
+#'
+#' @export
+#' @md
+#'
+###
+###
+get_sv_sectorInfo <- function(
+  description=F,
+  gcmOnly=F,
+  slrOnly=F
+){
+  if(is.null(description)){description<-F}
+  if(is.null(gcmOnly    )){gcmOnly    <-F}
+  if(is.null(slrOnly    )){slrOnly    <-F}
+  # co_sectorsRef$sector_label
+  assign("sectorInfo"  , svDataList[["sectorInfo"]])
+  assign("svSectorInfo", svDataList[["svSectorInfo"]])
+
+  sectorInfo <- sectorInfo %>%
+    select(c("sector", "modelType", "impactUnit")) %>%
+    mutate(modelType  = modelType %>% toupper) %>%
+    mutate(adaptations = sector %>% lapply(function(sector_i){
+      adaptations_i <- (svSectorInfo %>% filter(sector==sector_i))$adapt_label %>% paste(collapse=", ")
+      return(adaptations_i)
+    }) %>% unlist) %>%
+    mutate(driverUnit=ifelse(modelType=="GCM", "degrees Celsius", "cm")) %>%
+    select(c("sector", "modelType", "driverUnit", "adaptations", "impactUnit"))
+
+  gcm_string <- "GCM"
+  if(gcmOnly){
+    sectorInfo <- sectorInfo %>% filter(model_type==gcm_string)
+  } else if(slrOnly){
+    sectorInfo <- sectorInfo %>% filter(model_type!=gcm_string)
+  }
+
+  ### If not description, return names only
+  if(!description){
+    return_obj <- sectorInfo$sector
+  } else{
+    return_obj <- sectorInfo %>% as.data.frame
+  }
+
+  return(return_obj)
+}
 
 
 ###### calc_countyPop ######

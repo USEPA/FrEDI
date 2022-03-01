@@ -95,20 +95,20 @@ install_fredi <- function(
 
 install_fredi()
 
+# install_fredi(version="2.3.0")
 
-
-# ?devtools::install_github()
-# ?with_libpaths
-withr::with_libpaths(
-  new = .libPaths()[1],
-  devtools::install_github(
-    repo   = "https://github.com/USEPA/FrEDI",
-    subdir = "FrEDI",
-    type   = "source",
-    force  = TRUE,
-    ref = "new_labor"
-  )
-)
+# # ?devtools::install_github()
+# # ?with_libpaths
+# withr::with_libpaths(
+#   new = .libPaths()[1],
+#   devtools::install_github(
+#     repo   = "https://github.com/USEPA/FrEDI",
+#     subdir = "FrEDI",
+#     type   = "source",
+#     force  = TRUE,
+#     ref = "new_labor"
+#   )
+# )
 ###### Test Package ######
 testx     <- FrEDI::run_fredi(pv=T)
 
