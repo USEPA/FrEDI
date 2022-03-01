@@ -6,3 +6,4 @@
 ^.*\.Rhistory$
 ^\.Rhistory\.user$
 ^install$
+^data-raw$

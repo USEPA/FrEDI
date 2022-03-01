@@ -238,9 +238,17 @@ defaultResults <- FrEDI::run_fredi()
 save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.RData"))
 ```
 
+
+
 ### Update Documentation
 
 Use the following code to update documentation
+<!-- usethis::use_data() -->
+
+```{r datasets to include}
+# usethis::use_data()
+```
+
 
 ```{r updateDocs}
 ###### Update Documentation ######
