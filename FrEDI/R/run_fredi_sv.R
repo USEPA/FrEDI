@@ -5,7 +5,7 @@
 #' This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for socially vulnerable populations for available sectors (see [FrEDI::get_sv_sectorInfo()]). Users must pass a dataframe of custom driver scenarios to [FrEDI::run_fredi_sv()] using the `driverInput` argument (required) and have the option to pass a population scenario to [FrEDI::run_fredi_sv()] via the `popInput` argument (optional). The output is an R data frame object containing annual average impacts at five-year increments between 2010 and 2090. Users have the option to write results to an Excel file by setting `save=TRUE`. Additional arguments provide more control over how the outputs are saved if `save=TRUE`.
 #'
 #' @param sector=NULL A character string indicating for which sector to run the FrEDI SV module.
-#' @param driverInput=NULL A dataframe of custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` is a required input and [FrEDI::run_fredi_sv()] will abort prematurely if `driverInput=NULL` (default). `driverInput` requires a dataframe with columns of `"year"` and `"scenario"`. The dataframe must also include at least one of the following columns: `"temp_C"` or `"slr_cm"` (depending on whether the sector impacts are driven primarily by temperature or sea level rise, respectively...use [FrEDI::get_sv_sectorInfo()] to get information on driver types). If users include all four columns (`c(``"year",` `"scenario",` `"temp_C",` `"slr_cm"``)`) then [FrEDI::run_fredi_sv()] will determine which driver column (`"temp_C"` or `"slr_cm"`) to use based on the specified sector. Driver inputs (temperature and sea level rise) should start in the year 2000 or earlier. Temperature inputs must be temperature change in degrees Celsius for the CONUS region (if starting from global temperature change, use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`). Sea level rise inputs must be change in sea level in centimeters. All scenarios must include at least two non-missing values. Note: [FrEDI::import_inputs()] is not intended to import the driver scenario for [FrEDI::run_fredi_sv()]).
+#' @param driverInput=NULL A dataframe of up to four custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a dataframe with columns of `"year"` and `"scenario"`. The dataframe must also include at least one of the following columns: `"temp_C"` or `"slr_cm"` (depending on whether the sector impacts are driven primarily by temperature or sea level rise, respectively...use [FrEDI::get_sv_sectorInfo()] to get information on driver types). If users include all four columns (`c(``"year",` `"scenario",` `"temp_C",` `"slr_cm"``)`) then [FrEDI::run_fredi_sv()] will determine which driver column (`"temp_C"` or `"slr_cm"`) to use based on the specified sector. Driver inputs (temperature and sea level rise) should start in the year 2000 or earlier. Temperature inputs must be temperature change in degrees Celsius for the CONUS region (if starting from global temperature change, use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`). Sea level rise inputs must be change in sea level in centimeters. All scenarios must include at least two non-missing values. If any required columns are missing, [FrEDI::run_fredi_sv()] will use the default temperature scenario from [FrEDI::run_fredi()]. If the dataframe passed to `driverInput` has more than four unique scenarios, [FrEDI::run_fredi_sv()] will only run the first four scenarios.
 #' @param popInput=NULL A dataframe containing a custom scenario for regional population, with columns `c(``"year",` `"region",` `"reg_pop"``)` (containing the year, region, and regional population, respectively). The dataframe passed to `popInput` can be imported using [FrEDI::import_inputs()] (for more information, see [FrEDI::import_inputs()]). Note that, in contrast to the dataframe passed to `driverInput`, the `popInput` dataframe must be a single scenario (i.e., [FrEDI::run_fredi_sv()] uses the same population scenario for all driver scenarios in `driverInput`). Region names in the `"region"` column must match those in `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern Plains",` `"Southeast",` `"Southwest",` `"Southern Plains"``)` or `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern.Plains",` `"Southeast",` `"Southwest",` `"Southern.Plains"``)`.
 #' @param silent=TRUE A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 # @param return=TRUE A `TRUE/FALSE` value indicating whether to return the results as a dataframe (default=`TRUE`).
@@ -14,11 +14,9 @@
 #' @param overwrite=FALSE A `TRUE/FALSE` value indicating whether to overwrite an existing Excel file if `save=TRUE` (default=`FALSE`). By default, if `save=TRUE`, `overwrite=FALSE`. If `overwrite=FALSE`, [FrEDI::run_fredi_sv()] will not write over an existing file. If `overwrite=FALSE`, and the file already exists, [FrEDI::run_fredi_sv()] will provide the user with the option to write over the existing file: in this case, when [FrEDI::run_fredi_sv()] is ready to save the file, it will message the user and prompt them if they would like to write over the existing file.
 #' @param addDate=FALSE A `TRUE/FALSE` value indicating whether to add the date to the name of the output Excel file if `save=TRUE` (`default=FALSE`). By default, if `save=TRUE`, [FrEDI::run_fredi_sv()] will not add the date to the Excel file name (`addDate=FALSE`). If `addDate=TRUE` (and `save=TRUE`), [FrEDI::run_fredi_sv()] will append the system date to the beginning of the name of the outputs Excel file using the format `"%Y%m%d"` (see [base::format()] and [base::Sys.Date()] for additional information).
 #'
-#' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for socially vulnerable populations for available sectors (see [FrEDI::get_sv_sectorInfo()]). [FrEDI::run_fredi_sv()] is the main function for the FrEDI Social Vulnerability (SV) Module in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
+#' @details This function allows users to project annual average climate change impacts throughout the 21st century (2010-2090) for socially vulnerable populations for available sectors (see [FrEDI::get_sv_sectorInfo()]). [FrEDI::run_fredi_sv()] is the main function for the FrEDI Social Vulnerability (SV) Module in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information). Users have the option to pass a dataframe of custom driver scenarios to [FrEDI::run_fredi_sv()] using the `driverInput` argument (required) and have the option to pass a population scenario to [FrEDI::run_fredi_sv()] via the `popInput` argument (optional). The output is an R data frame object containing annual average impacts at five-year increments between 2010 and 2090. Users have the option to write results to an Excel file by setting `save=TRUE`. Additional arguments provide more control over how the outputs are saved if `save=TRUE`.
 #'
-#' Users must pass a dataframe of custom driver scenarios to [FrEDI::run_fredi_sv()] using the `driverInput` argument (required) and have the option to pass a population scenario to [FrEDI::run_fredi_sv()] via the `popInput` argument (optional). The output is an R data frame object containing annual average impacts at five-year increments between 2010 and 2090. Users have the option to write results to an Excel file by setting `save=TRUE`. Additional arguments provide more control over how the outputs are saved if `save=TRUE`.
-#'
-#' `driverInput` is a required input for [FrEDI::run_fredi_sv()] (in contrast to [FrEDI::run_fredi()], which has a default temperature and SLR scenario) and [FrEDI::run_fredi_sv()] will abort prematurely if `driverInput=NULL` (default). `driverInput` requires a dataframe of custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a dataframe with columns of `"year"` and `"scenario"`. The dataframe must also include at least one of the following columns: `"temp_C"` or `"slr_cm"` (depending on whether the sector impacts are driven primarily by temperature or sea level rise, respectively). If users include all four columns (`c(``"year",``"scenario",``"temp_C",``"slr_cm"``)`) then [FrEDI::run_fredi_sv()] will determine which driver column (`"temp_C"` or `"slr_cm"`) to use based on the specified sector. Driver inputs (temperature and sea level rise) should start in the year 2000 or earlier. Temperature inputs must be temperature change in degrees Celsius for the CONUS region (if starting from global temperature change, use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`). Sea level rise inputs must be change in sea level in centimeters. All scenarios must include at least two non-missing values.
+#' `driverInput` requires a dataframe of up to four custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a dataframe with columns of `"year"` and `"scenario"`. The dataframe must also include at least one of the following columns: `"temp_C"` or `"slr_cm"` (depending on whether the sector impacts are driven primarily by temperature or sea level rise, respectively). If users include all four columns (`c(``"year",``"scenario",``"temp_C",``"slr_cm"``)`) then [FrEDI::run_fredi_sv()] will determine which driver column (`"temp_C"` or `"slr_cm"`) to use based on the specified sector. Driver inputs (temperature and sea level rise) should start in the year 2000 or earlier. Temperature inputs must be temperature change in degrees Celsius for the CONUS region (if starting from global temperature change, use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`). Sea level rise inputs must be change in sea level in centimeters. All scenarios must include at least two non-missing values. If any required columns are missing, [FrEDI::run_fredi_sv()] will use the default temperature scenario from [FrEDI::run_fredi()]. If the dataframe passed to `driverInput` has more than four unique scenarios, [FrEDI::run_fredi_sv()] will only run the first four scenarios.
 #'
 #' `popInput` is an optional input that takes a dataframe containing a custom scenario for regional population, with columns `c(``"year",` `"region",` `"reg_pop"``)` (containing the year, region, and regional population, respectively). If `popInput=NULL` (default), [FrEDI::run_fredi_sv()] will use the a default regional population scenario from ICLUS (see <https://epa.gov/cira/FrEDI> for more information about the ICLUS scenario). The dataframe passed to `popInput` can be imported using [FrEDI::import_inputs()] (for more information, see [FrEDI::import_inputs()]). Note that, in contrast to the dataframe passed to `driverInput`, the `popInput` dataframe must be a single scenario (i.e., [FrEDI::run_fredi_sv()] uses the same population scenario for all driver scenarios in `driverInput`). Region names in the `"region"` column must match those in `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern Plains",` `"Southeast",` `"Southwest",` `"Southern Plains"``)` or `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern.Plains",` `"Southeast",` `"Southwest",` `"Southern.Plains"``)`.
 #'
@@ -485,7 +483,6 @@ run_fredi_sv <- function(
         paste0(ifelse(is.na(adaptAbbr_i), "", "_")) %>%
         paste0(ifelse(is.na(adaptAbbr_i), "", adaptAbbr_i))
       impactsPath_i     <- impactsPath %>% file.path(impactsName_i) %>% paste0(".rds")
-      impactsList_i     <- impactsPath_i %>% readRDS
 
       ### Which SV data to use
       svName_i     <- ifelse(c_sector=="Coastal Properties", "svDataCoastal", "svData"); # svName_i %>% print
@@ -496,14 +493,16 @@ run_fredi_sv <- function(
         ###### Scaled Impacts ######
         drivers_j <- drivers_df %>% filter(scenario == scenario_j) %>% select(-c("scenario"))
         ### Get impact list, calculate scaled impacts, remove impact list
+
+        if(!exists("impactsList_j")){impactsList_j <- impactsPath_i %>% readRDS}
         impacts_j <- calc_tractScaledImpacts(
-          funList      = impactsList_i,
+          funList      = impactsList_j,
           driverValues = drivers_j,
           silent       = silent,
           .msg0        = msg2
         ) %>%
           mutate(year  = year %>% as.numeric)
-        if(exists("impactsList_i")){remove(list=c("impactsList_i"), inherits = T)}
+        if(exists("impactsList_j")){remove(list=c("impactsList_j"), inherits = T)}
         # impacts_j %>% nrow %>% print
 
         impacts_j <- impacts_j %>% filter(!is.na(sv_impact))
@@ -531,6 +530,7 @@ run_fredi_sv <- function(
       }) %>%
         (function(y){do.call(rbind, y)}) %>%
         mutate(adaptation = adaptLabel_i)
+
       return(results_i)
     }) %>%
     (function(x){do.call(rbind, x)})
@@ -543,7 +543,7 @@ run_fredi_sv <- function(
     msg1 %>% paste0("Saving results to Excel...") %>% message
     ###### File Info ######
     ###### Template Info
-    inFilePath      <- system.file(package="FrEDI") %>% file.path("extdata")
+    inFilePath      <- system.file(package="FrEDI") %>% file.path("extdata", "sv")
     inFileName      <- "FrEDI SV Graphics Template.xlsx"
     ###### Workbook Info
     excel_wb_path   <- inFilePath   %>% file.path(inFileName)
@@ -593,8 +593,9 @@ run_fredi_sv <- function(
       msg1 %>% paste0("Finished.") %>% message
     } else{
       ### Open the workbook and write  ReadMe info
-      excel_wb      <- excel_wb_path %>% loadWorkbook()
       msg2 %>% paste0("Formatting workbook...") %>% message
+      excel_wb      <- excel_wb_path %>% loadWorkbook()
+
       ### Write sector, date/time, and adaptation info to workbook
       ### sector & date/time info
       excel_wb %>%
@@ -628,7 +629,7 @@ run_fredi_sv <- function(
       rm("df_info_i", "style_i", "sheet_i", "rows_i", "cols_i")
 
       ###### Write results
-      "Writing results..." %>% message
+      msg2 %>% paste0("Writing results...") %>% message
       for(i in 1:nrow(df_sectorInfo)){
         adapt_i     <- c_adaptLabels[i]
         sheet_i     <- excel_wb_sheets[i]

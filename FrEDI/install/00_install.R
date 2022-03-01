@@ -93,9 +93,9 @@ install_fredi <- function(
   }
 }
 
-install_fredi()
+# install_fredi()
 
-# install_fredi(version="2.3.0")
+install_fredi(version="2.3.0")
 
 # # ?devtools::install_github()
 # # ?with_libpaths

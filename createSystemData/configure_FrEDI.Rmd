@@ -61,6 +61,12 @@ mostRecentDate <- "20220225"
 ### Set system paths
 projectPath      <- getwd()
 today            <- format(Sys.Date(), "%Y%m%d")
+
+### Path to fredi project
+projectParentDir <- projectPath %>% file.path("..")
+projectParentDir %>% list.files
+frediPath        <- projectParentDir %>% file.path("FrEDI")
+
 ### Project configuration
 configPath       <- projectPath %>% file.path("config")
 configFiles      <- configPath %>% list.files(".R")
@@ -81,11 +87,6 @@ sysFileName      <- "sysdata"
 sysArchName      <- dataOutLog %>% file.path(sysFileName) %>% paste(today, sep="_") %>% paste0(".rda")
 excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
 sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
-
-### Path to fredi project
-projectParentDir <- projectPath %>% file.path("..")
-projectParentDir %>% list.files
-frediPath        <- projectParentDir %>% file.path("FrEDI")
 ```
 
 ### Configuration Files
