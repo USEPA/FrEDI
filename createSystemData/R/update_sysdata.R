@@ -28,7 +28,7 @@ update_sysdata <- function(
   ### SV pop data
   ### format data
   sysDataName     <- "sysdata"        %>% paste(rDataExt, sep=".")
-  sysDataName2    <- "sysdata2"        %>% paste(rDataExt, sep=".")
+  # sysDataName2    <- "sysdata2"        %>% paste(rDataExt, sep=".")
 
   ###### List of Objects ######
   df_sv <- data.frame(
@@ -40,7 +40,7 @@ update_sysdata <- function(
 
   ###### Import sysdata.rda ######
   sysDataPath   <- outPath %>% file.path(sysDataName)
-  sysDataPath2   <- outPath %>% file.path(sysDataName2)
+  # sysDataPath2   <- outPath %>% file.path(sysDataName2)
   sysDataList   <- sysDataPath %>% (function(x){admisc::obj.rda(x)})
   sysDataList %>% print
   load(sysDataPath)
@@ -60,9 +60,11 @@ update_sysdata <- function(
       ### Names
       names_sysdata   <- sysDataList
       pattern_sysdata <- paste(names_sysdata, collapse = "|")
-      eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
+      # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
+      eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
     }
-    sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
+    # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
+    sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
   }
 
 

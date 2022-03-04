@@ -69,7 +69,8 @@ frediPath        <- projectParentDir %>% file.path("FrEDI")
 
 ### Project configuration
 configPath       <- projectPath %>% file.path("config")
-configFiles      <- configPath %>% list.files(".R")
+# configFiles      <- configPath %>% list.files(".R")
+configFiles      <- "frediConfig.R"
 ### Code path
 codePath         <- projectPath %>% file.path("R")
 codeNames        <- codePath %>% list.files(".R")
@@ -293,6 +294,17 @@ Copy file
 file.copy(from = packageFile_path, to = packageDest, overwrite = T)
 ```
 
+<!-- Examine impacts data -->
+
+```{r}
+testx <- getwd() %>% file.path("inst", "extdata",  "sv", "impacts", "Coastal Flooding and SLR - With Adaptation.csv") %>% read.csv
+testx %>% glimpse
+testx$block_group %>% unique %>% length
+```
+
+
+
+
 
 ### Update SV
 
@@ -301,11 +313,11 @@ Use the following code to compile the SV configuration data
 ```{r test_systemData0}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 ### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
-test_sector <- c("Air Quality")
+test_sector     <- c("Coastal Properties")
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-# test_svData     <- createSVData(save=T, sv = T, pop = T, impacts=T, format=T)
-test_svData     <- createSVData(save=T, sv = F, format=T)
+test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
+# test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -314,7 +326,7 @@ time_create     <- time2 - time1; time_create
 
 Use the following code to update the FrEDI system data
 
-```{r}
+```{r update_sysdata}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 update_sysdata(sv=T, impacts=F, save=T)
 ```

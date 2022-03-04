@@ -244,8 +244,8 @@ run_fredi_sv <- function(
   if(has_popInput){
     msg1 %>% message("Checking `popInput` values...")
     ### Check that the input is a dataframe
-    class_driverInput <- driverInput %>% class
-    if(!("data.frame" %in% class_driverInput)){
+    class_popInput <- popInput %>% class
+    if(!("data.frame" %in% class_popInput)){
       msg2 %>% message("Error: `popInput` must have `class='data.frame'`!", "\n")
       msg2 %>% message("Exiting...")
       return()
@@ -489,7 +489,7 @@ run_fredi_sv <- function(
 
       ###### Iterate Over Scenarios ######
       results_i <- c_scenarios %>% lapply(function(scenario_j){
-         paste0("\n", msg1, "Calculating impacts for sector '", c_sector, "', adaptation '", adaptLabel_i, "', scenario '", scenario_j, "'...") %>% message
+         paste0("\n", msg1, "Calculating impacts for sector='", c_sector, "', adaptation='", adaptLabel_i, "', scenario='", scenario_j, "'...") %>% message
         ###### Scaled Impacts ######
         drivers_j <- drivers_df %>% filter(scenario == scenario_j) %>% select(-c("scenario"))
         ### Get impact list, calculate scaled impacts, remove impact list
@@ -550,50 +550,57 @@ run_fredi_sv <- function(
     excel_wb_exists <- excel_wb_path %>% file.exists; #excel_wb_exists %>% print
     excel_wb_sheets <- c("FrEDI Outputs 1", "FrEDI Outputs 2")
     ###### Outfile Info and add date if specified
-    outFileBase    <- "FrEDI" %>% paste("SV", "Outputs", c_sector, sep="_") #; outFileBase %>% print
-    outFileName    <- outFileBase %>% paste0(".xlsx"); #outFileName %>% print
+    outFileBase     <- "FrEDI" %>% paste("SV", "Outputs", c_sector, sep="_") #; outFileBase %>% print
+    outFileName     <- outFileBase %>% paste0(".xlsx"); #outFileName %>% print
     if(addDate){
-      today <- Sys.Date() %>% format("%Y%m%d")
-      paste(today, outFileName, sep="_")
+      today         <- Sys.Date() %>% format("%Y%m%d")
+      outFileName   <- paste(today, outFileName, sep="_")
     }
 
-    outFilePath    <- outpath %>% file.path(outFileName)
+    outFilePath     <- outpath %>% file.path(outFileName)
     ###### Workbook Info
-    df_readme1 <- data.frame(x=c(c_sector, as.character(Sys.Date())))
-    if(length(c_adaptLabels)==1){
-      c_adaptLabels <- paste(c_sector, "All Impacts", sep=", ")
-      df_readme2 <- data.frame(x=c(c_adaptLabels, "N/A"))
+    df_readme1      <- data.frame(x=c(c_sector, as.character(Sys.Date())))
+
+    if(nrow(df_sectorInfo)==1){
+      # c_adaptLabels <- paste(c_sector, "All Impacts", sep=", ")
+      c_adaptLabels <- c("All Impacts", "--")
+      # df_readme2    <- data.frame(x=c(c_adaptLabels, "--"))
     } else{
-      df_readme2 <- data.frame(x=c_adaptLabels)
+      c_adaptLabels <- df_sectorInfo$adapt_label
+      # df_readme2    <- data.frame(x=c_adaptLabels)
     }
+    df_readme2    <- data.frame(x=c_adaptLabels)
 
     ###### Check Directory and File ######
-    outDirExists   <- outFilePath %>% dirname %>% dir.exists
-    outFileExists  <- outFilePath %>% file.exists
+    outDirExists    <- outFilePath %>% dirname %>% dir.exists
+    outFileExists   <- outFilePath %>% file.exists
     if(!excel_wb_exists){
       msg2 %>% paste0("Warning: Excel template '", inFileName, "' not found in '", inFilePath, "'...") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
     }
-
+    ### What to do if the directory doesn't exist
     if(!outDirExists){
       msg2 %>% paste0("Warning: `outpath='", outpath, "' does not exist...", "\n") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
-    } else if(outFileExists & !overwrite){
+    }
+    ### What to do if the directory exists
+    if(outFileExists & !overwrite){
       msg2 %>% paste0("Warning: Excel file '", outFileName,"' already exists!") %>% message
       overwritePrompt <- paste0("Overwrite existing file (y/n)?")
-      overwriteInput  <- readline(prompt = overwritePrompt) %>% tolower; rm("overwritePrompt")
+      overwriteInput  <- readline(prompt = overwritePrompt) %>% tolower; #rm("overwritePrompt")
       overwrite       <- ifelse(overwriteInput == "y", T, overwrite)
     }
 
     ###### If not overwrite, then return and exit
-    if(!overwrite){
+    writeFile <- (outFileExists & overwrite) | (!outFileExists)
+    if(!writeFile){
       msg2 %>% paste0("Exiting without saving...") %>% message
       msg1 %>% paste0("Finished.") %>% message
     } else{
       ### Open the workbook and write  ReadMe info
-      msg2 %>% paste0("Formatting workbook...") %>% message
+      if(msgUser){ msg2 %>% paste0("Formatting workbook...") %>% message}
       excel_wb      <- excel_wb_path %>% loadWorkbook()
 
       ### Write sector, date/time, and adaptation info to workbook
@@ -629,15 +636,24 @@ run_fredi_sv <- function(
       rm("df_info_i", "style_i", "sheet_i", "rows_i", "cols_i")
 
       ###### Write results
-      msg2 %>% paste0("Writing results...") %>% message
+      if(msgUser){ msg2 %>% paste0("Writing results...") %>% message}
       for(i in 1:nrow(df_sectorInfo)){
-        adapt_i     <- c_adaptLabels[i]
+        adapt_i     <- df_sectorInfo$adapt_label[i]
         sheet_i     <- excel_wb_sheets[i]
-        results_i   <- df_results %>% filter(adaptation == adapt_i) %>% mutate(adaptation = c_adaptLabels[i])
+        label_i     <- c_adaptLabels[i]
+
+        ### Filter results
+        # results_i   <- df_results %>% filter(adaptation == adapt_i)
+        results_i   <- df_results %>%
+          filter(adaptation == adapt_i) %>%
+          # mutate(adaptation = adaptation %>% as.character) %>%
+          mutate(adaptation = label_i)
+
+        ### Save results
         excel_wb %>%
           writeData(
-            x     = results_i,
-            sheet = sheet_i,
+            x        = results_i,
+            sheet    = sheet_i,
             startCol = 1,
             startRow = 2,
             colNames = F

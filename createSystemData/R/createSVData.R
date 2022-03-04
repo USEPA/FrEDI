@@ -38,24 +38,14 @@ createSVData <- function(
   sv_filePath <- outPath_sv %>% file.path(sv_fileName)
   
   ###### Import Functions from ciraTempBin ######
-  # calc_countyPop  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
+  calc_countyPop  <- utils::getFromNamespace("calc_countyPop", "FrEDI")
   # outPath     = file.path(getwd(), "..", "FrEDI", "R"),
-  getwd() %>% file.path("..", "FrEDI", "R", "utils_sv.R") %>% source
+  # getwd() %>% file.path("..", "FrEDI", "R", "utils_sv.R") %>% source
   
   ###### Initialize Return List ######
   if(return){
     returnList <- list()  
   }
-  
-  # ###### Import sysdata.rda ######
-  # ### Whether to import system data
-  # update_sysdata <- save & (sv | pop | format)
-  # # list_sysdata   <- NULL
-  # if(update_sysdata){
-  #   # load(outPath %>% file.path("sysdata.rda"))
-  #   path_sysdata <- outPath %>% file.path("sysdata.rda")
-  #   list_sysdata <- path_sysdata %>% list.rda()
-  # }
   
   ###### SV Demographic Data ######
   ### Create or load SV demographic data
@@ -66,10 +56,6 @@ createSVData <- function(
       outPath = outPath_sv,
       msg0    = "\t"
     )
-    # ### Add to list of objects in sysdata
-    # if(save){
-    #   list_sysdata[["svDataList"]] <- svDataList
-    # }
   } else if(load_demoInfo){ ### Load svDataList
     load(sv_filePath)
   } else{
@@ -86,10 +72,6 @@ createSVData <- function(
       outPath = outPath_sv, 
       msg0    = "\t"
       )
-    # ### Add to list of objects in sysdata
-    # if(save){
-    #   list_sysdata[["svPopList"]] <- svPopList
-    # }
   } else{
     svPopList <- NULL
   }
@@ -103,6 +85,8 @@ createSVData <- function(
       style_i <- createStyle(
         fgFill       = df_formatTypes$fgFill[i],
         halign       = df_formatTypes$halign[i],
+        valign       = "center", 
+        wrapText     = TRUE,
         border       = df_formatTypes$border[i],
         borderColour = df_formatTypes$borderColour[i],
         fontColour   = df_formatTypes$fontColour[i]
@@ -118,30 +102,8 @@ createSVData <- function(
     formatPath <- outPath_sv %>% file.path(formatFile)
     save(format_styles, file=formatPath)
   }
-  # df_formatTypes <- svDataList$co_formatTypes
-  # format_styles  <- list()
-  # for(i in 1:nrow(df_formatTypes)){
-  #   styleName_i <- df_formatTypes$styleName[i]
-  #   
-  #   style_i <- createStyle(
-  #     fgFill       = df_formatTypes$fgFill[i], 
-  #     halign       = df_formatTypes$halign[i], 
-  #     border       = df_formatTypes$border[i], 
-  #     borderColour = df_formatTypes$borderColour[i],
-  #     fontColour   = df_formatTypes$fontColour[i]
-  #   )
-  #   
-  #   format_styles[[styleName_i]] <- style_i
-  # }
-  # if(save){
-  #   formatFile <- "format_styles" %>% paste("rda", sep=".")
-  #   formatPath <- outPath_sv %>% file.path(formatFile)
-  #   save(format_styles, file=formatPath)
-  # }
-  
+
   ###### Impacts Functions List ######
-  # codePath %>% file.path(paste("get_svImpactsList", "R", sep=".")) %>% source
-  # c_svSectors <- svSectorInfo$sector %>% unique
   if(impacts){
     ### Filter sector info to sectors specified by user
     svSectorInfo <- svDataList$svSectorInfo; 
@@ -158,11 +120,13 @@ createSVData <- function(
       sector_i      <- svSectorInfo$sector[i]
       adapt_i       <- svSectorInfo$adapt_label[i]
       fileExt_i     <- svSectorInfo$impactList_fileExt[i]
+      inFileExt_i   <- "csv"
+      # inFileExt_i   <- ifelse(sector == "Coastal Properties", "xlsx", "csv")
       
       infile_i      <- infileName_i %>% 
         paste0(ifelse(is.na(adapt_abbr_i), "", " - ")) %>% 
-        paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i)) %>% 
-        paste("csv", sep=".")
+        paste0(ifelse(is.na(adapt_abbr_i), "", adapt_i)) %>% 
+        paste(inFileExt_i, sep=".")
       # (infile_i %in% (excelDataPath %>% list.files)) %>% print
       
       outName_i     <- "impactsList" %>%
@@ -170,7 +134,8 @@ createSVData <- function(
         paste0(ifelse(is.na(adapt_abbr_i), "", "_")) %>%
         paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i))
       
-      outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
+      # outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
+      outfile_i     <- outName_i %>% paste("rds", sep=".")
       
       ### SV Data
       if(!is.null(svDataList)){
@@ -207,15 +172,6 @@ createSVData <- function(
     impactsList <- NULL
   }
 
-  
-  # ###### Update sysdata object ######
-  # if(update_sysdata){
-  #   ### Names
-  #   names_sysdata   <- list_sysdata %>% names
-  #   pattern_sysdata <- paste(names_sysdata, collapse = "|")
-  #   # save(list=ls(pattern = pattern_sysdata), file=path_sysdata)
-  #   eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=path_sysdata)))
-  # }
   
   ###### Return object ######
   message("\n\n", "Finished", ".")

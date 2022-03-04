@@ -655,16 +655,42 @@ get_svImpactsList <- function(
   if(!dataFileExists){
     msg1 %>% paste0("File `dataFile=", dataFile, "` not found in `dataPath='", dataPath,"'`.") %>% message
     msg1 %>% paste0("\n", "Exiting...") %>% message
+    return()
   }
   ###### Load data from CSV ######
   msg1 %>% paste0("Loading data from `dataFile=", dataFile, "` in `dataPath='", dataPath,"'`...") %>% message
   df_data <- dataFilePath %>% read.csv
   rows0   <- df_data %>% nrow
+  
+  ###### Load sv data ######
+  ### Load sv data "svData"
+  if(is.null(svInfo)){
+    df_sv_path <- outPath %>% file.path("..", "..", "R", "svDataList.rda")
+    load(df_sv_path)
+    if(sector == "Coastal Properties"){
+      svInfo <- svDataList$svDataCoastal  
+    } else{
+      svInfo <- svDataList$svData  
+    }
+    # svInfo$fips %>% unique %>% head %>% print
+  }
+  
+  ### Rename block_group
+  if(sector=="Coastal Properties"){
+    df_data   <- df_data %>% rename(tract = block_group)
+    nrow_data <- df_data %>% nrow
+    nrow_sv   <- svInfo  %>% nrow
+    if(nrow_data == nrow_sv){
+      df_data$tract = svInfo$fips
+    }
+  }
   tracts0 <- df_data$tract %>% unique %>% length
+  
   msg1 %>% paste0("\t", "Data has ", rows0, " rows and ", tracts0, " unique tracts.") %>% message
 
   ###### Gather data ######
   # x_subUnit <- ifelse(modelType=="gcm", "deg", "cm")
+  
   msg1 %>% paste0("Gathering data...") %>% message
   df_data    <- df_data %>%
     gather(
@@ -694,18 +720,6 @@ get_svImpactsList <- function(
 
   ###### Check data against sv data ######
   msg1 %>% paste0("Checking data against SV data...") %>% message
-  ### Load sv data "svData"
-  if(is.null(svInfo)){
-    df_sv_path <- outPath %>% file.path("..", "..", "R", "svDataList.rda")
-    load(df_sv_path)
-    if(sector == "Coastal Properties"){
-      svInfo <- svDataList$svDataCoastal  
-    } else{
-      svInfo <- svDataList$svData  
-    }
-    # svInfo$fips %>% unique %>% head %>% print
-  }
-  
   
   ### Standardize fips
   maxChar    <- svInfo$fips %>% nchar %>% max(na.rm=T)
@@ -805,12 +819,16 @@ get_svImpactsList <- function(
     ### Check that the directory exists
     if(dir.exists(outPath) & !is.null(outFile)){
       outname     <- outFile
-      outFileName <- outFile %>% paste(rDataExt, sep=".")
-      outFilePath <- outPath %>% file.path(outFileName)
+      # outFileName <- outFile %>% paste(rDataExt, sep=".")
+      # outFilePath <- outPath %>% file.path(outFileName)
+      # 
+      # ### Assign list, save to file, and remove list
+      # assign(outname, impactsList); rm("impactsList")
+      # save(list=ls(pattern="impactsList_"), file=outFilePath)
       
-      ### Assign list, save to file, and remove list
-      assign(outname, impactsList); rm("impactsList")
-      save(list=ls(pattern="impactsList_"), file=outFilePath)
+      outFileName <- outFile %>% paste("rds", sep=".")
+      outFilePath <- outPath %>% file.path(outFileName)
+      impactsList %>% saveRDS(file=outFilePath)
       # eval(substitute(rm(x), list(x=outname)))
       msg1 %>% paste0("\t", "Impacts list saved.") %>% message
     } else{
