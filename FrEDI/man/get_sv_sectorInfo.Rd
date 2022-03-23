@@ -35,11 +35,13 @@ Users can specify whether to return only GCM sectors \emph{or} SLR sectors by se
 get_sv_sectorInfo()
 
 ### Return a dataframe of all of the sectors in the FrEDI SV Module (sector names and additional information)
-get_sv_sectorInfo(description=T, gcmOnly=T)
+get_sv_sectorInfo(description=T)
 
 ### Return a character vector with only the names of the temperature-driven sectors:
 get_sv_sectorInfo(gcmOnly=T)
 
+### Return a character vector with only the names of the temperature-driven sectors:
+get_sv_sectorInfo(slrOnly=T)
 
 }
 \references{

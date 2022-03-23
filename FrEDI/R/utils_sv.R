@@ -28,11 +28,13 @@
 #' get_sv_sectorInfo()
 #'
 #' ### Return a dataframe of all of the sectors in the FrEDI SV Module (sector names and additional information)
-#' get_sv_sectorInfo(description=T, gcmOnly=T)
+#' get_sv_sectorInfo(description=T)
 #'
 #' ### Return a character vector with only the names of the temperature-driven sectors:
 #' get_sv_sectorInfo(gcmOnly=T)
 #'
+#' ### Return a character vector with only the names of the temperature-driven sectors:
+#' get_sv_sectorInfo(slrOnly=T)
 #'
 #' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
 #'
@@ -65,9 +67,9 @@ get_sv_sectorInfo <- function(
 
   gcm_string <- "GCM"
   if(gcmOnly){
-    sectorInfo <- sectorInfo %>% filter(model_type==gcm_string)
+    sectorInfo <- sectorInfo %>% filter(modelType==gcm_string)
   } else if(slrOnly){
-    sectorInfo <- sectorInfo %>% filter(model_type!=gcm_string)
+    sectorInfo <- sectorInfo %>% filter(modelType!=gcm_string)
   }
 
   ### If not description, return names only

@@ -18,36 +18,49 @@
 #'
 #' `driverInput` requires a dataframe of up to four custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a dataframe with columns of `"year"` and `"scenario"`. The dataframe must also include at least one of the following columns: `"temp_C"` or `"slr_cm"` (depending on whether the sector impacts are driven primarily by temperature or sea level rise, respectively). If users include all four columns (`c(``"year",``"scenario",``"temp_C",``"slr_cm"``)`) then [FrEDI::run_fredi_sv()] will determine which driver column (`"temp_C"` or `"slr_cm"`) to use based on the specified sector. Driver inputs (temperature and sea level rise) should start in the year 2000 or earlier. Temperature inputs must be temperature change in degrees Celsius for the CONUS region (if starting from global temperature change, use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`). Sea level rise inputs must be change in sea level in centimeters. All scenarios must include at least two non-missing values. If any required columns are missing, [FrEDI::run_fredi_sv()] will use the default temperature scenario from [FrEDI::run_fredi()]. If the dataframe passed to `driverInput` has more than four unique scenarios, [FrEDI::run_fredi_sv()] will only run the first four scenarios.
 #'
-#' `popInput` is an optional input that takes a dataframe containing a custom scenario for regional population, with columns `c(``"year",` `"region",` `"reg_pop"``)` (containing the year, region, and regional population, respectively). If `popInput=NULL` (default), [FrEDI::run_fredi_sv()] will use the a default regional population scenario from ICLUS (see <https://epa.gov/cira/FrEDI> for more information about the ICLUS scenario). The dataframe passed to `popInput` can be imported using [FrEDI::import_inputs()] (for more information, see [FrEDI::import_inputs()]). Note that, in contrast to the dataframe passed to `driverInput`, the `popInput` dataframe must be a single scenario (i.e., [FrEDI::run_fredi_sv()] uses the same population scenario for all driver scenarios in `driverInput`). Region names in the `"region"` column must match those in `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern Plains",` `"Southeast",` `"Southwest",` `"Southern Plains"``)` or `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern.Plains",` `"Southeast",` `"Southwest",` `"Southern.Plains"``)`.
+#' `popInput` is an optional input that takes a dataframe containing a custom scenario for regional population, with columns `c(``"year",` `"region",` `"reg_pop"``)` (containing the year, region, and regional population, respectively). If `popInput=NULL` (default), [FrEDI::run_fredi_sv()] will use the a default regional population scenario from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). The dataframe passed to `popInput` can be imported using [FrEDI::import_inputs()] (for more information, see [FrEDI::import_inputs()]). Note that, in contrast to the dataframe passed to `driverInput`, the `popInput` dataframe must be a single scenario (i.e., [FrEDI::run_fredi_sv()] uses the same population scenario for all driver scenarios in `driverInput`). Region names in the `"region"` column must match those in `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern Plains",` `"Southeast",` `"Southwest",` `"Southern Plains"``)` or `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern.Plains",` `"Southeast",` `"Southwest",` `"Southern.Plains"``)`.
 #'
 #' @return
 #' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation, model (GCM or SLR scenario), and region.
 #'
 #' @examples
-#' ### Run function with defaults (same as `defaultResults` dataset)
-#' sv_defaults <- run_fredi_sv()
+#' ### Run SV Module with defaults without specifying sector
+#' df_sv <- run_fredi_sv()
 #'
-#' ### Path to example scenarios
-#' scenariosPath <- system.file(package="FrEDI") %>% file.path("extdata","scenarios")
-#' ### View example scenario names
-#' scenariosPath %>% list.files
-#' ### Temperature Scenario File Name
-#' tempInputFile <- scenariosPath %>% file.path("GCAM_scenario.csv")
-#' ### SLR Scenario File Name
-#' slrInputFile  <- scenariosPath %>% file.path("slr_from_GCAM.csv")
-#' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath %>% file.path("pop_scenario.csv")
-#' ### Import inputs
-#' example_inputsList <- import_inputs(
-#'   tempfile = tempInputFile,
-#'   slrfile  = slrInputFile,
-#'   popfile  = popInputFile
-#' )
+#' ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
+#' get_sv_sectorInfo()
 #'
-#' ### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
-#' df_tempExOut <- run_fredi(inputsList= tempBin_inputs, aggLevels="none", pv=TRUE, silent=TRUE)
+#' ### Return a dataframe of all of the sectors in the FrEDI SV Module (sector names and additional information)
+#' get_sv_sectorInfo(description=T)
 #'
-#' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
+#' ### Run SV Module with defaults for "Coastal Properties" without saving
+#' df_sv <- run_fredi_sv(sector="Coastal Properties")
+#'
+#' ### Run SV Module with defaults for "Extreme Temperature" without saving
+#' df_sv <- run_fredi_sv(sector="Extreme Temperature")
+#'
+#' ### Run SV Module with defaults for "Extreme Temperature" with saving and add date to file name
+#' df_sv <- run_fredi_sv(sector="Extreme Temperature", save=T, addDate=T)
+#'
+#' ### Load temperature scenarios
+#' load(gcamScenarios)
+#'
+#' ### Load population scenario
+#' load(popScenario)
+#'
+#' ### Run SV Module for "Extreme Temperature" with custom population and temperature scenarios. Save and overwrite previous results
+#' df_sv <- run_fredi_sv(sector="Extreme Temperature", driverInput = gcamScenarios, popInput = popScenario, save=T, addDate=T, overwrite = T)
+#'
+#' @references
+#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
+#'
+#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+#'
+#' EPA. 2021. Technical Documentation on the Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental Protection Agency, EPA 430-R-21-004. Available at <https://epa.gov/cira/FrEDI/>.
+#'
+#' EPA. 2021. Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts. U.S. Environmental Protection Agency, EPA 430-R-21-003. Available at <https://www.epa.gov/cira/social-vulnerability-report/>.
+#'
+#' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
 #'
 #'
 #' @export
