@@ -110,5 +110,5 @@ install_fredi(version="2.3.0")
 #   )
 # )
 ###### Test Package ######
-testx     <- FrEDI::run_fredi(pv=T)
+# testx     <- FrEDI::run_fredi(pv=T)
 
