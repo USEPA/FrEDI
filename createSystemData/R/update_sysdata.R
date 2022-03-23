@@ -48,23 +48,37 @@ update_sysdata <- function(
   ###### Update sysdata: SV, pop, formatting ######
   if(sv){
     for(i in 1:nrow(df_sv)){
+      file_i   <- df_sv$file[i]
       object_i <- df_sv$object[i]
       path_i   <- df_sv$filePath[i]
       ### Load object
       load(path_i)
       ### Add object to list
       sysDataList <- sysDataList %>% c(object_i)
+      
+      ## Save the results
+      if(save){
+        paste0("Updating '", file_i, "'...") %>% print
+        ### Names
+        names_sysdata   <- sysDataList
+        pattern_sysdata <- paste(names_sysdata, collapse = "|")
+        # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
+        eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
+      }
+      # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
+      sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
     }
-    ### Save the results
-    if(save){
-      ### Names
-      names_sysdata   <- sysDataList
-      pattern_sysdata <- paste(names_sysdata, collapse = "|")
-      # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
-      eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
-    }
-    # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
-    sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
+    # ### Save the results
+    # if(save){
+    #   paste0("Updating '", file, "'...") %>% print
+    #   ### Names
+    #   names_sysdata   <- sysDataList
+    #   pattern_sysdata <- paste(names_sysdata, collapse = "|")
+    #   # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
+    #   eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
+    # }
+    # # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
+    # sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
   }
 
 

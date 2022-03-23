@@ -248,7 +248,7 @@ Use the following code to update documentation
 <!-- usethis::use_data() -->
 
 ```{r datasets to include}
-# usethis::use_data()
+# usethis::use_data_raw()
 ```
 
 
@@ -310,7 +310,7 @@ testx$block_group %>% unique %>% length
 
 Use the following code to compile the SV configuration data
 
-```{r test_systemData0}
+```{r test createSVData}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 ### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
 test_sector     <- c("Coastal Properties")

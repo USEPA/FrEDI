@@ -678,11 +678,11 @@ get_svImpactsList <- function(
   ### Rename block_group
   if(sector=="Coastal Properties"){
     df_data   <- df_data %>% rename(tract = block_group)
-    nrow_data <- df_data %>% nrow
-    nrow_sv   <- svInfo  %>% nrow
-    if(nrow_data == nrow_sv){
-      df_data$tract = svInfo$fips
-    }
+    # nrow_data <- df_data %>% nrow
+    # nrow_sv   <- svInfo  %>% nrow
+    # if(nrow_data == nrow_sv){
+    #   df_data$tract = svInfo$fips
+    # }
   }
   tracts0 <- df_data$tract %>% unique %>% length
   

@@ -2,9 +2,19 @@
 require(usethis)
 require(devtools)
 require(tidyverse)
+getwd() %>% load_all()
+
+###### Update Default Results ######
 defaultResults <- run_fredi()
 usethis::use_data(defaultResults, overwrite=T); rm("defaultResults")
 
+###### Update Scenarios ######
+gcamScenarios <- svDataList$gcamScenarios   %>% rename(temp_C  = temp_C_conus) %>% select(-c(temp_C_global)); usethis::use_data(gcamScenarios, overwrite=T)
+popScenario   <- svPopList$iclus_region_pop %>% rename(reg_pop = region_pop) %>% select(c(year, region, reg_pop)); usethis::use_data(popScenario, overwrite=T)
+# gcamScenarios <- getFromNamespace("svDataList", "FrEDI")$gcamScenarios   %>% rename(temp_C  = temp_C_conus)
+# popScenario   <- getFromNamespace("svPopList", "FrEDI")$iclus_region_pop %>% rename(reg_pop = region_pop)
+
+###### Update Impact Lists ######
 c_impactListFilePath <- getwd() %>% file.path("..", "createSystemData", "data", "sv", "impactsLists")
 c_impactListFiles    <- c_impactListFilePath %>% list.files; c_impactListFiles
 
@@ -14,14 +24,3 @@ for(i in 1:length(c_impactListFiles)){
   outFilePath_i <- c_impactListFilePath %>% file.path("inst", "extdata", "sv", "impactLists", fileName_i)
   file.copy(from=inFilePath_i, to = outFilePath_i)
 }
-
-# for(file_i in c_impactListFiles[1]){
-# # for(file_i in c_impactListFiles){
-#   name_i <- gsub(".rda", "", file_i); name_i %>% print
-#   path_i <- c_impactListFilePath %>% file.path(file_i)
-#   load(path_i)
-#   # eval(substitute(usethis::use_data(x, overwrite=y)), list(x=parse(text=name_i), y=TRUE))
-#   eval(substitute(usethis::use_data(list=ls(pattern="impactsList_"), overwrite=y)), list(x=parse(text=name_i), y=TRUE))
-#   eval(substitute(rm(x)), list(x=parse(text=name_i)))
-# }
-
