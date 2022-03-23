@@ -70,11 +70,10 @@
 ### This function creates a dataframe of sector impacts for default values or scenario inputs.
 ### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi_sv <- function(
-  inputsList  = list(driverInput=NULL, popInput=NULL), ### List of inputs
   sector      = NULL, ### Vector of sectors to get results for
-  silent      = TRUE,  ### Whether to message the user
   driverInput = NULL,
   popInput    = NULL,
+  silent      = TRUE,  ### Whether to message the user
   save        = FALSE,
   outpath     = getwd(),
   overwrite   = FALSE,

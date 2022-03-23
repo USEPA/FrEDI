@@ -5,11 +5,10 @@
 \title{FrEDI Social Vulnerability (SV) Module: calculates climate change impacts on socially vulnerable populations throughout the 21st century for available sectors}
 \usage{
 run_fredi_sv(
-  inputsList = list(driverInput = NULL, popInput = NULL),
   sector = NULL,
-  silent = TRUE,
   driverInput = NULL,
   popInput = NULL,
+  silent = TRUE,
   save = FALSE,
   outpath = getwd(),
   overwrite = FALSE,
