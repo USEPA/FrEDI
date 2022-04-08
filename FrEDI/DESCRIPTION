@@ -4,9 +4,9 @@ Version: 2.3.0
 Authors: U.S. Environmental Protection Agency (EPA) <https://epa.gov/cira/>
 URL: https://epa.gov/cira/FrEDI/
 Description: This R package models damages and impacts from climate change in the contiguous United States (CONUS) 
-    using the Framework for Evaluating Damages and Impacts developed as part of the Climate Change Impacts and 
+    using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the Climate Change Impacts and 
     Risk Analysis (CIRA) project at the U.S. Environmental Protection Agency. The package contains functions that 
-    implement the FrEDI for projecting impacts from climate change and sea level rise for a selected set of 
+    implement FrEDI for projecting impacts from climate change and sea level rise for a selected set of 
     sectors. Version 2.3.0 includes a module for estimating impacts on socially vulnerable populations for 
     select sectors.
 License: file LICENSE
