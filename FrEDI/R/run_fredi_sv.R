@@ -21,7 +21,7 @@
 #' `popInput` is an optional input that takes a dataframe containing a custom scenario for regional population, with columns `c(``"year",` `"region",` `"reg_pop"``)` (containing the year, region, and regional population, respectively). If `popInput=NULL` (default), [FrEDI::run_fredi_sv()] will use the default regional population scenario from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). The dataframe passed to `popInput` can be imported using [FrEDI::import_inputs()] (for more information, see [FrEDI::import_inputs()]). Note that, in contrast to the dataframe passed to `driverInput`, the `popInput` dataframe must be a single scenario (i.e., [FrEDI::run_fredi_sv()] uses the same population scenario for all driver scenarios in `driverInput`). Region names in the `"region"` column must match those in `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern Plains",` `"Southeast",` `"Southwest",` `"Southern Plains"``)` or `c(``"Midwest",` `"Northeast",` `"Northwest",` `"Northern.Plains",` `"Southeast",` `"Southwest",` `"Southern.Plains"``)`.
 #'
 #' @return
-#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, adaptation (or variation), model (GCM or SLR scenario), and region.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
 #'
 #' @examples
 #' ### Run SV Module with defaults without specifying sector
