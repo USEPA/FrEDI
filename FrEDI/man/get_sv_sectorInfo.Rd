@@ -7,7 +7,7 @@
 get_sv_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 }
 \arguments{
-\item{description=FALSE.}{Logical value indicating whether to include information about each sector. Returns a dataframe if \code{description=TRUE} and returns a character vector of sector names if \code{description=FALSE} (default).}
+\item{description=FALSE.}{Logical value indicating whether to include information about each sector. Returns a data frame if \code{description=TRUE} and returns a character vector of sector names if \code{description=FALSE} (default).}
 
 \item{gcmOnly=FALSE.}{Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.}
 
@@ -16,16 +16,16 @@ get_sv_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 \value{
 \itemize{
 \item If \code{description=FALSE} (default), outputs a character vector containing the names of sectors available for the FrEDI SV Module.
-\item If \code{description=TRUE}, `, outputs a dataframe containing the names of sectors available for the FrEDI SV Module in one column, with information about the sector model type, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ),  impact units (e.g., mortality, etc.), and available adaptations in the remaining columns.
+\item If \code{description=TRUE}, `, outputs a data frame containing the names of sectors available for the FrEDI SV Module in one column, with information about the sector model type, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ),  impact units (e.g., mortality, etc.), and available variants in the remaining columns.
 }
 }
 \description{
-This helper function returns a character vector with the names of sectors in the FrEDI SV module (default) \emph{or} a dataframe of those sectors with related information (\code{description=TRUE}). If \code{description=TRUE}, \link{get_sv_sectorInfo} will return a dataframe with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), available adaptations. Users can use \link{get_sv_sectorInfo} to determine which sectors can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument and/or to determine whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
+This helper function returns a character vector with the names of sectors in the FrEDI SV module (default) \emph{or} a data frame of those sectors with related information (\code{description=TRUE}). If \code{description=TRUE}, \link{get_sv_sectorInfo} will return a data frame with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), available variants. Users can use \link{get_sv_sectorInfo} to determine which sectors can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument and/or to determine whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
 }
 \details{
-This helper function returns a character vector with the names of sectors in FrEDI (default) \emph{or} a dataframe of those sectors with related information (\code{description=TRUE}). If \code{description=TRUE}, \link{get_sv_sectorInfo} will return a dataframe with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), and available adaptations. Users can use \link{get_sv_sectorInfo} to determine which sectors can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument and/or to determine whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
+This helper function returns a character vector with the names of sectors in FrEDI (default) \emph{or} a data frame of those sectors with related information (\code{description=TRUE}). If \code{description=TRUE}, \link{get_sv_sectorInfo} will return a data frame with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), and available variants. Users can use \link{get_sv_sectorInfo} to determine which sectors can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument and/or to determine whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
 
-If \code{description=FALSE} (default), this helper function returns a character vector of names of sectors that can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument. If \code{description=TRUE}, \code{get_sv_sectorInfo()} returns a dataframe of sectors with related information, such as whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
+If \code{description=FALSE} (default), this helper function returns a character vector of names of sectors that can be passed to the \code{\link[=run_sv_fredi]{run_sv_fredi()}} \code{sector} argument. If \code{description=TRUE}, \code{get_sv_sectorInfo()} returns a data frame of sectors with related information, such as whether a particular sector is driven primarily by temperature (\code{modelType="GCM"}) or sea level rise (\code{modelType="SLR"}).
 
 Users can specify whether to return only GCM sectors \emph{or} SLR sectors by setting \code{gcmOnly=TRUE} or \code{slrOnly=TRUE}, respectively. \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} will return the sectors in the form specified by \code{description} (see above).
 }
@@ -34,7 +34,7 @@ Users can specify whether to return only GCM sectors \emph{or} SLR sectors by se
 ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
 get_sv_sectorInfo()
 
-### Return a dataframe of all of the sectors in the FrEDI SV Module (sector names and additional information)
+### Return a data frame of all of the sectors in the FrEDI SV Module (sector names and additional information)
 get_sv_sectorInfo(description=T)
 
 ### Return a character vector with only the names of the temperature-driven sectors:
