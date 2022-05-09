@@ -87,6 +87,7 @@ import_inputs <- function(
   hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile) %>%
     lapply(function(x){!is.null(x)}) %>%
     unlist %>% any
+  silent  <- TRUE
   msgUser <- ifelse(silent, FALSE, TRUE)
   msg0    <- ""
   msg1    <- msg0 %>% paste0("\t")
@@ -159,7 +160,7 @@ import_inputs <- function(
       msg1 %>% paste0("User supplied ", msgName_i, " input...") %>% message
       msg2 %>% paste0("Importing data from ", inputFile_i, "...") %>% message
       ### Try to import the file and initialize the list value
-      fileInput_i   <- inputFile_i %>% fun_tryInput
+      fileInput_i   <- inputFile_i %>% fun_tryInput(silent=T)
       fileStatus_i  <- fileInput_i[["fileStatus"]]
       df_input_i    <- fileInput_i[["fileInput"]]
 
