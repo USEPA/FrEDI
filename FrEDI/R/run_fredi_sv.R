@@ -125,8 +125,8 @@ run_fredi_sv <- function(
   # df_sectorInfo <- svSectorInfo %>% filter(sector==sector)
   which_sector    <- (svSectorInfo$sector == c_sector) %>% which #; which_sector %>% print
   df_sectorInfo   <- svSectorInfo[which_sector,]
-  c_adaptations   <- df_sectorInfo$adapt_abbr
-  c_adaptLabels   <- df_sectorInfo$adapt_label
+  c_variants      <- df_sectorInfo$variant_abbr
+  c_variantLabels <- df_sectorInfo$variant_label
 
   ###### Check Driver Inputs ######
   ### Initialize whether to check for inputs
@@ -477,23 +477,23 @@ run_fredi_sv <- function(
     ); #rm("popProjList")
 
   ###### Calculate Impacts ######
-  ### Iterate over adaptations/variations
+  ### Iterate over adaptations/variants
   pkgPath     <- ifelse(is.null(pkgPath), system.file(package="FrEDI"), pkgPath)
   impactsPath <- pkgPath %>% file.path("extdata", "sv", "impactLists")
   df_results  <-
     1:nrow(df_sectorInfo) %>%
     # 1:1 %>%
     lapply(function(i){
-      sectorAbbr_i <- df_sectorInfo$impactList_fileExt[i]
-      adaptLabel_i <- df_sectorInfo$adapt_label[i]
-      adaptAbbr_i  <- df_sectorInfo$adapt_abbr[i]
-      weightsCol_i <- df_sectorInfo$popWeightCol[i]
+      sectorAbbr_i   <- df_sectorInfo$impactList_fileExt[i]
+      variantLabel_i <- df_sectorInfo$variant_label[i]
+      variantAbbr_i  <- df_sectorInfo$variant_abbr[i]
+      weightsCol_i   <- df_sectorInfo$popWeightCol[i]
 
       ### Which impacts list to use
       impactsName_i     <- "impactsList" %>%
         paste(sectorAbbr_i, sep="_") %>%
-        paste0(ifelse(is.na(adaptAbbr_i), "", "_")) %>%
-        paste0(ifelse(is.na(adaptAbbr_i), "", adaptAbbr_i))
+        paste0(ifelse(is.na(variantAbbr_i), "", "_")) %>%
+        paste0(ifelse(is.na(variantAbbr_i), "", variantAbbr_i))
       impactsPath_i     <- impactsPath %>% file.path(impactsName_i) %>% paste0(".rds")
 
       ### Which SV data to use
@@ -501,7 +501,7 @@ run_fredi_sv <- function(
 
       ###### Iterate Over Scenarios ######
       results_i <- c_scenarios %>% lapply(function(scenario_j){
-         paste0("\n", msg1, "Calculating impacts for sector='", c_sector, "', adaptation='", adaptLabel_i, "', scenario='", scenario_j, "'...") %>% message
+         paste0("\n", msg1, "Calculating impacts for sector='", c_sector, "', variant='", variantLabel_i, "', scenario='", scenario_j, "'...") %>% message
         ###### Scaled Impacts ######
         drivers_j <- drivers_df %>% filter(scenario == scenario_j) %>% select(-c("scenario"))
         ### Get impact list, calculate scaled impacts, remove impact list
@@ -541,7 +541,7 @@ run_fredi_sv <- function(
 
       }) %>%
         (function(y){do.call(rbind, y)}) %>%
-        mutate(adaptation = adaptLabel_i)
+        mutate(variant = variantLabel_i)
 
       return(results_i)
     }) %>%
@@ -574,14 +574,14 @@ run_fredi_sv <- function(
     df_readme1      <- data.frame(x=c(c_sector, as.character(Sys.Date())))
 
     if(nrow(df_sectorInfo)==1){
-      # c_adaptLabels <- paste(c_sector, "All Impacts", sep=", ")
-      c_adaptLabels <- c("All Impacts", "--")
-      # df_readme2    <- data.frame(x=c(c_adaptLabels, "--"))
+      # c_variantLabels <- paste(c_sector, "All Impacts", sep=", ")
+      c_variantLabels <- c("All Impacts", "--")
+      # df_readme2    <- data.frame(x=c(c_variantLabels, "--"))
     } else{
-      c_adaptLabels <- df_sectorInfo$adapt_label
-      # df_readme2    <- data.frame(x=c_adaptLabels)
+      c_variantLabels <- df_sectorInfo$variant_label
+      # df_readme2    <- data.frame(x=c_variantLabels)
     }
-    df_readme2    <- data.frame(x=c_adaptLabels)
+    df_readme2    <- data.frame(x=c_variantLabels)
 
     ###### Check Directory and File ######
     outDirExists    <- outFilePath %>% dirname %>% dir.exists
@@ -615,13 +615,13 @@ run_fredi_sv <- function(
       if(msgUser){ msg2 %>% paste0("Formatting workbook...") %>% message}
       excel_wb      <- excel_wb_path %>% loadWorkbook()
 
-      ### Write sector, date/time, and adaptation info to workbook
+      ### Write sector, date/time, and variant info to workbook
       ### sector & date/time info
       excel_wb %>%
         writeData(
           x = df_readme1, sheet = "ReadMe", startCol = 3, startRow = 3, colNames = F
         )
-      ####### Write adaptation info
+      ####### Write variant info
       excel_wb %>%
         writeData(
           x = df_readme2, sheet = "ReadMe", startCol = 3, startRow = 7, colNames = F
@@ -650,16 +650,16 @@ run_fredi_sv <- function(
       ###### Write results
       if(msgUser){ msg2 %>% paste0("Writing results...") %>% message}
       for(i in 1:nrow(df_sectorInfo)){
-        adapt_i     <- df_sectorInfo$adapt_label[i]
-        sheet_i     <- excel_wb_sheets[i]
-        label_i     <- c_adaptLabels[i]
+        variant_i     <- df_sectorInfo$variant_label[i]
+        sheet_i       <- excel_wb_sheets[i]
+        label_i       <- c_variantLabels[i]
 
         ### Filter results
-        # results_i   <- df_results %>% filter(adaptation == adapt_i)
+        # results_i   <- df_results %>% filter(variant == variant_i)
         results_i   <- df_results %>%
-          filter(adaptation == adapt_i) %>%
-          # mutate(adaptation = adaptation %>% as.character) %>%
-          mutate(adaptation = label_i)
+          filter(variant == variant_i) %>%
+          # mutate(variant = variant %>% as.character) %>%
+          mutate(variant = label_i)
 
         ### Save results
         excel_wb %>%
@@ -672,7 +672,7 @@ run_fredi_sv <- function(
           )
       }
       ### Remove objects
-      rm("adapt_i", "sheet_i", "results_i")
+      rm("variant_i", "sheet_i", "results_i")
       excel_wb %>% saveWorkbook(file=outFilePath, overwrite = overwrite)
       rm("excel_wb")
     } ### End if overwrite

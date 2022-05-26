@@ -58,12 +58,12 @@ get_sv_sectorInfo <- function(
   sectorInfo <- sectorInfo %>%
     select(c("sector", "modelType", "impactUnit")) %>%
     mutate(modelType  = modelType %>% toupper) %>%
-    mutate(adaptations = sector %>% lapply(function(sector_i){
-      adaptations_i <- (svSectorInfo %>% filter(sector==sector_i))$adapt_label %>% paste(collapse=", ")
-      return(adaptations_i)
+    mutate(variants = sector %>% lapply(function(sector_i){
+      variants_i <- (svSectorInfo %>% filter(sector==sector_i))$variant_label %>% paste(collapse=", ")
+      return(variants_i)
     }) %>% unlist) %>%
     mutate(driverUnit=ifelse(modelType=="GCM", "degrees Celsius", "cm")) %>%
-    select(c("sector", "modelType", "driverUnit", "adaptations", "impactUnit"))
+    select(c("sector", "modelType", "driverUnit", "variants", "impactUnit"))
 
   gcm_string <- "GCM"
   if(gcmOnly){

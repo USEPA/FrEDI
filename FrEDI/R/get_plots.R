@@ -10,22 +10,22 @@
 #' @param plotTypes Character string or character vector indicating which types of plots to produce. Options are `c("heatmaps", "ribbon", "all")`. Set `plotTypes="all"` (default) to produce both types of plots.
 #' @param save A `TRUE/FALSE` value indicating whether to save results. If a directory value is supplied (i.e., `!is.null(directory)`), defaults to `save=TRUE`. Otherwise, default is `save=FALSE`.
 #' @param directory A character string indicating the location of a directory in which to save the plot objects. No default (i.e., `directory=NULL`).
-#' @param groupVars A character vector indicating columns to use for grouping. Defaults to `groupVars=c("sector", "adaptation")`
+#' @param groupVars A character vector indicating columns to use for grouping. Defaults to `groupVars=c("sector", "variant")`
 #'
 #' @details
-#' This function creates plots for the summarized FrEDI outputs. [FrEDI::get_plots()] returns a list with heatmaps for model types present in the data (GCMs and SLR scenarios) and annual results for all sectors and adaptations. Results from FrEDI must be summed across impact types before using [FrEDI::get_plots()] (use [FrEDI::run_fredi()] with the defaults, use `run_fredi(aggLevels= "impacttype")`, or run `aggregate_impacts(aggLevels="impactType")` on the output from [FrEDI::run_fredi()]).
+#' This function creates plots for the summarized FrEDI outputs. [FrEDI::get_plots()] returns a list with heatmaps for model types present in the data (GCMs and SLR scenarios) and annual results for all sectors and variants. Results from FrEDI must be summed across impact types before using [FrEDI::get_plots()] (use [FrEDI::run_fredi()] with the defaults, use `run_fredi(aggLevels= "impacttype")`, or run `aggregate_impacts(aggLevels="impactType")` on the output from [FrEDI::run_fredi()]).
 #'
 #' By default, [FrEDI::get_plots()] plots results from the `"annual_impacts"` column (or users can specify a column name in the data with `column`).
 #'
 #' The argument `undiscounted` is used by [FrEDI::get_plots()] for plot labels and in file and directory names for saving results.
 #'
-#' [FrEDI::get_plots()] produces heatmaps (`plotTypes="heatmaps"`) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (`plotTypes="ribbon"`) for each sector-adaptation-region combination. Users can specify which plot types to produce by setting `plotTypes`. Set `plotTypes="all"` (default) to produce both heat maps and annual results) or specify a single type (`plotTypes="heatmaps"` and `plotTypes="ribbon"`, respectively).
+#' [FrEDI::get_plots()] produces heatmaps (`plotTypes="heatmaps"`) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (`plotTypes="ribbon"`) for each sector-variant-region combination. Users can specify which plot types to produce by setting `plotTypes`. Set `plotTypes="all"` (default) to produce both heat maps and annual results) or specify a single type (`plotTypes="heatmaps"` and `plotTypes="ribbon"`, respectively).
 #'
-#' The heatmaps display the numeric values in the specified column (e.g., "annual_impacts") as a grid of colored pixels. Each row in the grid corresponds to a sector-adaptation combination (e.g., "Coastal Properties, No Adaptation"), while columns in the grid correspond to years. In other words, the heatmaps display the relative intensity of the impacts of a sector and adaptation compared to others. The colors in the heatmap are a gradient ranging from dark blue (impacts with values below zero) to dark red (impacts with values above zero), with a midpoint at zero (missing values appear as grey pixels). The scale of the gradient is determined from the underlying data, with the darkest points corresponding to the minimum and maximum values.
+#' The heatmaps display the numeric values in the specified column (e.g., "annual_impacts") as a grid of colored pixels. Each row in the grid corresponds to a sector-variant combination (e.g., "Coastal Properties, No Adaptation"), while columns in the grid correspond to years. In other words, the heatmaps display the relative intensity of the impacts of a sector and variant compared to others. The colors in the heatmap are a gradient ranging from dark blue (impacts with values below zero) to dark red (impacts with values above zero), with a midpoint at zero (missing values appear as grey pixels). The scale of the gradient is determined from the underlying data, with the darkest points corresponding to the minimum and maximum values.
 #'
 #' If temperature-driven (GCM sectors) and SLR-driven (SLR sectors) sectors are both present in the data, [FrEDI::get_plots()] will produce a separate heatmap for each. Each heatmap displays panels for each region (stacked vertically) and underlying models (organized horizontally).
 #'
-#' Setting (`plotTypes="ribbon"`) plots the annual impacts as time series. For temperature-driven sectors, the model average is plotted as a line and the range of model values (minimum and maximum) are plotted as a ribbon plot. For the SLR-driven sectors, the interpolated impacts are plotted as a line. For sectors with multiple adaptations, impacts for individual adaptations are displayed in separate panels (organized horizontally).
+#' Setting (`plotTypes="ribbon"`) plots the annual impacts as time series. For temperature-driven sectors, the model average is plotted as a line and the range of model values (minimum and maximum) are plotted as a ribbon plot. For the SLR-driven sectors, the interpolated impacts are plotted as a line. For sectors with multiple variants, impacts for individual variants are displayed in separate panels (organized horizontally).
 #'
 #' If `save=TRUE` and the user supplies a path to a directory (i.e., `!is.null(directory)`), [FrEDI::get_plots()] will try to save results to the specified directory. Separate directories are created within the specified directory for heatmaps and ribbon plots.
 #'
@@ -72,14 +72,14 @@ get_plots <- function(
   plotTypes    = "all", ### Types of plots,
   save         = FALSE, ### Whether to save results
   directory    = NULL, ### Path to base image directory
-  groupVars    = c("sector", "adaptation")
+  groupVars    = c("sector", "variant")
   # column       = NULL, ### Column for annual impacts
   # undiscounted = NULL, ### True or false, affects labels
   # plotTypes    = NULL, ### Types of plots,
   # save         = NULL, ### Whether to save results
   # directory    = NULL, ### Path to base image directory
   # dpi          = NULL, ### Image resolution, default = 150
-  # groupVars    = c("sector", "adaptation")
+  # groupVars    = c("sector", "variant")
 ){
   ###### Plot Types ######
   ### Also accepts "all"
@@ -207,15 +207,15 @@ get_plots <- function(
   regionsList    <- data$region %>% unique()
   numRegions     <- regionsList %>% length()
 
-  ### Unique sectors, adaptations, impact types
+  ### Unique sectors, variants, impact types
   ### impact types
   impactTypes    <- data$impactType %>% unique()
   numImpactTypes <- impactTypes %>% length()
 
   ### Unique Groups
-  if(is.null(groupVars)){groupVars <- c("sector", "adaptation")}
-  # groupVars      <- c("sector", "adaptation")
-  # groupVarLabels <- c("Sector", "Adaptation")
+  if(is.null(groupVars)){groupVars <- c("sector", "variant")}
+  # groupVars      <- c("sector", "variant")
+  # groupVarLabels <- c("Sector", "Variant")
   groupVarLabels <- stringr::str_to_title(groupVars)
   if(numImpactTypes > 1){
     groupVars      <- c(groupVars, "impactType")
@@ -242,7 +242,7 @@ get_plots <- function(
   # ### Annual damage images, by region and sector
   # ### Different heights for regions, national (originally 6 for regions, 4.5 for national).
   base_rib_ht         <- 4
-  base_rib_width_per  <- 1.5 ### Per adaptation
+  base_rib_width_per  <- 1.5 ### Per variant
   base_rib_per        <- 0.75 ### Per region
   base_rib_width      <- 4
 
@@ -315,7 +315,7 @@ get_plots <- function(
       }
 
 
-      ### Unique sectors, adaptations, impact types
+      ### Unique sectors, variants, impact types
       unique_combos_heat  <- data_model_i %>% group_by_at(.vars = groupVars) %>% summarize(n=n())
       numCombos_heat      <- unique_combos_heat %>% nrow()
       data_model_i$group_name     <- (1:nrow(data_model_i)) %>% lapply(function(j){
@@ -382,7 +382,7 @@ get_plots <- function(
       base_rib_title <- sector_i
       ylab_unitEnd_i <- base_unitEnd ### Base unit
 
-      ### Filter to data and get number of adaptations
+      ### Filter to data and get number of variants
       data0_i        <- data %>% filter(sector==sector_i) %>%
         filter(model!="Average") %>%
         filter(model!="Model Average") %>%
@@ -483,7 +483,7 @@ get_plots <- function(
           # geom_ribbon( aes(x=year, ymin=modelMin, ymax = modelMax, fill=region), alpha=0.25) +
           # geom_line(aes(x=year, y=modelAve, colour=region, linetype=model), size = 0.5, alpha=0.85) +
 
-          facet_grid(region~adaptation) +
+          facet_grid(region~variant) +
 
           scale_x_continuous("Year", breaks = list_years_by10, limits = c(minYear, maxYear)) +
           scale_y_continuous(yLab0_reg_i) +
@@ -526,7 +526,7 @@ get_plots <- function(
             # geom_ribbon(aes(x=year, ymin=modelMin, ymax = modelMax), fill = "grey24", alpha=0.25) +
             # geom_line(aes(x=year, y=modelAve, linetype=model), size = 0.5, colour = "grey24", alpha=0.85) +
 
-            facet_grid(region~adaptation) +
+            facet_grid(region~variant) +
 
             scale_x_continuous("Year", breaks = list_years_by10, limits = c(minYear, maxYear)) +
             scale_y_continuous(yLab0_nat_i) +
@@ -544,7 +544,7 @@ get_plots <- function(
           ### Add plot to list
           list_plotOuts[["ribbon"]][[sector_i]][["national"]] <- plot0_nat_i
         }
-      } ### End iteration over adaptations
+      } ### End iteration over variants
     } ### End iteration over sectors
     ### Remove data
     # rm("data_modelStats0")
@@ -608,9 +608,9 @@ get_plots <- function(
         sectorPlots <- list_plotOuts[["ribbon"]] %>% names
         for(sector_i in sectorPlots){
           plotList0_i <- list_plotOuts[["ribbon"]][[sector_i]]
-          ### Number of adaptations
-          num_adapt_i <- (data %>% filter(sector == sector_i))$adaptation %>% unique() %>% length()
-          def_rib_width <- base_rib_width + base_rib_width_per * num_adapt_i
+          ### Number of variants
+          num_variant_i <- (data %>% filter(sector == sector_i))$variant %>% unique() %>% length()
+          def_rib_width <- base_rib_width + base_rib_width_per * num_variant_i
 
           ### Regions for j
           regions_i   <- plotList0_i %>% names
@@ -626,13 +626,13 @@ get_plots <- function(
                 (function(y){gsub("/", "", y)})
               fPath_j <- ann_dir %>% file.path(fPath_j) %>%
                 (function(k){gsub(" and ", "", k)}) %>%
-                (function(k){gsub("Adaptation", "", k)}) %>%
+                (function(k){gsub("Variant", "", k)}) %>%
                 (function(k){gsub(" ", "", k)})
 
               ### Plot height
               num_reg_i           <- ifelse(region_j=="national", 1, numRegions)
               fig_rib_ht          <- base_rib_ht + num_reg_i * base_rib_per
-              fig_rib_width       <- base_rib_width + num_adapt_i * base_rib_width_per
+              fig_rib_width       <- base_rib_width + num_variant_i * base_rib_width_per
 
               ### Plot exists
               if("ggplot" %in% class(plot_j) & !is.null(plot_j)){

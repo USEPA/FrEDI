@@ -154,7 +154,7 @@ createSystemData <- function(
   ### Add a column with a scenario id
   data_scaledImpacts <- data_scaledImpacts %>%
     mutate(
-      scenario_id = paste(sector, adaptation, impactYear, impactType, model_type, model_dot, region_dot, sep="_")
+      scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region_dot, sep="_")
       )
 
   ### Get list of scenarios for scenarios with at least some non-NA values
