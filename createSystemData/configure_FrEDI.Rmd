@@ -212,7 +212,7 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-df_defaults %>% mutate(annual_impacts=annual_impacts %>% format(digits=15)) %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
 
 
