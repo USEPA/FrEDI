@@ -291,7 +291,7 @@ aggregate_impacts <- function(
   ###### Driver scenario
   driverScenario <- 1:length(sectors1) %>%
     lapply(function(i){
-      data %>% filter(sector == sectors1[i], variant == variant1[i], region == region0, model == models1[i])
+      data %>% filter(sector == sectors1[i], variant == variants1[i], region == region0, model == models1[i])
     }) %>% (function(x){do.call(rbind, x)})
 
   ### Filter to impact types

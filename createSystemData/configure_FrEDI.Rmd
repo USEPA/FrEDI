@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220518"
+mostRecentDate <- "20220601"
 ```
 
 
@@ -186,7 +186,7 @@ file.copy(
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-new_sectors <- "CIL Extreme Temp"
+new_sectors <- "CIL Extreme Temperature"
 ```
 
 
@@ -212,7 +212,7 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-write.csv(df_defaults, file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+df_defaults %>% mutate(annual_impacts=annual_impacts %>% format(digits=15)) %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
 ```
 
 
