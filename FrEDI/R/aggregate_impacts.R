@@ -8,7 +8,7 @@
 #' @param data      Dataframe of results FrEDI (outputs from [FrEDI::run_fredi()])
 #' @param columns   Character vector of columns for which to aggregate results (defaults to `columns=c("annual_impacts"`)).
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelAverage"`, `"impactYear"`, `"impactType"`, `"all")`. Defaults to all levels (i.e., `aggLevels="all"`).
-#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, `"adaptation"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable.
+#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, `"variant"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"variant"` column referred to below contains information about the adaptation or variant name or `“N/A”`, as applicable.
 #'
 #' @details
 #' This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelAverage"`), summing over all impact types (`aggLevels="impactType"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default).
@@ -16,13 +16,13 @@
 #'
 #' Before aggregating impacts for national totals and/or model averages, [FrEDI::aggregate_impacts()] will drop any pre-summarized results  (i.e., values for which `region="National Total"` and/or for which `model="average"`, respectively) that are already present in the data `and then reaggregate at those levels.
 #'
-#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization (note that the `"adaptation"` column referred to below contains information about the adaptation or variation name or `“N/A”`, as applicable):
+#' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization (note that the `"variant"` column referred to below contains information about the adaptation or variant name or `“N/A”`, as applicable):
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
-#' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
-#' `modelaverage` \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`, `"impactYear"`, `"model_type"`, `"region"`, and `"year"` and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as `NA`. The rows of model averages (with column `model="Average"` are then added as rows to the results dataframe. \cr
-#' `impactType` \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns `"sector"`, `"adaptation"`, `"impactType"`, `"impactYear"`,`"model_type"`, `"model"`, `"region"`, and `"year"` and summed across impact types. Mutates column `impactType="all"` for all values. Years which have missing column data for all impact types return as `NA`. If results are aggregated across impact types, information about physical impacts (columns `"physicalmeasure"` and `"physical_impacts"`) are dropped.\cr
-#' `impactYear` \tab Annual results for sectors with only one impact year estimate (i.e., `impactYear == "N/A"`) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns `"sector", "adaptation", "impactType, "model_type", "model", "region", "year"` and interpolated across years with the 2010 run assigned to year 2010 and the 2090 run assigned to year 2090. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear="Interpolation"` for all values. \cr
+#' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
+#' `modelaverage` \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"model_type"`, `"region"`, and `"year"` and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as `NA`. The rows of model averages (with column `model="Average"` are then added as rows to the results dataframe. \cr
+#' `impactType` \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`,`"model_type"`, `"model"`, `"region"`, and `"year"` and summed across impact types. Mutates column `impactType="all"` for all values. Years which have missing column data for all impact types return as `NA`. If results are aggregated across impact types, information about physical impacts (columns `"physicalmeasure"` and `"physical_impacts"`) are dropped.\cr
+#' `impactYear` \tab Annual results for sectors with only one impact year estimate (i.e., `impactYear == "N/A"`) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns `"sector", "variant", "impactType, "model_type", "model", "region", "year"` and interpolated across years with the 2010 run assigned to year 2010 and the 2090 run assigned to year 2090. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear="Interpolation"` for all values. \cr
 #' }
 #'
 #' Note that [FrEDI::aggregate_impacts()] drops columns not used in grouping or aggregation.
@@ -48,7 +48,7 @@ aggregate_impacts <- function(
   data,             ### Dataframe of outputs from temperature binning
   aggLevels   = c("national", "modelaverage", "impactyear", "impacttype"),  ### Levels of aggregation
   columns     = c("annual_impacts"), ### Columns to aggregate
-  groupByCols = c("sector", "adaptation", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
+  groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
   mode = "all"
 ){
   ###### Defaults ######
@@ -83,31 +83,31 @@ aggregate_impacts <- function(
     mutate(model_type = model_type %>% toupper())
 
 
-  ###### Load Adaptation Info ######
+  ###### Load Variant Info ######
   ### Get input scenario info: co_inputScenarioInfo
-  ### Load adaptation info table from sysdata.rda
-  name_dfAdapt    <- "co_adaptations"
-  assign(name_dfAdapt, rDataList[[name_dfAdapt]])
-  ### Format adaptations
-  adaptCols_old   <- c("sector_id", "adaptation_label")
-  adaptCols_new   <- c("sector_id", "adaptation")
-  adaptCols_other <- c("sectorprimary", "includeaggregate")
-  co_adaptations  <- co_adaptations %>%
-    select(c(adaptCols_old, adaptCols_other)) %>%
+  ### Load variant info table from sysdata.rda
+  name_dfVariant    <- "co_variants"
+  assign(name_dfVariant, rDataList[[name_dfVariant]])
+  ### Format variants
+  variantCols_old   <- c("sector_id", "variant_label")
+  variantCols_new   <- c("sector_id", "variant")
+  variantCols_other <- c("sectorprimary", "includeaggregate")
+  co_variants  <- co_variants %>%
+    select(c(variantCols_old, variantCols_other)) %>%
     (function(y){
-      names(y) <- c(adaptCols_new, adaptCols_other)
+      names(y) <- c(variantCols_new, variantCols_other)
       return(y)
     })
 
-  ### Combine sector and adaptation info
-  co_sector_adaptations <- co_sectors %>%
-    left_join(co_adaptations, by = "sector_id") %>%
+  ### Combine sector and variant info
+  co_sector_variants <- co_sectors %>%
+    left_join(co_variants, by = "sector_id") %>%
     select(-c("sector_id"))
 
 
   ###### Groups Columns  ######
   ### Filter to columns in data and mutate those columns to character
-  default_groupByCols <- c("sector", "adaptation", "impactYear", "impactType", "model_type", "model", "region")
+  default_groupByCols <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region")
   ### Use default group by columns if none specified...otherwise, check which are present
   if(is.null(groupByCols)){
     groupByCols <- default_groupByCols
@@ -237,13 +237,13 @@ aggregate_impacts <- function(
   ### Some values are the same for all runs and regions...separate those values
   sectorsList   <- data$sector %>% unique
   sector0       <- sectorsList %>% first
-  adaptation0   <- (data %>% filter(sector==sector0))$adaptation %>% unique %>% first
+  variant0      <- (data %>% filter(sector==sector0))$variant %>% unique %>% first
   region0       <- (data %>% filter(sector==sector0))$region %>% unique %>% first
   model0        <- (data %>% filter(sector==sector0))$model %>% unique %>% first
   impactType0   <- (data %>% filter(sector==sector0))$impactType %>% unique %>% first
   ### Base Scenario and regional population
-  baseScenario  <- data %>% filter(sector == sector0, adaptation == adaptation0, region == region0, model == model0, impactType == impactType0)
-  regionalPop   <- data %>% filter(sector == sector0, adaptation == adaptation0, model == model0, impactType == impactType0)
+  baseScenario  <- data %>% filter(sector == sector0, variant == variant0, region == region0, model == model0, impactType == impactType0)
+  regionalPop   <- data %>% filter(sector == sector0, variant == variant0, model == model0, impactType == impactType0)
 
   ### Filter to impact types
   if(impactTypesAgg){
@@ -268,16 +268,16 @@ aggregate_impacts <- function(
     rename(reg_pop=national_pop)
 
   ###### Driver Scenario ######
-  ### Get unique model types, sectors, adaptations, and models
+  ### Get unique model types, sectors, variants, and models
   modelTypesList <- data$model_type %>% unique
   # data$model_type %>% unique %>% print
   sectors1       <- modelTypesList %>%
     lapply(function(model_type_i){
       (data %>% filter(model_type==model_type_i))$sector %>% unique %>% first
     }) %>% unlist %>% c()
-  adaptations1   <- sectors1 %>%
+  variants1   <- sectors1 %>%
     lapply(function(sector_i){
-      (data %>% filter(sector==sector_i))$adaptation %>% unique %>% first
+      (data %>% filter(sector==sector_i))$variant %>% unique %>% first
     }) %>% unlist%>% c()
   # impactTypes1   <- sectors1 %>%
   #   lapply(function(sector_i){
@@ -291,7 +291,7 @@ aggregate_impacts <- function(
   ###### Driver scenario
   driverScenario <- 1:length(sectors1) %>%
     lapply(function(i){
-      data %>% filter(sector == sectors1[i], adaptation == adaptations1[i], region == region0, model == models1[i])
+      data %>% filter(sector == sectors1[i], variant == variants1[i], region == region0, model == models1[i])
     }) %>% (function(x){do.call(rbind, x)})
 
   ### Filter to impact types
@@ -763,12 +763,12 @@ aggregate_impacts <- function(
   df_base   <- baseScenario %>% left_join(regionalPop, by=c("year"))
 
   df_agg_names      <- df_aggImpacts %>% names
-  sectorAdapt_names <- co_sector_adaptations %>% names
-  sectorAdapt_join  <- c("model_type", "sector", "adaptation")
-  sectorAdapt_drop  <- sectorAdapt_names[which((sectorAdapt_names %in% df_agg_names) & !(sectorAdapt_names %in% sectorAdapt_join))]
+  sectorVariant_names <- co_sector_variants %>% names
+  sectorVariant_join  <- c("model_type", "sector", "variant")
+  sectorVariant_drop  <- sectorVariant_names[which((sectorVariant_names %in% df_agg_names) & !(sectorVariant_names %in% sectorVariant_join))]
 
   df_return <- df_aggImpacts %>%
-    left_join(co_sector_adaptations %>% select(-c(all_of(sectorAdapt_drop))), by = sectorAdapt_join) %>%
+    left_join(co_sector_variants %>% select(-c(all_of(sectorVariant_drop))), by = sectorVariant_join) %>%
     left_join(driverScenario, by = c("year", "model_type")) %>%
     left_join(df_base      , by = c("year", "region"))
 

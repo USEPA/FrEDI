@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220225"
+mostRecentDate <- "20220601"
 ```
 
 
@@ -133,7 +133,7 @@ Test system data
 ```{r test_systemData0}
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
+test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -142,9 +142,9 @@ time_create     <- time2 - time1; time_create
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
-# (test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
-# test_systemData$slrImpacts %>% names
-# test_systemData$df_results0$sector_label %>% unique
+(test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
+test_systemData$slrImpacts %>% names
+test_systemData$df_results0$sector_label %>% unique
 ```
 
 
@@ -186,8 +186,7 @@ file.copy(
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-# new_sectors <- "CIL Crime"
-new_sectors <- NULL
+new_sectors <- "CIL Extreme Temperature"
 ```
 
 
@@ -213,7 +212,7 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-write.csv(df_defaults, file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
 
 

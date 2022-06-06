@@ -7,7 +7,7 @@
 install_fredi <- function(
   installFrom = NULL, ### Select a number, one or two
   package     = "FrEDI",
-  version     = "2.2.0",
+  version     = "2.3.0",
   libPath     = .libPaths()[1] ### Location of library path
 ){
   ###### Load Packages ######
