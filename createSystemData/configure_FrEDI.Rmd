@@ -249,6 +249,7 @@ test_digits <- (df_defaults %>%
 # test_digits %>% format(digits = 6)
 test_digits %>% sprintf(fmt = '%#.6f') 
 c(NA) %>% sprintf(fmt = '%#.6f') 
+### -239115535.389834
 ```
 
 
