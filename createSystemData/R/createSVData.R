@@ -115,24 +115,24 @@ createSVData <- function(
     ### Iterate over sectors
     for(i in 1:nrow(svSectorInfo)){
       ### File names
-      infileName_i  <- svSectorInfo$inputDataFile[i]
-      adapt_abbr_i  <- svSectorInfo$adapt_abbr[i]; #adapt_abbr_i %>% print
-      sector_i      <- svSectorInfo$sector[i]
-      adapt_i       <- svSectorInfo$adapt_label[i]
-      fileExt_i     <- svSectorInfo$impactList_fileExt[i]
-      inFileExt_i   <- "csv"
+      infileName_i    <- svSectorInfo$inputDataFile[i]
+      variant_abbr_i  <- svSectorInfo$variant_abbr[i]; #variant_abbr_i %>% print
+      sector_i        <- svSectorInfo$sector[i]
+      variant_i       <- svSectorInfo$variant_label[i]
+      fileExt_i       <- svSectorInfo$impactList_fileExt[i]
+      inFileExt_i     <- "csv"
       # inFileExt_i   <- ifelse(sector == "Coastal Properties", "xlsx", "csv")
       
       infile_i      <- infileName_i %>% 
-        paste0(ifelse(is.na(adapt_abbr_i), "", " - ")) %>% 
-        paste0(ifelse(is.na(adapt_abbr_i), "", adapt_i)) %>% 
+        paste0(ifelse(is.na(variant_abbr_i), "", " - ")) %>% 
+        paste0(ifelse(is.na(variant_abbr_i), "", variant_i)) %>% 
         paste(inFileExt_i, sep=".")
       # (infile_i %in% (excelDataPath %>% list.files)) %>% print
       
       outName_i     <- "impactsList" %>%
         paste(fileExt_i, sep="_") %>%
-        paste0(ifelse(is.na(adapt_abbr_i), "", "_")) %>%
-        paste0(ifelse(is.na(adapt_abbr_i), "", adapt_abbr_i))
+        paste0(ifelse(is.na(variant_abbr_i), "", "_")) %>%
+        paste0(ifelse(is.na(variant_abbr_i), "", variant_abbr_i))
       
       # outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
       outfile_i     <- outName_i %>% paste("rds", sep=".")

@@ -431,6 +431,8 @@ run_fredi <- function(
   if(has_popUpdate){
     message("Creating Population scenario from user inputs...")
     pop_df         <- popInput %>%
+      ### Standardize region and then interpolate
+      mutate(region = gsub(" ", ".", region)) %>%
       interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2:2) %>%
       filter( year >= minYear) %>% filter( year <= maxYear)
     ### Calculate national population

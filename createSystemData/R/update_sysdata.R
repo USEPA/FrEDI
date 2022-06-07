@@ -41,7 +41,7 @@ update_sysdata <- function(
   ###### Import sysdata.rda ######
   sysDataPath   <- outPath %>% file.path(sysDataName)
   # sysDataPath2   <- outPath %>% file.path(sysDataName2)
-  sysDataList   <- sysDataPath %>% (function(x){admisc::obj.rda(x)})
+  sysDataList   <- sysDataPath %>% (function(x){admisc::objRDA(x)})
   sysDataList %>% print
   load(sysDataPath)
 
@@ -65,8 +65,8 @@ update_sysdata <- function(
         # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
         eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
       }
-      # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
-      sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
+      # sysDataPath2 %>% (function(x){admisc::objRDA(x)}) %>% print
+      sysDataPath %>% (function(x){admisc::objRDA(x)}) %>% print
     }
     # ### Save the results
     # if(save){
@@ -77,15 +77,15 @@ update_sysdata <- function(
     #   # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
     #   eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
     # }
-    # # sysDataPath2 %>% (function(x){admisc::obj.rda(x)}) %>% print
-    # sysDataPath %>% (function(x){admisc::obj.rda(x)}) %>% print
+    # # sysDataPath2 %>% (function(x){admisc::objRDA(x)}) %>% print
+    # sysDataPath %>% (function(x){admisc::objRDA(x)}) %>% print
   }
 
 
   ###### Update sysdata: impacts ######
   if(impacts){
     impactFileNames <- inPath_imp %>% list.files
-    for(i in 1:length()){
+    for(i in 1:length(impactFileNames)){
       fileName_i <- impactFileNames[i]
       inPath_i   <- inPath_imp %>% file.path(fileName_i)
       outPath_i  <- inPath_imp %>% file.path(fileName_i)
