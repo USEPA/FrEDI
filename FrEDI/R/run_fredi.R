@@ -473,7 +473,7 @@ run_fredi <- function(
   df_mainScalars <- df_regPopScalar %>%
     rbind(
       df_mainScalars %>% filter(scalarName!="reg_pop")
-    ); rm(df_regPopScalar)
+    ); rm("df_regPopScalar")
 
   ###### Initialize Results ######
   ### Filter initial results to specified sectors

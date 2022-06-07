@@ -58,6 +58,8 @@ mostRecentDate <- "20220601"
 
 
 ```{r declare paths}
+### Set print options
+options(digits = 20)
 ### Set system paths
 # projectPath      <- getwd()
 projectPath      <- "."
@@ -214,8 +216,8 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- "CIL Extreme Temperature"
-c_sectorsList <- FrEDI::get_sectorInfo()
+c_sectorsList <- "Extreme Temperature"
+# c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
 
@@ -225,10 +227,28 @@ c_sectorsList <- FrEDI::get_sectorInfo()
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
-frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
-# df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# frediPath %>% load_all
+# df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
 # df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
+```
+
+
+
+Examine rounding
+
+```{r}
+# Extreme Temperature, No Adaptation, 2090 socioeconomics, Cold, Midwest, CanESM2, 2070
+# sprintf(x, fmt = '%#.3f') 
+test_digits <- (df_defaults %>%
+  filter(
+    year == 2070, region == "Midwest", model == "CanESM2",
+    sector == "Extreme Temperature", variant == "No Adaptation", impactYear == "2090", impactType == "Cold"
+    ))$annual_impacts; test_digits
+
+# test_digits %>% format(digits = 6)
+test_digits %>% sprintf(fmt = '%#.6f') 
+c(NA) %>% sprintf(fmt = '%#.6f') 
 ```
 
 
@@ -236,7 +256,6 @@ Use the following code to save the results:
 
 * Name the output path and create it if it doesn't exist.
 * Then save the outputs file.
->>>>>>> new_labor:createSystemData/configure_Rtool.Rmd
 
 
 ```{r saveOutputsPath}
@@ -244,6 +263,10 @@ saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
 df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
+
+
+
+
 
 
 Create plots
