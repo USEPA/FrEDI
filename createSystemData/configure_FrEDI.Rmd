@@ -52,14 +52,15 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220225"
+mostRecentDate <- "20220601"
 ```
 
 
 
 ```{r declare paths}
 ### Set system paths
-projectPath      <- getwd()
+# projectPath      <- getwd()
+projectPath      <- "."
 today            <- format(Sys.Date(), "%Y%m%d")
 
 ### Path to fredi project
@@ -133,7 +134,7 @@ Test system data
 ```{r test_systemData0}
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
+test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -142,9 +143,9 @@ time_create     <- time2 - time1; time_create
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
-# (test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
-# test_systemData$slrImpacts %>% names
-# test_systemData$df_results0$sector_label %>% unique
+(test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
+test_systemData$slrImpacts %>% names
+test_systemData$df_results0$sector_label %>% unique
 ```
 
 
@@ -179,15 +180,42 @@ file.copy(
 ```
 
 
-## Update R Tool [#updateRtool]
+## Update SV
 
-### Test function
+Use the following code to compile the SV configuration data
+
+```{r test createSVData}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
+test_sector     <- c("Coastal Properties")
+### Uncomment following two lines to create and save data and check the outputs
+time1           <- Sys.time()
+test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
+# test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
+time2           <- Sys.time()
+time_create     <- time2 - time1; time_create
+```
+
+
+
+Use the following code to update the FrEDI system data
+
+```{r update_sysdata}
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+update_sysdata(sv=T, impacts=F, save=T)
+```
+
+
+After running, [update the R tool](#updateRtool).
+
+
+## Test R Tool
 
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-# new_sectors <- "CIL Crime"
-new_sectors <- NULL
+c_sectorsList <- "CIL Extreme Temperature"
+c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
 
@@ -198,8 +226,9 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = new_sectors, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
-df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
+df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 ```
 
 
@@ -213,7 +242,7 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-write.csv(df_defaults, file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F)
+df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
 
 
@@ -230,6 +259,26 @@ defPlots$heatmaps$SLR
 ```
 
 
+Test SV tool 
+
+```{r test sv}
+# test_sv <- FrEDI::run_fredi_sv(sector="Coastal Properties")
+test_sv <- FrEDI::run_fredi_sv(sector="Coastal Properties", save = T, outpath = saveOutputsPath, addDate = T)
+test_sv <- FrEDI::run_fredi_sv(sector="Roads", save = T, outpath = saveOutputsPath, addDate = T)
+test_sv <- FrEDI::run_fredi_sv(sector="Labor", save = T, outpath = saveOutputsPath, addDate = T)
+test_sv <- FrEDI::run_fredi_sv(sector="Air Quality", save = T, outpath = saveOutputsPath, addDate = T)
+test_sv <- FrEDI::run_fredi_sv(sector="High Tide Flooding and Traffic", save = T, outpath = saveOutputsPath, addDate = T)
+test_sv <- FrEDI::run_fredi_sv(sector="Extreme Temperature", save = T, outpath = saveOutputsPath, addDate = T)
+```
+
+
+```{r}
+test_sv$aveRate_sv %>% is.na %>% which %>% length
+```
+
+
+
+## Update R Tool [#updateRtool]
 ### Update Default Outputs
 
 Use the following section to update R defaults
@@ -296,40 +345,13 @@ file.copy(from = packageFile_path, to = packageDest, overwrite = T)
 
 <!-- Examine impacts data -->
 
-```{r}
-testx <- getwd() %>% file.path("inst", "extdata",  "sv", "impacts", "Coastal Flooding and SLR - With Adaptation.csv") %>% read.csv
-testx %>% glimpse
-testx$block_group %>% unique %>% length
-```
+<!-- ```{r} -->
+<!-- testx <- getwd() %>% file.path("inst", "extdata",  "sv", "impacts", "Coastal Flooding and SLR - With Adaptation.csv") %>% read.csv -->
+<!-- testx %>% glimpse -->
+<!-- testx$block_group %>% unique %>% length -->
+<!-- ``` -->
 
 
 
 
 
-### Update SV
-
-Use the following code to compile the SV configuration data
-
-```{r test createSVData}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
-test_sector     <- c("Coastal Properties")
-### Uncomment following two lines to create and save data and check the outputs
-time1           <- Sys.time()
-test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
-# test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
-time2           <- Sys.time()
-time_create     <- time2 - time1; time_create
-```
-
-
-
-Use the following code to update the FrEDI system data
-
-```{r update_sysdata}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-update_sysdata(sv=T, impacts=F, save=T)
-```
-
-
-After running, [update the R tool](#updateRtool).

@@ -17,8 +17,7 @@ Depends: R (>= 3.5.0),
     tidyr,
     openxlsx
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 LazyData: TRUE
 Suggests: knitr, rmarkdown, prettydoc
 VignetteBuilder: knitr
-    

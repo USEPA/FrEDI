@@ -80,7 +80,7 @@ loadData <- function(
   ### Make a copy of the sectors list to include adaptations then drop adaptation column
   co_sectorsRef <- co_sectors
   dataList[["co_sectorsRef"]]
-  co_sectors    <- co_sectors %>% select(-adaptations, -impactYears, -impactTypes)
+  co_sectors    <- co_sectors %>% select(-variants, -impactYears, -impactTypes)
 
   ###### Adaptation info     ######
   ### No changes to adaptations
@@ -130,11 +130,11 @@ loadData <- function(
   ###### Join sector and other info ######
   ### Add additional sector info and add to data list
   df_sectorsInfo <- co_sectors %>%
-    left_join(co_adaptations %>% select(-c("adaptation_id_excel", "adaptation_label")), by="sector_id") %>%
+    left_join(co_variants %>% select(-c("variant_id_excel", "variant_label")), by="sector_id") %>%
     left_join(co_impactYears %>% select(-c("impactYear_label", "impactYear_excel")), by="sector_id") %>%
     left_join(co_impactTypes %>% select(-c("impactType_id_excel", "impactType_label", "impactType_description")), by="sector_id") %>%
     rename_at(
-      paste(c("sector", "adaptation", "impactYear", "impactType"), "id", sep="_"),
+      paste(c("sector", "variant", "impactYear", "impactType"), "id", sep="_"),
       function(x){substr(x, 1,nchar(x) - nchar("_id"))}
     ) #; df_sectorsInfo %>% glimpse
   dataList[["df_sectorsInfo"]] <- df_sectorsInfo
@@ -170,12 +170,12 @@ loadData <- function(
     mutate(impactType = impactType %>% replace_na("NA")) %>%
     ### Refactor adaptation
     mutate(
-      sector_adaptation = sector %>% paste(adaptation, sep="_"),
-      sector_adaptation = sector_adaptation %>%
-        factor(levels=paste(co_adaptations$sector_id, co_adaptations$adaptation_id_excel, sep="_"),labels=co_adaptations$adaptation_id),
-      adaptation=sector_adaptation
+      sector_variant = sector %>% paste(variant, sep="_"),
+      sector_variant = sector_variant %>%
+        factor(levels=paste(co_variants$sector_id, co_variants$variant_id_excel, sep="_"),labels=co_variants$variant_id),
+      variant=sector_variant
       ) %>%
-    select(-sector_adaptation) %>%
+    select(-sector_variant) %>%
     ### Refactor impact years
     mutate(
       impactYear= impactYear %>% factor(levels=co_impactYearLevels$impactYear_label, labels=co_impactYearLevels$impactYear_id)
@@ -210,7 +210,7 @@ loadData <- function(
   
   # slrImpacts %>% names %>% print
   slrImpacts <- slrImpacts %>%
-    gather(value="scaled_impacts", key="region_slr", -c("year", "sector", "adaptation", "impactType", "impactYear")) %>%
+    gather(value="scaled_impacts", key="region_slr", -c("year", "sector", "variant", "impactType", "impactYear")) %>%
     mutate(
       region = region_slr %>% lapply(function(x){str_split(x, "_")[[1]][1]}) %>% unlist,
       model  = region_slr %>% lapply(function(x){str_split(x, "_")[[1]][2]}) %>% unlist %>% paste("cm", sep="")
@@ -224,12 +224,12 @@ loadData <- function(
     ) %>%
     ### Refactor adaptation
     mutate(
-      sector_adaptation = sector %>% paste(adaptation, sep="_"),
-      sector_adaptation = sector_adaptation %>%
-        factor(levels=paste(co_adaptations$sector_id, co_adaptations$adaptation_id_excel, sep="_"),labels=co_adaptations$adaptation_id),
-      adaptation=sector_adaptation
+      sector_variant = sector %>% paste(variant, sep="_"),
+      sector_variant = sector_variant %>%
+        factor(levels=paste(co_variants$sector_id, co_variants$variant_id_excel, sep="_"),labels=co_variants$variant_id),
+      variant=sector_variant
     ) %>%
-    select(-sector_adaptation) %>%
+    select(-sector_variant) %>%
     ### Refactor impact years
     mutate(
       impactYear= impactYear %>% factor(levels=co_impactYearLevels$impactYear_label, labels=co_impactYearLevels$impactYear_id)
@@ -256,7 +256,7 @@ loadData <- function(
   ### Convert values of zero to NA
   data_scaledImpacts <- data_scaledImpacts %>%
     gather(key = "region_dot", value="scaledImpact", all_of(co_regions$region_dot)) %>%
-    mutate_at(vars(adaptation, impactYear, impactType, model_dot), as.character)
+    mutate_at(vars(variant, impactYear, impactType, model_dot), as.character)
   dataList[["data_scaledImpacts"]] <- data_scaledImpacts
 
   ###### Reshape scalars ######
