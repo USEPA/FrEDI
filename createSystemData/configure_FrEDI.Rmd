@@ -59,7 +59,8 @@ mostRecentDate <- "20220601"
 
 ```{r declare paths}
 ### Set system paths
-projectPath      <- getwd()
+# projectPath      <- getwd()
+projectPath      <- "."
 today            <- format(Sys.Date(), "%Y%m%d")
 
 ### Path to fredi project
@@ -186,7 +187,8 @@ file.copy(
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-new_sectors <- "CIL Extreme Temperature"
+c_sectorsList <- "CIL Extreme Temperature"
+c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
 
@@ -197,8 +199,9 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = new_sectors, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
-df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
+df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 ```
 
 
@@ -327,7 +330,7 @@ Use the following code to update the FrEDI system data
 
 ```{r update_sysdata}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-update_sysdata(sv=T, impacts=F, save=T)
+update_sysdata(sv=T, impacts=T, save=T)
 ```
 
 

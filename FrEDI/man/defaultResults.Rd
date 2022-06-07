@@ -8,7 +8,7 @@
 A data frame with 173 016 rows and 18 columns:
 \describe{
 \item{sector}{Name of the sector}
-\item{adaptation}{Name of the adaptation or variation (values are sector-specific)}
+\item{variant}{Name of the adaptation or variant (values are sector-specific)}
 \item{impactYear}{Name of the impact year ("2010", "2090", "N/A", or "Interpolation")}
 \item{impactType}{Name of the impact type ("all" or sector-specific values)}
 \item{region}{Name of the associated region ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", "Southwest", or "National Total")}
@@ -18,13 +18,13 @@ A data frame with 173 016 rows and 18 columns:
 \item{driverValue}{Value for the associated driver type (in "degrees Celsius" for temperature and in "cm" for sea level rise)}
 \item{driverUnit}{Unit for the associated driver type ("degrees Celsius" for temperature and "cm" for sea level rise)}
 \item{driverType}{Associated driver type ("Temperature" or "GMSL (SLR)")}
-\item{includeaggregate}{A \code{0} or \code{1} value indicating whether the adaptation is included in aggregation}
+\item{includeaggregate}{A \code{0} or \code{1} value indicating whether the variant is included in aggregation}
 \item{sectorprimary}{A \code{0} or \code{1} value indicating whether the sector is a primary CIRA sector}
 \item{gdp_usd}{National gross domestic product (GDP) for associated year in 2015 USD (U.S. dollars)}
 \item{national_pop}{National population for associated year}
 \item{gdp_per_cap}{National GDP per capita for associated year in 2015 USD (U.S. dollars) per capita}
 \item{reg_pop}{Regional population for associated year}
-\item{annual_impacts}{Annual impacts for associated year, region, sector, adaptation, impact year, impact type, and model}
+\item{annual_impacts}{Annual impacts for associated year, region, sector, variant, impact year, impact type, and model}
 \item{...}{...}
 }
 }
