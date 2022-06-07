@@ -1,9 +1,18 @@
 ###### fun_tryInput ######
-### Created 2021.02.08. Last updated 2021.02.08
+### Created 2021.02.08. Last updated 2022.05.09
 ### This function attempts to load a user-specified input file
 fun_tryInput <- function(
-  filename = NULL
+  filename = NULL,
+  silent   = FALSE, ### Whether to message
+  msg0      = "" ### Message prefix
 ){
+  ###### Messaging ######
+  msgUser <- ifelse(silent, FALSE, TRUE)
+  msg0 <- ifelse(is.null(msg0), "", msg0)
+  msg1 <- msg0 %>% paste0("\t")
+  msg2 <- msg1 %>% paste0("\t")
+  msg3 <- msg2 %>% paste0("\t")
+
   ###### Initialize results ######
   return_list <- list()
 
@@ -35,8 +44,8 @@ fun_tryInput <- function(
     }
 
     ### Message the user
-    message("\t", return_list[["fileMsg"]])
-
+    # message("\t", return_list[["fileMsg"]])
+    if(msgUser){ msg0 %>% paste0(return_list[["fileMsg"]]) %>% message }
   }
 
   ###### Return ######

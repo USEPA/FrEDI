@@ -378,7 +378,7 @@ get_annual_model_stats <- function(
   data      = NULL, ### Dataframe of results
   sectors   = NULL, ### Name of sectors to get statistics for
   yVar      = "annual_impacts", ### Column to get averages for
-  groupCol = c("sector", "adaptation", "model_type", "impactType", "impactYear") ### Column(s) to use for grouping
+  groupCol = c("sector", "variant", "model_type", "impactType", "impactYear") ### Column(s) to use for grouping
 ){
   ###### Ungroup data ######
   # data        <- data %>% ungroup
@@ -419,8 +419,8 @@ get_annual_model_stats <- function(
   model_label_x <- ifelse(tolower(model_type_x)=="gcm", model_aves_x[1], model_aves_x[2])
 
   ###### Reshape the data ######
-  # default_groupCols <- c("sector", "adaptation", "model_type", "impactType", "impactYear", "region")
-  default_groupCols <- c("sector", "adaptation", "model_type", "impactType", "impactYear", "region", "year", "model", "yvar")
+  # default_groupCols <- c("sector", "variant", "model_type", "impactType", "impactYear", "region")
+  default_groupCols <- c("sector", "variant", "model_type", "impactType", "impactYear", "region", "year", "model", "yvar")
   groupByCols       <- default_groupCols[which(default_groupCols %in% names(data))]
 
   ### Reshape the data and prepare a column indicating which rows have is.na() for all models

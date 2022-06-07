@@ -83,24 +83,32 @@ import_inputs <- function(
   temptype = "conus", ### "global", or "conus" (default)
   popform  = "wide" ### "wide" or "long" ### Previously: "gather", "spread"
 ){
-  ###### Defaults ######
-  # popform_default  <- "spread"
-  popform_default  <- "wide"
-  popform  <- ifelse(is.null(popform), popform_default, tolower(popform))
-  if(!(popform=="wide")){
-    message("User specified `popform='", popform, "'`...",
-            "Population inputs will be gathered by region.")
+  ###### Messaging ######
+  hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile) %>%
+    lapply(function(x){!is.null(x)}) %>%
+    unlist %>% any
+  silent  <- TRUE
+  msgUser <- ifelse(silent, FALSE, TRUE)
+  msg0    <- ""
+  msg1    <- msg0 %>% paste0("\t")
+  msg2    <- msg1 %>% paste0("\t")
+  msg3    <- msg2 %>% paste0("\t")
+  if(hasAnyInputs){
+    "\n" %>% paste0(msg0) %>% paste0("In import_inputs():") %>% message
   }
-  ### Rename to gather and spread
-  popform <- ifelse(popform == "wide", "spread", "gather")
 
+  ###### Defaults ######
+  ### Set popform default to "wide" (previously "spread")
+  ### Set popform to "wide" if none is specified
+  popform_default  <- "wide"
+  popform          <- ifelse(is.null(popform), popform_default, tolower(popform))
+  wide_pop         <- popform=="wide"
+
+  ### Set temperature type default and set temperature type to default if none
+  ### is declared. Check whether inputs temperatures are already in CONUS degrees
   temptype_default <- "conus"
-  temptype <- ifelse(is.null(temptype), temptype_default, temptype)
-  conus    <- (temptype == temptype_default)
-  if(!(conus)){
-    message("User specified `temptype='global'`...",
-            "Global temperatures will be converted to CONUS temperatures.")
-  }
+  temptype         <- ifelse(is.null(temptype), temptype_default, temptype)
+  conus            <- (tolower(temptype) == "conus"); #conus %>% print
 
   ###### Initialize Inputs List ######
   ### Get input scenario info: co_inputScenarioInfo
@@ -149,20 +157,26 @@ import_inputs <- function(
 
     ###### Format Dataframe ######
     if(!isNullFile_i){
-      message( "\n", "User supplied ", msgName_i, " input. ", "Importing data from ", inputFile_i, "...")
-      ### Try to import the file
-      fileInput_i   <- inputFile_i %>% fun_tryInput
+      msg1 %>% paste0("User supplied ", msgName_i, " input...") %>% message
+      msg2 %>% paste0("Importing data from ", inputFile_i, "...") %>% message
+      ### Try to import the file and initialize the list value
+      fileInput_i   <- inputFile_i %>% fun_tryInput(silent=T)
       fileStatus_i  <- fileInput_i[["fileStatus"]]
+      df_input_i    <- fileInput_i[["fileInput"]]
 
-      ### Initialize list value
-      df_input_i   <- fileInput_i[["fileInput"]]
+      ### Message the user
+      if(msgUser){ msg2 %>% paste0(fileInput_i[["fileMsg"]]) %>% message }
 
       ######## For loaded data ######
       ### If the load is a success, add results to the input list
       if(fileStatus_i=="loaded"){
-        message("\t", "Formatting inputs...")
+        msg2 %>% paste0("Formatting ", msgName_i, " inputs...") %>% message
         ###### Gather population inputs ######
-        if(input_i=="pop" & popform=="spread"){
+        if(input_i=="pop" & wide_pop){
+          msg3 %>% paste0("User specified `popform='wide'`...") %>%
+            paste0("Gathering population by region...") %>%
+            message
+
           names(df_input_i)[1] <- colNames_i[1]
           df_input_i <- df_input_i %>% gather(key = "region", value="reg_pop", -year)
         }
@@ -176,20 +190,24 @@ import_inputs <- function(
           mutate_at(vars(all_of(numCols_i)), as.numeric)
 
         ###### Convert Global Temps to CONUS ######
+        ### Convert Global Temps to CONUS if there are temperature inputs and they
+        ### aren't already in CONUS degrees
         if((input_i=="temp") & (!conus)){
-          df_input_i <- df_input_i %>% mutate(temp_C = temp_C %>% convertTemps(from="conus"))
+          ### Message user
+          msg3 %>% paste0("User specified `temptype='global'`...") %>% message
+          msg3 %>% paste0("Converting global temperatures to CONUS temperatures...") %>% message
+          ### Convert temps
+          df_input_i <- df_input_i %>% mutate(temp_C = temp_C %>% convertTemps(from="global"))
         }
 
         ###### Check Input ######
-        message("\t", "Checking input values...", "\n")
+        msg2 %>% paste0("Checking values...") %>% message
         ### Values
         values_i <- df_input_i[,valueCol_i]
         ### Substitute NULL for missing values for min and max
         if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
         ### Check the status
         flag_i <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
-        ### Add the status to the list
-        # flagList[[inputName_i]] <- flag_i
         ### Return and message the user if there is a flag:
         flagStatus_i <- flag_i$flagged
         flagRows_i   <- flag_i$rows
@@ -200,11 +218,14 @@ import_inputs <- function(
           years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
           rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
           ### Create message and message user
-          msg1_i       <- "Error in importing inputs for" %>% paste(msgName_i) %>% paste0(":")
-          msg2_i       <- inputName_i %>% paste("has", numrows_i,  "values outside of defined range", rangeLabel_i)
-          msg3_i       <- "Please correct values" %>% paste(msgName_i, "values for years", yearsLabel_i)
+          msg1_i       <- msg2 %>% paste("Error in importing inputs for", msgName_i) %>% paste0("!")
+          msg2_i       <- msg3 %>% paste(inputName_i, "has", numrows_i,  "values outside of defined range", rangeLabel_i)
+          msg3_i       <- msg3 %>% paste("Please correct values", msgName_i, "values for years", yearsLabel_i) %>% paste0("...")
+          ### Message user
+          "\n" %>% paste0(msg0) %>% paste0("Warning:") %>% message
+          msg1_i %>% message; msg2_i %>% message; msg3_i %>% message
+          "\n" %>% paste0(msg0) %>% paste0("Exiting...") %>% message
 
-          message(msg1_i); message("\t", msg2_i); message("\t", msg3_i, "...", "\n"); message("Exiting...")
           ### Return list with error and flagged rows
           returnList <- list(
             error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
@@ -218,13 +239,12 @@ import_inputs <- function(
         ###### Update Results List Element ######
         ### Add results to the file
         inputsList[[inputName_i]] <- df_input_i
-
-        message("\n", "Finished.")
       } ### End if status == loaded
     } ### End if !isNullFile
   }  ### End iterate on i
 
   ###### Return input list ######
+  msg0 %>% paste0("Finished.") %>% message
   return(inputsList)
 }
 
