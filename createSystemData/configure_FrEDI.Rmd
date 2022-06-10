@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220601"
+mostRecentDate <- "20220609"
 ```
 
 
@@ -136,7 +136,7 @@ Test system data
 ```{r test_systemData0}
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
+test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -145,9 +145,9 @@ time_create     <- time2 - time1; time_create
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
-(test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
-test_systemData$slrImpacts %>% names
-test_systemData$df_results0$sector_label %>% unique
+#(test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
+#test_systemData$slrImpacts %>% names
+#test_systemData$df_results0$sector_label %>% unique
 ```
 
 
@@ -216,7 +216,7 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- "Extreme Temperature"
+c_sectorsList <- "ATS Extreme Temperature"
 # c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
@@ -227,9 +227,9 @@ c_sectorsList <- "Extreme Temperature"
 Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
-# frediPath %>% load_all
-# df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
-df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+frediPath %>% load_all
+df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+# df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
 # df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 ```
 
@@ -247,8 +247,8 @@ test_digits <- (df_defaults %>%
     ))$annual_impacts; test_digits
 
 # test_digits %>% format(digits = 6)
-test_digits %>% sprintf(fmt = '%#.6f') 
-c(NA) %>% sprintf(fmt = '%#.6f') 
+# test_digits %>% sprintf(fmt = '%#.6f') 
+# c(NA) %>% sprintf(fmt = '%#.6f') 
 ### -239115535.389834
 ```
 
@@ -310,7 +310,7 @@ Use the following section to update R defaults
 ```{r defaultResults}
 # ###### Update and Save Default Scenario ######
 defaultResults <- FrEDI::run_fredi()
-save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.RData"))
+save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.rda"))
 ```
 
 
@@ -354,7 +354,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "2.3.0"
+packageVersion   <- "3.0.0"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
