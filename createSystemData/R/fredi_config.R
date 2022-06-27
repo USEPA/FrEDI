@@ -38,7 +38,8 @@ frediData_config$k_billion <- 10^9
 ###### Data years and eras ######
 ### Min year, max year
 frediData_config$minYear <- 2010
-frediData_config$maxYear <- 2090
+# frediData_config$maxYear <- 2090
+frediData_config$maxYear <- 2300
 
 
 
@@ -56,19 +57,19 @@ fredi_config$list_messages = list(
       fail   ="Could not find R data."
       ),
     loadInputs    = list(
-      try="Loading input data...",
+      try    ="Loading input data...",
       success="Input data loaded.",
-      fail="Could not find input data."
+      fail   ="Could not find input data."
       ),
     globalTemps   = "Converting global temperature scenario to CONUS scenario...",
     updatePopGDP  = "Updating socioeconomic scenario...",
     updateScalars = list(try="Updating physical and economic scalars...", success="Physical and economic scalars updated."),
     scaledImpacts = list(try="Calculating annual scaled impacts", success="Calculation of scaled impacts complete."),
     aggImpacts    = list(try="Aggregating impacts..."),
-    impactTypes    = list(try="Summing over impact types..."),
-    impactYears    = list(try="Interpolating between impact estimate years..."),
-    modelAves    = list(try="Getting model averages..."),
-    national    = list(try="Calculating national totals...")
+    impactTypes   = list(try="Summing over impact types..."),
+    impactYears   = list(try="Interpolating between impact estimate years..."),
+    modelAves     = list(try="Getting model averages..."),
+    national      = list(try="Calculating national totals...")
   )
 ###### Required package list ###### 
 ### Packages used in the RTool. Previous packages included: "scriptName", "stringr", and "ggplot2" # requiredPackageList <- c("tidyverse", "data.table", "openxlsx" #, #"sqldf", "openxlsx", "matrixStats", "RColorBrewer")
@@ -76,21 +77,23 @@ fredi_config$list_messages = list(
 ###### Lists of Years ######
 ### Sequences of years by 20-, 10-, 5-, and 1-year intervales
 ### Sequence from 2010 to 2090 with 20 year intervals
-fredi_config$list_years_by20 <- seq(fredi_config$minYear, fredi_config$maxYear, 20)
-fredi_config$list_years_by10 <- seq(fredi_config$minYear, fredi_config$maxYear, 10) 
-fredi_config$list_years_by5  <- seq(fredi_config$minYear, fredi_config$maxYear, 5)  
-fredi_config$list_years      <- seq(fredi_config$minYear, fredi_config$maxYear, 1)
+fredi_config$list_years_by100 <- seq(fredi_config$minYear, fredi_config$maxYear, 100)
+fredi_config$list_years_by50  <- seq(fredi_config$minYear, fredi_config$maxYear, 50)
+fredi_config$list_years_by20  <- seq(fredi_config$minYear, fredi_config$maxYear, 20)
+fredi_config$list_years_by10  <- seq(fredi_config$minYear, fredi_config$maxYear, 10) 
+fredi_config$list_years_by5   <- seq(fredi_config$minYear, fredi_config$maxYear, 5)  
+fredi_config$list_years       <- seq(fredi_config$minYear, fredi_config$maxYear, 1)
 ###### Default values ######
 ### Base year, discount rate
 ### Types of aggregation
-fredi_config$baseYear0     = 2010
-fredi_config$rate0         = 0.3
-fredi_config$discountRate0 = 0.03
-fredi_config$aggList0      = c("national", "model", "impactYear", "impactType")
-fredi_config$groupLevels0  = c("sector", "adaptation", "impactYear", "impactType", "modelType", "model", "region")
+fredi_config$baseYear0     <- 2010
+fredi_config$rate0         <- 0.3
+fredi_config$discountRate0 <- 0.03
+fredi_config$aggList0      <- c("national", "model", "impactYear", "impactType")
+fredi_config$groupLevels0  <- c("sector", "adaptation", "impactYear", "impactType", "modelType", "model", "region")
   
 ###### temps2slr constants ######
-fredi_config$temps2slr = list(
+fredi_config$temps2slr <- list(
   ### Phi: (i.e., "c", above) is a temperature-independent rate term with e-folding time tau2. I.e., phi is the multi-millennial contribution to GMSL in mm/year.
   ### Scalar: Sensitivity of the GSL rate to a deviation of T(t) from an equilibrium temperature of Te(t).
   ### Alpha: The value obtained in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "a").
@@ -113,13 +116,13 @@ fredi_config$temps2slr = list(
   # slr_cm0    = 0,
   
   ### Extend out to...
-  max_year   = 2090
+  max_year   = frediData_config$maxYear
 )
 
 ###### Image Constants ######
 ### Defaults for regional images
 # def_img_device  <- "png"
-fredi_config$get_plots = list(
+fredi_config$get_plots <- list(
 def_img_unit    = "in",
 
 ### Heights and Widths
