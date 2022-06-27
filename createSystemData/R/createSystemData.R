@@ -96,6 +96,42 @@ createSystemData <- function(
     left_join(pop_default, by = "year")
   rm("national_scenario_default")
 
+  ###### Interpolate SLR Scenarios ######
+  # dataList[["slr_cm"]]
+  c_npdRefYear <- 2090
+  c_maxSLRYear <- slr_cm$year %>% max
+  slr_cm <- slr_cm %>% 
+    filter(year <= c_maxSLRYear) %>%
+    (function(x){
+      x2 <- x %>% filter(year==c_maxSLRYear) %>% 
+        mutate(dummyCol = 1) %>% select(-c("year")) %>%
+        left_join(data.frame(
+          year = (c_npdRefYear + 1):maxYear,
+          dummyCol = 1
+        ), by = c("dummyCol")) %>%
+        select(-c("dummyCol"))
+      
+      x <- x %>% rbind(x2) %>%
+        arrange_at(.vars = c("model", "year"))
+    })
+  loadDataList[["slr_cm"]] <- slr_cm; rm("slr_cm")
+  ### slrImpacts
+  slrImpacts <- slrImpacts %>% 
+    filter(year <= c_maxSLRYear) %>%
+    (function(x){
+      x2 <- x %>% filter(year==c_maxSLRYear) %>% 
+        mutate(dummyCol = 1) %>% select(-c("year")) %>%
+        left_join(data.frame(
+          year = (c_npdRefYear + 1):maxYear,
+          dummyCol = 1
+        ), by = c("dummyCol")) %>%
+        select(-c("dummyCol"))
+      
+      x <- x %>% rbind(x2) %>%
+        arrange_at(.vars = c("sector", "variant", "impactType", "impactYear", "region", "year"))
+    })
+  loadDataList[["slrImpacts"]] <- slrImpacts; rm("slrImpacts")
+    
   ###### Format Scalar Tables ######
   ### Interpolate values to annual levels
   scalarNameList <- scalarDataframe$scalarName %>% unique
