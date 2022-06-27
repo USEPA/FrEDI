@@ -60,6 +60,12 @@ aggregate_impacts <- function(
   ###### Ungroup Data ######
   data    <- data %>% ungroup #; names(data) %>% print
 
+  ###### Years Info ######
+  ### Years in data
+  c_npdRefYear <- 2090
+  c_dataYears  <- data$year %>% unique
+  has_plus2090vals <- (c_dataYears[which(c_dataYears > c_npdRefYear)] %>% length) > 0
+
   ###### SLR Info ######
   # assign("slr_cm", rDataList[["slr_cm"]])
   assign("co_models", rDataList[["co_models"]])
@@ -333,10 +339,10 @@ aggregate_impacts <- function(
   df_aggImpacts <- data  %>% select(-c(all_of(scenarioCols)))
 
   ###### Impact Years ######
+  ### Separate into years after 2090 and before 2090
   if(impactYearsAgg){
     if(msgUser) message("\t", "Interpolating between impact year estimates...")
     # summaryCol1 <- summaryCols[1]
-
     ### Group by columns
     groupCols_impYears <- groupByCols[which(groupByCols != "impactYear" )]
 
@@ -344,8 +350,16 @@ aggregate_impacts <- function(
     impactYear2 <- impactYears[2]
     impactYear1 <- impactYears[1]
 
+    ### Separate data into years > 2090, years <= 2090
+    c_cutoff_yr <- 2090
+    df_aggImp_1 <- df_aggImpacts %>% filter(year <= c_cutoff_yr)
+    df_aggImp_2 <- df_aggImpacts %>% filter(year >  c_cutoff_yr)
+    rm("df_aggImpacts")
+
+    ### Process pre-2090:
+
     ### Separate out observations without impact years
-    df_naYears <- df_aggImpacts %>% filter(!(impactYear %in% impactYears)) %>% mutate(impactYear="Interpolation")
+    df_naYears <- df_aggImp_1 %>% filter(!(impactYear %in% impactYears)) %>% mutate(impactYear="Interpolation")
 
     ### New upper and lower column names
     new_2090SummaryCols <- paste(summaryCols, "2090", sep="_")
@@ -359,7 +373,7 @@ aggregate_impacts <- function(
     if(nrow_impYrs > 0){
 
       ### Filter to other lower models and then bind with the zero values, drop model column
-      df2090 <- df_aggImpacts %>% filter(impactYear == impactYear2) %>%
+      df2090 <- df_aggImp_1 %>% filter(impactYear == impactYear2) %>%
         select(-c("impactYear")) %>%
         (function(y){
           y <- y %>% as.data.frame
@@ -368,7 +382,7 @@ aggregate_impacts <- function(
         })
 
       ### Drop summary columns from 2010
-      df2010 <- df_aggImpacts %>% filter(impactYear == impactYear1) %>%
+      df2010 <- df_aggImp_1 %>% filter(impactYear == impactYear1) %>%
         select(-c("impactYear")) %>%
         (function(y){
           y <- y %>% as.data.frame
@@ -419,10 +433,16 @@ aggregate_impacts <- function(
         select(-c("numer_yr", "denom_yr", "adj_yr"))
     }
 
-    ### Add back into regional values
+    ### Add back into values without NA years
     df_aggImpacts <- df_impYears %>% rbind(df_naYears) %>% mutate(impactYear="Interpolation")
-
     rm("df_impYears", "df_naYears")
+
+    ### Then do the post-2090 results
+    ### Exclude 2010 results
+    df_aggImp_2   <- df_aggImp_2 %>% filter(impactYear != impactYear1) %>% mutate(impactYear="Interpolation")
+
+    ### Join post 2090 results with earlier results
+    df_aggImpacts <- df_aggImpacts %>% rbind(df_aggImp_2)
   }
 
   ###### Model Averages ######

@@ -286,6 +286,8 @@ get_plots <- function(
       }
     }
 
+    c_heatMapYears     <- seq(minYear, maxYear, by = 5)
+
     ##### Y Label
     impactLab_heat       <- base_plot_label %>% paste(base_unitStart) %>% paste0(ylab_unitEnd)
     # yLab_heat            <- groupVarLabels %>% paste(base_unitStart, collapse=", ")
@@ -305,14 +307,21 @@ get_plots <- function(
         # refModelList <- c(paste(c(0, 30, seq(50, 250, by=50)), "cm"), "Interpolation")
         # data_model_i       <- data_model_i %>% mutate(model = model %>% factor(levels=refModelList))
         refModelList   <- c("Interpolation")
-        data_model_i   <- data_model_i %>% mutate(model = model %>% factor(levels=refModelList))
+        data_model_i   <- data_model_i %>% mutate(model = model %>% as.character %>% factor(levels=refModelList))
+        # data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090) %>% nrow %>% print
+        # (data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090))$valueColumn %>% range %>% print
       } else{
-        models_i        <- data_model_i$model %>% unique
+        models_i        <- data_model_i$model %>% as.character %>% unique
         is_aveCol_i     <- (models_i == "Average" | models_i == "Model Average")
         ### Put average columns last
         modelLevels_i   <- models_i[which(!is_aveCol_i)] %>% c(models_i[which(is_aveCol_i)])
-        data_model_i    <- data_model_i %>% mutate(model = model %>% factor(levels=modelLevels_i))
+        # models_i %>% print; modelLevels_i %>% print
+        data_model_i    <- data_model_i %>% mutate(model = model %>% as.character %>% factor(levels=modelLevels_i))
+
+        # data_model_i %>% filter(!is.na(valueColumn)) %>% filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")) %>% nrow %>% print
+        # (data_model_i %>% filter(!is.na(valueColumn)) %>% filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")))$valueColumn %>% range(na.rm=T) %>% print
       }
+
 
 
       ### Unique sectors, variants, impact types
@@ -341,7 +350,8 @@ get_plots <- function(
       p_model <- data_model_i %>%
         # arrange(desc(group_name)) %>%
         # mutate(valueColumn = valueColumn / (10^3)^heat_power1000 ) %>%
-        filter(year %in% seq(2010, 2090, by=5)) %>%
+        # filter(year %in% seq(2010, 2090, by=5)) %>%
+        filter(year %in% c_heatMapYears) %>%
         mutate(group_name = group_name %>% factor) %>%
         mutate(group_name = group_name %>% factor(levels=rev(levels(group_name)))) %>%
         ggplot(., aes(x=year, y=group_name, fill=valueColumn)) +
