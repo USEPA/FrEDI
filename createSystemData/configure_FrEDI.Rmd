@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220609"
+mostRecentDate <- "20220627"
 ```
 
 
@@ -145,9 +145,12 @@ time_create     <- time2 - time1; time_create
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
 ```{r check outputs}
-#(test_systemData$slrImpacts %>% filter(sector %in% c_newSectors)) %>% filter(!is.na(annual_impacts)) %>% nrow
-#test_systemData$slrImpacts %>% names
-#test_systemData$df_results0$sector_label %>% unique
+### Check names and dimensions
+test_systemData$slr_cm$year %>% range
+test_systemData$slrImpacts$year %>% range
+test_systemData$df_results0 %>% glimpse
+test_systemData$df_results0$year %>% range
+test_systemData$df_results0 %>% filter(!is.na(physAdjValue) & !is.na(damageAdjValue) & !is.na(econScalarValue)) %>% nrow
 ```
 
 
@@ -169,16 +172,16 @@ time_create     <- time2 - time1; time_create
 
 
 
-**Manually update the sysdata.rdata file in the Rtool.**
+**Manually update the sysdata.rda file in the Rtool.**
 
 After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
 
 ```{r file.copy}
-file.copy(
-  from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
-  to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
-  overwrite = T
-)
+# file.copy(
+#   from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
+#   to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
+#   overwrite = T
+# )
 ```
 
 
@@ -200,7 +203,7 @@ time_create     <- time2 - time1; time_create
 
 
 
-Use the following code to update the FrEDI system data
+Use the following code to update the FrEDI system data with the SV data
 
 ```{r update_sysdata}
 for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
@@ -216,8 +219,8 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- "ATS Extreme Temperature"
-# c_sectorsList <- FrEDI::get_sectorInfo()
+# c_sectorsList <- "ATS Extreme Temperature"
+c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
 
@@ -228,9 +231,12 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2300, by=5)) 
 # df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
-# df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
+df_defaults %>% dim
+df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
+(df_defaults %>% filter(!is.na(annual_impacts)))$annual_impacts %>% range
+(df_defaults %>% filter(!is.na(annual_impacts)))$sector %>% unique
 ```
 
 
@@ -354,7 +360,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.0.0"
+packageVersion   <- "3.1.0"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
