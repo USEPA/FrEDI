@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220609"
+mostRecentDate <- "20220629"
 ```
 
 
@@ -216,7 +216,7 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- "ATS Extreme Temperature"
+c_sectorsList <- "CIL Extreme Temperature"
 # c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
