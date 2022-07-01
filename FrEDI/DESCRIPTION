@@ -1,6 +1,6 @@
 Package: FrEDI
 Title: The Framework for Evaluating Damages and Impacts (FrEDI)
-Version: 3.0.0
+Version: 3.1.0
 Authors: U.S. Environmental Protection Agency (EPA) <https://epa.gov/cira/>
 URL: https://epa.gov/cira/FrEDI/
 Description: This R package models damages and impacts from climate change in the contiguous United States (CONUS) 
