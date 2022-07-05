@@ -311,6 +311,7 @@ get_plots <- function(
         # data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090) %>% nrow %>% print
         # (data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090))$valueColumn %>% range %>% print
       } else{
+        data_model_i    <- data_model_i %>% mutate( model = model %>% as.character())
         models_i        <- data_model_i$model %>% as.character %>% unique
         is_aveCol_i     <- (models_i == "Average" | models_i == "Model Average")
         ### Put average columns last

@@ -366,7 +366,7 @@ aggregate_impacts <- function(
     new_2010SummaryCols <- paste(summaryCols, "2010", sep="_")
 
 
-    df_impYears <- df_aggImpacts %>% filter(impactYear %in% impactYears)
+    df_impYears <- df_aggImp_1 %>% filter(impactYear %in% impactYears)
     nrow_impYrs <- df_impYears %>% nrow
 
 
