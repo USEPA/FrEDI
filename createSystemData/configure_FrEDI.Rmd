@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220627"
+mostRecentDate <- "20220701"
 ```
 
 
@@ -190,15 +190,15 @@ After copying and pasting the system data to the Rtool, try detaching the packag
 Use the following code to compile the SV configuration data
 
 ```{r test createSVData}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+#for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
 ### "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
-test_sector     <- c("Coastal Properties")
+#test_sector     <- c("Coastal Properties")
 ### Uncomment following two lines to create and save data and check the outputs
-time1           <- Sys.time()
-test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
+#time1           <- Sys.time()
+#test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
 # test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
-time2           <- Sys.time()
-time_create     <- time2 - time1; time_create
+#time2           <- Sys.time()
+#time_create     <- time2 - time1; time_create
 ```
 
 
