@@ -87,14 +87,14 @@
 ### This function creates a dataframe of sector impacts for default values or scenario inputs.
 ### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi <- function(
-  inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
-  sectorList = NULL, ### Vector of sectors to get results for
-  aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
-  pv         = FALSE, ### T/F value indicating Whether to calculate net present value
-  baseYear   = 2010, ### Default = 2010
-  rate       = 0.03, ### Ratio, defaults to 0.03
-  elasticity = NULL, ### Override value for elasticity for economic values
-  silent     = TRUE  ### Whether to message the user
+    inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
+    sectorList = NULL, ### Vector of sectors to get results for
+    aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
+    pv         = FALSE, ### T/F value indicating Whether to calculate net present value
+    baseYear   = 2010, ### Default = 2010
+    rate       = 0.03, ### Ratio, defaults to 0.03
+    elasticity = NULL, ### Override value for elasticity for economic values
+    silent     = TRUE  ### Whether to message the user
 ){
 
   ###### Set up the environment ######
@@ -297,7 +297,7 @@ run_fredi <- function(
           years  = interpYrs,
           column = "temp_C",
           rule   = 1:2
-          ) %>%
+        ) %>%
           select(-c("region"))
         return(x_interp)
       }) %>%
@@ -364,8 +364,8 @@ run_fredi <- function(
           column = "slr_cm",
           rule   = 1:2
         ) %>%
-      select(-c("region"))
-    return(x_interp)
+          select(-c("region"))
+        return(x_interp)
       })
 
   }
@@ -383,6 +383,7 @@ run_fredi <- function(
   }
   # slr_df %>% nrow %>% print
   # slr_df %>% head %>% print
+  # slr_df$year %>% range %>% print
 
   ###### Driver Scenario  ######
   ###### Combine Scenarios and bind with the model type info
@@ -410,6 +411,7 @@ run_fredi <- function(
     filter( year >= minYear) %>%
     filter( year <= maxYear)
   # df_drivers %>% nrow %>% print; return()
+  # df_drivers$year %>% range %>% print
 
   ###### Socioeconomic Scenario ######
   ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
@@ -475,6 +477,68 @@ run_fredi <- function(
       df_mainScalars %>% filter(scalarName!="reg_pop")
     ); rm("df_regPopScalar")
 
+  ###### NPD Scalars ######
+  ### First set of scalars
+  # national_scenario %>% names %>% print
+  # slr_sectors    <- c("CoastalProperties", "HTF")
+  co_npdScalars <- data.frame(
+    sector          = c("CoastalProperties", "HTF"),
+    npd_scalarType  = c("gdp_percap", "gdp_usd"),
+    c1   = c(1,  0.16425),
+    exp0 = c(ifelse(is.null(elasticity), 0.45, elasticity), 1),
+    c2   = c(0, 0.8375)
+
+  )
+  c_npdRefYear <- 2090
+  ### Calculate scalars
+  npdScalars <- national_scenario %>%
+    filter(year >= c_npdRefYear) %>%
+    select(c("year", "gdp_usd", "gdp_percap")) %>%
+    gather(
+      key = "npd_scalarType", value="npd_scalarValue",
+      c("gdp_usd", "gdp_percap")
+    ) %>%
+    ### Get 2090 values and then bind them
+    (function(y){
+      y2 <- y %>%
+        filter(year == c_npdRefYear) %>% select(-c("year")) %>%
+        rename(npd_scalarValueRef = npd_scalarValue)
+      y  <- y %>%
+        left_join(y2, by = c("npd_scalarType")) %>%
+        left_join(co_npdScalars, by = c("npd_scalarType"))
+    }) %>%
+    ### Calculate scalar value
+    mutate(
+      npd_scalarValue = c1 * (npd_scalarValue / npd_scalarValueRef)**exp0
+    ) %>% select(-c("c1", "exp0", "npd_scalarValueRef")) %>%
+    ### Join with regional population
+    left_join(
+      pop_df %>%
+        filter(year >= c_npdRefYear) %>%
+        select(c("year", "region", "reg_pop")),
+      by = c("year")
+    ) %>%
+    left_join(
+      pop_df %>%
+        filter(year == c_npdRefYear) %>% select(-c("year")) %>%
+        select(c("region", "reg_pop")) %>%
+        rename(reg_popRef = reg_pop),
+      by = c("region")
+    ) %>%
+    ### Calculate value
+    mutate(
+      npd_scalarValue = npd_scalarValue + c2 * (reg_pop / reg_popRef)
+    ) %>% select(-c("c2", "reg_pop", "reg_popRef")) %>%
+    ### Rename values and join with data
+    mutate(
+      econScalar     = npd_scalarValue,
+      physEconScalar = npd_scalarValue
+    ) %>%
+    filter(year > c_npdRefYear) %>%
+    select(-c("npd_scalarValue", "npd_scalarType"))
+  # rm("co_npdScalars")
+
+
   ###### Initialize Results ######
   ### Filter initial results to specified sectors
   ### Join to the updated base scenario
@@ -492,8 +556,26 @@ run_fredi <- function(
     calcScalars(elasticity = elasticity)
   rm("df_mainScalars") ### df_mainScalars no longer needed
 
+  initialResults2 <- initialResults %>%
+    filter(sector %in% co_npdScalars$sector & year > c_npdRefYear) %>%
+    select(-c("econScalar", "physEconScalar")) %>%
+    left_join(
+      npdScalars, by = c("sector", "year", "region")
+    ); rm("npdScalars")
+  # ### Adjust NPD scalars
+  # initialResults <- initialResults %>% filter(
+  #   !(sector %in% co_npdScalars$sector & year > c_npdRefYear)
+  # )
+  # initialResults %>% names %>% print
+  # initialResults2 %>% names %>% print
+  initialResults <- initialResults %>%
+    filter(!(sector %in% co_npdScalars$sector & year > c_npdRefYear)) %>%
+    rbind(initialResults2)
+  rm("initialResults2", "co_npdScalars")
+
   ### Message the user
   if(msgUser) message("\t", messages_tempBin[["updateScalars"]]$success)
+
 
   ###### Join Initial Results & Model Info  ######
   ### - Join Initial Results with Model info
@@ -539,6 +621,7 @@ run_fredi <- function(
           filter(year>=minYear)
         df_scenarioResults <- df_scenarioResults %>% rbind(df_hasfun_i)
         # df_scenarioResults %>% names %>% print
+        rm("namesFunctions_i", "listFunctions_i", "df_hasfun_i")
       } #; return(df_i)
       if(hasNonFunc_i){
         df_nonfun_i    <- df_functions_i[-which_hasFunc,] %>%
@@ -547,7 +630,9 @@ run_fredi <- function(
           select(-c(joinCol, hasScenario, modelType))
         # df_nonfun_i %>% names %>% print
         df_scenarioResults <- df_scenarioResults %>% rbind(df_nonfun_i)
+        rm("df_nonfun_i")
       }
+      rm("df_xVar_i", "allFunctions_i", "which_hasFunc", "hasFunctions_i", "hasNonFunc_i")
     }
     ###### SLR Impacts ######
     else{
@@ -556,17 +641,19 @@ run_fredi <- function(
         mutate(modelUnitValue=NA) %>%
         mutate(
           scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region, sep="_")
-          ) %>%
+        ) %>%
         select(c("scenario_id", "year", "modelUnitValue", "scaled_impacts"))
       # df_scenarioResults %>% names %>% print
       df_scenarioResults <- df_scenarioResults %>% rbind(df_slrImpacts)
+
+      # df_slrImpacts %>% filter(year > 2100) %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+      rm("df_slrImpacts")
     }
   }
 
   ### Join results with initialized results and update missing observations with NA
   ### Remove intermediate values
   df_impacts   <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year")); rm("initialResults")
-
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
 
   ###### Calculate Impacts  ######
@@ -577,6 +664,12 @@ run_fredi <- function(
     mutate(physical_impacts = physScalar     * scaled_impacts * !is.na(physicalmeasure)) %>%
     mutate(annual_impacts   = physEconScalar * scaled_impacts) %>%
     as.data.frame
+
+  # # df_impacts %>% names %>% print
+  # df_impacts$modelUnit_label %>% unique %>% print
+  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(physEconScalar)))$year %>% range %>% print
+  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)))$year %>% range %>% print
+  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(annual_impacts)))$year %>% range %>% print
 
   ###### Add Scenario Information ######
   message("Formatting results", "...")
@@ -589,7 +682,7 @@ run_fredi <- function(
 
   ###### Format Outputs ######
   ### Refactor sectors, variants, impactTypes
-  co_variants <- co_variants %>% mutate(sector_variant = paste(sector_id, variant_id, sep="_"))
+  co_variants    <- co_variants    %>% mutate(sector_variant = paste(sector_id, variant_id, sep="_"))
   co_impactTypes <- co_impactTypes %>% mutate(sector_impactType = paste(sector_id, impactType_id, sep="_"))
 
   #### Rename Sector Columns
