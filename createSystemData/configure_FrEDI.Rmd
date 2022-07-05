@@ -216,8 +216,8 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- "CIL Extreme Temperature"
-# c_sectorsList <- FrEDI::get_sectorInfo()
+# c_sectorsList <- "CIL Extreme Temperature"
+c_sectorsList <- FrEDI::get_sectorInfo()
 ```
 
 
@@ -228,7 +228,7 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="all") %>% filter(year %in% seq(2010, 2090, by=5))
 # df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
 # df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 ```
@@ -262,7 +262,10 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
+df_test <- run_fredi(sectorList = c_sectorsList, aggLevels="none")
+df_test %>% 
+  filter(year %in% seq(2010, 2090, by=5)) %>% 
+  write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
 
 
@@ -309,6 +312,7 @@ Use the following section to update R defaults
 
 ```{r defaultResults}
 # ###### Update and Save Default Scenario ######
+frediPath %>% load_all
 defaultResults <- FrEDI::run_fredi()
 save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.rda"))
 ```

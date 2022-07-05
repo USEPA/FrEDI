@@ -353,13 +353,14 @@ aggregate_impacts <- function(
 
 
     df_impYears <- df_aggImpacts %>% filter(impactYear %in% impactYears)
+    rm("df_aggImpacts")
     nrow_impYrs <- df_impYears %>% nrow
 
 
     if(nrow_impYrs > 0){
 
       ### Filter to other lower models and then bind with the zero values, drop model column
-      df2090 <- df_aggImpacts %>% filter(impactYear == impactYear2) %>%
+      df2090 <- df_impYears %>% filter(impactYear == impactYear2) %>%
         select(-c("impactYear")) %>%
         (function(y){
           y <- y %>% as.data.frame
@@ -368,7 +369,7 @@ aggregate_impacts <- function(
         })
 
       ### Drop summary columns from 2010
-      df2010 <- df_aggImpacts %>% filter(impactYear == impactYear1) %>%
+      df2010 <- df_impYears %>% filter(impactYear == impactYear1) %>%
         select(-c("impactYear")) %>%
         (function(y){
           y <- y %>% as.data.frame

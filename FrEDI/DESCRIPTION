@@ -7,7 +7,7 @@ Description: This R package models damages and impacts from climate change in th
     using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the Climate Change Impacts and 
     Risk Analysis (CIRA) project at the U.S. Environmental Protection Agency. The package contains functions that 
     implement FrEDI for projecting impacts from climate change and sea level rise for a selected set of 
-    sectors. Version 3.0.0 includes a module for estimating impacts on socially vulnerable populations for 
+    sectors. Versions after 3.0 includes a module for estimating impacts on socially vulnerable populations for 
     select sectors.
 License: file LICENSE
 Encoding: UTF-8
