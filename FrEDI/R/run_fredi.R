@@ -222,40 +222,40 @@ run_fredi <- function(
     assign(has_i,    has_update_i)
     assign(inputName_i, df_input_i)
 
-    ### Iterate over the input list and check flags for inputs that are not null
-    if(has_update_i){
-      message("\t", "Checking input values for ", msgName_i, "...")
-      ### Values
-      values_i       <- df_input_i[,valueCol_i]
-      ### Substitute NULL for missing values for min and max
-      if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
-      ### Check the status
-      flag_i         <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
-      ### Return and message the user if there is a flag:
-      flagStatus_i   <- flag_i$flagged
-      flagRows_i     <- flag_i$rows
-      ### If flag, message user and return flagStatus_i
-      if(flagStatus_i){
-        ### Message labels
-        numrows_i    <- flagRows_i %>% length
-        years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
-        rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
-        ### Create message and message user
-        msg1_i       <- "Error in importing inputs for" %>% paste(msgName_i) %>% paste0(":")
-        msg2_i       <- inputName_i %>% paste("has", numrows_i,  "values outside of defined range", rangeLabel_i)
-        msg3_i       <- "Please correct values" %>% paste(msgName_i, "values for years", yearsLabel_i)
-
-        message("\t", "\t", msg1_i); message("\t", "\t", "\t", msg2_i); message("\t", "\t","\t",  msg3_i, "..."); message("Exiting...", "\n")
-        ### Return list with error and flagged rows
-        returnList <- list(
-          error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
-          flagged_rows = flagRows_i
-        )
-
-        ### Return list and not an inputs list if an error occurred
-        return(returnList)
-      } ### End if flagged_i
-    } ### End if !is.null(df_i)
+    # ### Iterate over the input list and check flags for inputs that are not null
+    # if(has_update_i){
+    #   message("\t", "Checking input values for ", msgName_i, "...")
+    #   ### Values
+    #   values_i       <- df_input_i[,valueCol_i]
+    #   ### Substitute NULL for missing values for min and max
+    #   if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
+    #   ### Check the status
+    #   flag_i         <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
+    #   ### Return and message the user if there is a flag:
+    #   flagStatus_i   <- flag_i$flagged
+    #   flagRows_i     <- flag_i$rows
+    #   ### If flag, message user and return flagStatus_i
+    #   if(flagStatus_i){
+    #     ### Message labels
+    #     numrows_i    <- flagRows_i %>% length
+    #     years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
+    #     rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
+    #     ### Create message and message user
+    #     msg1_i       <- "Error in importing inputs for" %>% paste(msgName_i) %>% paste0(":")
+    #     msg2_i       <- inputName_i %>% paste("has", numrows_i,  "values outside of defined range", rangeLabel_i)
+    #     msg3_i       <- "Please correct values" %>% paste(msgName_i, "values for years", yearsLabel_i)
+    #
+    #     message("\t", "\t", msg1_i); message("\t", "\t", "\t", msg2_i); message("\t", "\t","\t",  msg3_i, "..."); message("Exiting...", "\n")
+    #     ### Return list with error and flagged rows
+    #     returnList <- list(
+    #       error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
+    #       flagged_rows = flagRows_i
+    #     )
+    #
+    #     ### Return list and not an inputs list if an error occurred
+    #     return(returnList)
+    #   } ### End if flagged_i
+    # } ### End if has_update_i
   } ### End iterate over inputs
   # }
 
@@ -412,6 +412,7 @@ run_fredi <- function(
     filter( year <= maxYear)
   # df_drivers %>% nrow %>% print; return()
   # df_drivers$year %>% range %>% print
+  # df_drivers$year %>% print
 
   ###### Socioeconomic Scenario ######
   ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
@@ -472,6 +473,7 @@ run_fredi <- function(
       scalarType = "physScalar",
       national_or_regional ="regional"
     )
+  # df_regPopScalar$year %>% print
   df_mainScalars <- df_regPopScalar %>%
     rbind(
       df_mainScalars %>% filter(scalarName!="reg_pop")
@@ -510,7 +512,10 @@ run_fredi <- function(
     ### Calculate scalar value
     mutate(
       npd_scalarValue = c1 * (npd_scalarValue / npd_scalarValueRef)**exp0
-    ) %>% select(-c("c1", "exp0", "npd_scalarValueRef")) %>%
+    ) %>% select(-c("c1", "exp0", "npd_scalarValueRef"))
+
+  # (npdScalars %>% filter(year > 2090))$year %>% head %>% print
+  npdScalars <- npdScalars %>%
     ### Join with regional population
     left_join(
       pop_df %>%
@@ -538,7 +543,6 @@ run_fredi <- function(
     select(-c("npd_scalarValue", "npd_scalarType"))
   # rm("co_npdScalars")
 
-
   ###### Initialize Results ######
   ### Filter initial results to specified sectors
   ### Join to the updated base scenario
@@ -556,22 +560,15 @@ run_fredi <- function(
     calcScalars(elasticity = elasticity)
   rm("df_mainScalars") ### df_mainScalars no longer needed
 
-  initialResults2 <- initialResults %>%
-    filter(sector %in% co_npdScalars$sector & year > c_npdRefYear) %>%
+  initialResults_npd <- initialResults %>%
+    filter( (sector %in% co_npdScalars$sector & year > c_npdRefYear)) %>%
     select(-c("econScalar", "physEconScalar")) %>%
-    left_join(
-      npdScalars, by = c("sector", "year", "region")
-    ); rm("npdScalars")
+    left_join(npdScalars, by = c("sector", "year", "region"));
   # ### Adjust NPD scalars
-  # initialResults <- initialResults %>% filter(
-  #   !(sector %in% co_npdScalars$sector & year > c_npdRefYear)
-  # )
-  # initialResults %>% names %>% print
-  # initialResults2 %>% names %>% print
   initialResults <- initialResults %>%
     filter(!(sector %in% co_npdScalars$sector & year > c_npdRefYear)) %>%
-    rbind(initialResults2)
-  rm("initialResults2", "co_npdScalars")
+    rbind(initialResults_npd)
+  rm("initialResults_npd", "co_npdScalars", "npdScalars")
 
   ### Message the user
   if(msgUser) message("\t", messages_tempBin[["updateScalars"]]$success)
@@ -594,6 +591,7 @@ run_fredi <- function(
   df_scenarioResults  <- data.frame()
   ### List of impact functions for GCM sectors
   impactFunctionNames <- list_impactFunctions %>% names %>% unique
+
   ### Initial results
   ### Iterate over model types:
   for(modelType_i in co_modelTypes$modelType_id){
@@ -602,12 +600,12 @@ run_fredi <- function(
       ### Drivers
       df_xVar_i   <- df_drivers %>% filter(modelType == modelType_i) %>% as.data.frame
       ### Functions list
-      allFunctions_i <- (initialResults %>% filter(model_type==modelType_i))$scenario_id %>% unique#; length(allFunctions_i) %>% print
+      allFunctions_i <- (initialResults %>% filter(model_type==modelType_i))$scenario_id %>% unique
       df_functions_i <- data.frame(scenario_id = allFunctions_i) %>%
         mutate(
           hasScenario    = (scenario_id %in% impactFunctionNames)*1
-        ) #; length(which(allFunctions_i)) %>% print
-      which_hasFunc  <- which(df_functions_i$hasScenario==1)#; length(which_hasFunc) %>% print
+        )
+      which_hasFunc  <- which(df_functions_i$hasScenario==1)
       hasFunctions_i <-   length(which_hasFunc)>=1
       hasNonFunc_i   <- !(length(allFunctions_i) == length(which_hasFunc))
 
@@ -620,7 +618,6 @@ run_fredi <- function(
           rename(modelUnitValue = xVar) %>%
           filter(year>=minYear)
         df_scenarioResults <- df_scenarioResults %>% rbind(df_hasfun_i)
-        # df_scenarioResults %>% names %>% print
         rm("namesFunctions_i", "listFunctions_i", "df_hasfun_i")
       } #; return(df_i)
       if(hasNonFunc_i){
@@ -628,7 +625,6 @@ run_fredi <- function(
           mutate(scaled_impacts = NA, joinCol = 1) %>%
           left_join(df_xVar_i %>% mutate(joinCol = 1), by=c("joinCol")) %>%
           select(-c(joinCol, hasScenario, modelType))
-        # df_nonfun_i %>% names %>% print
         df_scenarioResults <- df_scenarioResults %>% rbind(df_nonfun_i)
         rm("df_nonfun_i")
       }
@@ -643,10 +639,7 @@ run_fredi <- function(
           scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region, sep="_")
         ) %>%
         select(c("scenario_id", "year", "modelUnitValue", "scaled_impacts"))
-      # df_scenarioResults %>% names %>% print
       df_scenarioResults <- df_scenarioResults %>% rbind(df_slrImpacts)
-
-      # df_slrImpacts %>% filter(year > 2100) %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
       rm("df_slrImpacts")
     }
   }
@@ -654,6 +647,7 @@ run_fredi <- function(
   ### Join results with initialized results and update missing observations with NA
   ### Remove intermediate values
   df_impacts   <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year")); rm("initialResults")
+  # (df_impacts %>% arrange_at(.vars=c("sector", "variant", "region", "model_id", "year")) %>% filter(year > 2090))$year %>% head %>% print
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
 
   ###### Calculate Impacts  ######
@@ -664,12 +658,6 @@ run_fredi <- function(
     mutate(physical_impacts = physScalar     * scaled_impacts * !is.na(physicalmeasure)) %>%
     mutate(annual_impacts   = physEconScalar * scaled_impacts) %>%
     as.data.frame
-
-  # # df_impacts %>% names %>% print
-  # df_impacts$modelUnit_label %>% unique %>% print
-  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(physEconScalar)))$year %>% range %>% print
-  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)))$year %>% range %>% print
-  # (df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(annual_impacts)))$year %>% range %>% print
 
   ###### Add Scenario Information ######
   message("Formatting results", "...")
@@ -687,7 +675,6 @@ run_fredi <- function(
 
   #### Rename Sector Columns
   df_results <- df_results %>% rename(sector_id = sector, sector = sector_label)
-
   #### Regions
   df_results <- df_results %>%
     mutate(
@@ -751,9 +738,15 @@ run_fredi <- function(
 
   ###### SLR Interpolation ######
   c_modelTypes <- df_results$model_type %>% unique
+  # df_results   <- df_results %>% filter(year >= minYear) %>% filter(year <= maxYear)
+  # df_results   <- df_results %>% filter(year > 2090)
   if("slr" %in% tolower(c_modelTypes)){
     df_results_nonSLR <- df_results %>% filter(tolower(model_type)!="slr")
     df_results_SLR    <- df_results %>% filter(tolower(model_type)=="slr")
+    # df_results_SLR$model %>% unique %>% print
+    # df_results_SLR %>% dim %>% print
+    # df_results_SLR %>% filter(sector=="Coastal Properties") %>% filter(region=="Northeast") %>% filter(variant=="No Adaptation") %>% filter(model == "30 cm" ) %>% dim %>% print
+
     slrGroupByCols    <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region", "sectorprimary", "includeaggregate")
     slr_results_names <- df_results_SLR %>% names
     slrGroupByCols    <- slrGroupByCols[which(slrGroupByCols %in% slr_results_names)]
@@ -761,10 +754,12 @@ run_fredi <- function(
     df_results_SLR    <- df_results_SLR %>%
       aggregate_impacts(aggLevels = "modelaverage", groupByCols = slrGroupByCols, mode="slrinterpolation")
 
+    # return(df_results_SLR)
     df_results        <- df_results_nonSLR %>% rbind(df_results_SLR)
 
     rm("df_results_nonSLR", "df_results_SLR", "slrGroupByCols", "slr_results_names")
   }
+
 
   ###### Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data:
