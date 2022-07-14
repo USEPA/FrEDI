@@ -144,13 +144,26 @@ time_create     <- time2 - time1; time_create
 
 Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
 
+Well, none of the SLR impacts are not not missing past 2100 so there's that...
+
+```{r}
+test_systemData$slrImpacts %>% names
+test_systemData$slrImpacts %>% filter(year > 2100) %>% filter(!is.na(scaled_impacts)) %>% nrow
+```
+
+But the SLR driver values appear to be ok (1400 out of 1400 are not missing)
+
+```{r}
+test_systemData$slr_cm %>% names
+test_systemData$slr_cm %>% filter(year > 2100) %>% nrow
+test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %>% nrow
+```
+
+
 ```{r check outputs}
-### Check names and dimensions
-test_systemData$slr_cm$year %>% range
-test_systemData$slrImpacts$year %>% range
-test_systemData$df_results0 %>% glimpse
-test_systemData$df_results0$year %>% range
-test_systemData$df_results0 %>% filter(!is.na(physAdjValue) & !is.na(damageAdjValue) & !is.na(econScalarValue)) %>% nrow
+test_systemData$slr_cm %>% filter(year > 2090) %>% arrange(model, year) %>% head
+test_systemData$slrImpacts %>% filter(year > 2090) %>% arrange(sector, variant, region, model, year) %>% head
+
 ```
 
 
@@ -177,11 +190,11 @@ time_create     <- time2 - time1; time_create
 After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
 
 ```{r file.copy}
-# file.copy(
-#   from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
-#   to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
-#   overwrite = T
-# )
+file.copy(
+  from = dataOutPath %>% file.path(sysFileName) %>% paste0(".rda"),
+  to   = frediPath   %>% file.path("R", sysFileName) %>% paste0(".rda"),
+  overwrite = T
+)
 ```
 
 
@@ -360,7 +373,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.1.0"
+packageVersion   <- "3.2.0"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]

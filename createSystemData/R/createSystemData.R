@@ -98,36 +98,42 @@ createSystemData <- function(
 
   ###### Interpolate SLR Scenarios ######
   # dataList[["slr_cm"]]
-  c_npdRefYear <- 2090
+  # c_npdRefYear <- 2090
   c_maxSLRYear <- slr_cm$year %>% max
-  slr_cm <- slr_cm %>% 
-    filter(year <= c_maxSLRYear) %>%
+  df_slrYears  <- data.frame(
+    year     = (c_maxSLRYear + 1):maxYear,
+    dummyCol = 1
+  )
+  slr_cm       <- slr_cm %>% 
+    # filter(year <= c_maxSLRYear) %>%
     (function(x){
-      x2 <- x %>% filter(year==c_maxSLRYear) %>% 
-        mutate(dummyCol = 1) %>% select(-c("year")) %>%
-        left_join(data.frame(
-          year = (c_npdRefYear + 1):maxYear,
-          dummyCol = 1
-        ), by = c("dummyCol")) %>%
+      x2 <- x %>% 
+        filter(year==c_maxSLRYear) %>% 
+        mutate(dummyCol = 1) %>% 
+        select(-c("year")) %>%
+        left_join(df_slrYears, by = c("dummyCol")) %>%
         select(-c("dummyCol"))
       
-      x <- x %>% rbind(x2) %>%
-        arrange_at(.vars = c("model", "year"))
+      x <- x %>% 
+        filter(year <= c_maxSLRYear) %>% 
+        rbind(x2) %>%
+        arrange_at(.vars = c("model", "year")) %>%
+        mutate(model_type = "slr")
     })
   loadDataList[["slr_cm"]] <- slr_cm; rm("slr_cm")
   ### slrImpacts
   slrImpacts <- slrImpacts %>% 
-    filter(year <= c_maxSLRYear) %>%
+    # filter(year <= c_maxSLRYear) %>%
     (function(x){
-      x2 <- x %>% filter(year==c_maxSLRYear) %>% 
+      x2 <- x %>% 
+        filter(year==c_maxSLRYear) %>% 
         mutate(dummyCol = 1) %>% select(-c("year")) %>%
-        left_join(data.frame(
-          year = (c_npdRefYear + 1):maxYear,
-          dummyCol = 1
-        ), by = c("dummyCol")) %>%
+        left_join(df_slrYears, by = c("dummyCol")) %>%
         select(-c("dummyCol"))
       
-      x <- x %>% rbind(x2) %>%
+      x <- x %>% 
+        filter(year <= c_maxSLRYear) %>% 
+        rbind(x2) %>%
         arrange_at(.vars = c("sector", "variant", "impactType", "impactYear", "region", "year"))
     })
   loadDataList[["slrImpacts"]] <- slrImpacts; rm("slrImpacts")
