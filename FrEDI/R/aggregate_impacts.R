@@ -45,11 +45,11 @@
 #'
 ### This function aggregates outputs produced by temperature binning
 aggregate_impacts <- function(
-  data,             ### Dataframe of outputs from temperature binning
-  aggLevels   = c("national", "modelaverage", "impactyear", "impacttype"),  ### Levels of aggregation
-  columns     = c("annual_impacts"), ### Columns to aggregate
-  groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
-  mode = "all"
+    data,             ### Dataframe of outputs from temperature binning
+    aggLevels   = c("national", "modelaverage", "impactyear", "impacttype"),  ### Levels of aggregation
+    columns     = c("annual_impacts"), ### Columns to aggregate
+    groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
+    mode = "all"
 ){
   ###### Defaults ######
   ### Not used currently; preserving it in messaging logicals for the future
@@ -62,9 +62,9 @@ aggregate_impacts <- function(
 
   ###### Years Info ######
   ### Years in data
-  c_npdRefYear <- 2090
+  # c_npdRefYear <- 2090
   c_dataYears  <- data$year %>% unique
-  has_plus2090vals <- (c_dataYears[which(c_dataYears > c_npdRefYear)] %>% length) > 0
+  # has_plus2090vals <- (c_dataYears[which(c_dataYears > c_npdRefYear)] %>% length) > 0
 
   ###### SLR Info ######
   # assign("slr_cm", rDataList[["slr_cm"]])
@@ -178,7 +178,7 @@ aggregate_impacts <- function(
   num_summaryCols     <- summaryCols %>% length
   data        <- data %>% mutate_at(.vars=c(all_of(groupByCols)), as.character)
 
-  ###### Aggregation level  ######
+  ###### Aggregation Levels  ######
   ### Types of summarization to do: default
   aggList0 <- c("national", "modelaverage", "impactyear", "impacttype", "all")
   if(!is.null(aggLevels)){
@@ -275,58 +275,43 @@ aggregate_impacts <- function(
 
   ###### Driver Scenario ######
   ### Get unique model types, sectors, variants, and models
+  names_x        <- data %>% names
   modelTypesList <- data$model_type %>% unique
-  # data$model_type %>% unique %>% print
-  sectors1       <- modelTypesList %>%
+  driverScenario <- modelTypesList %>%
     lapply(function(model_type_i){
-      (data %>% filter(model_type==model_type_i))$sector %>% unique %>% first
-    }) %>% unlist %>% c()
-  variants1   <- sectors1 %>%
-    lapply(function(sector_i){
-      (data %>% filter(sector==sector_i))$variant %>% unique %>% first
-    }) %>% unlist%>% c()
-  # impactTypes1   <- sectors1 %>%
-  #   lapply(function(sector_i){
-  #     (data %>% filter(sector==sector_i))$impactType %>% unique %>% first
-  #   }) %>% unlist%>% c()
-  models1     <- sectors1 %>%
-    lapply(function(sector_i){
-      (data %>% filter(sector==sector_i))$model %>% unique %>% first
-    }) %>% unlist %>% c()
-
-  ###### Driver scenario
-  driverScenario <- 1:length(sectors1) %>%
-    lapply(function(i){
-      data %>% filter(sector == sectors1[i], variant == variants1[i], region == region0, model == models1[i])
+      ### Filter to sector
+      df_i      <- data %>% filter(model_type==model_type_i)
+      sector_i  <- df_i$sector %>% unique %>% first
+      df_i      <- df_i %>% filter(sector == sector_i)
+      ### Filter to variant
+      variant_i <- df_i$variant %>% unique %>% first
+      df_i      <- df_i %>% filter(variant == variant_i)
+      ### Filter to impact type
+      if("impactType" %in% names_x){
+        type_i    <- df_i$impactType %>% unique %>% first
+        df_i      <- df_i %>% filter(impactType == type_i)
+      }
+      ### Filter to region
+      if("region" %in% names_x){
+        region_i  <- df_i$region %>% unique %>% first
+        df_i      <- df_i %>% filter(region == region_i)
+      }
+      ### Filter to model
+      if("model" %in% names_x){
+        model_i  <- df_i$model %>% unique %>% first
+        df_i     <- df_i %>% filter(model == model_i)
+      }
+      ### Filter to impact year
+      if("impactYear" %in% names_x){
+        year_i  <- df_i$impactYear %>% unique %>% first
+        df_i     <- df_i %>% filter(impactYear == year_i)
+      }
+      ### Select columns
+      df_i <- df_i %>% select(all_of(driverScenarioCols))
+      ### Return
+      return(df_i)
     }) %>% (function(x){do.call(rbind, x)})
-
-  ### Filter to impact types
-  # if(impactTypesAgg){
-  impactTypes1  <- sectors1 %>%
-    lapply(function(sector_i){
-      (driverScenario %>% filter(sector==sector_i))$impactType %>% unique %>% first
-    }) %>% unlist
-  driverScenario  <- 1:length(sectors1) %>%
-    lapply(function(i){
-      driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactType == impactTypes1[i])
-    }) %>% (function(x){do.call(rbind, x)})
-  # }
-
-  ### Filter to impact years
-  # if(impactYearsAgg){
-  impactYear1  <- sectors1 %>%
-    lapply(function(sector_i){
-      (driverScenario %>% filter(sector==sector_i))$impactYear %>% unique %>% first
-    }) %>% unlist
-  driverScenario  <- 1:length(sectors1) %>%
-    lapply(function(i){
-      driverScenario %>% filter(sector==sectors1[i]) %>% filter(impactYear == impactYear1[i])
-    }) %>% (function(x){do.call(rbind, x)})
-  # }
-
-
-  ### Select columns
-  driverScenario <- driverScenario %>% select(all_of(driverScenarioCols))
+  # driverScenario %>% dim %>% print
 
   ###### Aggregation  ######
   # if(requiresAgg){
@@ -342,6 +327,8 @@ aggregate_impacts <- function(
   ### Separate into years after 2090 and before 2090
   if(impactYearsAgg){
     if(msgUser) message("\t", "Interpolating between impact year estimates...")
+    ### Ungroup first
+    df_aggImpacts <- df_aggImpacts %>% ungroup
     # summaryCol1 <- summaryCols[1]
     ### Group by columns
     groupCols_impYears <- groupByCols[which(groupByCols != "impactYear" )]
@@ -450,236 +437,192 @@ aggregate_impacts <- function(
   if(modelAveAgg){
     modelAveMsg <- ifelse(xMode=="slrinterpolation", "Interpolating SLR impacts..." , "Calculating model averages...")
     if(msgUser) message("\t", modelAveMsg)
+    ### Ungroup first
+    df_aggImpacts          <- df_aggImpacts %>% mutate_at(.vars=c("model"), as.character) %>% ungroup
     ### Group by columns
     groupCols_modelAverage <- groupByCols[which(groupByCols != "model" )]
+    ### Separate model types
+    df_gcm <- df_aggImpacts %>% filter(tolower(model_type)=="gcm")
+    df_slr <- df_aggImpacts %>% filter(tolower(model_type)=="slr")
+    rm("df_aggImpacts")
+    ###### GCM #######
+    if(nrow(df_gcm)){
+      ### Names of agg impacts
+      names_gcms   <- df_gcm %>% names
+      ### Calculate number of non missing values
+      ### Group data, sum data, calculate averages, and drop NA column
+      df_modelAves <- df_gcm %>%
+        (function(w){
+          w$not_isNA <- (!is.na(w[,summaryCol1] %>% as.vector))*1
+          return(w)
+        }) %>%
+        group_by_at(c(all_of(groupCols_modelAverage), "year")) %>%
+        summarize_at(.vars=c(all_of(summaryCols), "not_isNA"), sum, na.rm=T) %>%
+        mutate(not_isNA = not_isNA %>% na_if(0)) %>%
+        as.data.frame %>%
+        (function(x){
+          x[,summaryCols] <- x[,summaryCols] / x$not_isNA
+          return(x)
+        }) %>%
+        select(-c("not_isNA")) %>%
+        mutate(model = "Average") %>%
+        ungroup %>% as.data.frame
 
-    for(model_type_i in modelTypesList){
-      ###### GCM #######
-      if(tolower(model_type_i)=="gcm"){
+      ### Add observations back in
+      # df_aggImpacts <- df_aggImpacts %>% rbind(df_modelAves)
+      df_gcm <- df_gcm %>% rbind(df_modelAves)
+      rm("df_modelAves", "names_gcms")
+    } ### End if nrow(df_gcm)
 
-        ### Names of agg impacts
-        names_aggImpacts   <- df_aggImpacts %>% names
+    ###### SLR #######
+    if(nrow(df_slr)){
+      ### Separate into interpolated & not interpolated
+      df_slr_interp    <- df_slr %>% filter(model=="Interpolation")
+      df_slr_notInterp <- df_slr %>% filter(model!="Interpolation")
 
-        ### Calculate number of non missing values
-        ### Group data, sum data, calculate averages, and drop NA column
-        df_modelAves     <- df_aggImpacts %>%
-          filter(model_type == model_type_i) %>%
-          (function(w){
-            w <- w %>% as.data.frame
-            w$not_isNA <- (!is.na(w[,summaryCol1]))*1
-            return(w)
-          }) %>%
-          group_by_at(c(all_of(groupCols_modelAverage), "year")) %>%
-          summarize_at(.vars=c(all_of(summaryCols), "not_isNA"), sum, na.rm=T) %>%
-          as.data.frame %>%
-          mutate(not_isNA = not_isNA %>% na_if(0)) %>%
-          (function(x){
-            x[,summaryCols] <- x[,summaryCols]/x$not_isNA
-            return(x)
-          }) %>%
-          select(-not_isNA) %>%
-          mutate(model = "Average") %>%
-          ungroup %>%
-          as.data.frame
-
-        ### Add observations back in
-        df_aggImpacts <- df_aggImpacts %>% rbind(df_modelAves)
+      ### Check if there is more than one model level and if so, interpolate model
+      do_slrInterp    <- nrow(df_slr_interp) == 0 & nrow(df_slr_notInterp) > 0
+      if  (!do_slrInterp){
+        df_slr         <- df_slr_interp; rm("df_slr_notInterp", "df_slr_interp")
       }
-      ###### SLR #######
-      else{
-        ### Filter to SLR sectors
-        df_slr <- df_aggImpacts %>%
-          mutate_at(.vars=c("model"), as.character) %>%
-          filter(model_type == model_type_i)
+      else {
+        df_slr         <- df_slr_notInterp; rm("df_slr_notInterp", "df_slr_interp")
+        names_df_slr       <- df_slr %>% names; #names_df_slr %>% print
+        ### Summary columns
+        slrSummaryCols <- summaryCols
+        num_slrSumCols <- slrSummaryCols %>% length
 
-        ### Separate into interpolated & not interpolated
-        df_slr_interp   <- df_slr %>%
-          filter(model=="Interpolation") %>%
-          as.data.frame
-
-        df_slr_notInterp <- df_slr %>%
-          filter(model!="Interpolation") %>%
-          as.data.frame
-
-        nrow_slr        <- df_slr %>% nrow
-        nrow_interp     <- df_slr_interp %>% nrow
-        nrow_notInterp  <- df_slr_notInterp %>% nrow
-        # c(nrow_slr, nrow_interp, nrow_notInterp) %>% print
-
+        ### Get information on the driver scenario
         ### Filter driver scenario to slr
-        slrScenario    <- driverScenario %>% filter(model_type=="SLR") %>% select(-c("model_type"))
+        ### Names from slr_Interp_byYear c("driverValue", "lower_model", "upper_model", "lower_slr", "upper_slr")
+        slrScenario        <- driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
+        df_slrInfo         <- slrScenario %>% slr_Interp_byYear
+        # df_slrInfo %>% dim %>% print ### 291
 
-        ### Check if there is more than one model level
-        if(nrow_interp== 0 & nrow_notInterp > 0){
-          df_slr         <- df_slr_notInterp
-          slrSummaryCols <- summaryCols
-          num_slrSumCols <- slrSummaryCols %>% length
-
-          ### Get information on the driver scenario
-          ### Names from slr_Interp_byYear c("driverValue", "lower_model", "upper_model", "lower_slr", "upper_slr")
-          df_slrInfo         <- slrScenario %>% slr_Interp_byYear
-
-          names_df_slrInfo   <- df_slrInfo %>% names
-          other_slrGroupCols <- names_df_slrInfo[which(names_df_slrInfo!="year")]
-          names_aggImpacts   <- df_aggImpacts %>% names
-
-          df_slr <- df_slr %>% left_join(df_slrInfo, by=c("year"))
-
-          ### Data where upper model = lower model
-          equal_slr_models <- (df_slr$lower_model == df_slr$upper_model)
-          which_equal      <-  equal_slr_models %>% which
-          which_notEqual   <- (!equal_slr_models) %>% which
+        ### "year", "driverValue", "lower_model" , "upper_model", "lower_slr" ,  "upper_slr"
+        names_df_slrInfo   <- df_slrInfo %>% names; #names_df_slrInfo %>% print
+        other_slrGroupCols <- names_df_slrInfo[which(names_df_slrInfo!="year")]
 
 
-          ### Initialize dataframes
-          df_slr_equal     <- df_slr[which_equal,]
-          df_slr_notEqual  <- df_slr[which_notEqual,]
+        ### Data where upper model = lower model
+        equal_slr_models   <- df_slr$lower_model == df_slr$upper_model
+        slr_EqualYears     <- df_slrInfo$year[ equal_slr_models]
 
-          ### Filter out observations that are equal
-          if(length(which_equal) > 0){
-            ### Filter observations that are zeros only and make the summary column values zero
-            slr_equal0    <- df_slr_equal %>% filter(lower_model=="0 cm")
+        ### Initialize dataframes
+        df_slr_equal     <- df_slr %>% filter(  year %in% slr_EqualYears ); #0 df_slr_equal %>% dim %>% print
+        df_slr_equal     <- df_slr_equal %>% left_join(df_slrInfo, by="year") %>%
+          mutate_at(.vars=c("model", "lower_model", "upper_model"), as.character); #0 df_slr_equal %>% dim %>% print
+        df_slr_notEqual  <- df_slr %>% filter(!(year %in% slr_EqualYears)); #37296 df_slr_notEqual %>% dim %>% print
+        df_slr_notEqual  <- df_slr_notEqual %>% left_join(df_slrInfo, by="year") %>%
+          mutate_at(.vars=c("model", "lower_model", "upper_model"), as.character); #37296 df_slr_notEqual %>% dim %>% print
+        rm("df_slr")
 
-            if(nrow(slr_equal0) > 0){
-              c_slr_equal0 <- slr_equal0$model %>% as.character %>% unique
+        ### Filter out observations that are equal
+        if(nrow(df_slr_equal) > 0){
+          ### Filter observations that are zeros only and make the summary column values zero
+          df_slr_equal0    <- df_slr_equal %>%
+            filter(lower_model=="0 cm") %>%
+            mutate_at(.vars=c(all_of(slrSummaryCols)), function(y){0})
 
-              slr_equal0    <- slr_equal0 %>%
-                ### Filter to the lower model results
-                filter(model==c_slr_equal0[1]) %>%
-                ### Make values zero
-                (function(y){
-                  y[,slrSummaryCols] <- 0; return(y)
-                })
-            }
+          ### For those that are equal but not equal to zero, filter to the appropriate model
+          ### Bind values back together and add the model info
+          df_slr_equal <- df_slr_equal %>%
+            filter(lower_model!="0 cm") %>%
+            rbind(df_slr_equal0) %>%
+            mutate(model="Interpolation") %>%
+            select(c(all_of(names_df_slr)))
+          rm("df_slr_equal0")
+        } ### End if length(which_equal) > 0
 
-            ### For those that are equal but not equal to zero, filter to the appropriate model
-            slr_equal_not0 <- df_slr_equal %>%
-              filter(lower_model!="0 cm") %>%
-              filter(model==lower_model)
+        ### Observations that are greater than zero
+        if(nrow(df_slr_notEqual) > 0){
+          ### New upper and lower column names
+          new_lowerSummaryCols <- paste(slrSummaryCols, "lower", sep="_")
+          new_upperSummaryCols <- paste(slrSummaryCols, "upper", sep="_")
+          ### Mutate to character
+          ### Filter observations with a lower value of "0 cm" and convert values to zero
+          ### Lower and upper dataframes
+          ### Filter observations with a lower value of "0 cm" and convert values to zero
+          ### Filter to the 30cm model results
+          df_slr_lower0   <- df_slr_notEqual %>% filter(lower_model=="0 cm") %>%
+            rename_with(~new_lowerSummaryCols[which(slrSummaryCols==.x)], .cols=slrSummaryCols) %>%
+            mutate_at(.vars=c(all_of(new_lowerSummaryCols)), function(y){0}) %>%
+            filter(model=="30 cm")
 
-            ### Join values back together and add the model info
-            df_slr_equal <- slr_equal0 %>%
-              rbind(slr_equal_not0) %>%
-              mutate(model="Interpolation")
-
-            if("physical_impacts" %in% names_aggImpacts){
-              df_slr_equal <- df_slr_equal %>% mutate(physical_impacts = NA)
-            }
-            df_slr_equal <- df_slr_equal %>% select(c(all_of(names_aggImpacts)))
-
-            rm("slr_equal0")
-          } ### End if length(which_equal) > 0
-
-          ### Observations that are greater than zero
-          if(length(which_notEqual) > 0){
-            df_slr_notEqual <- df_slr[which_notEqual,] %>%
-              mutate_at(.vars=c("model", "lower_model", "upper_model"), as.character)
-
-            ### New upper and lower column names
-            new_lowerSummaryCols <- paste(slrSummaryCols, "lower", sep="_")
-            new_upperSummaryCols <- paste(slrSummaryCols, "upper", sep="_")
-
-            ### Lower and upper dataframes
-            ### Filter observations with a lower value of "0 cm" and convert values to zero
-            slr_lower0    <- df_slr_notEqual %>% filter(lower_model=="0 cm")
-
-            if(nrow(slr_lower0)>0){
-              slr_lower0 <- slr_lower0 %>%
-                (function(y){
-                  y[,new_lowerSummaryCols] <- 0
-                  return(y)
-                }) %>%
-                ### Filter to the 30cm model results
-                filter(model=="30 cm")
-            }
-
-            ### Filter to other lower models and then bind with the zero values, drop model column
-            slr_lower <- df_slr_notEqual %>% filter(model==lower_model & lower_model!= "0 cm") %>%
-              (function(y){
-                y <- y %>% as.data.frame
-                y[,new_lowerSummaryCols] <- y[,slrSummaryCols]
-                return(y)
-              })
-
-            slr_lower <- slr_lower %>% rbind(slr_lower0) %>% select(-c("model"))
+          ### Filter to other lower models and then bind with the zero values, drop model column
+          df_slr_lower    <- df_slr_notEqual %>%
+            filter(lower_model != "0 cm") %>%
+            filter(model==lower_model) %>%
+            rename_with(~new_lowerSummaryCols[which(slrSummaryCols==.x)], .cols=slrSummaryCols) %>%
+            mutate_at(.vars=c(all_of(new_lowerSummaryCols)), function(y){0}) %>%
+            rbind(df_slr_lower0) %>%
+            select(-c("model"))
+          rm("df_slr_lower0")
 
 
-            ### Filter to upper model values, drop model column
-            slr_upper <- df_slr_notEqual %>% filter(model==upper_model) %>% select(-c("model"))
-            slr_upper <- slr_upper %>% rename_with(~new_upperSummaryCols[which(slrSummaryCols==.x)], .cols=slrSummaryCols)
+          ### Filter to upper model values, drop model column
+          df_slr_upper <- df_slr_notEqual %>%
+            filter(model==upper_model) %>%
+            select(-c("model")) %>%
+            rename_with(~new_upperSummaryCols[which(slrSummaryCols==.x)], .cols=slrSummaryCols)
+          rm("df_slr_notEqual")
 
+          ### Join upper and lower data frames and calculate the numerator, denominator, and adjustment factor
+          df_slr_notEqual <- df_slr_lower %>%
+            left_join(
+              df_slr_upper,
+              by = c(all_of(groupCols_modelAverage), "year", all_of(other_slrGroupCols))
+              ) %>%
+            mutate(denom_slr  = upper_slr - lower_slr) %>%
+            mutate(numer_slr  = upper_slr - driverValue) %>%
+            mutate(adj_slr    = numer_slr / denom_slr) %>%
+            as.data.frame
+          rm("df_slr_lower", "df_slr_upper", "new_lowerSummaryCols", "new_upperSummaryCols")
+          # df_slr_notEqual %>% names %>% print
+          ### Iterate over summary columns
+          for(i in 1:num_slrSumCols){
+            ### Columns
+            col_i      <- slrSummaryCols[i]
+            lowerCol_i <- col_i %>% paste("lower", sep="_")
+            upperCol_i <- col_i %>% paste("upper", sep="_")
 
-            ### Join upper and lower data frames and calculate the numerator, denominator, and adjustment factor
-            df_slr_notEqual <- slr_lower %>%
-              left_join(slr_upper, by=c(groupCols_modelAverage, "year", other_slrGroupCols)) %>%
-              mutate(denom_slr  = upper_slr - lower_slr) %>%
-              mutate(numer_slr  = upper_slr - driverValue) %>%
-              mutate(adj_slr    = numer_slr/denom_slr) %>%
-              as.data.frame
+            ### Calculate numerator and denominator
+            df_slr_notEqual <- df_slr_notEqual %>% as.data.frame
 
-            rm("slr_lower0", "slr_lower", "slr_upper", "new_lowerSummaryCols", "new_upperSummaryCols")
+            df_slr_notEqual$new_factor <- df_slr_notEqual[,upperCol_i] - df_slr_notEqual[,lowerCol_i]
+            df_slr_notEqual$new_value  <- df_slr_notEqual[,lowerCol_i]
 
-            ###### Iterate over summary columns ######
-            ### Iterate over summary columns
-            for(i in 1:num_slrSumCols){
-              col_i      <- slrSummaryCols[i]
+            ### Update the new value
+            oldCol_i <- col_i %>% c()
+            newCol_i <- "new_value" %>% c()
+            df_slr_notEqual <- df_slr_notEqual %>%
+              mutate(new_value = new_value + new_factor * (1 - adj_slr)) %>%
+              # select(-c(all_of(col_i))) %>%
+              rename_with(~oldCol_i[which(newCol_i==.x)], .cols=newCol_i)
+            rm("col_i", "lowerCol_i", "upperCol_i", "oldCol_i", "newCol_i")
+          } ### End for(i in 1:num_slrSumCols)
 
-              ### Upper/lower
-              lowerCol_i <- col_i %>% paste("lower", sep="_")
-              upperCol_i <- col_i %>% paste("upper", sep="_")
+          ### When finished, drop columns and mutate model column
+          df_slr_notEqual <- df_slr_notEqual %>% mutate(model="Interpolation")
+          # df_slr_notEqual %>% names %>% print
+          df_slr_notEqual <- df_slr_notEqual %>% select(c(all_of(names_df_slr)))
+        } ### End if length which_not Equal
 
-              ### Calculate numerator and denominator
-              df_slr_notEqual <- df_slr_notEqual %>% as.data.frame
+        ### Bind SLR averages together
+        df_slr <- df_slr_equal %>% rbind(df_slr_notEqual)
+        rm("df_slr_equal", "df_slr_notEqual")
+      } ### End else do_slrInterp
+    } ### End if nrow(df_slr)
 
-              df_slr_notEqual$new_factor <- df_slr_notEqual[,upperCol_i] - df_slr_notEqual[,lowerCol_i]
-              df_slr_notEqual$new_value  <- df_slr_notEqual[,lowerCol_i]
-
-              ### Update the new value
-              oldCol_i <- col_i %>% c()
-              newCol_i <- "new_value" %>% c()
-              df_slr_notEqual <- df_slr_notEqual %>%
-                mutate(new_value = new_value + new_factor * (1 - adj_slr)) %>%
-                select(-c(all_of(col_i))) %>%
-                rename_with(~oldCol_i[which(newCol_i==.x)], .cols=newCol_i)
-            } ### End for(i in 1:num_slrSumCols)
-
-            ### When finished, drop columns and mutate model column
-            df_slr_notEqual <- df_slr_notEqual %>% mutate(model="Interpolation")
-
-            df_slr_notEqual <- df_slr_notEqual %>% select(c(all_of(names_aggImpacts))) %>%
-              mutate(model_type = model_type_i)
-
-          } ### End if(nrow_interp== 0 & nrow_notInterp > 0)
-
-          ### Bind slr averages together
-          df_slr <- df_slr_equal %>% rbind(df_slr_notEqual)
-
-          ### Add other observations back in
-          df_aggImpacts <- df_aggImpacts %>%
-            filter(tolower(model_type)!="slr") %>%
-            filter(model!="Interpolation") %>%
-            rbind(df_slr)
-
-          rm("df_slr", "df_slr_equal", "df_slr_notEqual")
-        }
-        ### Else (nrow_interp== 0 & nrow_notInterp > 0)
-        else{
-          df_aggImpacts_gcm <- df_aggImpacts %>% filter(tolower(model_type) != tolower(model_type_i))
-          df_aggImpacts_slr <- df_aggImpacts %>%
-            filter(tolower(model_type) == tolower(model_type_i)) %>%
-            filter(model=="Interpolation")
-
-          df_aggImpacts     <- df_aggImpacts_gcm %>% rbind(df_aggImpacts_slr)
-          rm("df_slr", "df_aggImpacts_gcm", "df_aggImpacts_slr")
-
-        } ### ### End else(nrow_interp== 0 & nrow_notInterp > 0)
-      } ### End if if(model_type_i=="gcm")
-    } ### End if model_type_i %in% c_models
+    ### Add other observations back in
+    df_aggImpacts <- df_gcm %>% rbind(df_slr)
   } ### End if "model" %in% aggLevels
 
   ###### National Totals ######
   if(nationalAgg){
     if(msgUser) message("\t", "Calculating national totals...")
+    ### Ungroup first
+    df_aggImpacts <- df_aggImpacts %>% ungroup
     ### Group by columns
     groupCols_national <- groupByCols[which(groupByCols != "region" )]
     ### Filter to national values and not national values
@@ -709,11 +652,12 @@ aggregate_impacts <- function(
     rm("df_national")
   } ### End if national
 
-  ###### Impact Type ######
+  ###### Impact Types ######
   ### Summarize by Impact Type
   if(impactTypesAgg){
     if(msgUser) message("\t", "Summing across impact types...")
-
+    ### Ungroup first
+    df_aggImpacts <- df_aggImpacts %>% ungroup
     ### Group by columns
     impactType_dropCols     <- c("physicalmeasure", "physical_impacts")
     df_aggImpacts           <- df_aggImpacts %>%
@@ -723,36 +667,28 @@ aggregate_impacts <- function(
         y       <- y %>% select(all_of(names_y))
         return(y)
       })
-
+    ### Names
     names_aggImpacts      <- df_aggImpacts %>% names
-
+    ### Columns
     groupByCols   <- groupByCols[which(!(groupByCols %in% c(impactType_dropCols)))]
     summaryCols   <- summaryCols[which(!(summaryCols %in% c(impactType_dropCols)))]
     summaryCol1   <- summaryCols[1]
     standardCols  <- standardCols[which(!(standardCols %in% c(impactType_dropCols)))]
-
+    ### GroupByCols
     groupCols_impactTypes <- groupByCols[which(!(groupByCols %in% c("impactType")))]
     n_groupCols_impTypes  <- groupCols_impactTypes %>% length
 
+    ### Separate into observations that have a single impact type and rename impact type
+    df_aggImpacts_oneType <- df_aggImpacts %>% filter(impactType=="N/A") %>% mutate(impactType="all")
+    # "aggregate_impacts: got here" %>% print
+    ### Separate into observations that have a multiple impact types and rename impact type
+    df_aggImpacts_nTypes  <- df_aggImpacts %>% filter(impactType!="N/A")
+    # "aggregate_impacts: got here2" %>% print
+    ### Remove df_aggImpacts
+    rm("df_aggImpacts")
+
     ### Summarize at impact types: Count number of impact types
-    df_nImpTypes       <- df_aggImpacts %>%
-      group_by_at(.vars=c(all_of(groupCols_impactTypes), "impactType", "year")) %>%
-      summarize(nTypes = n(), .groups="keep") %>%
-      group_by_at(.vars=c(all_of(groupCols_impactTypes), "impactType")) %>%
-      summarize(nTypes = n(), .groups="keep") %>%
-      group_by_at(.vars=c(all_of(groupCols_impactTypes))) %>%
-      summarize(nTypes = n(), .groups="keep")
-
-
-    ### Add info back in
-    df_aggImpacts <- df_aggImpacts %>% left_join(df_nImpTypes, by=groupCols_impactTypes)
-
-    df_oneImpact  <- df_aggImpacts %>%
-      filter(nTypes==1) %>% select(-c("nTypes")) %>%
-      mutate(impactType="all")
-
-    df_nImpacts   <- df_aggImpacts %>%
-      filter(nTypes!=1) %>% select(-c("nTypes")) %>%
+    df_aggImpacts_nTypes <- df_aggImpacts_nTypes %>%
       (function(w){
         w <- w %>% as.data.frame
         w$not_isNA <- (!is.na(w[,summaryCol1]))*1
@@ -760,7 +696,10 @@ aggregate_impacts <- function(
       }) %>%
       group_by_at(.vars=c(all_of(groupCols_impactTypes), "year")) %>%
       summarize_at(.vars=c(all_of(summaryCols), "not_isNA"), sum, na.rm=T) %>%
-      as.data.frame %>%
+      as.data.frame %>% ungroup
+
+    # "aggregate_impacts: got here3" %>% print
+    df_aggImpacts_nTypes <- df_aggImpacts_nTypes %>%
       mutate(
         not_isNA = (not_isNA > 0)*1,
         not_isNA = not_isNA %>% na_if(0)
@@ -771,26 +710,39 @@ aggregate_impacts <- function(
       }) %>%
       select(-not_isNA) %>%
       mutate(impactType="all") %>%
+      ungroup %>%
       as.data.frame
-
+    # "aggregate_impacts: got here4" %>% print
     ### Add to impacts
-    df_aggImpacts <- df_oneImpact %>% rbind(df_nImpacts) %>% mutate(impactType="all")
-    rm("df_oneImpact", "df_nImpacts")
+    # df_aggImpacts <- df_oneImpact %>% rbind(df_nImpacts) %>% mutate(impactType="all")
+    # rm("df_oneImpact", "df_nImpacts")
+    df_aggImpacts <- df_aggImpacts_oneType %>% rbind(df_aggImpacts_nTypes)
+    rm("df_aggImpacts_oneType", "df_aggImpacts_nTypes")
+    # "aggregate_impacts: got here5" %>% print
   } ### End if impactType in aggLevels
 
   ###### Join Base Scenario Info with Aggregated Data ######
   ### Join national info with population
-  df_base   <- baseScenario %>% left_join(regionalPop, by=c("year"))
-
-  df_agg_names      <- df_aggImpacts %>% names
-  sectorVariant_names <- co_sector_variants %>% names
+  # "aggregate_impacts: got here6" %>% print
+  # df_base      %>% head %>% glimpse %>% print
+  df_base             <- baseScenario %>%
+    mutate(year = year %>% as.numeric) %>%
+    left_join(
+      regionalPop %>% mutate(year = year %>% as.numeric), by=c("year")
+    )
+  df_base    <- df_base %>% left_join(driverScenario, by="year")
+  # df_base %>% dim %>% print ### 1470 rows, 13 columns
+  ### Names
+  df_agg_names        <- df_aggImpacts %>% names; #df_agg_names %>% print
+  sectorVariant_names <- co_sector_variants %>% names; #sectorVariant_names %>% print
   sectorVariant_join  <- c("model_type", "sector", "variant")
   sectorVariant_drop  <- sectorVariant_names[which((sectorVariant_names %in% df_agg_names) & !(sectorVariant_names %in% sectorVariant_join))]
+  # "aggregate_impacts: got here7" %>% print
 
   df_return <- df_aggImpacts %>%
-    left_join(co_sector_variants %>% select(-c(all_of(sectorVariant_drop))), by = sectorVariant_join) %>%
-    left_join(driverScenario, by = c("year", "model_type")) %>%
-    left_join(df_base      , by = c("year", "region"))
+    left_join(co_sector_variants %>% select(-c(all_of(sectorVariant_drop))), by = sectorVariant_join)
+  rm("df_aggImpacts")
+  df_return <- df_return %>% left_join(df_base , by = c("year", "region", "model_type"))
 
   ###### Reformat sectorprimary and includeaggregate, which were converted to character
   c_aggColumns <- c("sectorprimary", "includeaggregate") %>% (function(y){y[which(y %in% names(df_return))]})
