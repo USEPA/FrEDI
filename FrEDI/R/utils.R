@@ -319,7 +319,8 @@ get_impactFunctions <- function(
       ### Create a piece-wise linear interpolation function using approxfun and defaults
       ###    rule = 1 (Returns NA for x-values outside range)
       ###    ties = mean (take the average of multiple values)
-      fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", rule = 1)
+      # fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", rule = 1)
+      fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", yleft = 0, yright=NA)
 
       return(fun_i)
 
