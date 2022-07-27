@@ -1,4 +1,3 @@
-![hex logos v2-02](https://user-images.githubusercontent.com/7500729/181265767-fa52469f-f955-4e22-a517-8657ef5d7081.png)
 # FrEDI
 The Framework for Evaluating Damages and Impacts (FrEDI)
 
