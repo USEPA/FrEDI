@@ -161,8 +161,9 @@ test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %
 
 
 ```{r check outputs}
-test_systemData$slr_cm %>% filter(year > 2090) %>% arrange(model, year) %>% head
-test_systemData$slrImpacts %>% filter(year > 2090) %>% arrange(sector, variant, region, model, year) %>% head
+test_systemData$list_impactFunctions$AirQuality_2011_NA_O3_gcm_CCSM4_Midwest(-1)
+# test_systemData$slr_cm %>% filter(year > 2090) %>% arrange(model, year) %>% head
+# test_systemData$slrImpacts %>% filter(year > 2090) %>% arrange(sector, variant, region, model, year) %>% head
 
 ```
 
@@ -232,11 +233,24 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-# c_sectorsList <- "ATS Extreme Temperature"
 c_sectorsList <- FrEDI::get_sectorInfo()
+# c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
 ```
 
 
+Test
+```{r df_defaults, message=T}
+### Results are fine for ATS Extreme Temperature and Coastal Properties
+frediPath %>% load_all
+test1 <- run_fredi(inputsList = list(
+  tempInput = data.frame( year = 2000:2300, temp_C = 4)
+  # tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% rbind(data.frame(year=2021:2300, temp_C = -1))
+  ), sectorList = c_sectorsList, aggLevels="none")
+test1 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 %>% filter(driverValue >3) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 %>% filter(driverValue <0)  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 %>% filter(is.infinite(annual_impacts)) %>% as.vector %>% range(na.rm=T)
+```
 
 
 
@@ -378,13 +392,15 @@ packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
 packageDest_path <- packageDest %>% file.path(packageFile_name)
-```
-
-Copy file
-
-```{r copy package}
+### Copy file
 file.copy(from = packageFile_path, to = packageDest, overwrite = T)
 ```
+
+<!-- Copy file -->
+
+<!-- ```{r copy package} -->
+<!-- file.copy(from = packageFile_path, to = packageDest, overwrite = T) -->
+<!-- ``` -->
 
 <!-- Examine impacts data -->
 

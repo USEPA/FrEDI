@@ -647,6 +647,9 @@ run_fredi <- function(
   ### Join results with initialized results and update missing observations with NA
   ### Remove intermediate values
   df_impacts   <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year")); rm("initialResults")
+  # df_impacts %>% names %>% print
+  # df_impacts %>% filter(modelUnitValue > 3)  %>% filter(model_label == "GISS-E2-R") %>% select(scaled_impacts) %>% as.vector %>% range(na.rm=T) %>% print
+  # df_impacts %>% filter(modelUnitValue < 0)  %>% select(scaled_impacts) %>% as.vector %>% range(na.rm=T) %>% print
   # (df_impacts %>% arrange_at(.vars=c("sector", "variant", "region", "model_id", "year")) %>% filter(year > 2090))$year %>% head %>% print
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
 

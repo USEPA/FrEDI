@@ -272,7 +272,10 @@ get_impactFunctions <- function(
   groups_x <- (x %>% group_keys)$group_id %>% unique
 
   ### Initialize data
-  df_0     <- data.frame(xIn = 0, yIn = 0)
+  xIn_min  <- 0
+  yIn_min  <- 0
+  df_0     <- data.frame(xIn = xIn_min, yIn = yIn_min)
+  # df_0     <- data.frame(xIn = 0, yIn = 0)
   ###### Generate list of impact functions ######
   ### Iterate over the groups
   list_x   <- x %>%
@@ -289,6 +292,7 @@ get_impactFunctions <- function(
       len_i       <- df_i %>% nrow
       # ### Extend values out to 10 degrees of warming
       xIn_max     <- df_i$xIn[len_i]
+      yIn_max     <- df_i$yIn[len_i]
 
       # extrapolate %>% print
       ### Whether to extend values
@@ -320,7 +324,7 @@ get_impactFunctions <- function(
       ###    rule = 1 (Returns NA for x-values outside range)
       ###    ties = mean (take the average of multiple values)
       # fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", rule = 1)
-      fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", yleft = 0, yright=NA)
+      fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", yleft = yIn_min, yright=yIn_max)
 
       return(fun_i)
 
