@@ -8,7 +8,8 @@ Estimates economic damages and impacts from climate change to the US through the
 
 To install FrEDI for the first time:
 
- `withr::with_libpaths(  
+ ```
+ withr::with_libpaths(  
  
     new = .libPaths()[1],  
     
@@ -19,7 +20,8 @@ To install FrEDI for the first time:
          type = "source",  
           force = TRUE  
           #ref = "branch" # this will install a particular branch of interest
-        ))`
+        ))
+```
 
 `library("FrEDI")`
 
