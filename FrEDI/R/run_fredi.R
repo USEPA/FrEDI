@@ -437,7 +437,7 @@ run_fredi <- function(
       ### Standardize region and then interpolate
       mutate(region = gsub(" ", ".", region)) %>%
       interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2:2) %>%
-      filter( year >= minYear) %>% filter( year <= maxYear)
+      filter( year >= minYear) %>% filter( year <= maxYear) #%>% mutate_at(.vars=c("reg_pop"), round, 0)
     ### Calculate national population
     national_pop <- pop_df %>% group_by(year) %>%
       summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>%
@@ -793,13 +793,12 @@ run_fredi <- function(
   driverCols    <- c("driverValue", "driverUnit", "driverType")
   nonGroupCols  <- resultNames[which(!(resultNames %in% c(groupByCols, driverCols)))]
   orderColIndex <- which(names(data) %in% groupByCols)
-  df_results    <- df_results %>%
-    select(c(all_of(groupByCols), all_of(driverCols), all_of(nonGroupCols)))
+  selectCols    <- c(groupByCols, driverCols, nonGroupCols) %>% (function(x){x[x!="annual_impacts"] %>% c("annual_impacts")})
+
+  df_results    <- df_results %>% select(c(all_of(selectCols))) %>% arrange_at(.vars=c(all_of(groupByCols)))
 
   # c_aggColumns <- c("sectorprimary", "includeaggregate") %>% (function(y){y[which(y %in% names(df_results))]})
-  # if(length(c_aggColumns)>0){
-  #   df_results     <- df_results %>% mutate_at(.vars=c(all_of(c_aggColumns)), as.numeric)
-  # }
+  # if(length(c_aggColumns)>0){df_results <- df_results %>% mutate_at(.vars=c(all_of(c_aggColumns)), as.numeric)}
 
   ###### Present Values ######
   if(pv){
@@ -818,8 +817,9 @@ run_fredi <- function(
       mutate(discounted_impacts = annual_impacts * discountFactor)
   }
 
-  ###### Convert to Dataframe ######
+  ###### Format Dataframe ######
   df_results   <- df_results %>% ungroup %>% as.data.frame
+
   ###### Return Object ######
   message("\n", "Finished", ".")
   return(df_results)
