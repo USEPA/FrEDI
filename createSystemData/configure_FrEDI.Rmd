@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220701"
+mostRecentDate <- "20220907"
 ```
 
 
@@ -106,7 +106,7 @@ configFiles; for(i in configFiles){ source(paste(configPath, i, sep="/")) }
 List configuration files
 
 ```{r}
-configLogPath %>% list.files("rda")
+configLogPath %>% list.files("rda") %>% sort(decreasing=FALSE) %>% head
 ```
 
 Update archive:
@@ -162,6 +162,7 @@ test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %
 
 ```{r check outputs}
 test_systemData$list_impactFunctions$AirQuality_2011_NA_O3_gcm_CCSM4_Midwest(-1)
+test_systemData$list_impactFunctions$AirQuality_2011_NA_O3_gcm_CCSM4_Midwest(10)
 # test_systemData$slr_cm %>% filter(year > 2090) %>% arrange(model, year) %>% head
 # test_systemData$slrImpacts %>% filter(year > 2090) %>% arrange(sector, variant, region, model, year) %>% head
 
@@ -233,23 +234,28 @@ After running, [update the R tool](#updateRtool).
 Change the following code if there are new sectors
 
 ```{r new_sectors}
-c_sectorsList <- FrEDI::get_sectorInfo()
-# c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
+# c_sectorsList <- FrEDI::get_sectorInfo()
+c_sectorsList <- c("ATS Extreme Temperature")
 ```
 
 
 Test
+
 ```{r df_defaults, message=T}
 ### Results are fine for ATS Extreme Temperature and Coastal Properties
 frediPath %>% load_all
-test1 <- run_fredi(inputsList = list(
-  tempInput = data.frame( year = 2000:2300, temp_C = 4)
-  # tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% rbind(data.frame(year=2021:2300, temp_C = -1))
-  ), sectorList = c_sectorsList, aggLevels="none")
-test1 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 <- list(tempInput = data.frame( year = 2000:2300, temp_C = 10)) %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
+test1 %>% filter(is.infinite(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 %>% filter(is.na(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+### @Temp=4: -131031543004.56610107  518117915169.87200928; @Temp = 10: -131031543004.56610107  518117915169.87200928
 test1 %>% filter(driverValue >3) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test1 %>% filter(driverValue <0)  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test1 %>% filter(is.infinite(annual_impacts)) %>% as.vector %>% range(na.rm=T)
+
+test2 <- list(tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% rbind(data.frame(year=2021:2300, temp_C = -1))) %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
+test2 %>% filter(is.infinite(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test2 %>% filter(is.na(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test2 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test2 %>% filter(driverValue <0)  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+
 ```
 
 
@@ -258,8 +264,9 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2300, by=5)) 
+df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels=c("national", "modelaverage", "impactyear")) %>% filter(year %in% seq(2010, 2300, by=5)) 
 # df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
+df_defaults %>% filter(sector=="ATS Extreme Temperature") %>% filter(region=="National Total") %>% filter(year==2090) %>% filter(model=="Average")
 df_defaults %>% dim
 df_defaults %>% filter(!is.na(annual_impacts)) %>% nrow
 (df_defaults %>% filter(!is.na(annual_impacts)))$annual_impacts %>% range
@@ -273,11 +280,11 @@ Examine rounding
 ```{r}
 # Extreme Temperature, No Adaptation, 2090 socioeconomics, Cold, Midwest, CanESM2, 2070
 # sprintf(x, fmt = '%#.3f') 
-test_digits <- (df_defaults %>%
-  filter(
-    year == 2070, region == "Midwest", model == "CanESM2",
-    sector == "Extreme Temperature", variant == "No Adaptation", impactYear == "2090", impactType == "Cold"
-    ))$annual_impacts; test_digits
+test_digits <- df_defaults %>%
+  filter(year == 2070, region == "Midwest", model == "CanESM2") %>%
+  filter(sector == "Extreme Temperature", variant == "No Adaptation") %>% 
+  filter(impactYear == "2090", impactType == "Cold") %>% 
+  select(annual_impacts) %>% as.vector; test_digits
 
 # test_digits %>% format(digits = 6)
 # test_digits %>% sprintf(fmt = '%#.6f') 
@@ -342,7 +349,9 @@ Use the following section to update R defaults
 
 ```{r defaultResults}
 # ###### Update and Save Default Scenario ######
-defaultResults <- FrEDI::run_fredi()
+frediPath %>% load_all
+defaultResults <- run_fredi()
+# defaultResults <- FrEDI::run_fredi()
 save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.rda"))
 ```
 
@@ -387,7 +396,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.2.0"
+packageVersion   <- "3.3.0"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
