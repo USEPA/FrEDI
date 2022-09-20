@@ -498,7 +498,7 @@ aggregate_impacts <- function(
         ### Names from slr_Interp_byYear c("driverValue", "lower_model", "upper_model", "lower_slr", "upper_slr")
         slrScenario    <- driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
         df_slrInfo     <- slrScenario    %>% slr_Interp_byYear
-        df_slrInfo %>% head %>% print
+        # df_slrInfo %>% head %>% print
         # df_slrInfo %>% dim %>% print ### 291
         ### "year", "driverValue", "lower_model" , "upper_model", "lower_slr" ,  "upper_slr"
         names_slrInfo  <- df_slrInfo %>% names; #names_slrInfo %>% print

@@ -431,7 +431,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.3.0"
+packageVersion   <- "3.3.1"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
