@@ -7,7 +7,7 @@
 install_fredi <- function(
   installFrom = NULL, ### Select a number, one or two
   package     = "FrEDI",
-  version     = "3.3.0",
+  version     = "3.3.1",
   libPath     = .libPaths()[1] ### Location of library path
 ){
   ###### Load Packages ######
@@ -95,7 +95,7 @@ install_fredi <- function(
 
 # install_fredi()
 
-install_fredi(version="3.3.0")
+install_fredi(version="3.3.1")
 
 # # ?devtools::install_github()
 # # ?with_libpaths

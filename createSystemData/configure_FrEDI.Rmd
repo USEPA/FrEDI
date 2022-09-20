@@ -134,6 +134,7 @@ codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 Test system data
 
 ```{r test_systemData0}
+frediPath %>% load_all
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
 test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
@@ -160,13 +161,18 @@ test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %
 ```
 
 
+Check GCM impact functions:
+GISS-E2-R defined up to 3 degrees of warming. GFDL-CM3 defined up to 6 degrees of warming. 
+
 ```{r check outputs}
-test_systemData$list_impactFunctions$AirQuality_2011_NA_O3_gcm_CCSM4_Midwest(-1)
-test_systemData$list_impactFunctions$AirQuality_2011_NA_O3_gcm_CCSM4_Midwest(10)
-# test_systemData$slr_cm %>% filter(year > 2090) %>% arrange(model, year) %>% head
-# test_systemData$slrImpacts %>% filter(year > 2090) %>% arrange(sector, variant, region, model, year) %>% head
+test_impactVals1 <- c(-1, 2:4, 10:11)
+test_impactVals2 <- c(-1, 5:7, 10:11)
+test_impactVals1 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GISS.E2.R_Midwest()
+test_impactVals2 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GFDL.CM3_Midwest()
 
 ```
+
+
 
 
 
@@ -235,28 +241,57 @@ Change the following code if there are new sectors
 
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
-c_sectorsList <- c("ATS Extreme Temperature")
+c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
 ```
 
 
-Test
+Test inputs
+
+```{r}
+### Values above maximum values
+testInputs1 <- list(
+  tempInput = data.frame( year = 2000:2300, temp_C = 11),
+  slrInput  = data.frame( year = 2000:2300, slr_cm = 260)
+  )
+### Values below minimum
+testInputs2 <- list(
+  tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% 
+    rbind(data.frame(year=2021:2300, temp_C = -1))
+)
+```
+
 
 ```{r df_defaults, message=T}
 ### Results are fine for ATS Extreme Temperature and Coastal Properties
 frediPath %>% load_all
-test1 <- list(tempInput = data.frame( year = 2000:2300, temp_C = 10)) %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
-test1 %>% filter(is.infinite(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test1 %>% filter(is.na(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test1 <- testInputs1 %>% run_fredi(sectorList = c_sectorsList, aggLevels="all")
+test1$driverUnit %>% unique
+test1 %>% filter(is.infinite(annual_impacts)) %>% nrow()
+check1 <- test1 %>% filter(driverUnit=="cm", region=="Northeast"); check1 %>% head
+(test1 %>% filter(driverUnit=="cm", region=="Northeast"))$model %>% unique
+test1 %>% filter(is.na(annual_impacts)) %>% nrow()
+check1 <- test1 %>% filter(is.na(annual_impacts))
 ### @Temp=4: -131031543004.56610107  518117915169.87200928; @Temp = 10: -131031543004.56610107  518117915169.87200928
 test1 %>% filter(driverValue >3) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-
-test2 <- list(tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% rbind(data.frame(year=2021:2300, temp_C = -1))) %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
-test2 %>% filter(is.infinite(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test2 %>% filter(is.na(annual_impacts)) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test2 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test2 %>% filter(driverValue <0)  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-
 ```
+
+
+Try plotting
+
+```{r}
+test1 %>% filter(driverUnit=="cm", region=="Northeast") %>% ggplot() + geom_line(aes(x=year, y=annual_impacts, color=variant))
+```
+
+
+```{r}
+frediPath %>% load_all
+test2 <- testInputs2 %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
+test2 %>% filter(is.infinite(annual_impacts)) %>% nrow
+test2 %>% filter(is.na(annual_impacts)) %>% nrow
+test2 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R") %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test2 %>% filter(driverValue <0) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+```
+
 
 
 
@@ -396,7 +431,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.3.0"
+packageVersion   <- "3.3.1"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
