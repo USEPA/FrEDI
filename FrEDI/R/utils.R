@@ -247,17 +247,18 @@ get_impactFunctions <- function(
   groupCol  = NULL, ### Which column to look for the scenario column name (default = temp_impact_scenario )
   xCol      = NULL, ### Which column to use for x (default = temp_C)
   yCol      = NULL, ### Which column to use for y
+  # extrapolate = FALSE, ### Whether to extrapolate by default
   extend_from = NULL, ### Maximum value for model type to extend from, if not missing
   extend_to = NULL, ### Extend last points for x
   unitScale = NULL ### Scale between values
 ){
   ###### Defaults ######
-  unitScale <- ifelse(is.null(unitScale),        1, unitScale)
+  unitScale   <- ifelse(is.null(unitScale),        1, unitScale)
   # extend_to      <- ifelse(is.null(extend_to     ),        1, unitScale)
   ###### Group data ######
-  x$group_id <- x[,groupCol]
-  x$xIn      <- x[,    xCol]
-  x$yIn      <- x[,    yCol]
+  x$group_id  <- x[,groupCol]
+  x$xIn       <- x[,    xCol]
+  x$yIn       <- x[,    yCol]
   ###### Extend from/to ######
   ### Make sure they are numeric
   extend_from <- extend_from %>% as.character %>% as.numeric
@@ -296,6 +297,7 @@ get_impactFunctions <- function(
 
       # extrapolate %>% print
       ### Whether to extend values
+      # extrapolate <- TRUE
       extrapolate <- (xIn_max == extend_from) & (extend_from!=extend_to)
       # extrapolate %>% print
       if(extrapolate){
@@ -317,14 +319,28 @@ get_impactFunctions <- function(
 
         ### Bind the new observations with the other observations
         df_i <- df_i %>% rbind(df_new_i)
+
+        ### Sort and get new y value to extend to
+        # df_i <- df_i %>% arrange_at(.vars=c("xIn"))
+        which_i <- (df_i$xIn == extend_to) %>% which
+        yIn_max <- df_i$yIn[which_i]
       }
+
+
 
       ###### Linear Interpolation ######
       ### Create a piece-wise linear interpolation function using approxfun and defaults
       ###    rule = 1 (Returns NA for x-values outside range)
       ###    ties = mean (take the average of multiple values)
       # fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", rule = 1)
-      fun_i <- approxfun(x = df_i$xIn, y = df_i$yIn, method = "linear", yleft = yIn_min, yright=yIn_max)
+      fun_i <- approxfun(
+        x = df_i$xIn,
+        y = df_i$yIn,
+        method = "linear",
+        yleft  = yIn_min,
+        yright = yIn_max
+        # yright = yIn_ext
+        )
 
       return(fun_i)
 
