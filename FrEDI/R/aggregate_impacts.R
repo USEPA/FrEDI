@@ -491,44 +491,34 @@ aggregate_impacts <- function(
         ### Summary columns
         slrSumCols     <- summaryCols
         n_slrSumCols   <- slrSumCols %>% length
-        slrMutCols     <- c("model", "lower_model", "upper_model")
+        # slrMutCols     <- c("model", "lower_model", "upper_model")
+        slrMutCols     <- c("lower_model", "upper_model")
 
         ### Get information on the driver scenario
         ### Filter driver scenario to slr
         ### Names from slr_Interp_byYear c("driverValue", "lower_model", "upper_model", "lower_slr", "upper_slr")
         slrScenario    <- driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
-        df_slrInfo     <- slrScenario    %>% slr_Interp_byYear
-        # df_slrInfo %>% head %>% print
-        # df_slrInfo %>% dim %>% print ### 291
+        df_slrAdj      <- slrScenario    %>% slr_Interp_byYear
+        rm("slrScenario")
+        ### Info names
         ### "year", "driverValue", "lower_model" , "upper_model", "lower_slr" ,  "upper_slr"
-        names_slrInfo  <- df_slrInfo %>% names; #names_slrInfo %>% print
-        other_slrCols  <- names_slrInfo[which(names_slrInfo!="year")]
+        names_slrAdj   <- df_slrAdj %>% names; #names_slrAdj %>% print
+        other_slrCols  <- names_slrAdj[which(names_slrAdj!="year")]
         join_slrCols   <- c(groupCols_modelAverage, "year", other_slrCols)
-
-        ### Conditions
-        ### - Data where upper model = lower model
-        ### - Data for which values are greater than or equal to the maximum value
-        ### - Data for other values
-        cond_slrEqual  <- df_slrInfo$lower_model == df_slrInfo$upper_model
-        cond_slrOther  <- (!cond_slrEqual)
-        ### Years associated with conditions
-        years_slrEqual <-  df_slrInfo$year[cond_slrEqual] %>% unique %>% sort
-        years_slrOther <-  df_slrInfo$year[cond_slrOther] %>% unique %>% sort
-        rm("cond_slrEqual", "cond_slrOther")
-        # c(length(years_slrEqual), length(years_slrOther)) %>% print; df_slr %>% names %>% print
+        ### Format values
+        df_slrAdj      <- df_slrAdj %>% mutate_at(.vars=c(all_of(slrMutCols)), as.character)
 
         ### Join with slrInfo and convert columns to character
-        df_slr         <- df_slr %>% left_join(df_slrInfo, by="year")
-        df_slr         <- df_slr %>% mutate_at(.vars=c(all_of(slrMutCols)), as.character)
-        rm("df_slrInfo")
+        df_slrAdj      <- df_slrAdj %>% mutate(equal_models = lower_model == upper_model)
+        df_slr         <- df_slr %>% left_join(df_slrAdj, by="year")
+        rm("df_slrAdj")
         ### Filter to conditions
-        df_slrEqual    <- df_slr %>% filter(year %in% years_slrEqual); #0 df_slrEqual %>% dim %>% print
-        df_slrOther    <- df_slr %>% filter(year %in% years_slrOther);
-        rm("df_slr", "years_slrEqual", "years_slrOther")
+        df_slrEqual    <- df_slr %>% filter( equal_models) %>% select(-c("equal_models"));
+        df_slrOther    <- df_slr %>% filter(!equal_models) %>% select(-c("equal_models"));
         # c(nrow(df_slrEqual), nrow(df_slrOther)) %>% print
 
         ### Process observations that are equal
-        if(nrow(df_slrEqual) > 0){
+        if(nrow(df_slrEqual)){
           ### Filter observations that are zeros only and make the summary column values zero
           df_slrEqual0    <- df_slrEqual %>% filter(lower_model=="0 cm") %>% filter(model=="30 cm")
           df_slrEqual1    <- df_slrEqual %>% filter(lower_model!="0 cm") %>% filter(model == lower_model)
@@ -545,7 +535,7 @@ aggregate_impacts <- function(
         } ### End if length(which_equal) > 0
 
         ### Observations that are greater than zero
-        if(nrow(df_slrOther) > 0){
+        if(nrow(df_slrOther)){
           ### Lower and upper column names and new names
           lowerSumCols <- slrSumCols %>% paste("lower", sep="_")
           upperSumCols <- slrSumCols %>% paste("upper", sep="_")
@@ -561,6 +551,8 @@ aggregate_impacts <- function(
           # rm("lowerSumCols", "upperSumCols")
           ### Convert values for observations with a lower model value =="0 cm" to zero
           df_slrLower0   <- df_slrLower0 %>% mutate_at(.vars=c(all_of(lowerSumCols)), function(y){0})
+          # ### Convert values for observations with a lower model value =="0 cm" to zero
+          # df_slrLower0   <- df_slrLower0 %>% mutate_at(.vars=c(all_of(slrSumCols)), function(y){0})
           ### Filter values
           df_slrLower0   <- df_slrLower0 %>% filter(model=="30 cm"    )
           df_slrLower1   <- df_slrLower1 %>% filter(model==lower_model)
@@ -569,34 +561,22 @@ aggregate_impacts <- function(
           ### Join upper and lower data frames
           df_slrOther    <- df_slrLower %>% left_join(df_slrUpper, by = c(all_of(join_slrCols)))
           rm("df_slrLower", "df_slrUpper")
-          ### Calculate the numerator, denominator, and adjustment factor
-          df_slrOther    <- df_slrOther %>%
-            mutate(denom_slr  = upper_slr - lower_slr  ) %>%
-            mutate(numer_slr  = upper_slr - driverValue) %>%
-            mutate(adj_slr    = numer_slr / denom_slr  ) %>% as.data.frame
-          # df_slrOther %>% names %>% print
-          # rm("lowerSumCols", "upperSumCols")
-          ### Iterate over summary columns and calculate the value
-          for(i in 1:n_slrSumCols){
-            ### Columns
-            col_i        <- slrSumCols[i]
-            ### Calculate numerator and denominator
-            slrOtherLow   <- df_slrOther[,lowerSumCols[i]] %>% as.vector
-            slrOtherUpp   <- df_slrOther[,upperSumCols[i]] %>% as.vector
-            ### Calculate new value
-            slrOtherAdj   <- df_slrOther[,"adj_slr"]  %>% as.vector
-            slrNewFactor  <- slrOtherUpp - slrOtherLow
-            slrNewValue   <- slrOtherLow + slrNewFactor * (1 - slrOtherAdj)
-            ### Update the new value
-            df_slrOther[,col_i]   <- slrNewValue
-            rm("col_i", "slrOtherLow", "slrOtherUpp", "slrOtherAdj", "slrNewFactor", "slrNewValue")
-          } ### End for(i in 1:n_slrSumCols)
 
+          ### Calculate the new value
+          # df_slrOther %>% names %>% print
+          slrLowerVals  <- df_slrOther[, lowerSumCols]
+          slrUpperVals  <- df_slrOther[, upperSumCols]
+          slrOtherAdj   <- df_slrOther[, "adj_slr"]  %>% as.vector
+          slrNewFactors <- (slrUpperVals - slrLowerVals) * (1 - slrOtherAdj)
+          slrNewValues  <- slrLowerVals + slrNewFactors
+          df_slrOther[,slrSumCols] <- slrNewValues
+          rm("slrLowerVals", "slrUpperVals", "slrOtherAdj", "slrNewFactors", "slrNewValues")
+          rm("lowerSumCols", "upperSumCols")
           ### When finished, drop columns and mutate model column
           # df_slrOther %>% names %>% print
           df_slrOther <- df_slrOther %>% mutate(model="Interpolation")
           df_slrOther <- df_slrOther %>% select(c(all_of(names_slr)))
-          rm("lowerSumCols", "upperSumCols")
+
         } ### End if (nrow(df_slrOther) > 0)
 
         ### Bind SLR averages together
