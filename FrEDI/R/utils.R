@@ -505,15 +505,16 @@ get_annual_model_stats <- function(
 ###### slr_Interp_byYear ######
 ### utils for aggregate_impacts
 slr_Interp_byYear <- function(
-  data, ### Driver scenario with columns year, slr_cm
-  yCol = "driverValue", ### Column to look for the driver value
-  silent=TRUE
+    data, ### Driver scenario with columns year, slr_cm
+    yCol = "driverValue", ### Column to look for the driver value
+    silent=TRUE
 ){
   ###### Defaults ######
   ### Rename y Column
   if(is.null(yCol)){yCol <- "driverValue"}
   oldColName_y <- yCol %>% c()
   newColName_y <- "yValue" %>% c()
+  newColRef_y  <- newColName_y %>% paste0("_ref")
   data <- data %>% rename_at(.vars=c(all_of(oldColName_y)), ~newColName_y)
   ### Messaging
   if(is.null(silent)){silent <- T}
@@ -525,19 +526,21 @@ slr_Interp_byYear <- function(
   co_slrs    <- co_models %>% filter(modelType=="slr") %>% rename(model=model_label)
   slr_levels <- c("0cm", co_slrs$model_dot)
   slr_labels <- c("0 cm", co_slrs$model)
+  slr_orders <- slr_levels %>% factor(levels=slr_levels) %>% as.numeric
+  slr_min    <- (slr_orders %>% min(na.rm=T)) #+ 1
+  slr_max    <-  slr_orders %>% max(na.rm=T)
 
   ### Sea level rise information
   assign("slr_df", rDataList[["slr_cm"]])
   df_slr_years <- slr_df$year %>% unique
-
+  ### Refactor model
   slr_df       <- slr_df %>%
-    mutate(model  = model %>% as.character) %>%
-    mutate(model2 = model %>% factor(levels = slr_levels, labels=slr_labels)) %>%
-    mutate(order  = model2 %>% as.numeric) %>%
-    arrange_at(.vars=c("order", "year")) %>%
-    mutate(model = model2 %>% as.character) %>%
-    select(-c(model2)) %>%
-    as.data.frame
+    mutate(model        = model %>% as.character) %>%
+    mutate(model_factor = model %>% factor(slr_levels, slr_labels)) %>%
+    mutate(model_level  = model_factor %>% as.numeric) %>%
+    arrange_at(.vars=c("model_level", "year")) %>%
+    mutate(model = model_factor %>% as.character) %>%
+    select(-c("model_factor")) %>% as.data.frame
 
   ### Character vector of model names
   c_slrs0      <- slr_labels
@@ -551,7 +554,7 @@ slr_Interp_byYear <- function(
   if(check_unique_years){
     if(msgUser){
       message("\t", "values for 'yCol' are not unique...")
-      message("\t", "Averaging 'yCol' values...")
+      message("\t", "Averaging over 'yCol' values...")
     }
     data <- data %>%
       group_by_at(c("year")) %>%
@@ -564,42 +567,68 @@ slr_Interp_byYear <- function(
   data       <- data %>% filter(year %in% df_slr_years)
   n_years    <- data %>% nrow
 
-  ### Initialize an empty dataframe
-  df_return  <- data.frame()
+  ###### Standard Columns ######
+  ### JoinCols
+  join0   <- c("year", "model_level")
+  select0 <- c("year", newColName_y, newColRef_y, "model")
+  select1 <- c("year", newColName_y, "lower_model", "upper_model", "lower_slr", "upper_slr")
+  ### Format data
+  # y    <- y %>% mutate(model_factor = model_factor %>% as.character)
+  x      <- data; rm("data")
+  y      <- slr_df %>% rename(yValue_ref = driverValue); rm("slr_df")
+  ### Join
+  z    <- x %>% left_join(y, by = "year")
+  ### Filter observations
+  z_lo <- z %>% filter(yValue_ref <= yValue); #n_lo <- z_lo %>% nrow
+  z_hi <- z %>% filter(yValue_ref >= yValue); #n_hi <- z_hi %>% nrow
+  ### Figure if years are missing
+  yrs_z  <- x$year
+  yrs_lo <- z_lo$year %>% unique %>% sort; nas_lo <- yrs_z[!(yrs_z %in% yrs_lo)]
+  yrs_hi <- z_hi$year %>% unique %>% sort; nas_hi <- yrs_z[!(yrs_z %in% yrs_hi)]
+  ### Add years to data
+  dfNaLo <- data.frame(year = yrs_lo, model_level = slr_min) %>% left_join(z, by = c(all_of(join0)))
+  dfNaHi <- data.frame(year = yrs_lo, model_level = slr_max) %>% left_join(z, by = c(all_of(join0)))
+  ### Add missing values back in
+  z_lo   <- z_lo %>% rbind(dfNaLo) %>% arrange_at(.vars=c(join0[1]))
+  z_hi   <- z_hi %>% rbind(dfNaHi) %>% arrange_at(.vars=c(join0[1]))
+  ### Get low values
+  x_lo   <- z_lo %>%
+    group_by_at(.vars=c("year")) %>%
+    summarize_at(.vars=c("model_level"), max, na.rm=T) %>% ungroup %>%
+    (function(a, b = x){
+      b %>% left_join(a, by = c("year"))
+    }) %>%
+    left_join(y, by=c("year", "model_level")) %>%
+    select(c(all_of(select0))) %>%
+    rename(lower_slr = yValue_ref, lower_model = model)
 
-  for(i in 1:n_years){
-    ### Get year and gmsl in cm
-    year_i  <- data$year[i]
-    gmsl_i  <- data$yValue[i]
+  ### Get hi values
+  x_hi   <- z_hi %>%
+    group_by_at(.vars=c("year")) %>%
+    summarize_at(.vars=c("model_level"), min, na.rm=T) %>% ungroup %>%
+    (function(a, b = x){
+      b %>% left_join(a, by = c("year"))
+    }) %>%
+    left_join(y, by=c("year", "model_level")) %>%
+    select(c(all_of(select0))) %>%
+    rename(upper_slr = yValue_ref, upper_model = model)
 
-    ### Filter to slr observations for that year
-    ### Arrange by driver value
-    df_slr_i <- slr_df %>% filter(year == year_i)
+  ### Join all
+  z <- x_lo %>% left_join(x_hi, by = c("year", all_of(newColName_y)))
+  z <- z    %>% select(c(all_of(select1)))
 
-    ### Figure out which values match
-    which_slrs  <- gmsl_i %>% fun_getNeighbors(values=df_slr_i, col="driverValue")
-    # c_slrs      <- which_slrs$model
-    lower_i     <- which_slrs %>% filter(type=="lower")
-    upper_i     <- which_slrs %>% filter(type=="upper")
+  ### Add adjustment
+  z <- z   %>%
+    mutate(denom_slr  = upper_slr - lower_slr  ) %>%
+    mutate(numer_slr  = upper_slr - yValue) %>%
+    mutate(adj_slr    = numer_slr / denom_slr  ) %>%
+    mutate(is_inf     = adj_slr %>% is.infinite) %>%
+    mutate(adj_slr    = adj_slr * (!is_inf)) %>%
+    mutate(adj_slr    = adj_slr %>% replace_na(0)) %>%
+    select(-c("is_inf"))
 
-    ### Make a dataframe with the new info
-    df_i <- data.frame(
-      year   = year_i,
-      yValue = gmsl_i) %>%
-      mutate(
-        lower_model  = lower_i$model[1],
-        upper_model  = upper_i$model[1],
-        lower_slr = lower_i$driverValue[1],
-        upper_slr = upper_i$driverValue[1]
-    )
-
-    ### Add to data frame
-    df_return <- df_return %>% rbind(df_i)
-  } ### End iterate over years
-
-  ### Rename yValue
-  df_return <- df_return %>% rename_at(.vars=c(all_of(newColName_y)), ~oldColName_y)
-
+  ### Rename yValue and return
+  df_return <- z %>% rename_at(.vars=c(all_of(newColName_y)), ~oldColName_y)
   return(df_return)
 
 }
