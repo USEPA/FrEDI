@@ -294,6 +294,7 @@ get_impactFunctions <- function(
       # ### Extend values out to 10 degrees of warming
       xIn_max     <- df_i$xIn[len_i]
       yIn_max     <- df_i$yIn[len_i]
+      yMaxNew     <- NA
 
       # extrapolate %>% print
       ### Whether to extend values
@@ -323,7 +324,8 @@ get_impactFunctions <- function(
         ### Sort and get new y value to extend to
         # df_i <- df_i %>% arrange_at(.vars=c("xIn"))
         which_i <- (df_i$xIn == extend_to) %>% which
-        yIn_max <- df_i$yIn[which_i]
+        # yIn_max <- df_i$yIn[which_i]
+        yMaxNew <- df_i$yIn[which_i]
       }
 
 
@@ -338,8 +340,8 @@ get_impactFunctions <- function(
         y = df_i$yIn,
         method = "linear",
         yleft  = yIn_min,
-        yright = yIn_max
-        # yright = yIn_ext
+        # yright = yIn_max
+        yright = yMaxNew
         )
 
       return(fun_i)

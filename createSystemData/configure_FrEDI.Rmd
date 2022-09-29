@@ -162,16 +162,20 @@ test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %
 
 
 Check GCM impact functions:
-GISS-E2-R defined up to 3 degrees of warming. GFDL-CM3 defined up to 6 degrees of warming. 
 
 ```{r check outputs}
 test_impactVals1 <- c(-1, 2:4, 10:11)
 test_impactVals2 <- c(-1, 5:7, 10:11)
-test_impactVals1 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GISS.E2.R_Midwest()
-test_impactVals2 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GFDL.CM3_Midwest()
-
 ```
 
+
+* GISS-E2-R defined up to 3 degrees of warming: Should have NA values for values above 3 degrees
+* GFDL-CM3 defined up to 6 degrees of warming: : Should have same values for values 10C and above
+
+```{r}
+test_impactVals1 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GISS.E2.R_Midwest()
+test_impactVals2 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GFDL.CM3_Midwest()
+```
 
 
 
@@ -211,15 +215,15 @@ file.copy(
 Use the following code to compile the SV configuration data
 
 ```{r test createSVData}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-## "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
-test_sector     <- c("Coastal Properties")
-## Uncomment following two lines to create and save data and check the outputs
-time1           <- Sys.time()
-test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
-# test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
-time2           <- Sys.time()
-time_create     <- time2 - time1; time_create
+# for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
+# ## "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
+# test_sector     <- c("Coastal Properties")
+# ## Uncomment following two lines to create and save data and check the outputs
+# time1           <- Sys.time()
+# test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
+# # test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
+# time2           <- Sys.time()
+# time_create     <- time2 - time1; time_create
 ```
 
 
@@ -308,7 +312,8 @@ Try the package: 167,184 rows
 
 ```{r df_defaults, message=T}
 frediPath %>% load_all
-df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels=c("national", "modelaverage", "impactyear")) %>% filter(year %in% seq(2010, 2300, by=5)) 
+df_defaults <- run_fredi(sectorList = NULL, aggLevels=c("national", "modelaverage", "impactyear")) %>% filter(year %in% seq(2010, 2300, by=5)) 
+# df_defaults <- run_fredi(sectorList = c_sectorsList, aggLevels=c("national", "modelaverage", "impactyear")) %>% filter(year %in% seq(2010, 2300, by=5)) 
 # df_defaults <- FrEDI::run_fredi(sectorList = c_sectorsList, aggLevels="none") %>% filter(year %in% seq(2010, 2090, by=5))
 df_defaults %>% filter(sector=="ATS Extreme Temperature") %>% filter(region=="National Total") %>% filter(year==2090) %>% filter(model=="Average")
 df_defaults %>% dim
@@ -444,7 +449,7 @@ devtools::build(pkg=frediPath)
 ```{r package paths}
 ### Copy the file
 packageName      <- "FrEDI"
-packageVersion   <- "3.3.2"
+packageVersion   <- "3.3.3"
 packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
 packageFile_path <- frediPath %>% file.path("..", packageFile_name)
 packageDest      <- .libPaths()[1]
