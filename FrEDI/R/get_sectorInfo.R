@@ -56,7 +56,9 @@ get_sectorInfo <- function(
     rename(sector     = sector_label) %>%
     rename(model_type = modelType) %>%
     mutate(model_type = model_type %>% toupper)
-
+  ### Sort
+  co_sectorsRef <- co_sectorsRef %>% arrange_at(.vars=c("sector"))
+  ### GCM or SLR
   gcm_string <- "GCM"
   if(gcmOnly){
     co_sectorsRef <- co_sectorsRef %>% filter(model_type==gcm_string)
