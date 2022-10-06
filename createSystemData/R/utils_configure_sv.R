@@ -13,6 +13,7 @@ get_svDataList <- function(
   return         = T,
   msg0           = ""
 ){
+  require(tidyverse)
   ###### Libraries ######
   # require(tidyverse)
   # require(openxlsx)
@@ -23,7 +24,7 @@ get_svDataList <- function(
   dataFilePath   <- dataPath %>% file.path(dataFile)
   dataFile       <- dataFilePath %>% basename
   dataPath       <- dataFilePath %>% dirname
-  
+  # "got here1" %>% print
   ### Check if file exists and if it doesn't, exit
   dataPathFiles  <- dataPath %>% list.files
   dataFileExists <- dataFile %in% dataPathFiles
@@ -32,7 +33,7 @@ get_svDataList <- function(
     msg1 %>% paste0("\n\t", "Exiting...") %>% message
     return()
   }
-
+  # "got here2" %>% print
   ### Otherwise, get information about the file
   ### Check that `dataInfoSheet` and `dataSheet` exists:
   dataFileSheets   <- dataFilePath %>% getSheetNames
@@ -43,13 +44,13 @@ get_svDataList <- function(
     msg1 %>% paste0("\n\t", "Exiting...") %>% message
     return()
   } ### End if !dataInfoSheetExists
-
+  # "got here3" %>% print
   ###### Load the Excel Workbook ######
   wb_data          <- dataFilePath %>% loadWorkbook
   c_tables         <- wb_data %>% getTables(sheet = tableSheet); rm("wb_data")
   tableExists      <- tableName %in% c_tables
   which_table      <- (tableName == c_tables) %>% which
-
+  # "got here4" %>% print
   ###### Get the table of tables ######
   ### If the files exist then get info about the tables
   ### - Load the Excel Workbook
@@ -410,7 +411,7 @@ get_svPopList <- function(
   msg1 %>% paste0("Checking data against SV data...") %>% message
   ### Load sv data  
   if(is.null(svData)){
-    df_sv_path <- outPath %>% file.path("svDataList.rda")
+    df_sv_path <- outPath %>% file.path("svDataList") %>% paste0(".", rDataExt)
     load(df_sv_path)
     svData    <- svDataList[["svData"]]; rm("svDataList")
   }
@@ -419,19 +420,15 @@ get_svPopList <- function(
 
   ### Join with SV data
   c_ids1      <- iclusData$geoid10 %>% unique %>% length
+  svDataIclus <- svData %>%
+    group_by_at(.vars=c("region", "state", "geoid10")) %>%
+    summarise(n=n(), .groups="keep") %>%
+    select(-c("n")) %>% ungroup
+  ### Filter to relevant states, regions, tracts
+  iclusData   <- iclusData %>% left_join(svDataIclus, by = c("state", "geoid10"))
   iclusData   <- iclusData %>%
-    left_join(
-      svData %>%
-        # group_by_at(.vars=c("region", "state", "county")) %>%
-        group_by_at(.vars=c("region", "state", "geoid10")) %>%
-        summarise(n=n(), .groups="keep") %>%
-        select(-c("n")),
-      by = c("state", "geoid10")
-      # by = c("state", "county")
-    ) %>%
-    ### Filter to relevant states, regions, tracts
-    filter(!is.na(region)) %>%
-    filter(!is.na(state)) %>%
+    filter(!is.na(region) & !is.nan(region)) %>%
+    filter(!is.na(state ) & !is.nan(state )) %>%
     filter(region %in% x_regions)
   c_ids2 <- iclusData$geoid10 %>% unique %>% length
   # c_ids2 <- iclusData$county %>% unique %>% length
@@ -441,67 +438,68 @@ get_svPopList <- function(
   ### Regional population summary (160 rows)
   msg1 %>% paste0("Creating population projection functions...") %>% message
   msg1 %>% paste0("\t", "Calculating regional population...") %>% message
-  iclus_region_pop <-
-    iclusData %>%
+  iclus_region_pop <- iclusData %>%
     group_by_at(.vars=c("region", "year")) %>%
-    summarise_at(.vars=c("county_pop"), sum, na.rm=T) %>%
-    rename(region_pop = county_pop) %>%
-    (function(x){
-      x$region %>% unique %>%
-        lapply(function(region_i){
+    summarise_at(.vars=c("county_pop"), sum, na.rm=T) %>% ungroup %>%
+    rename(region_pop = county_pop)
+  iclus_region_pop <- iclus_region_pop %>% (function(x){
+    regions_x <- x$region  %>% unique
+    regions_x <- regions_x %>% lapply(function(region_i){
           df_i     <- x %>% filter(region == region_i)
           df_i_new <- approx(
             x    = df_i$year,
             y    = df_i$region_pop,
             xout = c_intYears
-          ) %>% 
-            as.data.frame %>% 
+          ) %>% as.data.frame
+          df_i_new <- df_i_new %>% 
             rename(year = x, region_pop = y) %>%
             mutate(region = region_i)
-        }) %>%
-        (function(i){do.call(rbind, i)})
+          return(df_i_new)
+        })
+    ### Bind and return
+    regions_x <- regions_x %>% (function(i){do.call(rbind, i)})
+    return(regions_x)
     })
   
   ###### State population summary ######
   ### State population summary (1020 rows)
   msg1 %>% paste0("\t", "Calculating state population...") %>% message
-  iclus_state_pop <-
-    iclusData %>%
+  iclus_state_pop <- iclusData %>%
     group_by_at(.vars=c("state", "region", "year")) %>%
-    summarise_at(.vars=c("county_pop"), sum, na.rm=T) %>%
-    rename(state_pop = county_pop) %>%
-    (function(x){
-      x$state %>% unique %>%
-        lapply(function(state_i){
+    summarise_at(.vars=c("county_pop"), sum, na.rm=T) %>% ungroup %>%
+    rename(state_pop = county_pop)
+  iclus_state_pop <- iclus_state_pop %>% (function(x){
+    states_x <- x$state %>% unique
+    states_x <- states_x %>% lapply(function(state_i){
           df_i     <- x %>% filter(state == state_i)
           region_i <- df_i$region %>% unique
           df_i_new <- approx(
             x    = df_i$year,
             y    = df_i$state_pop,
             xout = c_intYears
-          ) %>% 
-            as.data.frame %>% 
+          ) %>% as.data.frame
+          ### Rename
+          df_i_new <- df_i_new %>% 
             rename(year = x, state_pop = y) %>%
             mutate(region = region_i) %>%
             mutate(state  = state_i)
-        }) %>%
-        (function(i){do.call(rbind, i)})
-    }) %>%
-    ### Join with region info and calculate ratio
-    left_join(iclus_region_pop, by = c("year", "region")) %>%
-    mutate(
-      ratioStatePop2Region = state_pop / region_pop
-    )
+          ## Return
+          return(df_i_new)
+        })
+    ### Bind and return
+    states_x <- states_x %>% (function(i){do.call(rbind, i)})
+    return(states_x)
+    })
+  ### Join with region info and calculate ratio
+  iclus_state_pop <- iclus_state_pop %>% left_join(iclus_region_pop, by = c("year", "region"))
+  iclus_state_pop <- iclus_state_pop %>% mutate(ratioStatePop2Region = state_pop / region_pop)
   
   ###### County population summary ######
   msg1 %>% paste0("\t", "Calculating county population ratios...") %>% message
   ### Join with region info and calculate ratio
-  iclusData <- iclusData %>%
-    left_join(iclus_state_pop, by = c("year", "region", "state")) %>%
-    mutate(
-      ratioCountyPop2State = county_pop / state_pop
-    ) %>%
-    filter(!is.na(ratioCountyPop2State))
+  iclusData <- iclusData %>% left_join(iclus_state_pop, by = c("year", "region", "state"))
+  iclusData <- iclusData %>% mutate(ratioCountyPop2State = county_pop / state_pop)
+  iclusData <- iclusData %>% filter(!is.na(ratioCountyPop2State) & !is.nan(ratioCountyPop2State))
   
 
   ###### Create population projections ######
@@ -509,20 +507,18 @@ get_svPopList <- function(
   ### About half an hour to run them all
   x_sysTime1  <- Sys.time()
   popProjList <- list()
-
-  x_regions   <- iclusData$region %>% unique
+  ### Unique regions
   msg1 %>% paste0("\t", "Creating functions...") %>% message
+  x_regions   <- iclusData$region %>% unique
   for(i in 1:length(x_regions)){
     region_i  <- x_regions[i]
     df_i      <- iclusData  %>% filter(region==region_i)
     states_i  <- df_i$state %>% unique
     # states_i  <- (iclus_state_pop %>% filter(region==region_i))$state %>% unique
     msg1 %>% paste0("\t\t", region_i, ":") %>% message
-    
     ### Initialize empty list for region
     popProjList[[region_i]] <- list()
-
-    
+    ### Iterate over states
     for(j in 1:length(states_i)){
       ### Get state population projection and initialize list
       state_j    <- states_i[j]
@@ -538,7 +534,6 @@ get_svPopList <- function(
         x = df_j$year,
         y = df_j$ratioStatePop2Region
       )
-
       popProjList[[region_i]][[state_j]][["state2region"]] <- fun_j
       popProjList[[region_i]][[state_j]][["county2state"]] <- list()
       
@@ -592,7 +587,7 @@ get_svPopList <- function(
     msg1 %>% paste0("Saving impacts list...") %>% message
     ### Check that the directory exists
     if(dir.exists(outPath) & !is.null(outFile)){
-      outFileName <- outFile %>% paste(rDataExt, sep=".")
+      outFileName <- outFile %>% paste0(".", rDataExt)
       outFilePath <- outPath %>% file.path(outFileName)
       save(svPopList, file=outFilePath)
       msg1 %>% paste0("\t", "Population scenario and projection list saved.") %>% message
@@ -623,7 +618,6 @@ get_svPopList <- function(
 
 ###### get_svImpactsList ######
 ### This function reads in impacts data, formats it, and then creates impacts lists from it
-
 get_svImpactsList <- function(
   dataFile   = NULL,
   dataPath   = file.path(getwd(), "inst", "extdata",  "sv", "impacts"),
@@ -637,7 +631,11 @@ get_svImpactsList <- function(
   svInfo     = NULL,
   save       = F,
   return     = T,
-  msg0       = ""
+  msg0       = "",
+  extend     = list(
+    gcm = list(from = 6  , to = 10 , unitScale = 1),
+    slr = list(from = 200, to = 250, unitScale = 50)
+  )
 ){
   msg0 %>% paste0("Running get_svImpactsList():", "\n") %>% message
   msg1 <- msg0 %>% paste0("\t")
@@ -662,7 +660,7 @@ get_svImpactsList <- function(
   df_data <- dataFilePath %>% read.csv
   rows0   <- df_data %>% nrow
   
-  ###### Load sv data ######
+  ###### Load SV data ######
   ### Load sv data "svData"
   if(is.null(svInfo)){
     df_sv_path <- outPath %>% file.path("..", "..", "R", "svDataList.rda")
@@ -678,73 +676,45 @@ get_svImpactsList <- function(
   ### Rename block_group
   if(sector=="Coastal Properties"){
     df_data   <- df_data %>% rename(tract = block_group)
-    # nrow_data <- df_data %>% nrow
-    # nrow_sv   <- svInfo  %>% nrow
-    # if(nrow_data == nrow_sv){
-    #   df_data$tract = svInfo$fips
-    # }
   }
   tracts0 <- df_data$tract %>% unique %>% length
-  
+  ### Message the user
   msg1 %>% paste0("\t", "Data has ", rows0, " rows and ", tracts0, " unique tracts.") %>% message
 
   ###### Gather data ######
   # x_subUnit <- ifelse(modelType=="gcm", "deg", "cm")
-  
   msg1 %>% paste0("Gathering data...") %>% message
-  df_data    <- df_data %>%
-    gather(
-      key   = "driverValue_txt",
-      value = "sv_impact",
-      -c("tract")
-    )
-
-  # df_data %>% names %>% print
-  # df_data$driverValue_txt %>% unique %>% print
-
-  df_data    <- df_data %>%
-    ### Convert tract to FIPS
-    rename(fips = tract) %>%
-    mutate(fips = fips %>% as.character) %>%
-    ### Convert driver value text to numeric
-    mutate(
-      # driverValue = driverValue_txt %>% (function(x){gsub(x_subUnit, "", x)}) %>% as.numeric
-      driverValue = driverValue_txt %>%
-        (function(x){gsub("deg", "", x)}) %>%
-        (function(x){gsub("cm", "", x)}) %>%
-        (function(x){gsub("X", "", x)}) %>%
-        as.numeric
-    )
+  df_data    <- df_data %>%gather(
+    key   = "driverValue_txt",
+    value = "sv_impact",
+    -c("tract"))
+  # df_data %>% names %>% print; df_data$driverValue_txt %>% unique %>% print
+  ### Rename FIPS and format FIPS
+  df_data    <- df_data %>% rename(fips = tract) %>% mutate(fips = fips %>% as.character)
+  ### Convert driver value text to numeric
+  df_data    <- df_data %>% mutate(
+    driverValue = driverValue_txt %>%
+      (function(x){gsub("deg", "", x)}) %>% (function(x){gsub("cm", "", x)}) %>%
+      (function(x){gsub("X"  , "", x)}) %>%  as.numeric)
   # df_data$fips %>% unique %>% length %>% print
   
-
-  ###### Check data against sv data ######
-  msg1 %>% paste0("Checking data against SV data...") %>% message
-  
+  ###### Check data against SV data ######
   ### Standardize fips
+  msg1 %>% paste0("Checking data against SV data...") %>% message
   maxChar    <- svInfo$fips %>% nchar %>% max(na.rm=T)
-  df_data    <- df_data %>%
-    mutate(
-      nChars     = fips %>% nchar,
-      fips       = paste0(ifelse(nChars < maxChar, "0", ""), fips)
-    ) %>%
-    select(-c("nChars"))
-  
-  # c_ids1 <- df_data$fips %>% unique; paste0(length(c_ids1), ": ", paste(head(c_ids1)), collapse=", ") %>% print
-  # c_ids2 <- svInfo$fips  %>% unique; paste0(length(c_ids2), ": ", paste(head(c_ids2)), collapse=", ") %>% print
-  # c_ids1[c_ids1 %in% c_ids2] %>% length %>% print
-  # c_ids2[c_ids2 %in% c_ids1] %>% length %>% print
-  
+  df_data    <- df_data %>% mutate(
+    nChars     = fips %>% nchar,
+    fips       = paste0(ifelse(nChars < maxChar, "0", ""), fips)
+  )
+  ### Drop nChars column
+  df_data    <- df_data %>% select(-c("nChars"))
   ### Join with SV data
-  df_data <- df_data %>%
-    left_join(
-      svInfo %>% select(c("region", "state", "county", "fips")),
-      by = "fips"
-    ); rm("svInfo")
+  joinVars0 <- c("region", "state", "county", "fips")
+  df_data   <- df_data %>% left_join(svInfo %>% select(c(all_of(joinVars0))), by = "fips")
+  rm("svInfo", "joinVars0")
   ###### Remove missing values ######
   tracts_data <- df_data$fips %>% unique %>% length
   msg1 %>% paste0("\t", "Data has ", tracts_data, " tracts...") %>% message
-  
   tracts_na   <- (df_data %>% filter(is.na(county)))$fips %>% unique %>% length
   tracts_nan  <- (df_data %>% filter(is.nan(sv_impact) | is.infinite(sv_impact)))$fips %>% unique %>% length
   # tracts_inf <- (df_data %>% filter(is.infinite(sv_impact)))$fips %>% unique %>% length
@@ -763,7 +733,7 @@ get_svImpactsList <- function(
   if(!createList){
     return(df_data)
   }
-  Sys.sleep(.1)
+  Sys.sleep(1e-2)
 
   ###### Unique Tracts ######
   c_fips <- df_data$fips %>% unique
@@ -775,39 +745,86 @@ get_svImpactsList <- function(
   ### Iterate over values
   msg1 %>% paste0("Creating impacts lists...") %>% message
   sysTime1    <- Sys.time()
+  ### Initialize list
   impactsList <- list()
-
+  ### Percents for tracking
   status_pcts <- c(25, 50, 75, 100)
-  # status_pcts <- status_labs/100
-  status_nums <- ceiling(status_pcts/100)
   
+  ### Get information about type
+  sector_h <- sector
+  info_h   <- svDataList$sectorInfo %>% filter(sector == sector_h) 
+  type_h   <- info_h$modelType %>% unique
+  ### Where to extend from and to
+  extend_h <- extend[[type_h]]
+  # from_h   <- extend_i$from; to_h <- extend_h$to; rm("extend_h")
+  ### Iterate
   for(i in 1:n_fips){
-    which_status_i <- (i == status_nums) %>% which
-    if(length(which_status_i)>0){
+    ### Message about status
+    check_i <- (i / n_fips * 1e2) %>% ceiling
+    which_status_i <- (i == status_pcts) %>% which
+    if(which_status_i %>% length){
       msg1 %>% paste0("\t\t", status_pcts[which_status_i], "% complete...")
     }
-    
+    rm("check_i", "which_status_i")
+    ### Get FIPS
     fips_i <- c_fips[i]
+    ### Format data:
+    ### Rename columns
+    ### Filter to FIPS, filter to values above 0
     df_i   <- df_data %>% filter(fips == fips_i)
-
-    ### 11 rows: df_i %>% nrow %>% print
-    x_i    <- c(0, df_i$driverValue)
-    y_i    <- c(0, df_i$sv_impact)
-
-    which_there  <- y_i[!is.na(y_i)]
-    length_there <- which_there %>% length
-
-    if(length_there<2){
+    df_i   <- df_i %>% rename(xIn = driverValue, yIn = sv_impact)
+    df_i   <- df_i %>% filter(xIn > 0) %>% select(c("xIn", "yIn"))
+    
+    ### Filter out NA observations and deal with those with only NA
+    length_there <- df_i %>% filter(!is.na(yIn)) %>% nrow
+    if(length_there < 2){
       impactsList[[fips_i]] <- NA
     } else{
-      fun_i        <- approxfun(x = x_i, y = y_i)
+      ### Zero out and sort by driver value
+      # df_i %>% names %>% print
+      df_i   <- tibble(xIn = 0, yIn = 0) %>% rbind(df_i)
+      df_i   <- df_i %>% arrange_at(.vars=c("xIn"))
+      # x_i <- c(0, df_i$driverValue); y_i <- c(0, df_i$sv_impact)
+      ### Extend values out to 10 degrees of warming and 250 cm of SLR
+      len_i   <- df_i %>% nrow
+      xIn_max <- df_i$xIn[len_i]
+      yIn_max <- df_i$yIn[len_i]
+      yMaxNew <- NA
+      ### Whether to extend values
+      extrapolate <- (xIn_max == extend_h$from) & (extend_h$from!=extend_h$to)
+      # extrapolate %>% print
+      ### Extend values out to the specified value
+      if(extrapolate){
+        ### - Find linear relationship between last two points
+        ### - Interpolate the last few values and get linear trend
+        df_ref_i  <- df_i[len_i + -1:0,]
+        lm_i      <- lm(yIn~xIn, data=df_ref_i)
+        # df_ref_i %>% print
+        ### Extend values
+        x_new_i   <- seq(xIn_max + extend_h$unitScale, extend_h$to, extend_h$unitScale)
+        y_new_i   <- x_new_i * lm_i$coefficients[2] + lm_i$coefficients[1]
+        df_new_i  <- tibble(xIn = x_new_i, yIn = y_new_i)
+        # df_new_i %>% print
+        ### Bind the new observations with the other observations
+        df_i <- df_i %>% rbind(df_new_i)
+        rm("df_ref_i", "lm_i", "x_new_i", "y_new_i", "df_new_i")
+        ### Sort and get new y value to extend to
+        which_i <- (df_i$xIn == extend_h$to) %>% which
+        yMaxNew <- df_i$yIn[which_i]
+        rm("which_i")
+      }
+      ### Get approximation function
+      fun_i        <- approxfun(
+        x = df_i$xIn, 
+        y = df_i$yIn,
+        method = "linear",
+        yleft  = df_i$yIn[1],
+        yright = yMaxNew
+      )
       impactsList[[fips_i]] <- fun_i
     }
-    
-    # if(length_there>=2){
-    #   impactsList[[fips_i]] <- approxfun(x = x_i, y = y_i)
-    # }
-    Sys.sleep(.001)
+    ### Rest the system
+    Sys.sleep(1e-4)
   }
   sysTime2  <- Sys.time()
   deltaTime <- (sysTime2 - sysTime1)
@@ -819,14 +836,7 @@ get_svImpactsList <- function(
     ### Check that the directory exists
     if(dir.exists(outPath) & !is.null(outFile)){
       outname     <- outFile
-      # outFileName <- outFile %>% paste(rDataExt, sep=".")
-      # outFilePath <- outPath %>% file.path(outFileName)
-      # 
-      # ### Assign list, save to file, and remove list
-      # assign(outname, impactsList); rm("impactsList")
-      # save(list=ls(pattern="impactsList_"), file=outFilePath)
-      
-      outFileName <- outFile %>% paste("rds", sep=".")
+      outFileName <- outFile %>% paste0(".", rDataExt)
       outFilePath <- outPath %>% file.path(outFileName)
       impactsList %>% saveRDS(file=outFilePath)
       # eval(substitute(rm(x), list(x=outname)))

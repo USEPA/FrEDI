@@ -2,7 +2,8 @@
 ### The purpose of this function is to assist in adding SV objects to FrEDI sysdata.rda
 update_sysdata <- function(
   projectPath = getwd(), ### Path to project
-  outPath     = file.path(getwd(), "..", "FrEDI", "R"),
+  outPath     = file.path(".", "..", "FrEDI", "R"),
+  # outPath       = NULL,
   sv            = T, ### Whether to update SV, population, formatting info
   impacts       = F, ### Whether to update impact info
   # impactSectors = NULL,
@@ -11,38 +12,41 @@ update_sysdata <- function(
   save          = F, ### Whether to save
   return        = T  ### Whether to return
 ){
-  paste0("Running createSVData():", "\n") %>% message
+  require(tidyverse)
+  paste0("Running update_sysdata():", "\n") %>% message
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   msgUser <- !silent
 
   ###### Directories ######
   projectPath <- ifelse(is.null(projectPath), ".", projectPath)
+  outPath     <- ifelse(is.null(outPath), system.file(package="FrEDI"), outPath); 
   inPath_sv   <- projectPath %>% file.path("data", "sv")
   inPath_imp  <- inPath_sv   %>% file.path("impactsLists")
-  outPath_imp <- outPath     %>% file.path("..", "data")
+  # outPath_imp <- outPath     %>% file.path("..", "data")
+  outPath_imp <- outPath     %>% file.path("..", "inst", "extdata", "sv", "impactLists")
+  # inPath_imp %>% list.files %>% print; outPath_imp %>% list.files %>% print
 
   ###### File Names ######
   ### sysdata.rda
   ### SV demo data
   ### SV pop data
   ### format data
-  sysDataName     <- "sysdata"        %>% paste(rDataExt, sep=".")
-  # sysDataName2    <- "sysdata2"        %>% paste(rDataExt, sep=".")
+  sysDataName     <- "sysdata" %>% paste0(".", rDataExt)
 
   ###### List of Objects ######
   df_sv <- data.frame(
     file   = c("svDataList", "svPopData", "format_styles"),
     object = c("svDataList", "svPopList", "format_styles")
   ) %>%
-    mutate(fileName = file %>% paste(rDataExt, sep=".")) %>%
+    mutate(fileName = file %>% paste0(".", rDataExt)) %>%
     mutate(filePath = inPath_sv %>% file.path(fileName))
 
   ###### Import sysdata.rda ######
   sysDataPath   <- outPath %>% file.path(sysDataName)
   # sysDataPath2   <- outPath %>% file.path(sysDataName2)
   sysDataList   <- sysDataPath %>% (function(x){admisc::objRDA(x)})
-  sysDataList %>% print
+  # sysDataList %>% print
   load(sysDataPath)
 
   ###### Update sysdata: SV, pop, formatting ######
@@ -62,33 +66,22 @@ update_sysdata <- function(
         ### Names
         names_sysdata   <- sysDataList
         pattern_sysdata <- paste(names_sysdata, collapse = "|")
-        # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
         eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
       }
-      # sysDataPath2 %>% (function(x){admisc::objRDA(x)}) %>% print
       sysDataPath %>% (function(x){admisc::objRDA(x)}) %>% print
     }
-    # ### Save the results
-    # if(save){
-    #   paste0("Updating '", file, "'...") %>% print
-    #   ### Names
-    #   names_sysdata   <- sysDataList
-    #   pattern_sysdata <- paste(names_sysdata, collapse = "|")
-    #   # eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath2)))
-    #   eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))
-    # }
-    # # sysDataPath2 %>% (function(x){admisc::objRDA(x)}) %>% print
-    # sysDataPath %>% (function(x){admisc::objRDA(x)}) %>% print
   }
 
 
   ###### Update sysdata: impacts ######
+  # impacts %>% print
   if(impacts){
     impactFileNames <- inPath_imp %>% list.files
+    # impactFileNames %>% print
     for(i in 1:length(impactFileNames)){
       fileName_i <- impactFileNames[i]
-      inPath_i   <- inPath_imp %>% file.path(fileName_i)
-      outPath_i  <- inPath_imp %>% file.path(fileName_i)
+      inPath_i   <- inPath_imp  %>% file.path(fileName_i)
+      outPath_i  <- outPath_imp %>% file.path(fileName_i)
       file.copy(
         from      = inPath_i,
         to        = outPath_i,

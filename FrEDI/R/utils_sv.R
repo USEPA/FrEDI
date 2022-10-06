@@ -44,9 +44,9 @@
 ###
 ###
 get_sv_sectorInfo <- function(
-  description=F,
-  gcmOnly=F,
-  slrOnly=F
+    description=F,
+    gcmOnly=F,
+    slrOnly=F
 ){
   if(is.null(description)){description<-F}
   if(is.null(gcmOnly    )){gcmOnly    <-F}
@@ -64,7 +64,9 @@ get_sv_sectorInfo <- function(
     }) %>% unlist) %>%
     mutate(driverUnit=ifelse(modelType=="GCM", "degrees Celsius", "cm")) %>%
     select(c("sector", "modelType", "driverUnit", "variants", "impactUnit"))
-
+  ### Arrange
+  sectorInfo <- sectorInfo %>% arrange_at(.vars=c("sector"))
+  ### GCM or SLR
   gcm_string <- "GCM"
   if(gcmOnly){
     sectorInfo <- sectorInfo %>% filter(modelType==gcm_string)
@@ -89,10 +91,10 @@ get_sv_sectorInfo <- function(
 ### Use this function to calculate tract level impacts
 
 calc_countyPop <- function(
-  regPop,  ### Dataframe of population projection
-  funList, ### Dataframe of population projections
-  # years = seq(2000, 2099, 1)
-  years = seq(2010, 2090, by=5)
+    regPop,  ### Dataframe of population projection
+    funList, ### Dataframe of population projections
+    # years = seq(2000, 2099, 1)
+    years = seq(2010, 2090, by=5)
 
 ){
   c_regions <- regPop$region %>% unique
@@ -145,9 +147,9 @@ calc_countyPop <- function(
                 y_k <- NA
               }
               df_k  <- data.frame(
-                  year = years_i,
-                  ratioCounty2StatePop = y_k
-                ) %>%
+                year = years_i,
+                ratioCounty2StatePop = y_k
+              ) %>%
                 mutate(
                   state   = state_j,
                   # county  = county_k
@@ -189,15 +191,15 @@ calc_countyPop <- function(
 ###### calc_tractScaledImpacts ######
 ### Use this function to calculate tract level impacts
 calc_tractScaledImpacts <- function(
-  funList, ### List of impact functions
-  # scenarios, ### Character vector of scenarios
-  # driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
-  # tracts ### Character vectors of tracts
-  driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
-  xCol  = "driverValue",
-  sleep = .00001,
-  silent = FALSE,
-  .msg0 = ""
+    funList, ### List of impact functions
+    # scenarios, ### Character vector of scenarios
+    # driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
+    # tracts ### Character vectors of tracts
+    driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
+    xCol  = "driverValue",
+    sleep = 1e-7,
+    silent = FALSE,
+    .msg0 = ""
 ){
   ### Messaging
   msg0 <- .msg0
@@ -205,67 +207,58 @@ calc_tractScaledImpacts <- function(
   msg2 <- msg1 %>% paste("\t")
   msg3 <- msg2 %>% paste("\t")
   msgUser <- !silent
-
   msg0 %>% paste0("Calculating scaled impacts for each tract...") %>% message
-  # x_sysTime1 <- Sys.time()
-  ### Names of functions
-  c_tracts    <- funList %>% names
 
-  # df_i_base   <- driverValues %>% select("year", "driverValue", "driverUnit")
-  years_i     <- driverValues$year %>% as.vector
-  x_i         <- driverValues[,xCol] %>% as.vector
+  ### Names of functions
+  c_tracts <- funList %>% names
+  years_x  <- driverValues$year %>% as.vector
+  values_x <- driverValues[,xCol] %>% as.vector
+  funcs_x  <- funList %>% names
 
   ###### Iterate over Tracts ######
-  data   <-
-    c_tracts %>%
-    lapply(function(tract_i){
-      ### Function for tract i and whether the function exists
-      fun_i     <- funList[[tract_i]]
-      has_fun_i <- (!is.null(fun_i))
+  data_x   <- c_tracts %>% lapply(function(tract_i){
+    ### Initialize data
+    df_i      <- data.frame(year = years_x, fips = tract_i)
+    y_i       <- NA
+    ### Function for tract i and whether the function exists
+    which_i   <- (funcs_x %in% c(tract_i)) %>% which
+    fun_i     <- funList[[which_i]]
+    has_fun_i <- (!is.null(fun_i))
 
-
-      ### If the function is not missing
-      if(has_fun_i){
-        y_i   <- fun_i(x_i)
-      } else{
-        y_i    <- NA
-      }
-      df_i <- data.frame(
-        year      = years_i,
-        sv_impact = y_i,
-        fips      = tract_i
-      )
-      Sys.sleep(sleep)
-      return(df_i)
-
-    }) %>%
-    (function(x){
-      do.call(rbind, x)
-    }) %>%
-    left_join(
-      driverValues, by = c("year")
-    )
+    ### Calculate values if the function is not missing
+    ### Add values to the dataframe
+    if(has_fun_i){
+      y_i <- fun_i(values_x)
+      # y_i %>% print
+    }
+    df_i      <- df_i %>% mutate(sv_impact = y_i)
+    ### Sleep and return
+    Sys.sleep(sleep)
+    return(df_i)
+  })
+  ### Bind and join with driver values
+  data_x <- data_x %>% (function(x){do.call(rbind, x)})
+  data_x <- data_x %>% left_join(driverValues, by = c("year"))
 
   ### Final time
-  # x_sysTime2  <- Sys.time()
-
   msg1 %>% paste0("Finished calculating tract-level impacts.") %>% message
 
-  return(data)
+  return(data_x)
 }
 
 ###### calc_tractImpacts ######
 ### Use this function to calculate tract level impacts
 calc_tractImpacts <- function(
-  scaledImpacts, ### Dataframe of scaled impacts by tract
-  sector,
-  popData, ### Dataframe of population projections
-  svInfo    = NULL, ### Dataframe of sv data
-  svGroups  = NULL, ### Character vector of sv group columns
-  weightCol = NULL,
-  sleep     = 1,
-  silent    = FALSE,
-  .msg0     = ""
+    scaledImpacts, ### Dataframe of scaled impacts by tract
+    sector,
+    popData, ### Dataframe of population projections
+    svInfo    = NULL, ### Dataframe of sv data
+    svGroups  = NULL, ### Character vector of sv group columns
+    weightCol = NULL,
+    years     = seq(2010, 2090, by=5),
+    sleep     = 1e-5,
+    silent    = FALSE,
+    .msg0     = ""
 ){
   ###### Constants  ######
   # paste0("Calculating total impacts for each tract...") %>% message
@@ -273,7 +266,7 @@ calc_tractImpacts <- function(
   regions      <- popData$region %>% unique
   tracts       <- scaledImpacts$fips %>% unique
   # c_years_eras <- seq(2000, 2090, by = 5)
-  c_years_eras <- fredi_config$list_years_by5
+  # c_years_eras <- fredi_config$list_years_by5
 
   ###### Messages ######
   msg0 <- .msg0
@@ -285,11 +278,9 @@ calc_tractImpacts <- function(
   ###### Column Names  ######
   ### Other info
   c_svDataDropCols    <- c("svCounty")
-  c_svOtherDropCols   <- c(
-    "state", "county", "geoid10",
-    "ratioTract2CountyPop", "ratioState2RegionPop", "ratioCounty2StatePop",
-    "region_pop", "state_pop", "county_pop"
-  )
+  c_svOtherDropCols   <- c("state", "county", "geoid10") %>%
+    c("ratioTract2CountyPop", "ratioState2RegionPop", "ratioCounty2StatePop") %>%
+    c("region_pop", "state_pop", "county_pop")
   c_svJoinPopCols     <- c("region", "state", "geoid10")
   c_svJoinImpactsCols <- c("fips", "year")
   ### Columns to drop
@@ -300,210 +291,184 @@ calc_tractImpacts <- function(
   c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
   c_svWeightCols <- c("children", "highRiskLabor")
 
-  ###### Impact Lists ######
+
+  ###### Other Info ######
   ### Eventually, import from svDemographics
-  c_sector      <- sector
-  weightsCol    <- weightCol #; weightsCol %>% print
+  c_sector    <- sector
+  weightsCol  <- weightCol #; weightsCol %>% print
 
+  ###### Join Data ######
   msg0 %>% paste0("Calculating total impacts for each tract...") %>% message
-  ### Join svInfo and population projections by fips
-  ### - Add column for none
-  ### - Drop columns
-  ### - Join with population projections
-  x_impacts   <- svInfo %>%
-    mutate(none = 1) %>%
-    select(-c(all_of(c_svDataDropCols))) %>%
-    left_join(
-      popData, by = all_of(c_svJoinPopCols)
-    ) %>%
-    as.data.frame; rm("svInfo", "popData"); Sys.sleep(sleep)
+  ### Format svInfo - Add column for none and drop other columns
+  x_impacts   <- svInfo %>% mutate(none = 1) %>% select(-c(all_of(c_svDataDropCols)))
+  rm("svInfo")
+  ### Join svInfo with population projections by FIPS
+  # x_impacts %>% head %>% glimpse %>% print; popData %>% head %>% glimpse %>% print
+  x_impacts   <- x_impacts %>% left_join(popData, by = all_of(c_svJoinPopCols))
+  rm("popData")
+  ### Join svInfo with the impacts by fips number
+  # x_impacts %>% head %>% glimpse %>% print; scaledImpacts %>% head %>% glimpse %>% print
+  x_impacts   <- x_impacts %>% left_join(scaledImpacts, by = c("year", "fips"))
+  rm("scaledImpacts")
+  ### Filter out that with missing data (!is.na(driverUnit))
+  x_impacts   <- x_impacts %>% filter(!is.na(driverUnit)) %>% as.data.frame
+  ### Sleep
+  Sys.sleep(sleep)
 
-  ### - Join with the impacts by fips number
-  ### - Filter out that with missing data (!is.na(driverUnit))
+  ###### Population Weight ######
   ### Format population weight column:
   ### - Multiply by 1 if no population weight
   ### - Otherwise, get population weight value
-  x_impacts   <- x_impacts %>%
-    left_join(scaledImpacts, by = c("year", "fips")) %>%
-    filter(!is.na(driverUnit))
-
   ### Calculate weights
-  x_impacts   <- x_impacts %>%
-    (function(x){
-      if(weightsCol=="none"){
-        x    <- x %>% mutate(popWeight = 1)
-      } else{
-        xCol <- x[,weightsCol] %>% as.vector
-        x    <- x %>% mutate(popWeight = xCol) %>% select(-c(all_of(c_svWeightCols)))
-      }
-      return(x)
-    }) %>%
-    ### Total tract population
-    mutate(
-      tract_totPop_tot = county_pop * ratioTract2CountyPop
-    ) %>%
-    select(-c(all_of(c_svOtherDropCols))) %>%
-    as.data.frame; rm("scaledImpacts"); Sys.sleep(sleep)
+  x_impacts   <- x_impacts %>% (function(x){
+    if(weightsCol=="none"){
+      x    <- x %>% mutate(popWeight = 1)
+    }
+    else{
+      xCol <- x[,weightsCol] %>% as.vector
+      x    <- x %>% mutate(popWeight = xCol) %>% select(-c(all_of(c_svWeightCols)))
+      rm("xCol")
+    }
+    return(x)
+  })
+  ### Calculate total tract population and drop columns
+  x_impacts   <- x_impacts %>% mutate(tract_totPop_tot = county_pop * ratioTract2CountyPop)
+  x_impacts   <- x_impacts %>% select(-c(all_of(c_svOtherDropCols)))
 
   ### Gather by svGroupType: all the main SV variables, and racial vars
   ### - Minority and racial vars must be calculated separately
-  x_impacts   <- x_impacts %>%
-    gather(
-      key = "svGroupType", value = "svRatio2Ref", c(all_of(svGroups))
-    ) %>%
-    ### Convert some svRatio2Ref values to NA:
-    ### - Check if sector has any NA columns i.e., `length(c_svNACols)>0`
-    ### - If it does: check if svGroupType is in c_svNACols
-    ### - Convert svRatio2Ref value to NA if true
-    (function(x){
-      if(length(c_svNACols)>0){
-        x_inNAGroup <- x$svGroupType %in% c_svNACols
-        x <- x %>%
-          mutate(
-            svRatio2Ref = svRatio2Ref %>% na_if(x_inNAGroup)
-          )
-      }
-      return(x)
-    }) %>%
-    as.data.frame; Sys.sleep(sleep)
+  x_impacts   <- x_impacts %>% gather(key = "svGroupType", value = "svRatio2Ref", c(all_of(svGroups)))
+  ### Convert some svRatio2Ref values to NA:
+  ### - Check if sector has any NA columns i.e., `length(c_svNACols)>0`
+  ### - If it does: check if svGroupType is in c_svNACols
+  ### - Convert svRatio2Ref value to NA if true
+  x_impacts   <- x_impacts %>% (function(x){
+    if(length(c_svNACols)>0){
+      x_inNAGroup <- x$svGroupType %in% c_svNACols
+      x <- x %>% mutate(svRatio2Ref = svRatio2Ref %>% na_if(x_inNAGroup))
+    }
+    return(x)
+  })
 
+  ###### Tract Values ######
   ### - Calculate SV ref pop ("refPop") and weighted (impacted) SV pop ("impactPop")
   ### - Calculate SV impacts for ref pop and impacted SV pop
   ### - SV population and reference population
   ### - Impacted population (e.g., children for Air Quality)
   ### - Impacts = population*popWeight
-  x_impacts   <- x_impacts %>%
-    mutate(
-      tract_totPop_sv   = tract_totPop_tot * svRatio2Ref,
-      tract_totPop_ref  = tract_totPop_tot - tract_totPop_sv
-    )
-  x_impacts   <- x_impacts %>%
-    mutate(
-      tract_impPop_sv   = tract_totPop_sv  * popWeight,
-      tract_impPop_ref  = tract_totPop_ref * popWeight
-    )
-  x_impacts   <- x_impacts %>%
-    mutate(
-      tract_impact_ref  = tract_impPop_ref * sv_impact,
-      tract_impact_sv   = tract_impPop_sv  * sv_impact
-    )
-  x_impacts   <- x_impacts %>%
-    select(-c("svRatio2Ref", "popWeight")) %>%
-    as.data.frame; Sys.sleep(sleep)
+  x_impacts   <- x_impacts %>% mutate(
+    tract_totPop_sv   = tract_totPop_tot * svRatio2Ref,
+    tract_totPop_ref  = tract_totPop_tot - tract_totPop_sv
+  )
+  x_impacts   <- x_impacts %>% mutate(
+    tract_impPop_sv   = tract_totPop_sv  * popWeight,
+    tract_impPop_ref  = tract_totPop_ref * popWeight
+  )
+  x_impacts   <- x_impacts %>% mutate(
+    tract_impact_ref  = tract_impPop_ref * sv_impact,
+    tract_impact_sv   = tract_impPop_sv  * sv_impact
+  )
+  ### Select columns
+  x_impacts   <- x_impacts %>% select(-c("svRatio2Ref", "popWeight"))
 
-  ###### Probabilities ######
+  ###### Tertiles ######
   ### Probability values for tertiles
-  n_quants     <- 3
-  c_probs      <- seq(0, 1, length.out=n_quants + 1)
-
-  ###### National Tertiles ######
+  n_quants         <- 3
+  c_probs          <- seq(0, 1, length.out=n_quants + 1)
+  ### Columns
+  c_quantGroups    <- c("year", "region")
+  c_quantColsNat   <- c("national_highRiskPop_sv", "national_highRiskPop_ref")
+  c_quantColsReg   <- c("regional_highRiskPop_sv", "regional_highRiskPop_ref")
+  ### National
   if(msgUser){msg1 %>% paste0("Calculating national tertiles...") %>% message}
   else{msg1 %>% paste0("Calculating high risk populations...") %>% message}
-  c_popRiskCols_national <- c("national_highRiskPop_sv", "national_highRiskPop_ref")
-
-  quants_national <- x_impacts %>%
-    filter(year %in% c_years_eras) %>%
-    select(c("year", "tract_impact_sv")) %>%
-    group_by_at(.vars=c("year")) %>%
+  quants_national  <- x_impacts %>% filter(year %in% years) %>% select(c("year", "tract_impact_sv"))
+  quants_national  <- quants_national %>%
+    group_by_at(.vars=c(c_quantGroups[1])) %>%
     summarize_at(
       .vars=c("tract_impact_sv"), function(x){quantile(x, na.rm=T, probs = c_probs)[3]}
-    ) %>%
-    rename(
-      national_cutoff = tract_impact_sv
-    ); Sys.sleep(sleep)
+    ) %>% ungroup
+  ### Rename
+  quants_national  <- quants_national %>% rename(national_cutoff = tract_impact_sv)
+  Sys.sleep(sleep)
 
   ###### Regional Tertiles ######
   if(msgUser){msg1 %>% paste0("Calculating regional tertiles...") %>% message}
-  c_popRiskCols_regional <- c("regional_highRiskPop_sv", "regional_highRiskPop_ref")
-
   ### 126 rows
-  quants_regional <- x_impacts %>%
-    filter(year %in% c_years_eras) %>%
-    select(c("year", "region", "tract_impact_sv")) %>%
-    group_by_at(.vars=c("year", "region")) %>%
+  quants_regional  <- x_impacts %>% filter(year %in% years) %>% select(c("year", "region", "tract_impact_sv"))
+  quants_regional  <- quants_regional %>%
+    group_by_at(.vars=c(c_quantGroups[1:2])) %>%
     summarize_at(
       .vars=c("tract_impact_sv"), function(x){quantile(x, na.rm=T, probs = c_probs)[3]}
-    ) %>%
-    rename(
-      regional_cutoff = tract_impact_sv
-    ); Sys.sleep(sleep)
-
+    ) %>% ungroup
+  ### Rename
+  quants_regional  <- quants_regional %>% rename(regional_cutoff = tract_impact_sv);
+  Sys.sleep(sleep)
   if(!msgUser){msg1 %>% paste0("\t", "\t", "...") %>% message}
-  ### Join with quantiles
-  if(msgUser){msg1 %>% paste0("Joining national tertiles to tract-level data...") %>% message}
-  x_impacts <- x_impacts %>%
-    left_join(
-      quants_national, by = c("year")
-    ); rm("quants_national"); Sys.sleep(sleep)
 
+  ### Join with national quantiles
+  if(msgUser){msg1 %>% paste0("Joining national tertiles to tract-level data...") %>% message}
+  x_impacts <- x_impacts %>% left_join(quants_national, by = c("year"));
+  rm("quants_national"); Sys.sleep(sleep)
+  ### Join with regional quantiles
   if(msgUser){msg1 %>% paste0("Joining regional tertiles to tract-level data...") %>% message}
-  x_impacts <- x_impacts %>%
-    left_join(
-      quants_regional, by = c("year", "region")
-    ); rm("quants_regional"); Sys.sleep(sleep)
+  x_impacts <- x_impacts %>% left_join(quants_regional, by = c("year", "region"));
+  rm("quants_regional"); Sys.sleep(sleep)
 
   ###### High Risk Tracts ######
   ### Message, add new columns, drop unnecessary columns
   if(msgUser){msg1 %>% paste0("Calculating high risk populations...") %>% message}
   else{msg1 %>% paste0("\t", "\t", "...") %>% message}
-  x_impacts <- x_impacts %>%
-    mutate(
-      national_highRiskTract = (tract_impact_sv > national_cutoff) %>% na_if(F),
-      national_highRiskTract = national_highRiskTract*1,
-      national_highRiskPop_sv  = tract_totPop_sv  * national_highRiskTract,
-      national_highRiskPop_ref = tract_totPop_ref * national_highRiskTract
-    ) %>%
-    select(
-      -c("national_highRiskTract")
-    ); Sys.sleep(sleep)
-
+  ### National
+  x_impacts <- x_impacts %>% mutate(
+    national_highRiskTract   = (tract_impact_sv > national_cutoff) %>% na_if(F),
+    national_highRiskTract   = national_highRiskTract*1,
+    national_highRiskPop_sv  = tract_totPop_sv  * national_highRiskTract,
+    national_highRiskPop_ref = tract_totPop_ref * national_highRiskTract
+  )
+  ### Drop columns
+  x_impacts <- x_impacts %>% select(-c("national_highRiskTract"));
   msg1 %>% paste0("\t", "\t", "...") %>% message
-
-  x_impacts <- x_impacts %>%
-    mutate(
-      regional_highRiskTract = (tract_impact_sv > national_cutoff) %>% na_if(F),
-      regional_highRiskTract   = regional_highRiskTract*1,
-      regional_highRiskPop_sv  = tract_totPop_sv  * regional_highRiskTract,
-      regional_highRiskPop_ref = tract_totPop_ref * regional_highRiskTract
-    ) %>%
-    select(
-      -c("regional_highRiskTract")
-    ); Sys.sleep(sleep)
+  ### Regional
+  x_impacts <- x_impacts %>% mutate(
+    regional_highRiskTract   = (tract_impact_sv > national_cutoff) %>% na_if(F),
+    regional_highRiskTract   = regional_highRiskTract*1,
+    regional_highRiskPop_sv  = tract_totPop_sv  * regional_highRiskTract,
+    regional_highRiskPop_ref = tract_totPop_ref * regional_highRiskTract
+  )
+  x_impacts <- x_impacts %>% select(-c("regional_highRiskTract"));
+  Sys.sleep(sleep)
 
   ###### Regional Summaries ######
   if(msgUser){msg1 %>% paste0( "Calculating regional summaries...") %>% message}
-  c_svSumCols   <- c(
-    "tract_impPop_ref", "tract_impPop_sv", "tract_impact_ref", "tract_impact_sv",
-    c_popRiskCols_national, c_popRiskCols_regional
-  )
-
+  c_svSumCols   <- c("tract_impPop_ref", "tract_impPop_sv", "tract_impact_ref", "tract_impact_sv") %>% c(c_quantColsNat, c_quantColsReg)
   c_svGroupCols <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
 
   ### Select all of the relevant columns
   ### Group by the grouping columns
   ### Summarize the summary columns
-  ### Replace tract in summary names
   x_impacts     <- x_impacts %>%
     select(c(all_of(c_svSumCols), all_of(c_svGroupCols))) %>%
     group_by_at(.vars=all_of(c_svGroupCols)) %>%
-    summarize_at(
-      .vars = c(all_of(c_svSumCols)), sum, na.rm=T
-    ) %>%
-    rename_at(
-      .vars = c(all_of(c_svSumCols)), (function(x){gsub("tract_", "", x)})
-    ); Sys.sleep(sleep)
+    summarize_at(.vars = c(all_of(c_svSumCols)), sum, na.rm=T) %>% ungroup
+  ### Replace tract in summary names
+  x_impacts     <- x_impacts %>% rename_at(
+    .vars = c(all_of(c_svSumCols)), (function(x){gsub("tract_", "", x)})
+  ); Sys.sleep(sleep)
 
   ### Calculate average rates
   ### Convert 0 values to NA and then to zero
-  x_impacts     <- x_impacts %>%
-    mutate(
-      aveRate_sv  = impact_sv  / impPop_sv,
-      aveRate_ref = impact_ref / impPop_ref
-    ) %>%
-    mutate_at(
-      .vars = c("aveRate_sv", "aveRate_ref"),
-      function(y){y %>% na_if(NaN) %>% replace_na(0)}
-    ); Sys.sleep(sleep)
+  x_impacts     <- x_impacts %>% mutate(
+    aveRate_sv  = impact_sv  / impPop_sv,
+    aveRate_ref = impact_ref / impPop_ref
+  )
+  ### Replace NA values
+  x_impacts     <- x_impacts %>% mutate_at(
+    .vars = c("aveRate_sv", "aveRate_ref"),
+    function(y){y %>% na_if(NaN) %>% replace_na(0)}
+  ); Sys.sleep(sleep)
+  ### Dataframe
+  x_impacts     <- x_impacts %>% as.data.frame
 
   ###### Return ######
   msg1 %>% paste0("Finished calculating total impacts.") %>% message
