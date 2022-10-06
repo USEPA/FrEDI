@@ -8,6 +8,7 @@ createSystemData <- function(
   save        = NULL,
   silent      = NULL  ### Whether to message the user
 ){
+  require(tidyverse)
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   silent  <- ifelse(is.null(silent), F, silent)
@@ -23,7 +24,7 @@ createSystemData <- function(
   
   ### Output file
   sysDataPath <- projectPath %>% file.path("data")
-  sysDataFile <- sysDataPath %>% file.path("sysdata.rda")
+  sysDataFile <- sysDataPath %>% file.path("sysdata") %>% paste0(".", "rda")
   sysDataFile <- ifelse(!is.null(outPath), outPath, sysDataFile)
   
   ###### Configuration Data ######
