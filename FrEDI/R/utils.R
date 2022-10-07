@@ -298,37 +298,26 @@ get_impactFunctions <- function(
 
       # extrapolate %>% print
       ### Whether to extend values
+      ### Extend values out to the specified value
+      ### - Find linear relationship between last two points
+      ### - Interpolate the last few values
       # extrapolate <- TRUE
       extrapolate <- (xIn_max == extend_from) & (extend_from!=extend_to)
       # extrapolate %>% print
       if(extrapolate){
-        ### Extend values out to the specified value
-        ### - Find linear relationship between last two points
-        ### - Interpolate the last few values
         df_ref_i  <- df_i[len_i + -1:0,]
         # df_ref_i %>% print
         ### Get linear trend
         lm_i      <- lm(yIn~xIn, data=df_ref_i)
         ### Extend values
-        df_new_i  <- data.frame(
-          xIn = seq(xIn_max + unitScale, extend_to, unitScale)
-        ) %>%
-          mutate(
-            yIn = xIn * lm_i$coefficients[2] + lm_i$coefficients[1]
-          )
-        # df_new_i %>% print
-
+        df_new_i  <- data.frame(xIn = seq(xIn_max + unitScale, extend_to, unitScale))
+        df_new_i  <- df_new_i %>% mutate(yIn = xIn * lm_i$coefficients[2] + lm_i$coefficients[1])
         ### Bind the new observations with the other observations
         df_i <- df_i %>% rbind(df_new_i)
-
         ### Sort and get new y value to extend to
-        # df_i <- df_i %>% arrange_at(.vars=c("xIn"))
         which_i <- (df_i$xIn == extend_to) %>% which
-        # yIn_max <- df_i$yIn[which_i]
         yMaxNew <- df_i$yIn[which_i]
       }
-
-
 
       ###### Linear Interpolation ######
       ### Create a piece-wise linear interpolation function using approxfun and defaults
@@ -340,7 +329,6 @@ get_impactFunctions <- function(
         y = df_i$yIn,
         method = "linear",
         yleft  = yIn_min,
-        # yright = yIn_max
         yright = yMaxNew
         )
 
@@ -633,6 +621,89 @@ slr_Interp_byYear <- function(
   df_return <- z %>% rename_at(.vars=c(all_of(newColName_y)), ~oldColName_y)
   return(df_return)
 
+}
+
+
+###### SLR Extremes ######
+### Function for dealing with SLR values above the maximum
+fun_slrConfigExtremes <- function(
+    slr_x, ### rDataList_x$slr_cm
+    imp_x  ### rDataList_x$slrImpacts
+){
+  ### Prepare data
+  ### SLR Heights
+  slr_df      <- slr_x %>% filter(year <=2090) %>%
+    mutate(model_cm = gsub("cm", "", model_dot) %>% as.character %>% as.numeric) %>%
+    arrange_at(.vars=c("year", "model_cm"));
+  rm("slr_x")
+  # slr_df %>% head %>% print
+  ### SLR Impacts
+  imp_df      <- imp_x %>% filter(year <=2090) %>%
+    mutate(model_cm = gsub("cm", "", model_dot) %>% as.character %>% as.numeric) %>%
+    arrange_at(.vars=c("sector", "variant", "region", "year", "model_cm"));
+  rm("imp_x")
+  # imp_df %>% head %>% print
+
+  ### Years
+  c_slr_years <- slr_x$year %>% unique %>% sort
+  # c_slr_years %>% print
+
+  ### Get upper and lower
+  ext_slr_cm <- c_slr_years %>%
+    # last %>%
+    lapply(function(
+    year_i, data_x = slr_x
+    ){
+      data_i     <- data_x %>% filter(year==year_i) %>% arrange_at(.vars=c("driverValue", "model_cm"))
+      vals_i     <- data_i$driverValue
+      unique_i   <- vals_i %>% unique
+      n_unique_i <- unique_i %>% length
+      last_i     <- vals_i[n_unique_i + (-1):0]
+      which_i    <- last_i %>% lapply(function(val_j, vals_y = vals_i){
+        (vals_y == val_j) %>% which %>% last
+      }) %>% unlist
+      drivers_i  <- data_i$driverValue[which_i]
+      models_i   <- data_i$model_dot[which_i]
+      df_i       <- data.frame(year = year_i, model_dot = models_i, driverValue = drivers_i, valueType = c("lower", "upper"))
+      return(df_i)
+    }) %>% (function(df_i){do.call(rbind, df_i)})
+  # ext_slr_cm %>% glimpse %>% print; ext_slr_cm$model_dot %>% unique %>% print
+
+  ### Join with impacts: 7644 rows
+  ext_slr_imp <- ext_slr_cm %>% left_join(imp_df, by = c("year", "model_dot"))
+  # ext_slr_imp %>% glimpse %>% print; (nrow(ext_slr_imp)/2) %>% print
+
+  ### Spread
+  ext_slr     <- ext_slr_imp %>%
+    select(-c("model_dot", "model", "model_type", "model_cm")) %>%
+    (function(data_x){
+      join0   <- c("sector", "variant", "impactType", "impactYear", "region", "year")
+      suffix0 <- c("1", "2")
+      data_lo <- data_x %>% filter(valueType=="lower") %>% select(-c("valueType"))
+      data_up <- data_x %>% filter(valueType!="lower") %>% select(-c("valueType"))
+      ### Join data
+      data_x  <- data_lo %>% left_join(data_up, by = c(all_of(join0)), suffix = suffix0)
+      # data_x %>% names %>% print
+      ### Calculate differences
+      data_x  <- data_x %>% mutate(delta_impacts     = scaled_impacts2 - scaled_impacts1)
+      data_x  <- data_x %>% mutate(delta_driverValue = driverValue2    - driverValue1)
+      ### Calculate slope and intercept
+      data_x  <- data_x %>% mutate(driverValue_ref   = driverValue2)
+      data_x  <- data_x %>% mutate(impacts_intercept = scaled_impacts2)
+      data_x  <- data_x %>% mutate(impacts_slope     = delta_impacts/delta_driverValue)
+      ### Replace zeros
+      replace0 <- (data_x$delta_driverValue == 0) %>% which
+      data_x$impacts_slope[replace0]  <- 0
+      # data_x %>% names %>% print
+      ### Drop intermediate columns and return
+      drop0   <- "driverValue" %>% paste0(suffix0) %>% c("scaled_impacts" %>% paste0(suffix0)) %>% c("delta_impacts", "delta_driverValue")
+      data_x  <- data_x  %>% select(-c(all_of(drop0)))
+      return(data_x)
+    })
+  # ext_slr %>% glimpse %>% print;
+  ### Format and Return
+  ext_slr <- ext_slr %>% arrange_at(.vars=c(join0))
+  return(ext_slr)
 }
 
 

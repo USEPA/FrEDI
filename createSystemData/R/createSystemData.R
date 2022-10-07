@@ -97,17 +97,28 @@ createSystemData <- function(
     left_join(pop_default, by = "year")
   rm("national_scenario_default")
 
+  ###### Extreme SLR Scenarios ######
+  # dataList[["slr_cm"]]
+  # c_npdRefYear <- 2090
+  # c_maxSLRYear <- slr_cm$year %>% max
+  # df_slrYears  <- data.frame(year = (c_maxSLRYear + 1):maxYear, dummyCol = 1)
+  ### Do nothing to slr_cm and slrImpacts
+  loadDataList[["slr_cm"    ]] <- slr_cm; rm("slr_cm")
+  loadDataList[["slrImpacts"]] <- slrImpacts; rm("slrImpacts")
+  ### Create data for extreme values above 250cm
+  slrExtremes <- fun_slrConfigExtremes(
+      slr_x = rDataList_x$slr_cm, ### rDataList_x$slr_cm
+      imp_x = rDataList_x$slrImpacts ### rDataList_x$slrImpacts
+    )
+  loadDataList[["slrExtremes"]] <- slrExtremes; rm("slrExtremes")
+  
   ###### Interpolate SLR Scenarios ######
   # dataList[["slr_cm"]]
   # c_npdRefYear <- 2090
   c_maxSLRYear <- slr_cm$year %>% max
-  df_slrYears  <- data.frame(
-    year     = (c_maxSLRYear + 1):maxYear,
-    dummyCol = 1
-  )
-  slr_cm       <- slr_cm %>% 
-    # filter(year <= c_maxSLRYear) %>%
-    (function(x){
+  df_slrYears  <- data.frame(year = (c_maxSLRYear + 1):maxYear, dummyCol = 1)
+  ### SLR Heights
+  slr_cm       <- slr_cm %>% (function(x){
       x2 <- x %>% 
         filter(year==c_maxSLRYear) %>% 
         mutate(dummyCol = 1) %>% 
@@ -116,16 +127,13 @@ createSystemData <- function(
         select(-c("dummyCol"))
       
       x <- x %>% 
-        filter(year <= c_maxSLRYear) %>% 
-        rbind(x2) %>%
+        filter(year <= c_maxSLRYear) %>% rbind(x2) %>%
         arrange_at(.vars = c("model", "year")) %>%
         mutate(model_type = "slr")
     })
   loadDataList[["slr_cm"]] <- slr_cm; rm("slr_cm")
   ### slrImpacts
-  slrImpacts <- slrImpacts %>% 
-    # filter(year <= c_maxSLRYear) %>%
-    (function(x){
+  slrImpacts <- slrImpacts %>% (function(x){
       x2 <- x %>% 
         filter(year==c_maxSLRYear) %>% 
         mutate(dummyCol = 1) %>% select(-c("year")) %>%
@@ -133,11 +141,24 @@ createSystemData <- function(
         select(-c("dummyCol"))
       
       x <- x %>% 
-        filter(year <= c_maxSLRYear) %>% 
-        rbind(x2) %>%
+        filter(year <= c_maxSLRYear) %>% rbind(x2) %>%
         arrange_at(.vars = c("sector", "variant", "impactType", "impactYear", "region", "year"))
     })
   loadDataList[["slrImpacts"]] <- slrImpacts; rm("slrImpacts")
+  ### slrImpacts
+  slrExtremes <- slrExtremes %>% (function(x){
+    x2 <- x %>% 
+      filter(year==c_maxSLRYear) %>% 
+      mutate(dummyCol = 1) %>% select(-c("year")) %>%
+      left_join(df_slrYears, by = c("dummyCol")) %>%
+      select(-c("dummyCol"))
+    
+    x <- x %>% 
+      filter(year <= c_maxSLRYear) %>% rbind(x2) %>%
+      arrange_at(.vars = c("sector", "variant", "impactType", "impactYear", "region", "year"))
+  })
+  loadDataList[["slrExtremes"]] <- slrExtremes; rm("slrExtremes")
+  
     
   ###### Format Scalar Tables ######
   ### Interpolate values to annual levels
@@ -168,8 +189,8 @@ createSystemData <- function(
     select(c("scalarName", "region", "year", "value")) %>%
     ### Bind the scalar info to the scalar data
     left_join(co_scalarInfo %>% select(c("scalarName", "scalarType", "national_or_regional")), by=c("scalarName"))
-
-
+  
+  
 
   ###### Physical and Economic Scalars ######
   ### Physical scalars: Get population weights, then physical scalar multipliers
