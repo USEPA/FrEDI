@@ -3,11 +3,11 @@
 ### Interpolate Annual Values
 ### This function interpolates missing values for temperature, GDP, or population inputs
 interpolate_annual <- function(
-  data     = NULL, ### Input dataframe, with list of years
-  years    = NULL, ### List of years to interpolate
-  column   = NULL, ### Column to create results for
-  rule     = NULL, ### for interpolation,
-  method   = NULL ### method for interpolation; default=linear
+    data     = NULL, ### Input dataframe, with list of years
+    years    = NULL, ### List of years to interpolate
+    column   = NULL, ### Column to create results for
+    rule     = NULL, ### for interpolation,
+    method   = NULL ### method for interpolation; default=linear
 ){
   ##### Names ######
   names_inputs    <- data %>% names
@@ -67,9 +67,9 @@ interpolate_annual <- function(
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
 ### Function "match_scalarValues" replaces "get_popWts", "get_physMultipliers", and "get_econScalars"
 match_scalarValues <- function(
-  data,    ### Initial results dataframe
-  scalars, ### Scalars dataframe
-  scalarType
+    data,    ### Initial results dataframe
+    scalars, ### Scalars dataframe
+    scalarType
 ){
   ### Scalar columns to rename
   newColNames    <- scalarType %>% paste0(c("Name", "Value"))
@@ -128,9 +128,9 @@ match_scalarValues <- function(
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
 ### Function "get_econAdjValues" replaces "get_econMultipliers"
 get_econAdjValues <- function(
-  data,     ### Initial results dataframe
-  scenario,  ### Population and GDP scenario
-  multipliers ### List of multipliers
+    data,     ### Initial results dataframe
+    scenario,  ### Population and GDP scenario
+    multipliers ### List of multipliers
 ){
   ###### Get scenario information ######
   scenarioNames   <- scenario %>% names
@@ -198,8 +198,8 @@ get_econAdjValues <- function(
 ### The physical and economic scalars refer to the time series column from which the Annual Sectors tab
 ###   in the Excel tool draws values.
 calcScalars <- function(
-  data,   ### Initial results dataframe
-  elasticity = NULL ### An elasticity to use to adjust values
+    data,   ### Initial results dataframe
+    elasticity = NULL ### An elasticity to use to adjust values
 ){
   ###### Calculate physical scalar ######
   ### Physical scalars are the product of the physical scalar, the physical adjustment, and the damage adjustment
@@ -236,6 +236,39 @@ calcScalars <- function(
   return(df_x)
 }
 
+###### get_scenario_id ######
+### Function to standardize the creation of the scenario_id
+get_scenario_id <- function(
+    data_x,
+    include=c("model_dot", "region_dot") ### Character vector of column names to include
+){
+  ### Other vals
+  mnl0   <- "\n" ### Message new line
+  msg0   <- "\t" ### Message indent level 0
+  mcom   <- ", " ### Comma for collapsing lists
+  mqu0   <- "\'" ### Message quote
+  mqu1   <- mqu0 %>% paste0(mcom, mqu0, collapse="")
+  mend0  <- "..."
+  ### Columns to include
+  main0  <- c("sector", "variant", "impactYear", "impactType", "model_type")
+  cols0  <- main0  %>% c(include)
+  ### Check names
+  names0 <- data_x %>% names
+  cCheck <- (cols0 %in% names0)
+  nCheck <- (!cCheck) %>% which %>% length
+  if(nCheck){
+    c("In get_scenario_id:") %>% c(mnl0, msg0) %>%
+      c("Data is missing columns ") %>% c(mqu0, paste(cols0[!cCheck], collapse=mqu1), mqu0, mend0) %>%
+      c("Creating `scenario_id` from columns ") %>% c(mqu0, paste(cols0[cCheck], collapse=mqu1), mqu0, mend0)
+    ### New names
+    cols0  <- cols0[cCheck]
+  }
+  scen_x <- data_x[,cols0]
+  scen_x <- scen_x %>% apply(1, simplify="array", function(x){as.vector(x) %>% paste(collapse ="_")}) %>% unlist
+  data_x <- data_x %>% mutate(scenario_id = scen_x)
+  return(data_x)
+}
+
 
 ###### get_impactFunctions ######
 ### Last updated 2021.02.05
@@ -243,14 +276,15 @@ calcScalars <- function(
 ### This is used by createSystemData (see inst/extdata/createSystemData.R) to generate impact functions
 ### This function can be run separately and its outputs saved as an R data object to facilitate computation time.
 get_impactFunctions <- function(
-  x         = NULL, ### Data frame with scaled impacts data
-  groupCol  = NULL, ### Which column to look for the scenario column name (default = temp_impact_scenario )
-  xCol      = NULL, ### Which column to use for x (default = temp_C)
-  yCol      = NULL, ### Which column to use for y
-  # extrapolate = FALSE, ### Whether to extrapolate by default
-  extend_from = NULL, ### Maximum value for model type to extend from, if not missing
-  extend_to = NULL, ### Extend last points for x
-  unitScale = NULL ### Scale between values
+    x         = NULL, ### Data frame with scaled impacts data
+    groupCol  = NULL, ### Which column to look for the scenario column name (default = temp_impact_scenario )
+    xCol      = NULL, ### Which column to use for x (default = temp_C)
+    yCol      = NULL, ### Which column to use for y
+    # extrapolate = FALSE, ### Whether to extrapolate by default
+    extend_from = NULL, ### Maximum value for model type to extend from, if not missing
+    extend_to   = NULL, ### Extend last points for x
+    extend_all  = FALSE, ### Whether to extend all models or just those that go to the max model value
+    unitScale   = NULL ### Scale between values
 ){
   ###### Defaults ######
   unitScale   <- ifelse(is.null(unitScale),        1, unitScale)
@@ -303,6 +337,7 @@ get_impactFunctions <- function(
       ### - Interpolate the last few values
       # extrapolate <- TRUE
       extrapolate <- (xIn_max == extend_from) & (extend_from!=extend_to)
+      if(extend_all) extrapolate <- TRUE
       # extrapolate %>% print
       if(extrapolate){
         df_ref_i  <- df_i[len_i + -1:0,]
@@ -330,7 +365,7 @@ get_impactFunctions <- function(
         method = "linear",
         yleft  = yIn_min,
         yright = yMaxNew
-        )
+      )
 
       return(fun_i)
 
@@ -350,9 +385,9 @@ get_impactFunctions <- function(
 ### Calculate impacts (binning)
 ### This function uses the dplyr group_map capabilities to interpolate scaled impacts by temperature or sea level rise (SLR) relationships
 interpolate_impacts <- function(
-  functions   = NULL, ### List of functions
-  xVar        = NULL, ### Temperatures or SLRs to interpolate,
-  years       = NULL  ### Years
+    functions   = NULL, ### List of functions
+    xVar        = NULL, ### Temperatures or SLRs to interpolate,
+    years       = NULL  ### Years
 ){
   ### Names of functions and number of functions
   functionNames    <- functions %>% names
@@ -386,10 +421,10 @@ interpolate_impacts <- function(
 ### Updated method for calculating model statistics and dealing with NA values.
 ### This function returns a table with gcm averages, minimums, and maximums
 get_annual_model_stats <- function(
-  data      = NULL, ### Dataframe of results
-  sectors   = NULL, ### Name of sectors to get statistics for
-  yVar      = "annual_impacts", ### Column to get averages for
-  groupCol = c("sector", "variant", "model_type", "impactType", "impactYear") ### Column(s) to use for grouping
+    data      = NULL, ### Dataframe of results
+    sectors   = NULL, ### Name of sectors to get statistics for
+    yVar      = "annual_impacts", ### Column to get averages for
+    groupCol = c("sector", "variant", "model_type", "impactType", "impactYear") ### Column(s) to use for grouping
 ){
   ###### Ungroup data ######
   # data        <- data %>% ungroup
@@ -623,96 +658,198 @@ slr_Interp_byYear <- function(
 
 }
 
+###### fun_slrModel2height ######
+### Helper function to convert SLR model to height in cm
+fun_slrModel2Height <- function(
+    col_x, ### column "model_dot"
+    include   = c("factor", "values"),
+    valType   = c("numeric", "character", "factor"),
+    labelType = c("numeric", "character") ### Used for factor or label
+
+){
+  ### Checks
+  do_factor <- "factor" %in% include
+  do_values <- "values" %in% include
+  do_both   <- do_factor & do_values
+  ### Value types and priority
+  valTypes <- c("numeric", "character", "factor")
+  valType0 <- valType
+  valType0 <- valTypes %>% (function(y, types_y=valTypes){
+    ls1 <- ls0 <- types_y
+    c0  <- ls0[1] %in% y
+    c1  <- ls0[2] %in% y
+    c3  <- ls0[2] %in% y
+    if(c0) {ls1 <- ls0[1]}
+    else if(c1) {ls1 <- ls0[2]}
+    else        {ls1 <- ls0[3]}
+    return(ls1)
+  })
+  do_numb  <- "numeric"   %in% valType
+  do_char  <- "character" %in% valType
+  do_fact  <- "factor"    %in% valType
+  # valType %>% print; labelType %>% print
+  ### Label types and priority
+  labTypes <- c("numeric", "character")
+  label_x0 <- labelType %>%
+    (function(y, types_y=labTypes){
+      ls1 <- ls0 <- types_y
+      c0  <- do_numb | do_char
+      c1  <- ls0[1] %in% y
+      if(c0) {ls1 <- ls0[1]}
+      else if(c1) {ls1 <- ls0[1]}
+      else        {ls1 <- ls0[2]}
+      return(ls1)
+    })
+  # label_x0 %>% print
+  labChar  <- "character" %in% label_x0
+  # label_x0 %>% print; labChar %>% print
+  ### Original labels
+  lvl_x0 <- col_x %>% unique
+  df_x0  <- data.frame(levels=lvl_x0)
+  ### Standardize
+  df_x0$labels  <- gsub("_" , "", df_x0$levels)
+  df_x0$numbers <- gsub("cm", "", df_x0$labels)
+  df_x0$values  <- df_x0$numbers %>% as.character %>% as.numeric
+  ### Sprt
+  df_x0  <- df_x0 %>% arrange_at(.vars=c("values"))
+  ### Create factor list
+  list_x <- list(factors=df_x0)
+  ### Adjust values
+  vals_x <- NULL
+  if(do_values){
+    if(labChar){labels_x <- df_x0$labels}
+    else       {labels_x <- df_x0$values}
+    vals_x <- col_x  %>% factor(levels=df_x0$levels, labels=labels_x)
+    if(do_char){vals_x <- vals_x %>% as.character}
+    if(do_numb){vals_x <- vals_x %>% as.numeric  }
+    list_x[["values"]] <- vals_x
+  }
+  ### Return list
+  if     (do_both  ) {return_x <- list_x}
+  else if(do_factor) {return_x <- list_x$factors}
+  else               {return_x <- list_x$values}
+  ### Return
+  return(return_x)
+
+}
 
 ###### SLR Extremes ######
 ### Function for dealing with SLR values above the maximum
 fun_slrConfigExtremes <- function(
-    slr_x, ### rDataList_x$slr_cm
-    imp_x  ### rDataList_x$slrImpacts
+    slr_x, ### rDataList$slr_cm
+    imp_x  ### rDataList$slrImpacts
 ){
+  ### Vectors
+  slrCols0 <- c("year", "model_cm")
+  impCols0 <- c("sector", "variant", "region", "year", slrCols0)
+  arrange0 <- c("driverValue", "model_cm")
+  suffix0  <- c("1", "2")
+  bounds0  <- c("lower", "upper")
+  select0  <- c("model_dot", "model", "model_type", "model_cm")
+  join0    <- c("year", "model_dot")
+  join1    <- c("sector", "variant", "impactType", "impactYear", "region", "year")
+  drop0    <- "driverValue" %>% paste0(suffix0) %>% c("scaled_impacts" %>% paste0(suffix0)) %>% c("delta_impacts", "delta_driverValue")
   ### Prepare data
   ### SLR Heights
-  slr_df      <- slr_x %>% filter(year <=2090) %>%
+  slr_df   <- slr_x %>% #filter(year <=2090) %>%
     mutate(model_cm = gsub("cm", "", model_dot) %>% as.character %>% as.numeric) %>%
-    arrange_at(.vars=c("year", "model_cm"));
+    arrange_at(.vars=c(all_of(slrCols0)));
   rm("slr_x")
   # slr_df %>% head %>% print
   ### SLR Impacts
-  imp_df      <- imp_x %>% filter(year <=2090) %>%
+  imp_df   <- imp_x %>% #filter(year <=2090) %>%
     mutate(model_cm = gsub("cm", "", model_dot) %>% as.character %>% as.numeric) %>%
-    arrange_at(.vars=c("sector", "variant", "region", "year", "model_cm"));
+    arrange_at(.vars=c(all_of(impCols0)));
   rm("imp_x")
   # imp_df %>% head %>% print
 
-  ### Years
-  c_slr_years <- slr_x$year %>% unique %>% sort
-  # c_slr_years %>% print
-
-  ### Get upper and lower
-  ext_slr_cm <- c_slr_years %>%
-    # last %>%
-    lapply(function(
-    year_i, data_x = slr_x
-    ){
-      data_i     <- data_x %>% filter(year==year_i) %>% arrange_at(.vars=c("driverValue", "model_cm"))
-      vals_i     <- data_i$driverValue
-      unique_i   <- vals_i %>% unique
-      n_unique_i <- unique_i %>% length
-      last_i     <- vals_i[n_unique_i + (-1):0]
-      which_i    <- last_i %>% lapply(function(val_j, vals_y = vals_i){
-        (vals_y == val_j) %>% which %>% last
-      }) %>% unlist
-      drivers_i  <- data_i$driverValue[which_i]
-      models_i   <- data_i$model_dot[which_i]
-      df_i       <- data.frame(year = year_i, model_dot = models_i, driverValue = drivers_i, valueType = c("lower", "upper"))
-      return(df_i)
-    }) %>% (function(df_i){do.call(rbind, df_i)})
-  # ext_slr_cm %>% glimpse %>% print; ext_slr_cm$model_dot %>% unique %>% print
+  ### Get upper and lower for each year
+  slrYears <- slr_df$year %>% unique %>% sort
+  slr_extr <- slrYears %>% lapply(function(
+    year_i, data_x = slr_df
+  ){
+    data_i     <- data_x %>% filter(year==year_i) %>% arrange_at(.vars=c(all_of(arrange0)))
+    vals_i     <- data_i$driverValue
+    ### Unique values and length
+    unique_i   <- vals_i %>% unique;
+    n_unique_i <- unique_i %>% length
+    ### Figure out which the last values belong to
+    last_i     <- vals_i[n_unique_i + (-1):0]
+    which_i    <- last_i %>% lapply(function(val_j, vals_y = vals_i){
+      (vals_y == val_j) %>% which %>% last
+    }) %>% unlist
+    ### Get driver values and models for the last values
+    drivers_i  <- data_i$driverValue[which_i]
+    models_i   <- data_i$model_dot[which_i]
+    ### Create a return a dataframe with the model value, driver value, year, and bound
+    df_i       <- data.frame(year = year_i, model_dot = models_i, driverValue = drivers_i, valueType = c(bounds0))
+    return(df_i)
+  }) %>% (function(df_i){do.call(rbind, df_i)})
+  # slr_extr %>% glimpse %>% print; slr_extr$model_dot %>% unique %>% print
 
   ### Join with impacts: 7644 rows
-  ext_slr_imp <- ext_slr_cm %>% left_join(imp_df, by = c("year", "model_dot"))
-  # ext_slr_imp %>% glimpse %>% print; (nrow(ext_slr_imp)/2) %>% print
+  imp_extr <- slr_extr %>% left_join(imp_df, by = c(all_of(join0)))
+  # imp_extr %>% glimpse %>% print; (nrow(imp_extr)/2) %>% print
 
-  ### Spread
-  ext_slr     <- ext_slr_imp %>%
-    select(-c("model_dot", "model", "model_type", "model_cm")) %>%
-    (function(data_x){
-      join0   <- c("sector", "variant", "impactType", "impactYear", "region", "year")
-      suffix0 <- c("1", "2")
-      data_lo <- data_x %>% filter(valueType=="lower") %>% select(-c("valueType"))
-      data_up <- data_x %>% filter(valueType!="lower") %>% select(-c("valueType"))
-      ### Join data
-      data_x  <- data_lo %>% left_join(data_up, by = c(all_of(join0)), suffix = suffix0)
-      # data_x %>% names %>% print
-      ### Calculate differences
-      data_x  <- data_x %>% mutate(delta_impacts     = scaled_impacts2 - scaled_impacts1)
-      data_x  <- data_x %>% mutate(delta_driverValue = driverValue2    - driverValue1)
-      ### Calculate slope and intercept
-      data_x  <- data_x %>% mutate(driverValue_ref   = driverValue2)
-      data_x  <- data_x %>% mutate(impacts_intercept = scaled_impacts2)
-      data_x  <- data_x %>% mutate(impacts_slope     = delta_impacts/delta_driverValue)
-      ### Replace zeros
-      replace0 <- (data_x$delta_driverValue == 0) %>% which
-      data_x$impacts_slope[replace0]  <- 0
-      # data_x %>% names %>% print
-      ### Drop intermediate columns and return
-      drop0   <- "driverValue" %>% paste0(suffix0) %>% c("scaled_impacts" %>% paste0(suffix0)) %>% c("delta_impacts", "delta_driverValue")
-      data_x  <- data_x  %>% select(-c(all_of(drop0)))
-      return(data_x)
-    })
+  ### Separate lower and upper values and join them together
+  imp_extr <- imp_extr %>% select(-c(all_of(select0)))
+  ext_slr  <- imp_extr %>% (function(data_x){
+    ### Separate into lower and upper values and join data
+    data_lo <- data_x  %>% filter(valueType=="lower") %>% select(-c("valueType"))
+    data_up <- data_x  %>% filter(valueType!="lower") %>% select(-c("valueType"))
+    data_x  <- data_lo %>% left_join(data_up, by = c(all_of(join1)), suffix = suffix0)
+    # data_x %>% names %>% print
+    ### Calculate differences
+    data_x  <- data_x  %>% mutate(delta_impacts     = scaled_impacts2 - scaled_impacts1)
+    data_x  <- data_x  %>% mutate(delta_driverValue = driverValue2    - driverValue1)
+    ### Calculate slope and intercept
+    data_x  <- data_x  %>% mutate(driverValue_ref   = driverValue2)
+    data_x  <- data_x  %>% mutate(impacts_intercept = scaled_impacts2)
+    data_x  <- data_x  %>% mutate(impacts_slope     = delta_impacts/delta_driverValue)
+    ### Replace zeros
+    which0  <- (data_x$delta_driverValue == 0) %>% which
+    data_x$impacts_slope[which0] <- 0
+    # data_x %>% names %>% print
+    ### Drop intermediate columns and return
+    data_x  <- data_x  %>% select(-c(all_of(drop0)))
+    return(data_x)
+  })
   # ext_slr %>% glimpse %>% print;
   ### Format and Return
-  ext_slr <- ext_slr %>% arrange_at(.vars=c(join0))
+  ext_slr <- ext_slr %>% arrange_at(.vars=c(all_of(join1)))
   return(ext_slr)
 }
 
+####### Extend SLR Scenarios ######
+### Function to extend SLR scenarios in createSystemData
+extend_slr   <- function(
+    x,
+    # maxYear_x = 2090,
+    newMax_x  = 2300,
+    arrange_x = c("model", "year")
+){
+  ### Values
+  maxYear_x <- x$year %>% max
+  ### Format Dataframes
+  x_nu <- data.frame(year = (maxYear_x + 1):newMax_x) %>% mutate(dummyCol = 1)
+  x_up <- x %>% filter(year == maxYear_x) %>% mutate(dummyCol = 1) %>% select(-c("year"))
+  x_lo <- x %>% filter(year <= maxYear_x)
+  rm("x")
+  ### Join data
+  x_up <- x_up %>% left_join(x_nu, by = c("dummyCol")) %>% select(-c("dummyCol"))
+  x    <- x_lo %>% rbind(x_up)
+  rm("x_nu", "x_up", "x_lo")
+  ### Arrange and standardize model type
+  x  <- x %>% arrange_at(.vars = c(all_of(arrange_x))) %>% mutate(model_type = "slr")
+  return(x)
+}
 
 ####### fun_getNeighbors ######
 ### Figure out which SLR heights are immediately above and below a driver value
 fun_getNeighbors <- function(
-  x, ### X values
-  values, ### values to compare
-  col = "driverValue" # which column to compare
+    x, ### X values
+    values, ### values to compare
+    col = "driverValue" # which column to compare
 ){
 
   # ### Mutate data
@@ -775,6 +912,45 @@ fun_getNeighbors <- function(
 
   new_values   <- lo_values %>% rbind(hi_values)
   return(new_values)
+}
+
+###### fun_formatScalars ######
+### Function to format scalars in createSystemData
+fun_formatScalars <- function(
+    data_x, ### rDataList$scalarDataframe
+    info_x, ### rDataList$co_scalarInfo
+    years_x ### rDataList$list_years
+){
+  names_x <- data_x$scalarName %>% unique
+  num_x   <- names_x %>% length
+  new_x   <- 1:num_x %>% lapply(function(i){
+    ### Figure out name, method, region
+    name_i     <- names_x[i]
+    # name_i %>% print
+    ### Dataframes
+    scalar_i   <- data_x %>% filter(scalarName==name_i)
+    info_i     <- info_x %>% filter(scalarName==name_i)
+    ### Info about scalar
+    method_i   <- info_i$constant_or_dynamic[1]
+    method_i   <- ifelse(method_i=="constant", method_i, "linear")
+    # region_i   <- info_i$national_or_regional[1]
+    ### Interpolate data
+    scalar_i   <- scalar_i %>% interpolate_annual(
+      years  = years_x,
+      column = "value", rule   = 1:2,
+      method = method_i)
+    ### Add in name and return
+    scalar_i   <- scalar_i %>% mutate(scalarName=name_i)
+    return(scalar_i)
+  }) %>% (function(scalars_i){do.call(rbind, scalars_i)})
+  ### Join info
+  select0 <- c("scalarName", "scalarType", "national_or_regional")
+  select1 <- c("scalarName", "region", "year", "value")
+  info_x  <- info_x %>% select(c(all_of(select0)))
+  new_x   <- new_x  %>% select(c(all_of(select1)))
+  new_x   <- new_x  %>% left_join(info_x, by=c("scalarName"))
+  ### Return
+  return(new_x)
 }
 
 
