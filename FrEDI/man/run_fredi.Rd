@@ -9,10 +9,12 @@ run_fredi(
     NULL),
   sectorList = NULL,
   aggLevels = c("national", "modelaverage", "impactyear", "impacttype"),
+  elasticity = NULL,
+  maxYear = 2090,
+  thru2300 = FALSE,
   pv = FALSE,
   baseYear = 2010,
   rate = 0.03,
-  elasticity = NULL,
   silent = TRUE
 )
 }
