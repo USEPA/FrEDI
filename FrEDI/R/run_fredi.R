@@ -252,16 +252,16 @@ run_fredi <- function(
     ### Interpolate annual values
     temp_df  <- tempInput %>% mutate(region="National Total")
     temp_df  <- temp_df   %>% (function(x){
-        minYear_x <- x$year %>% min
-        interpYrs <- refYear_temp:maxYear
-        ### Interpolate
-        x_interp  <- x %>% interpolate_annual(
-          years  = interpYrs,
-          column = "temp_C",
-          rule   = 1:2
-        ) %>% select(-c("region"))
-        return(x_interp)
-      })
+      minYear_x <- x$year %>% min
+      interpYrs <- refYear_temp:maxYear
+      ### Interpolate
+      x_interp  <- x %>% interpolate_annual(
+        years  = interpYrs,
+        column = "temp_C",
+        rule   = 1:2
+      ) %>% select(-c("region"))
+      return(x_interp)
+    })
     temp_df  <- temp_df  %>% rename(temp_C_conus = temp_C)
     temp_df  <- temp_df  %>% mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
     rm("tempInput")
@@ -305,16 +305,16 @@ run_fredi <- function(
     ### Add dummy region and interpolate values
     slr_df <- slrInput %>% mutate(region="National Total")
     slr_df <- slr_df   %>% (function(x){
-        minYear_x <- x$year %>% min
-        interpYrs <- refYear_slr:maxYear
-        ### Interpolate annual values
-        x_interp  <- x %>% interpolate_annual(
-          years  = interpYrs,
-          column = "slr_cm",
-          rule   = 1:2
-        ) %>% select(-c("region"))
-        return(x_interp)
-      })
+      minYear_x <- x$year %>% min
+      interpYrs <- refYear_slr:maxYear
+      ### Interpolate annual values
+      x_interp  <- x %>% interpolate_annual(
+        years  = interpYrs,
+        column = "slr_cm",
+        rule   = 1:2
+      ) %>% select(-c("region"))
+      return(x_interp)
+    })
     rm("slrInput")
   } ### End if(has_slrUpdate)
   else{
@@ -432,14 +432,14 @@ run_fredi <- function(
     )
   ### Get 2090 values and then bind them
   npdScalars <- npdScalars %>% (function(y){
-      y2 <- y %>%
-        filter(year == c_npdRefYear) %>% select(-c("year")) %>%
-        rename(npd_scalarValueRef = npd_scalarValue)
-      y  <- y %>%
-        left_join(y2, by = c("npd_scalarType")) %>%
-        left_join(co_npdScalars, by = c("npd_scalarType"))
-      return(y)
-    })
+    y2 <- y %>%
+      filter(year == c_npdRefYear) %>% select(-c("year")) %>%
+      rename(npd_scalarValueRef = npd_scalarValue)
+    y  <- y %>%
+      left_join(y2, by = c("npd_scalarType")) %>%
+      left_join(co_npdScalars, by = c("npd_scalarType"))
+    return(y)
+  })
   ### Calculate scalar value
   npdScalars <- npdScalars %>% mutate(npd_scalarValue = c1 * (npd_scalarValue / npd_scalarValueRef)**exp0)
   npdScalars <- npdScalars %>% select(-c("c1", "exp0", "npd_scalarValueRef"))
@@ -457,13 +457,13 @@ run_fredi <- function(
   )
   ### Calculate value and rename values
   npdScalars <- npdScalars %>% mutate(
-      npd_scalarValue = npd_scalarValue + c2 * (reg_pop / reg_popRef)
-    ) %>% select(-c("c2", "reg_pop", "reg_popRef"))
+    npd_scalarValue = npd_scalarValue + c2 * (reg_pop / reg_popRef)
+  ) %>% select(-c("c2", "reg_pop", "reg_popRef"))
   ### Rename values
   npdScalars <- npdScalars %>% mutate(
     econScalar     = npd_scalarValue,
     physEconScalar = npd_scalarValue
-    )
+  )
   npdScalars <- npdScalars %>% filter(year > c_npdRefYear)
   npdScalars <- npdScalars %>% select(-c("npd_scalarValue", "npd_scalarType"))
   # rm("co_npdScalars")
@@ -504,179 +504,217 @@ run_fredi <- function(
   initialResults     <- initialResults %>% mutate(model_type=modelType)
   initialResults_slr <- initialResults %>% filter(modelType=="slr")
   initialResults     <- initialResults %>% filter(modelType!="slr")
-  ### Get scenario id
-  # initialResults_slr <- initialResults_slr %>% get_scenario_id(include=c())
-  initialResults     <- initialResults %>% left_join(co_models, by="modelType")
-  initialResults     <- initialResults %>% get_scenario_id(include=c("model_dot", "region"))
-  initialResults     <- initialResults %>% select(-c("model_type"))
-  # initialResults %>% names %>% print
 
-  ###### Join Initial Results & Model Info  ######
-  ### - Join Initial Results with Model info
-  ### - Also add a scenario identifier and determine whether the scenario has an impact function (scenarios with all missing values have no functions)
-  ### - Check if there is an impact function
-  if(msgUser) message(messages_tempBin[["scaledImpacts"]]$try)
+  nrow_gcm           <- initialResults     %>% nrow
+  nrow_slr           <- initialResults_slr %>% nrow
 
   ###### Scaled Impacts  ######
   ### Initialize and empty dataframe df_scenarioResults
-  ### List of impact functions for GCM sectors
+  if(msgUser) message(messages_tempBin[["scaledImpacts"]]$try)
   if(msgUser) message("Calculating scaled impacts...")
   df_scenarioResults  <- data.frame()
-  impactFunctionNames <- list_impactFunctions %>% names %>% unique
-  # impactSelectCols    <- c("year", "modelUnitValue", "scaled_impacts", "scenario_id")
   impactSelectCols    <- c("year", "scaled_impacts", "scenario_id")
-  ### Generate initial results for each model type:
-  for(modelType_i in co_modelTypes$modelType){
-    ###### GCM Impacts ######
-    if(tolower(modelType_i)=="gcm"){
-      ### Drivers
-      df_xVar_i      <- df_drivers %>% filter(modelType == modelType_i) %>% as.data.frame
-      ### Get and check list of functions
-      allFunctions_i <- initialResults$scenario_id %>% unique
-      df_functions_i <- data.frame(scenario_id = allFunctions_i)
-      df_functions_i <- df_functions_i %>% mutate(hasScenario = (scenario_id %in% impactFunctionNames)*1)
-      ### Figure out which have functions
-      which_hasFunc  <- which(df_functions_i$hasScenario==1)
-      hasFunctions_i <- length(which_hasFunc)>=1
-      hasNonFunc_i   <- !(length(allFunctions_i) == length(which_hasFunc))
-      # impactFunctionNames[1:5] %>% print; allFunctions_i[1:5] %>% print; which_hasFunc %>% head %>% print
 
-      ### Get impacts for scenario_ids that have functions
-      if(hasFunctions_i){
-        namesFunctions_i <- df_functions_i[which_hasFunc, "scenario_id"] %>% unique
-        listFunctions_i  <- list_impactFunctions[which(impactFunctionNames %in% namesFunctions_i)]
-        df_hasfun_i      <- listFunctions_i %>%
-          interpolate_impacts(xVar = df_xVar_i$modelUnitValue, years = df_xVar_i$year) %>%
-          rename(modelUnitValue = xVar) %>%
-          filter(year>=minYear) %>%
-          select(c(all_of(impactSelectCols)))
-        # df_scenarioResults %>% names %>% print
-        df_scenarioResults <- df_scenarioResults %>% rbind(df_hasfun_i)
-        rm("namesFunctions_i", "listFunctions_i", "df_hasfun_i")
-      } #; return(df_i)
-      if(hasNonFunc_i){
-        df_nonfun_i    <- df_functions_i[-which_hasFunc,] %>%
-          mutate(scaled_impacts = NA, joinCol = 1) %>%
-          left_join(df_xVar_i %>% mutate(joinCol = 1), by=c("joinCol")) %>%
-          select(c(all_of(impactSelectCols)))
-        # df_scenarioResults %>% names %>% print; df_nonfun_i %>% names %>% print
-        # df_scenarioResults %>% names %>% print
-        df_scenarioResults <- df_scenarioResults %>% rbind(df_nonfun_i)
-        rm("df_nonfun_i")
-      }
-      rm("df_xVar_i", "allFunctions_i", "which_hasFunc", "hasFunctions_i", "hasNonFunc_i")
-    }
-    ###### SLR Impacts ######
-    else{
-      ### Filter to appropriate number of years
-      slrImpacts     <- slrImpacts  %>% filter(year <= maxYear)
-      slrExtremes    <- slrExtremes %>% filter(year <= maxYear)
-      ### Examine driver values: combine with extremes
-      slrMax         <- (co_modelTypes %>% filter(modelType=="slr"))$modelMaxOutput[1]
-      ### Combine SLR with extremes and filter to appropriate years
-      df_slrMax      <- df_drivers  %>% filter(modelType=="slr") #%>% rename(model_type=modelType)
-      df_slrMax      <- df_slrMax   %>% left_join(slrExtremes, by=c("year"))
-      df_slrMax      <- df_slrMax   %>% mutate(deltaDriver = driverValue_ref - modelUnitValue)
-      df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0)
-      # df_slrMax      <- df_slrMax   %>% filter(modelUnitValue > driverValue_ref)
-      slrMaxYears    <- df_slrMax$year %>% unique %>% sort
-      rm("slrMax")
-      ### Calculate scaled impacts for values > slrMax and adjust the model value
-      df_slrMax      <- df_slrMax   %>% mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
-      df_slrMax      <- df_slrMax   %>% mutate(model_dot = "Interpolation")
-      # df_slrMax %>% names %>% print
-      df_slrMax      <- df_slrMax   %>% get_scenario_id(include=c("model_dot", "region"))
 
-      check_max_ids <- df_slrMax$scenario_id;
-      # check_max_ids %>% head %>% print
+  ###### GCM Scaled Impacts ######
+  if(nrow_gcm){
+    ### Drivers
+    df_drivers_gcm <- df_drivers %>% filter(modelType == "gcm")
+    ### Get scenario id
+    # initialResults_slr <- initialResults_slr %>% get_scenario_id(include=c())
+    initialResults <- initialResults %>% left_join(co_models, by="modelType")
+    initialResults <- initialResults %>% get_scenario_id(include=c("model_dot", "region"))
+    initialResults <- initialResults %>% select(-c("model_type"))
+    ### Get list of unique impact functions
+    impFunNames    <- list_impactFunctions %>% names %>% unique
+    ### Check whether the scenario has an impact function (scenarios with all missing values have no functions)
+    gcmAllFuncs    <- initialResults$scenario_id %>% unique
+    df_gcm_i       <- data.frame(scenario_id = gcmAllFuncs)
+    df_gcm_i       <- df_gcm_i %>% mutate(hasScenario = (scenario_id %in% impFunNames)*1)
+    ### Figure out which have functions
+    which_hasFunc  <- which(df_gcm_i$hasScenario==1)
+    gcmHasFuns     <- length(which_hasFunc)>=1
+    gcmNoFuns      <- !(length(gcmAllFuncs) == length(which_hasFunc))
+    # impFunNames[1:5] %>% print; gcmAllFuncs[1:5] %>% print; which_hasFunc %>% head %>% print
 
-      ### Get impacts and create scenario ID for values <= slrMax
-      df_slrImpacts  <- slrImpacts    %>% filter(!(year %in% slrMaxYears))
-      df_slrImpacts  <- df_slrImpacts %>% get_scenario_id(include=c("model_dot", "region"))
-
-      check_oth_ids <- df_slrImpacts$scenario_id;
-      # check_oth_ids %>% head %>% print
-
-      ### Add other results back in
-      df_slrMax      <- df_slrMax     %>% select(c(all_of(impactSelectCols)))
-      df_slrImpacts  <- df_slrImpacts %>% select(c(all_of(impactSelectCols)))
-      df_slrImpacts  <- df_slrImpacts %>% rbind(df_slrMax)
-      df_slrImpacts  <- df_slrImpacts %>% arrange_at(.vars=c("scenario_id", "year"))
-      rm("impactSelectCols", "df_slrMax")
-      # df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
-
-      ### Bind with other results
+    ### Get impacts for scenario_ids that have functions
+    if(gcmHasFuns){
+      hasFunNames <- df_gcm_i[which_hasFunc, "scenario_id"] %>% unique
+      hasFunsList <- list_impactFunctions[which(impFunNames %in% hasFunNames)]
+      ### Get impacts
+      imp_hasFuns <- hasFunsList %>% interpolate_impacts(xVar = df_drivers_gcm$modelUnitValue, years = df_drivers_gcm$year)
+      imp_hasFuns <- imp_hasFuns  %>% rename(modelUnitValue = xVar) %>% filter(year>=minYear)
+      imp_hasFuns <- imp_hasFuns  %>% select(c(all_of(impactSelectCols)))
       # df_scenarioResults %>% names %>% print
-      # df_slrImpacts$scenario_id %>% head %>% print
-
-      df_scenarioResults  <- df_scenarioResults %>% rbind(df_slrImpacts)
-      rm("df_slrImpacts")
-      ### Separate initial results out
-      # initialResults_slr  <- initialResults_slr %>% mutate(scenario_id = scenario_id)
-      initialResults_max  <- initialResults_slr %>% filter( (year %in% slrMaxYears))
-      initialResults_slr  <- initialResults_slr %>% filter(!(year %in% slrMaxYears))
-      ### Add additional columns
-      addMaxCols          <- c("model_id", "model_dot", "model_label", "model_underscore")
-      initialResults_max[,addMaxCols]  <- "Interpolation"
-      rm("addMaxCols")
-      ### Add scenarios
-      initialResults_max  <- initialResults_max %>% get_scenario_id(include=c("model_dot", "region"))
-      initialResults_slr  <- initialResults_slr %>% get_scenario_id(include=c("model_dot", "region"))
-
-      check_inMax_ids <- initialResults_max$scenario_id;
-      check_inSlr_ids <- initialResults_slr$scenario_id;
-      # check_inMax_ids %>% head %>% print; check_inSlr_ids %>% head %>% print
-
-      ### Join with model
-      initialResults_max  <- initialResults_max %>% left_join(co_modelTypes, by="modelType")
-      initialResults_slr  <- initialResults_slr %>% left_join(co_models, by="modelType")
-
-      ### Add scenarios and bind results
-      initialResults_slr  <- initialResults_slr %>% rbind(initialResults_max)
-      # # df_impacts %>% names %>% print
-      # # initialResults_slr$scenario_id %>% head %>% print
-      # initialResults_slr %>% filter(!is.na(econScalarValue)) %>% nrow %>% print
-
-
-      rm("initialResults_max")
-      ### Arrange and bind with other results
-      initialResults_slr  <- initialResults_slr %>% select(-c("model_type"))
-      initialResults_slr  <- initialResults_slr %>% arrange_at(.vars=c("scenario_id", "year"))
-      names1 <- initialResults_slr %>% names
-      names2 <- initialResults %>% names
-      # names1[!(names1 %in% names2)] %>% print
-      # initialResults_slr %>% names %>% print; initialResults %>% names %>% print
-      initialResults      <- initialResults %>% rbind(initialResults_slr)
-      rm("initialResults_slr")
+      df_scenarioResults <- df_scenarioResults %>% rbind(imp_hasFuns)
+      rm("hasFunNames", "hasFunsList", "imp_hasFuns")
+    } #; return(df_i)
+    if(gcmNoFuns){
+      imp_noFuns  <- df_gcm_i[-which_hasFunc,]
+      imp_noFuns  <- imp_noFuns %>% mutate(scaled_impacts = NA, joinCol = 1)
+      imp_noFuns  <- imp_noFuns %>% left_join(df_drivers_gcm %>% mutate(joinCol = 1), by=c("joinCol"))
+      imp_noFuns  <- imp_noFuns %>% select(c(all_of(impactSelectCols)))
+      # df_scenarioResults %>% names %>% print; imp_noFuns %>% names %>% print
+      df_scenarioResults <- df_scenarioResults %>% rbind(imp_noFuns)
+      rm("imp_noFuns")
     }
+    rm("df_drivers_gcm", "gcmAllFuncs", "which_hasFunc", "gcmHasFuns", "gcmNoFuns")
   }
 
+  ###### SLR Scaled Impacts ######
+  if(nrow_slr){
+    ### Filter to appropriate number of years
+    slrImpacts     <- slrImpacts  %>% filter(year <= maxYear)
+    slrExtremes    <- slrExtremes %>% filter(year <= maxYear)
+    slrDrivers     <- df_drivers  %>% filter(modelType=="slr") #%>% rename(model_type=modelType)
+
+    ###### ** SLR Scaled Impacts Above Max #######
+    ### Examine driver values: combine with extremes
+    slrMax         <- (co_modelTypes %>% filter(modelType=="slr"))$modelMaxOutput[1]
+    ### Combine SLR with extremes and filter to appropriate years
+    df_slrMax      <- slrDrivers
+    df_slrMax      <- df_slrMax   %>% left_join(slrExtremes, by=c("year"))
+    df_slrMax      <- df_slrMax   %>% mutate(deltaDriver = driverValue_ref - modelUnitValue)
+    df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0)
+    # df_slrMax      <- df_slrMax   %>% filter(modelUnitValue > driverValue_ref)
+    slrMaxYears    <- df_slrMax$year %>% unique %>% sort
+    rm("slrMax")
+    ### Calculate scaled impacts for values > slrMax and adjust the model value
+    df_slrMax      <- df_slrMax   %>% mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
+    df_slrMax      <- df_slrMax   %>% mutate(model_dot = "Interpolation")
+    # df_slrMax %>% names %>% print
+    df_slrMax      <- df_slrMax   %>% get_scenario_id(include=c("model_dot", "region"))
+    # check_max_ids <- df_slrMax$scenario_id; # check_max_ids %>% head %>% print; rm("check_max_ids)
+
+    ###### ** SLR Other Scaled Impacts #######
+    ### Get impacts and create scenario ID for values <= slrMax
+    df_slrImpacts  <- slrDrivers    %>% filter(!(year %in% slrMaxYears))
+    df_slrImpacts  <- df_slrImpacts %>% left_join(slrImpacts, by=c("year"))
+    df_slrImpacts  <- df_slrImpacts %>% get_scenario_id(include=c("model_dot", "region"))
+
+    nrow_oth       <- df_slrImpacts %>% nrow
+    nrow_oth %>% print
+    ###### ** SLR Interpolation ######
+    # df_results   <- df_results %>% filter(year >= minYear) %>% filter(year <= maxYear)
+    # df_results   <- df_results %>% filter(year > 2090)
+    if(nrow_oth){
+      ### Group by cols
+      cols0          <- c("modelType",  "modelUnitValue")
+      cols1          <- c("model_type", "driverValue")
+      cols2          <- c("lower_model", "upper_model")
+      ### Group by cols
+      slr_names      <- df_slrImpacts %>% names
+      slrGroupByCols <- c("sector", "variant", "impactYear", "impactType", "model", "model_dot", "region", "scenario_id")
+      slrGroupByCols <- slrGroupByCols[which(slrGroupByCols %in% slr_names)] %>% c(cols1)
+      # rm("slrGroupByCols", "slr_names")
+      #### Interpolate driver values
+      slrDrivers     <- slrDrivers %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
+      slrScenario    <- slrDrivers %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
+      slrScenario    <- slrScenario %>% slr_Interp_byYear
+      slrScenario    <- slrScenario %>% mutate_at(.vars=c(all_of(cols2)), function(y){gsub(" ", "", y)})
+      # df_slrImpacts$model %>% unique %>% print
+      # return(slrScenario)
+      # df_slrImpacts %>% names %>% print; slrScenario %>% names %>% print
+      ### Interpolate
+      # df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+      df_slrImpacts  <- df_slrImpacts %>% rename_at(.vars=c(all_of(cols0[2])), ~cols1[2])
+      df_slrImpacts  <- df_slrImpacts %>% fredi_slrInterp(slr_x = slrScenario, groupByCols=slrGroupByCols)
+      df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+      # "got here" %>% print
+      # df_slrImpacts %>% names %>% print
+      df_slrImpacts  <- df_slrImpacts %>% rename_at(.vars=c(all_of(cols1[2])), ~cols0[2])
+      df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+      # df_slrImpacts %>% names %>% print
+      rm("slrGroupByCols", "slr_names", "slrScenario")
+      rm("cols0", "cols1")
+    }
+    rm("nrow_oth")
+    df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+
+
+    ###### ** SLR Join Scaled Impacts ######
+    ### Add other results back in
+    df_slrMax      <- df_slrMax     %>% select(c(all_of(impactSelectCols)))
+    df_slrImpacts  <- df_slrImpacts %>% select(c(all_of(impactSelectCols)))
+    slrMaxYears   %>% length %>% print
+    df_slrMax     %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+    df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+
+    df_slrImpacts  <- df_slrImpacts %>% rbind(df_slrMax)
+    df_slrImpacts  <- df_slrImpacts %>% arrange_at(.vars=c("scenario_id", "year"))
+    rm("impactSelectCols", "df_slrMax")
+    # df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+
+    ### Bind with other results
+    # df_scenarioResults %>% names %>% print; df_slrImpacts$scenario_id %>% head %>% print
+    df_scenarioResults  <- df_scenarioResults %>% rbind(df_slrImpacts)
+    rm("df_slrImpacts")
+
+    ###### ** SLR Initial Results #######
+    ### Separate initial results out
+    # initialResults_slr  <- initialResults_slr %>% mutate(scenario_id = scenario_id)
+    initialResults_max  <- initialResults_slr %>% filter( (year %in% slrMaxYears))
+    initialResults_slr  <- initialResults_slr %>% filter(!(year %in% slrMaxYears))
+    ### Add additional columns
+    addMaxCols          <- c("model_id", "model_dot", "model_label", "model_underscore")
+    initialResults_max[,addMaxCols]  <- "Interpolation"
+    rm("addMaxCols")
+
+    ### Add scenarios
+    initialResults_max  <- initialResults_max %>% get_scenario_id(include=c("model_dot", "region"))
+    initialResults_slr  <- initialResults_slr %>% get_scenario_id(include=c("model_dot", "region"))
+    # check_inMax_ids <- initialResults_max$scenario_id; check_inSlr_ids <- initialResults_slr$scenario_id;
+    # check_inMax_ids %>% head %>% print; check_inSlr_ids %>% head %>% print
+
+    ### Join with model
+    initialResults_max  <- initialResults_max %>% left_join(co_modelTypes, by="modelType")
+    initialResults_slr  <- initialResults_slr %>% left_join(co_models, by="modelType")
+
+    ### Add scenarios and bind results
+    initialResults_slr  <- initialResults_slr %>% rbind(initialResults_max)
+    # # df_impacts %>% names %>% print
+    # # initialResults_slr$scenario_id %>% head %>% print
+    # initialResults_slr %>% filter(!is.na(econScalarValue)) %>% nrow %>% print
+    rm("initialResults_max")
+
+    ###### ** SLR Bind Initial Results #######
+    ### Arrange and bind with other results
+    initialResults_slr  <- initialResults_slr %>% select(-c("model_type"))
+    initialResults_slr  <- initialResults_slr %>% arrange_at(.vars=c("scenario_id", "year"))
+    # names1 <- initialResults_slr %>% names; names2 <- initialResults %>% names; # names1[!(names1 %in% names2)] %>% print
+    # initialResults_slr %>% names %>% print; initialResults %>% names %>% print
+    initialResults      <- initialResults %>% rbind(initialResults_slr)
+    rm("initialResults_slr")
+  }
+
+  ###### Calculate Impacts  ######
   ### Join results with initialized results and update missing observations with NA
   ### Remove intermediate values
   # initialResults %>% names %>% print; df_scenarioResults %>% names %>% print
-  df_impacts   <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
-  df_impacts   <- df_impacts     %>% rename(model_type = modelType)
+  df_impacts <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
   rm("initialResults")
-  # df_impacts %>% names %>% print
-  # df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
+  # df_impacts %>% names %>% print
+  # initialResults$modelUnit_label %>% unique %>% print
+  # df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+  # (df_impacts %>% filter(modelUnit_label=="cm"))$year %>% range %>% print
 
-  ###### Calculate Impacts  ######
   ### Physical impacts = physScalar * scaled_impacts
   ### Annual impacts = phys-econ scalar value by the scaled impacts
-  df_impacts <- df_impacts %>%
-    filter(year>=minYear) %>%
-    mutate(physical_impacts = physScalar     * scaled_impacts * !is.na(physicalmeasure)) %>%
-    mutate(annual_impacts   = physEconScalar * scaled_impacts) %>%
-    as.data.frame
+  df_impacts <- df_impacts %>% mutate(hasPhysImpacts   = 1 * !is.na(physicalmeasure))
+  df_impacts <- df_impacts %>% mutate(physical_impacts = hasPhysImpacts * scaled_impacts * physScalar)
+  df_impacts <- df_impacts %>% mutate(annual_impacts   = hasPhysImpacts * scaled_impacts * physEconScalar)
+  df_impacts <- df_impacts %>% select(-c("hasPhysImpacts")) #%>% as.data.frame
 
   ###### Add Scenario Information ######
   ### Add in model info
   message("Formatting results", "...")
+  df_impacts <- df_impacts %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_drivers <- df_drivers %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_results <- df_impacts %>% left_join(df_drivers, by=c("year", "model_type"))
-    # select(-c("modelUnitValue")) %>%
   rm("df_impacts")
+  # (df_results %>% filter(modelUnit_label=="cm"))$year %>% range %>% print
+  # df_results %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
 
   ###### Format Outputs ######
   ### Refactor sectors, variants, impactTypes
@@ -687,98 +725,77 @@ run_fredi <- function(
   df_results <- df_results %>% rename(sector_id = sector, sector = sector_label)
   #### Regions
   # df_results %>% names %>% print
-  df_results <- df_results %>% mutate(
-      region_id = region,
-      region    = region_id %>% factor(levels=co_regions$region_dot, labels=co_regions$region_label)
-    ) %>% select(-c("region_id", "model_type"))
+  reg_lvls   <- co_regions$region_dot
+  reg_lbls   <- co_regions$region_label
+  df_results <- df_results %>% rename(region_id = region)
+  df_results <- df_results %>% mutate(region    = region_id %>% factor(reg_lvls, reg_lbls))
+  rm("reg_lvls", "reg_lbls")
 
   ### Model types and models
-  df_results <- df_results %>% rename(
-      model       = model_label,
-      model_type  = modelType_label,
-      driverValue = modelUnitValue,
-      driverUnit  = modelUnit_label,
-      driverType  = modelUnitDesc
-    ) %>%
-    select(-c("model_id", "model_dot", "model_underscore", "modelUnit_id")) %>%
-    select(-c("modelRefYear", "modelMaxOutput", "modelUnitScale", "modelMaxExtrap"))
-  ### Variant labels
-  df_results <- df_results %>% mutate(
-      variant_id     = variant,
-      sector_variant = sector_id %>% paste(variant_id, sep="_"),
-      variant        = sector_variant %>% factor(levels=co_variants$sector_variant, labels=co_variants$variant_label)
-    ) %>% select(-c("variant_id", "sector_variant"))
-  ### Impact types
-  df_results <- df_results %>% mutate(
-      impactType_id     = impactType,
-      sector_impactType = sector_id %>% paste(impactType_id, sep="_"),
-      impactType        = sector_impactType %>% factor(levels=co_impactTypes$sector_impactType, labels=co_impactTypes$impactType_label)
-    ) %>% select(-c("impactType_id", "sector_impactType"))
-  ### Convert to character and drop sector id
-  df_results <- df_results %>%
-    mutate_at(vars(sector, variant, impactYear, impactType, model_type, model, region), as.character) %>%
-    select(-c("sector_id")) %>% filter(!is.na(sector))
+  modelCols0 <- c("model_label", "modelType_label", "modelUnitValue", "modelUnit_label", "modelUnitDesc")
+  modelCols1 <- c("model"      , "model_type"     , "driverValue"   , "driverUnit",      "driverType")
+  modelCols2 <- c("model_id", "model_dot", "model_underscore", "modelUnit_id")
+  modelCols3 <- c("modelRefYear", "modelMaxOutput", "modelUnitScale", "modelMaxExtrap")
+  df_results <- df_results %>% select(-c("model_type"))
+  df_results <- df_results %>% rename_at(.vars=c(all_of(modelCols0)), ~modelCols1)
+  df_results <- df_results %>% select(-c(all_of(modelCols2), all_of(modelCols3)))
+  rm("modelCols0", "modelCols1", "modelCols2", "modelCols3")
+  # df_results %>% names %>% print
+  # (df_results %>% filter(driverUnit=="cm"))$year %>% range %>% print
 
-  ###### Simplify the Dataframe ######
-  ### Scalar column names
-  cScalarNames <- c("physScalarName", "physAdjName", "damageAdjName", "physScalar") %>%
+  ### Variant labels
+  var_lvls   <- co_variants$sector_variant
+  var_lbls   <- co_variants$variant_label
+  df_results <- df_results %>% mutate(sect_var = sector_id %>% paste(variant, sep="_"))
+  df_results <- df_results %>% mutate(variant  = sect_var %>% factor(var_lvls, var_lbls))
+  df_results <- df_results %>% select(-c("sect_var"))
+  rm("var_lvls", "var_lbls")
+  # (df_results %>% filter(driverUnit=="cm"))$year %>% range %>% print
+
+  ### Impact types
+  imp_lvls   <- co_impactTypes$sector_impactType
+  imp_lbls   <- co_impactTypes$impactType_label
+  df_results <- df_results %>% mutate(sect_imp   = sector_id %>% paste(impactType, sep="_"))
+  df_results <- df_results %>% mutate(impactType = sect_imp %>% factor(imp_lvls, imp_lbls))
+  df_results <- df_results %>% select(-c("sect_imp", "sector_id"))
+  rm("imp_lvls", "imp_lbls")
+  # (df_results %>% filter(driverUnit=="cm"))$year %>% range %>% print
+
+  ###### Columns ######
+  ### Scalar column names, Sector info names, Scenario names
+  cGroupByCols0    <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region")
+  cAddCols0        <- c("sectorprimary", "includeaggregate")
+  cSectorInfoNames <- c("modelUnitType", "c0", "c1", "exp0", "year0")
+  cScenarioNames   <- c("scenario_id")
+  cScalarNames     <- c("physScalarName", "physAdjName", "damageAdjName", "physScalar") %>%
     c("physScalarValue", "physAdjValue"       , "damageAdjValue") %>%
     c("econScalarName" , "econMultiplierName" , "econScalar") %>%
     c("econScalarValue", "econMultiplierValue", "econAdjValue", "econMultiplier") %>%
     c("physEconScalar" , "scaled_impacts")
-  ### Sector info names
-  cSectorInfoNames <- c("modelUnitType", "c0", "c1", "exp0", "year0")
-  ### Scenario names
-  cScenarioNames   <- c("scenario_id")
-  ### Filter some columns
-  selectCols0 <- c(cScenarioNames, cScalarNames, cSectorInfoNames)
+  selectCols0      <- c(cScenarioNames, cScalarNames, cSectorInfoNames)
+
+  ### Convert to character and drop sector id
+  df_results <- df_results %>% mutate_at(.vars = c(all_of(cGroupByCols0)), as.character)
+  df_results <- df_results %>% filter(!is.na(sector))
+  # (df_results %>% filter(driverUnit=="cm"))$year %>% range %>% print
+
+  ###### Testing ######
   if(!testing) {df_results <- df_results %>% select(-c(all_of(selectCols0)))}
-
-  ###### SLR Interpolation ######
-  c_modelTypes <- df_results$model_type %>% unique
-  # df_results   <- df_results %>% filter(year >= minYear) %>% filter(year <= maxYear)
-  # df_results   <- df_results %>% filter(year > 2090)
-  if("slr" %in% tolower(c_modelTypes)){
-    df_results_nonSLR <- df_results %>% filter(tolower(model_type)!="slr")
-    df_results_SLR    <- df_results %>% filter(tolower(model_type)=="slr")
-    # df_results_SLR$model %>% unique %>% print
-    # df_results_SLR %>% dim %>% print
-    # df_results_SLR %>% filter(sector=="Coastal Properties") %>% filter(region=="Northeast") %>% filter(variant=="No Adaptation") %>% filter(model == "30 cm" ) %>% dim %>% print
-
-    slrGroupByCols    <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region", "sectorprimary", "includeaggregate")
-    slr_results_names <- df_results_SLR %>% names
-    slrGroupByCols    <- slrGroupByCols[which(slrGroupByCols %in% slr_results_names)]
-
-    df_results_SLR    <- df_results_SLR %>%
-      aggregate_impacts(aggLevels = "modelaverage", groupByCols = slrGroupByCols, mode="slrinterpolation")
-
-    # return(df_results_SLR)
-    df_results        <- df_results_nonSLR %>% rbind(df_results_SLR)
-
-    rm("df_results_nonSLR", "df_results_SLR", "slrGroupByCols", "slr_results_names")
-  }
 
 
   ###### Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data:
   if(requiresAgg){
-
-    aggGroupByCols <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region")
-    includeAggCol  <- "includeaggregate"
-
+    ### Aggregation types
+    aggGroupByCols <- cGroupByCols0
+    includeAggCol  <- c("includeaggregate")
+    if( primaryTypes){df_results     <- df_results %>% filter(includeaggregate==1) %>% select(-c(all_of(includeAggCol)))}
+    if(!primaryTypes){aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)}
     ### If the user specifies primary type, filter to primary types and variants and drop that column
-    if(primaryTypes){
-      df_results    <- df_results %>% filter(includeaggregate==1) %>% select(-c(all_of(includeAggCol)))
-    } else{
-      aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)
-    }
-    agg_results_names <- df_results %>% names
     df_results <- df_results %>% as.data.frame %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
-    # df_results <- df_results %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
-
-    rm("aggGroupByCols", "agg_results_names")
+    rm("aggGroupByCols")
   }
-
+  # df_results %>% names %>% print
 
   ###### Order the Output ######
   ### Convert levels to character
@@ -807,7 +824,7 @@ run_fredi <- function(
 
   ###### Format Dataframe ######
   df_results   <- df_results %>% ungroup %>% as.data.frame
-
+  # df_results %>% filter(driverUnit=="cm") %>% filter(!is.na(annual_impacts)) %>% nrow %>% print
   ###### Return Object ######
   message("\n", "Finished", ".")
   return(df_results)

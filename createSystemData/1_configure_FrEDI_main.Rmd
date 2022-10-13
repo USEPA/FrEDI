@@ -708,6 +708,7 @@ frediPath %>% load_all
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", thru2300=T)
 test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2200)
 test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
+test1 %>% glimpse
 # test1 <- test1 %>% aggregate_impacts(aggLevels = "all")
 test1$driverUnit %>% unique
 ```
@@ -719,12 +720,15 @@ First checks: There are more NA values than non NA values
 ```{r}
 test1$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
 test1$annual_impacts %>% (function(x){c(length(which(!is.nan(x))), length(which(is.nan(x))))})
+(test1 %>% filter(driverUnit=="cm"))$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
 ```
 
 
 Examine missing values
 
 ```{r test1_na}
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
 test1_na <- test1 %>% filter(is.na(annual_impacts))
 test1_na %>% glimpse
 test1_na$sector %>% unique

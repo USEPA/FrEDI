@@ -1051,3 +1051,115 @@ fun_getScale <-
     return(return_list)
   }
 
+####### fredi_slrInterp ######
+fredi_slrInterp <- function(
+    data_x,
+    slr_x, ### slrScenario
+    groupByCols
+    # drivers_x ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
+    # drivers_x, ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
+    ){
+  names_slr      <- data_x %>% names; #names_slr %>% print
+  ### Summary columns
+  slrSumCols     <- c("scaled_impacts")
+  n_slrSumCols   <- slrSumCols %>% length
+  slrMutCols     <- c("lower_model", "upper_model")
+
+  ### Info names
+  ### "year", "driverValue", "lower_model" , "upper_model", "lower_slr" ,  "upper_slr"
+  data_xAdj      <- slr_x; rm("slr_x")
+  names_slrAdj   <- data_xAdj %>% names; #names_slrAdj %>% print
+  other_slrCols  <- names_slrAdj[which(names_slrAdj!="year")]
+  join_slrCols   <- c(groupByCols, "year") ### sectorprimary, includeaggregate
+  join_cols0     <- c("driverValue", "year")
+
+  ### Format values
+  data_xAdj      <- data_xAdj %>% mutate_at(.vars=c(all_of(slrMutCols)), as.character)
+
+  ### Join with slrInfo and convert columns to character
+  data_xAdj      <- data_xAdj %>% mutate(equal_models = lower_model == upper_model)
+  data_x         <- data_x    %>% left_join(data_xAdj, by=all_of(join_cols0))
+  data_x %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
+  rm("data_xAdj")
+
+  ### Filter to conditions
+  data_xEqual    <- data_x %>% filter( equal_models) %>% select(-c("equal_models"));
+  data_xOther    <- data_x %>% filter(!equal_models) %>% select(-c("equal_models"));
+  data_x %>% names %>% print
+  data_x$model %>% unique %>% print
+  data_x$model_dot %>% unique %>% print
+  data_x$lower_model %>% unique %>% print
+  data_x$upper_model %>% unique %>% print
+  c(nrow(data_xEqual), nrow(data_xOther)) %>% print
+  rm("data_x")
+  ### Process observations that are equal
+  if(nrow(data_xEqual)){
+    ### Filter observations that are zeros only and make the summary column values zero
+    data_xEqual0    <- data_xEqual %>% filter(lower_model=="0cm") %>% filter(model_dot=="30cm")
+    data_xEqual1    <- data_xEqual %>% filter(lower_model!="0cm") %>% filter(model_dot==lower_model)
+    c(nrow(data_xEqual0), nrow(data_xEqual1)) %>% print
+    rm("data_xEqual")
+    ### For observations that are zeros only and make the summary column values zero
+    data_xEqual0    <- data_xEqual0 %>% mutate_at(.vars=c(all_of(slrSumCols)), function(y){0})
+    ### Bind values back together
+    data_xEqual     <- data_xEqual0 %>% rbind(data_xEqual1)
+    rm("data_xEqual0", "data_xEqual1")
+    ### Rename the model_dot, select appropriate columns
+    data_xEqual     <- data_xEqual %>% mutate(model_dot="Interpolation")
+    # data_xEqual %>% names%>% print
+    data_xEqual     <- data_xEqual %>% select(c(all_of(names_slr)))
+  } ### End if length(which_equal) > 0
+
+  ### Observations that are greater than zero
+  if(nrow(data_xOther)){
+    ### Lower and upper column names and new names
+    lowerSumCols   <- slrSumCols %>% paste("lower", sep="_")
+    upperSumCols   <- slrSumCols %>% paste("upper", sep="_")
+    ### Filter lower model_dot observations to those with a lower model_dot value == "0 cm" and others and drop model_dot column
+    data_xLower0   <- data_xOther %>% filter(lower_model=="0cm")
+    data_xLower1   <- data_xOther %>% filter(lower_model!="0cm")
+    data_xUpper    <- data_xOther %>% filter(model_dot==upper_model ) %>% select(-c("model_dot"))
+    rm("data_xOther")
+    ### Rename columns
+    data_xLower0   <- data_xLower0 %>% rename_with(~lowerSumCols[which(slrSumCols==.x)], .cols=slrSumCols)
+    data_xLower1   <- data_xLower1 %>% rename_with(~lowerSumCols[which(slrSumCols==.x)], .cols=slrSumCols)
+    data_xUpper    <- data_xUpper  %>% rename_with(~upperSumCols[which(slrSumCols==.x)], .cols=slrSumCols)
+    # rm("lowerSumCols", "upperSumCols")
+    ### Convert values for observations with a lower model_dot value =="0 cm" to zero
+    data_xLower0   <- data_xLower0 %>% mutate_at(.vars=c(all_of(lowerSumCols)), function(y){0})
+    # ### Convert values for observations with a lower model_dot value =="0 cm" to zero
+    # data_xLower0   <- data_xLower0 %>% mutate_at(.vars=c(all_of(slrSumCols)), function(y){0})
+    ### Filter values
+    data_xLower0   <- data_xLower0 %>% filter(model_dot=="30 cm"    )
+    data_xLower1   <- data_xLower1 %>% filter(model_dot==lower_model)
+    data_xLower    <- data_xLower0 %>% rbind(data_xLower1) %>% select(-c("model_dot"))
+    rm("data_xLower0", "data_xLower1")
+    ### Join upper and lower data frames
+    data_xOther    <- data_xLower %>% left_join(data_xUpper, by = c(all_of(join_slrCols)))
+    rm("data_xLower", "data_xUpper")
+
+    ### Calculate the new value
+    # data_xOther %>% names %>% print
+    slrLowerVals  <- data_xOther[, lowerSumCols]
+    slrUpperVals  <- data_xOther[, upperSumCols]
+    slrOtherAdj   <- data_xOther[, "adj_slr"]  %>% as.vector
+    slrNewFactors <- (slrUpperVals - slrLowerVals) * (1 - slrOtherAdj)
+    slrNewValues  <- slrLowerVals + slrNewFactors
+    data_xOther[,slrSumCols] <- slrNewValues
+    rm("slrLowerVals", "slrUpperVals", "slrOtherAdj", "slrNewFactors", "slrNewValues")
+    rm("lowerSumCols", "upperSumCols")
+    ### When finished, drop columns and mutate model_dot column
+    # data_xOther %>% names %>% print
+    data_xOther <- data_xOther %>% mutate(model_dot="Interpolation")
+    data_xOther <- data_xOther %>% select(c(all_of(names_slr)))
+
+  } ### End if (nrow(data_xOther) > 0)
+
+  ### Bind SLR averages together
+  # c(nrow(data_xEqual), nrow(data_xOther)) %>% print
+  data_x <- data_xEqual %>% rbind(data_xOther)
+  # data_x %>% nrow %>% print
+  rm("data_xEqual", "data_xOther")
+
+  return(data_x)
+}
