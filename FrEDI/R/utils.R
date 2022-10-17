@@ -264,7 +264,7 @@ get_scenario_id <- function(
     cols0  <- cols0[cCheck]
   }
   scen_x <- data_x[,cols0]
-  scen_x <- scen_x %>% apply(1, simplify="array", function(x){as.vector(x) %>% paste(collapse ="_")}) %>% unlist
+  scen_x <- scen_x %>% apply(1, function(x){as.vector(x) %>% paste(collapse ="_")}) %>% unlist
   data_x <- data_x %>% mutate(scenario_id = scen_x)
   return(data_x)
 }
@@ -1059,6 +1059,7 @@ fredi_slrInterp <- function(
     # drivers_x ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
     # drivers_x, ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
     ){
+  
   names_slr      <- data_x %>% names; #names_slr %>% print
   ### Summary columns
   slrSumCols     <- c("scaled_impacts")
@@ -1135,7 +1136,7 @@ fredi_slrInterp <- function(
     data_xLower    <- data_xLower0 %>% rbind(data_xLower1) %>% select(-c("model_dot"))
     rm("data_xLower0", "data_xLower1")
     ### Join upper and lower data frames
-    data_xOther    <- data_xLower %>% left_join(data_xUpper, by = c(all_of(join_slrCols)))
+    data_xOther    <- data_xLower %>% left_join(data_xUpper)# by = c(all_of(join_slrCols[-6])))
     rm("data_xLower", "data_xUpper")
 
     ### Calculate the new value

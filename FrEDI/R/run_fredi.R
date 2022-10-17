@@ -98,7 +98,18 @@ run_fredi <- function(
     rate       = 0.03, ### Ratio, defaults to 0.03
     silent     = TRUE  ### Whether to message the user
 ){
-
+  
+  sectorList = c_sectorsList
+  aggLevels="none"
+  maxYear=2200
+   inputsList = testInputs$ramp
+   elasticity = NULL
+  thru2300   = FALSE
+   pv         = FALSE
+   rate       = 0.03
+   baseYear   = 2010
+   rate       = 0.03
+   silent     = TRUE
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent   <- ifelse(is.null(silent), T, silent)
@@ -145,8 +156,7 @@ run_fredi <- function(
     } else{
       requiresAgg <- length(aggLevels) > 0
     }
-  }
-  else{aggLevels <- aggList0; requiresAgg  <- F}
+  } else{aggLevels <- aggList0; requiresAgg  <- F}
 
   # ### Aggregate to impact years or national...reduces the columns in output
   # impactYearsAgg <- ifelse("impactyear"   %in% aggLevels, T, F)
@@ -194,8 +204,7 @@ run_fredi <- function(
   list_inputs     <- co_inputScenarioInfo$inputName
   num_inputNames  <- co_inputScenarioInfo %>% nrow
 
-  if(is.null(inputsList)) {inputsList <- list()}
-  else                    {message("Checking input values...")}
+  if(is.null(inputsList)) {inputsList <- list()}else{message("Checking input values...")}
   ### Iterate over the input list
   # if(!is.null(inputsList)){
   ### Assign inputs to objects
@@ -265,8 +274,7 @@ run_fredi <- function(
     temp_df  <- temp_df  %>% rename(temp_C_conus = temp_C)
     temp_df  <- temp_df  %>% mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
     rm("tempInput")
-  } ### End if(has_tempUpdate)
-  else{
+  } else{
     ### No need to interpolate these values since they're already interpolated
     message("Creating temperature scenario from defaults...")
     # tempInput <- co_defaultScenario %>% filter(region==co_regions$region_dot[1])
@@ -316,8 +324,7 @@ run_fredi <- function(
       return(x_interp)
     })
     rm("slrInput")
-  } ### End if(has_slrUpdate)
-  else{
+  }  else{
     ### If there is no SLR scenario, calculate from temperatures
     ### First convert temperatures to global temperatures
     ### Then convert global temps to SLR
@@ -569,7 +576,7 @@ run_fredi <- function(
     slrDrivers     <- df_drivers  %>% filter(modelType=="slr") #%>% rename(model_type=modelType)
 
     ###### ** SLR Scaled Impacts Above Max #######
-    ### Examine driver values: combine with extremes
+    ### Examine driver values: combine with extremeSs
     slrMax         <- (co_modelTypes %>% filter(modelType=="slr"))$modelMaxOutput[1]
     ### Combine SLR with extremes and filter to appropriate years
     df_slrMax      <- slrDrivers
@@ -578,17 +585,17 @@ run_fredi <- function(
     df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0)
     # df_slrMax      <- df_slrMax   %>% filter(modelUnitValue > driverValue_ref)
     slrMaxYears    <- df_slrMax$year %>% unique %>% sort
-    rm("slrMax")
+    #rm("slrMax")
     ### Calculate scaled impacts for values > slrMax and adjust the model value
     df_slrMax      <- df_slrMax   %>% mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
     df_slrMax      <- df_slrMax   %>% mutate(model_dot = "Interpolation")
     # df_slrMax %>% names %>% print
-    df_slrMax      <- df_slrMax   %>% get_scenario_id(include=c("model_dot", "region"))
+    df_slrMax      <- df_slrMax   %>% get_scenario_id(.,include=c("model_dot", "region"))
     # check_max_ids <- df_slrMax$scenario_id; # check_max_ids %>% head %>% print; rm("check_max_ids)
 
     ###### ** SLR Other Scaled Impacts #######
     ### Get impacts and create scenario ID for values <= slrMax
-    df_slrImpacts  <- slrDrivers    %>% filter(!(year %in% slrMaxYears))
+    df_slrImpacts  <- slrDrivers    %>% filter((modelUnitValue <= slrMax))
     df_slrImpacts  <- df_slrImpacts %>% left_join(slrImpacts, by=c("year"))
     df_slrImpacts  <- df_slrImpacts %>% get_scenario_id(include=c("model_dot", "region"))
 
@@ -597,6 +604,7 @@ run_fredi <- function(
     ###### ** SLR Interpolation ######
     # df_results   <- df_results %>% filter(year >= minYear) %>% filter(year <= maxYear)
     # df_results   <- df_results %>% filter(year > 2090)
+  
     if(nrow_oth){
       ### Group by cols
       cols0          <- c("modelType",  "modelUnitValue")
@@ -624,13 +632,15 @@ run_fredi <- function(
       # df_slrImpacts %>% names %>% print
       df_slrImpacts  <- df_slrImpacts %>% rename_at(.vars=c(all_of(cols1[2])), ~cols0[2])
       df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
-      # df_slrImpacts %>% names %>% print
+      df_slrImpacts %>% names %>% print
+      #df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr.csv")), row.names=F, na="")
       rm("slrGroupByCols", "slr_names", "slrScenario")
       rm("cols0", "cols1")
     }
     rm("nrow_oth")
     df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
-
+    #df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr1.csv")), row.names=F, na="")
+  
 
     ###### ** SLR Join Scaled Impacts ######
     ### Add other results back in
@@ -642,19 +652,26 @@ run_fredi <- function(
 
     df_slrImpacts  <- df_slrImpacts %>% rbind(df_slrMax)
     df_slrImpacts  <- df_slrImpacts %>% arrange_at(.vars=c("scenario_id", "year"))
+    df_slrImpacts  <- df_slrImpacts %>% 
+      filter(!is.na(scaled_impacts)) %>% 
+      mutate(across('scenario_id',str_replace, '(\\d)[0-9]{1,3}cm', '\\Interpolation'))
+    df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr3.csv")), row.names=F, na="")
     rm("impactSelectCols", "df_slrMax")
     # df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
 
     ### Bind with other results
     # df_scenarioResults %>% names %>% print; df_slrImpacts$scenario_id %>% head %>% print
     df_scenarioResults  <- df_scenarioResults %>% rbind(df_slrImpacts)
+    df_scenarioResults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr4.csv")), row.names=F, na="")
     rm("df_slrImpacts")
 
     ###### ** SLR Initial Results #######
     ### Separate initial results out
     # initialResults_slr  <- initialResults_slr %>% mutate(scenario_id = scenario_id)
     initialResults_max  <- initialResults_slr %>% filter( (year %in% slrMaxYears))
+    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr5.csv")), row.names=F, na="")
     initialResults_slr  <- initialResults_slr %>% filter(!(year %in% slrMaxYears))
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr6.csv")), row.names=F, na="")
     ### Add additional columns
     addMaxCols          <- c("model_id", "model_dot", "model_label", "model_underscore")
     initialResults_max[,addMaxCols]  <- "Interpolation"
@@ -662,16 +679,27 @@ run_fredi <- function(
 
     ### Add scenarios
     initialResults_max  <- initialResults_max %>% get_scenario_id(include=c("model_dot", "region"))
-    initialResults_slr  <- initialResults_slr %>% get_scenario_id(include=c("model_dot", "region"))
+    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr7.csv")), row.names=F, na="")
+    initialResults_slr  <- initialResults_slr %>% get_scenario_id(include=c("model_dot", "region")) %>%
+                                                  mutate(across('scenario_id',str_replace,'slr','slr_Interpolation'))
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr8.csv")), row.names=F, na="")
     # check_inMax_ids <- initialResults_max$scenario_id; check_inSlr_ids <- initialResults_slr$scenario_id;
     # check_inMax_ids %>% head %>% print; check_inSlr_ids %>% head %>% print
 
     ### Join with model
     initialResults_max  <- initialResults_max %>% left_join(co_modelTypes, by="modelType")
-    initialResults_slr  <- initialResults_slr %>% left_join(co_models, by="modelType")
-
+    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr9.csv")), row.names=F, na="")
+    initialResults_slr  <- initialResults_slr %>% left_join(co_models, by="modelType") %>%
+                                                  mutate(model_id =	"Interpolation",
+                                                         model_dot =	"Interpolation",
+                                                         model_underscore =	"Interpolation",
+                                                         model_label = "Interpolation") %>% distinct()
+                                                           
+    
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr10.csv")), row.names=F, na="")
     ### Add scenarios and bind results
     initialResults_slr  <- initialResults_slr %>% rbind(initialResults_max)
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr11.csv")), row.names=F, na="")
     # # df_impacts %>% names %>% print
     # # initialResults_slr$scenario_id %>% head %>% print
     # initialResults_slr %>% filter(!is.na(econScalarValue)) %>% nrow %>% print
@@ -681,9 +709,11 @@ run_fredi <- function(
     ### Arrange and bind with other results
     initialResults_slr  <- initialResults_slr %>% select(-c("model_type"))
     initialResults_slr  <- initialResults_slr %>% arrange_at(.vars=c("scenario_id", "year"))
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr12.csv")), row.names=F, na="")
     # names1 <- initialResults_slr %>% names; names2 <- initialResults %>% names; # names1[!(names1 %in% names2)] %>% print
     # initialResults_slr %>% names %>% print; initialResults %>% names %>% print
     initialResults      <- initialResults %>% rbind(initialResults_slr)
+    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr13.csv")), row.names=F, na="")
     rm("initialResults_slr")
   }
 
@@ -694,6 +724,8 @@ run_fredi <- function(
   df_impacts <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
   rm("initialResults")
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
+  
+  df_impacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr14.csv")), row.names=F, na="")
   # df_impacts %>% names %>% print
   # initialResults$modelUnit_label %>% unique %>% print
   # df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
@@ -712,6 +744,7 @@ run_fredi <- function(
   df_impacts <- df_impacts %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_drivers <- df_drivers %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_results <- df_impacts %>% left_join(df_drivers, by=c("year", "model_type"))
+  df_impacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr15.csv")), row.names=F, na="")
   rm("df_impacts")
   # (df_results %>% filter(modelUnit_label=="cm"))$year %>% range %>% print
   # df_results %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
