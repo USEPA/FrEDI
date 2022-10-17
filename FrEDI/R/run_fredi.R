@@ -99,17 +99,17 @@ run_fredi <- function(
     silent     = TRUE  ### Whether to message the user
 ){
   
-  sectorList = c_sectorsList
-  aggLevels="none"
-  maxYear=2200
-   inputsList = testInputs$ramp
-   elasticity = NULL
-  thru2300   = FALSE
-   pv         = FALSE
-   rate       = 0.03
-   baseYear   = 2010
-   rate       = 0.03
-   silent     = TRUE
+  # sectorList = c_sectorsList
+  # aggLevels="none"
+  # maxYear=2200
+  #  inputsList = testInputs$ramp
+  #  elasticity = NULL
+  # thru2300   = FALSE
+  #  pv         = FALSE
+  #  rate       = 0.03
+  #  baseYear   = 2010
+  #  rate       = 0.03
+  #  silent     = TRUE
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent   <- ifelse(is.null(silent), T, silent)
@@ -735,7 +735,7 @@ run_fredi <- function(
   ### Annual impacts = phys-econ scalar value by the scaled impacts
   df_impacts <- df_impacts %>% mutate(hasPhysImpacts   = 1 * !is.na(physicalmeasure))
   df_impacts <- df_impacts %>% mutate(physical_impacts = hasPhysImpacts * scaled_impacts * physScalar)
-  df_impacts <- df_impacts %>% mutate(annual_impacts   = hasPhysImpacts * scaled_impacts * physEconScalar)
+  df_impacts <- df_impacts %>% mutate(annual_impacts   = scaled_impacts * physEconScalar)
   df_impacts <- df_impacts %>% select(-c("hasPhysImpacts")) #%>% as.data.frame
 
   ###### Add Scenario Information ######
