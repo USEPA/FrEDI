@@ -721,7 +721,7 @@ run_fredi <- function(
   df_impacts <- df_impacts %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_drivers <- df_drivers %>% filter(year>=minYear) %>% rename(model_type = modelType)
   df_results <- df_impacts %>% left_join(df_drivers, by=c("year", "model_type"))
-  df_impacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr15.csv")), row.names=F, na="")
+
   rm("df_impacts")
   # (df_results %>% filter(modelUnit_label=="cm"))$year %>% range %>% print
   # df_results %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
