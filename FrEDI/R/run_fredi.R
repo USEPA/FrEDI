@@ -99,7 +99,15 @@ run_fredi <- function(
     silent     = TRUE  ### Whether to message the user
 ){
   
-
+  # sectorList = c_sectorsList
+  # aggLevels="none"
+  # maxYear=2300
+  # inputsList = testInputs$ramp
+  # elasticity = NULL
+  # pv         = FALSE
+  # baseYear   = 2010
+  # rate       = 0.03
+  # silent     = TRUE
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent   <- ifelse(is.null(silent), T, silent)
@@ -571,7 +579,7 @@ run_fredi <- function(
     ### Combine SLR with extremes and filter to appropriate years
     df_slrMax      <- slrDrivers
     df_slrMax      <- df_slrMax   %>% left_join(slrExtremes, by=c("year"))
-    df_slrMax      <- df_slrMax   %>% mutate(deltaDriver = driverValue_ref - modelUnitValue)
+    df_slrMax      <- df_slrMax   %>% mutate(deltaDriver = modelUnitValue-driverValue_ref)
     df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0)
     # df_slrMax      <- df_slrMax   %>% filter(modelUnitValue > driverValue_ref)
     slrMaxYears    <- df_slrMax$year %>% unique %>% sort
@@ -585,7 +593,8 @@ run_fredi <- function(
 
     ###### ** SLR Other Scaled Impacts #######
     ### Get impacts and create scenario ID for values <= slrMax
-    df_slrImpacts  <- slrDrivers    %>% filter((modelUnitValue <= slrMax))
+    y <- list_years[!(list_years %in% slrMaxYears)]
+    df_slrImpacts  <- slrDrivers    %>% filter(year %in% y)
     df_slrImpacts  <- df_slrImpacts %>% left_join(slrImpacts, by=c("year"))
     df_slrImpacts  <- df_slrImpacts %>% get_scenario_id(include=c("model_dot", "region"))
 

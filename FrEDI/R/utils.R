@@ -1060,6 +1060,10 @@ fredi_slrInterp <- function(
     # drivers_x, ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
     ){
   
+  #data_x <-df_slrImpacts
+  #slr_x = slrScenario
+  #groupByCols=slrGroupByCols
+  
   names_slr      <- data_x %>% names; #names_slr %>% print
   ### Summary columns
   slrSumCols     <- c("scaled_impacts")
@@ -1136,7 +1140,7 @@ fredi_slrInterp <- function(
     data_xLower    <- data_xLower0 %>% rbind(data_xLower1) %>% select(-c("model_dot"))
     rm("data_xLower0", "data_xLower1")
     ### Join upper and lower data frames
-    data_xOther    <- data_xLower %>% left_join(data_xUpper)# by = c(all_of(join_slrCols[-6])))
+    data_xOther    <- data_xLower %>% select(-model,-scenario_id) %>% left_join(data_xUpper)#, by = c(all_of(join_slrCols[-5:-6])))
     rm("data_xLower", "data_xUpper")
 
     ### Calculate the new value
