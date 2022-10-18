@@ -52,11 +52,7 @@ aggregate_impacts <- function(
     mode = "all"
 ){
   
-  # data <- df_results %>% as.data.frame 
-  # aggLevels = aggLevels
-  # groupByCols = aggGroupByCols
-  # columns     = c("annual_impacts")
-  # mode = "all"
+ 
   ###### Defaults ######
   ### Not used currently; preserving it in messaging logicals for the future
   msgUser <- T
