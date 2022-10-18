@@ -99,17 +99,7 @@ run_fredi <- function(
     silent     = TRUE  ### Whether to message the user
 ){
   
-  # sectorList = c_sectorsList
-  # aggLevels="none"
-  # maxYear=2200
-  #  inputsList = testInputs$ramp
-  #  elasticity = NULL
-  # thru2300   = FALSE
-  #  pv         = FALSE
-  #  rate       = 0.03
-  #  baseYear   = 2010
-  #  rate       = 0.03
-  #  silent     = TRUE
+
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent   <- ifelse(is.null(silent), T, silent)
@@ -633,13 +623,11 @@ run_fredi <- function(
       df_slrImpacts  <- df_slrImpacts %>% rename_at(.vars=c(all_of(cols1[2])), ~cols0[2])
       df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
       df_slrImpacts %>% names %>% print
-      #df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr.csv")), row.names=F, na="")
       rm("slrGroupByCols", "slr_names", "slrScenario")
       rm("cols0", "cols1")
     }
     rm("nrow_oth")
     df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
-    #df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr1.csv")), row.names=F, na="")
   
 
     ###### ** SLR Join Scaled Impacts ######
@@ -655,23 +643,19 @@ run_fredi <- function(
     df_slrImpacts  <- df_slrImpacts %>% 
       filter(!is.na(scaled_impacts)) %>% 
       mutate(across('scenario_id',str_replace, '(\\d)[0-9]{1,3}cm', '\\Interpolation'))
-    df_slrImpacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr3.csv")), row.names=F, na="")
     rm("impactSelectCols", "df_slrMax")
     # df_slrImpacts %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
 
     ### Bind with other results
     # df_scenarioResults %>% names %>% print; df_slrImpacts$scenario_id %>% head %>% print
     df_scenarioResults  <- df_scenarioResults %>% rbind(df_slrImpacts)
-    df_scenarioResults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr4.csv")), row.names=F, na="")
     rm("df_slrImpacts")
 
     ###### ** SLR Initial Results #######
     ### Separate initial results out
     # initialResults_slr  <- initialResults_slr %>% mutate(scenario_id = scenario_id)
     initialResults_max  <- initialResults_slr %>% filter( (year %in% slrMaxYears))
-    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr5.csv")), row.names=F, na="")
     initialResults_slr  <- initialResults_slr %>% filter(!(year %in% slrMaxYears))
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr6.csv")), row.names=F, na="")
     ### Add additional columns
     addMaxCols          <- c("model_id", "model_dot", "model_label", "model_underscore")
     initialResults_max[,addMaxCols]  <- "Interpolation"
@@ -679,27 +663,22 @@ run_fredi <- function(
 
     ### Add scenarios
     initialResults_max  <- initialResults_max %>% get_scenario_id(include=c("model_dot", "region"))
-    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr7.csv")), row.names=F, na="")
     initialResults_slr  <- initialResults_slr %>% get_scenario_id(include=c("model_dot", "region")) %>%
                                                   mutate(across('scenario_id',str_replace,'slr','slr_Interpolation'))
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr8.csv")), row.names=F, na="")
+
     # check_inMax_ids <- initialResults_max$scenario_id; check_inSlr_ids <- initialResults_slr$scenario_id;
     # check_inMax_ids %>% head %>% print; check_inSlr_ids %>% head %>% print
 
     ### Join with model
     initialResults_max  <- initialResults_max %>% left_join(co_modelTypes, by="modelType")
-    initialResults_max %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr9.csv")), row.names=F, na="")
     initialResults_slr  <- initialResults_slr %>% left_join(co_models, by="modelType") %>%
                                                   mutate(model_id =	"Interpolation",
                                                          model_dot =	"Interpolation",
                                                          model_underscore =	"Interpolation",
                                                          model_label = "Interpolation") %>% distinct()
                                                            
-    
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr10.csv")), row.names=F, na="")
-    ### Add scenarios and bind results
+        ### Add scenarios and bind results
     initialResults_slr  <- initialResults_slr %>% rbind(initialResults_max)
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr11.csv")), row.names=F, na="")
     # # df_impacts %>% names %>% print
     # # initialResults_slr$scenario_id %>% head %>% print
     # initialResults_slr %>% filter(!is.na(econScalarValue)) %>% nrow %>% print
@@ -709,11 +688,10 @@ run_fredi <- function(
     ### Arrange and bind with other results
     initialResults_slr  <- initialResults_slr %>% select(-c("model_type"))
     initialResults_slr  <- initialResults_slr %>% arrange_at(.vars=c("scenario_id", "year"))
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr12.csv")), row.names=F, na="")
+
     # names1 <- initialResults_slr %>% names; names2 <- initialResults %>% names; # names1[!(names1 %in% names2)] %>% print
     # initialResults_slr %>% names %>% print; initialResults %>% names %>% print
     initialResults      <- initialResults %>% rbind(initialResults_slr)
-    initialResults_slr %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr13.csv")), row.names=F, na="")
     rm("initialResults_slr")
   }
 
@@ -724,8 +702,7 @@ run_fredi <- function(
   df_impacts <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
   rm("initialResults")
   if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
-  
-  df_impacts %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qcslr14.csv")), row.names=F, na="")
+
   # df_impacts %>% names %>% print
   # initialResults$modelUnit_label %>% unique %>% print
   # df_impacts %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
