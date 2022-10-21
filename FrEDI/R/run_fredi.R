@@ -99,15 +99,7 @@ run_fredi <- function(
     silent     = TRUE  ### Whether to message the user
 ){
   
-  # sectorList = c_sectorsList
-  # aggLevels="none"
-  # maxYear=2300
-  # inputsList = testInputs$ramp
-  # elasticity = NULL
-  # pv         = FALSE
-  # baseYear   = 2010
-  # rate       = 0.03
-  # silent     = TRUE
+
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent   <- ifelse(is.null(silent), T, silent)
@@ -422,7 +414,7 @@ run_fredi <- function(
   co_npdScalars <- data.frame(
     sector          = c("CoastalProperties", "HTF"),
     npd_scalarType  = c("gdp_percap", "gdp_usd"),
-    c1   = c(1,  0.16425),
+    c1   = c(1,  0.1625),
     exp0 = c(ifelse(is.null(elasticity), 0.45, elasticity), 1),
     c2   = c(0, 0.8375)
   )
@@ -580,7 +572,13 @@ run_fredi <- function(
     df_slrMax      <- slrDrivers
     df_slrMax      <- df_slrMax   %>% left_join(slrExtremes, by=c("year"))
     df_slrMax      <- df_slrMax   %>% mutate(deltaDriver = modelUnitValue-driverValue_ref)
-    df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0)
+    df_slrMax      <- df_slrMax   %>% filter(deltaDriver >= 0) %>% mutate(
+                                      impacts_slope = case_when(
+                                                impacts_slope < 0 ~ 0,
+                                                TRUE ~ impacts_slope
+                                                )
+                                      )
+    
     # df_slrMax      <- df_slrMax   %>% filter(modelUnitValue > driverValue_ref)
     slrMaxYears    <- df_slrMax$year %>% unique %>% sort
     #rm("slrMax")
