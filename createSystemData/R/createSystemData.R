@@ -8,11 +8,12 @@ createSystemData <- function(
     save        = NULL,
     silent      = NULL  ### Whether to message the user
 ){
+  
   require(tidyverse)
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   silent  <- ifelse(is.null(silent), F, silent)
-  msgUser <- !silent
+  msgUser <- TRUE
   save    <- ifelse(is.null(save), F, save)
   
   ###### Create File Paths ######
@@ -38,7 +39,7 @@ createSystemData <- function(
   for(i in 1:length(fredi_config)){
     assign(names(fredi_config)[i], fredi_config[[i]])
   }
-  
+
   ###### Import Functions from ciraTempBin ######
   interpolate_annual  <- utils::getFromNamespace("interpolate_annual", "FrEDI")
   match_scalarValues  <- utils::getFromNamespace("match_scalarValues", "FrEDI")
@@ -132,7 +133,7 @@ createSystemData <- function(
     info_x  = co_scalarInfo, ### rDataList$co_scalarInfo
     years_x = list_years ### rDataList$list_years
   )
-  
+
   ###### Physical and Economic Scalars ######
   ### Physical scalars: Get population weights, then physical scalar multipliers
   ### Economic scalars: Get economic scalars, then multipliers
@@ -153,12 +154,19 @@ createSystemData <- function(
   df_results0 <- df_results0 %>% select(-c("gdp_usd", "reg_pop", "national_pop", "gdp_percap"))
   ### Message the user
   if(msgUser){message("\t", messages_data[["calcScalars"]]$success)}
-  
+
   ###### Get Scenario Info for Scaled Impacts  ######
   ### Refactor adaptation, impact years, impact types
   ### Add a column with a scenario id
-  data_scaledImpacts <- data_scaledImpacts %>% get_scenario_id(include=c("model_dot", "region_dot"))
+  #print(get_scenario_id(include=c("model_dot", "region_dot")))
+
+  #data_scaledImpacts <- data_scaledImpacts %>% get_scenario_id(include=c("model_dot", "region_dot"))
+
   
+  data_scaledImpacts <- data_scaledImpacts %>%
+    mutate(
+      scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region_dot, sep="_")
+    )
   ### Get list of scenarios for scenarios with at least some non-NA values
   impactScenariosList <- (
     data_scaledImpacts %>% 
@@ -175,7 +183,7 @@ createSystemData <- function(
   if(msgUser){message("\t", messages_data[["interpFuns"]]$try)}
   df_hasScenario         <- data_scaledImpacts %>% filter(hasScenario)
   list_impactFunctions   <- list()
-  
+
   # c_modelTypes   <- co_modelTypes$modelType_id
   c_modelTypes   <- c("gcm")
   for(modelType_i in c_modelTypes){
@@ -217,7 +225,7 @@ createSystemData <- function(
   )
   ### Combine with the data list
   rDataList <- c(loadDataList, rDataList)
-  
+ 
   ###### Save R Data objects ######
   ### If save:
   ### - Message the user

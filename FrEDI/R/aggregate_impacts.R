@@ -51,6 +51,8 @@ aggregate_impacts <- function(
     groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
     mode = "all"
 ){
+  
+ 
   ###### Defaults ######
   ### Not used currently; preserving it in messaging logicals for the future
   msgUser <- T
@@ -471,6 +473,7 @@ aggregate_impacts <- function(
       ### Add observations back in
       # df_aggImpacts <- df_aggImpacts %>% rbind(df_modelAves)
       df_gcm <- df_gcm %>% rbind(df_modelAves)
+      df_aggImpacts <- df_gcm %>% rbind(df_slr)
       rm("df_modelAves", "names_gcms")
     } ### End if nrow(df_gcm)
 

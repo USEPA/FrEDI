@@ -264,7 +264,7 @@ get_scenario_id <- function(
     cols0  <- cols0[cCheck]
   }
   scen_x <- data_x[,cols0]
-  scen_x <- scen_x %>% apply(1, simplify="array", function(x){as.vector(x) %>% paste(collapse ="_")}) %>% unlist
+  scen_x <- scen_x %>% apply(1, function(x){as.vector(x) %>% paste(collapse ="_")}) %>% unlist
   data_x <- data_x %>% mutate(scenario_id = scen_x)
   return(data_x)
 }
@@ -739,6 +739,7 @@ fun_slrConfigExtremes <- function(
     slr_x, ### rDataList$slr_cm
     imp_x  ### rDataList$slrImpacts
 ){
+
   ### Vectors
   slrCols0 <- c("year", "model_cm")
   impCols0 <- c("sector", "variant", "region", "year", slrCols0)
@@ -762,27 +763,37 @@ fun_slrConfigExtremes <- function(
     arrange_at(.vars=c(all_of(impCols0)));
   rm("imp_x")
   # imp_df %>% head %>% print
-
+  
+  
   ### Get upper and lower for each year
   slrYears <- slr_df$year %>% unique %>% sort
   slr_extr <- slrYears %>% lapply(function(
     year_i, data_x = slr_df
   ){
+    print(year_i)
+    
     data_i     <- data_x %>% filter(year==year_i) %>% arrange_at(.vars=c(all_of(arrange0)))
+    # df_i <- data_i %>% group_by(driverValue) %>%
+    #                                        slice(which.max(model_cm)) %>%
+    #                                        ungroup() %>%
+    #                                        filter(row_number() >= (n() - 1)) %>%
+    #                             select(year, model_dot,driverValue) %>%
+    #                             mutate(valueType = (bounds0))
+    
     vals_i     <- data_i$driverValue
     ### Unique values and length
     unique_i   <- vals_i %>% unique;
     n_unique_i <- unique_i %>% length
     ### Figure out which the last values belong to
-    last_i     <- vals_i[n_unique_i + (-1):0]
+    last_i     <- unique_i[n_unique_i + (-1):0]
     which_i    <- last_i %>% lapply(function(val_j, vals_y = vals_i){
       (vals_y == val_j) %>% which %>% last
     }) %>% unlist
     ### Get driver values and models for the last values
     drivers_i  <- data_i$driverValue[which_i]
     models_i   <- data_i$model_dot[which_i]
-    ### Create a return a dataframe with the model value, driver value, year, and bound
-    df_i       <- data.frame(year = year_i, model_dot = models_i, driverValue = drivers_i, valueType = c(bounds0))
+    # ### Create a return a dataframe with the model value, driver value, year, and bound
+     df_i       <- data.frame(year = year_i, model_dot = models_i, driverValue = drivers_i, valueType = c(bounds0))
     return(df_i)
   }) %>% (function(df_i){do.call(rbind, df_i)})
   # slr_extr %>% glimpse %>% print; slr_extr$model_dot %>% unique %>% print
@@ -1059,6 +1070,11 @@ fredi_slrInterp <- function(
     # drivers_x ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
     # drivers_x, ### driverScenario %>% filter(tolower(model_type)=="slr") %>% select(-c("model_type"))
     ){
+  
+  #data_x <-df_slrImpacts
+  #slr_x = slrScenario
+  #groupByCols=slrGroupByCols
+  
   names_slr      <- data_x %>% names; #names_slr %>% print
   ### Summary columns
   slrSumCols     <- c("scaled_impacts")
@@ -1135,7 +1151,7 @@ fredi_slrInterp <- function(
     data_xLower    <- data_xLower0 %>% rbind(data_xLower1) %>% select(-c("model_dot"))
     rm("data_xLower0", "data_xLower1")
     ### Join upper and lower data frames
-    data_xOther    <- data_xLower %>% left_join(data_xUpper, by = c(all_of(join_slrCols)))
+    data_xOther    <- data_xLower %>% select(-model,-scenario_id) %>% left_join(data_xUpper)#, by = c(all_of(join_slrCols[-5:-6])))
     rm("data_xLower", "data_xUpper")
 
     ### Calculate the new value
