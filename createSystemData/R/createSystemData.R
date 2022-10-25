@@ -68,45 +68,48 @@ createSystemData <- function(
   ### Exclude some sectors, get the number of sectors and sector info
   ### Sector info with additional sector info: df_sectorsInfo
   ### Sector info with models: df_sectorsModels
-  num_sectors  <- co_sectors %>% nrow #; num_sectors
-  sector_ids   <- co_sectors$sector_id
+  num_sectors <- co_sectors %>% nrow #; num_sectors
+  sector_ids  <- co_sectors$sector_id
   
   ###### Interpolate Default Scenario ######
-  ### Interpolate annual values and calculate GDP per capita
-  gdp_default <- co_defaultScenario %>% filter(region==co_regions$region[1]) %>%
-    select(year, gdp_usd) %>% mutate(region="National.Total") %>%
-    interpolate_annual(years= list_years, column = "gdp_usd", rule=1:2)
+  ### Interpolate annual values for population and calculate national population
+  popCols     <- c("year", "region", "reg_pop")
+  pop_default <- co_defaultScenario %>% select(c(all_of(popCols)))
+  pop_default <- pop_default %>% interpolate_annual(years= list_years, column="reg_pop", rule=1:2)
+  # pop_default %>% names %>% print
   
-  pop_default <- co_defaultScenario %>%
-    select(year, reg_pop, region) %>%
-    interpolate_annual(years= list_years, column="reg_pop", rule=1:2)
+  df_national <- pop_default %>% 
+    group_by_at(.vars=c(popCols[1])) %>% 
+    summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>% ungroup
+  df_national <- df_national %>% rename(national_pop = reg_pop)
+  national_pop_default <- df_national
+  # df_national %>% names %>% print
   
-  national_pop_default <- pop_default %>%
-    group_by(year) %>%
-    summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>%
-    rename(national_pop = reg_pop) %>%
-    mutate(region="National.Total")
-  
-  # ### National scenario
-  national_scenario_default <- gdp_default %>%
-    left_join(national_pop_default, by=c("year", "region")) %>%
-    mutate(gdp_percap = gdp_usd/national_pop)
-  
-  ### Join GDP with national totals and population
-  df_defaultScenario <- national_scenario_default %>%
-    select(-region) %>%
-    left_join(pop_default, by = "year")
-  rm("national_scenario_default")
+  ### Interpolate annual values for GDP
+  gdpCols     <- c("year", "gdp_usd")
+  nationalDot <- c("National.Total")
+  gdp_default <- co_defaultScenario %>% filter(region==co_regions$region[1])
+  gdp_default <- gdp_default %>% select(c(all_of(gdpCols))) %>% mutate(region=nationalDot)
+  gdp_default <- gdp_default %>% interpolate_annual(years= list_years, column = "gdp_usd", rule=1:2)
+  ### Default scenario: Join national values with regional population by year
+  ### Calculate GDP per capita
+  df_national <- gdp_default %>% select(-c("region")) %>% left_join(df_national, by=c(all_of(gdpCols[1])))
+  df_national <- df_national %>% mutate(gdp_percap = gdp_usd/national_pop)
+  ### Default scenario: Join national values with regional population by year
+  df_defaultScenario <- df_national %>% left_join(pop_default, by = gdpCols[1])
+  # df_defaultScenario %>% names %>% print
+  rm("df_national", "gdpCols", "popCols")
   
   ###### Extreme SLR Scenarios ######
   ### Do nothing to slr_cm and slrImpacts
   # loadDataList[["slr_cm"    ]] <- slr_cm; #rm("slr_cm")
   # loadDataList[["slrImpacts"]] <- slrImpacts; #rm("slrImpacts")
   # slr_cm %>% names %>% print; slrImpacts %>% names %>% print; 
-  # slr_cm <- slr_cm %>% rename(model_type = model_type)
+  slr_cm     <- slr_cm     %>% mutate(model_type = model_type %>% replace_na("slr") %>% as.character)
+  slrImpacts <- slrImpacts %>% mutate(model_type = model_type %>% replace_na("slr") %>% as.character)
   ### Create data for extreme values above 250cm
   slrExtremes <- fun_slrConfigExtremes(
-    slr_x = slr_cm, ### rDataList$slr_cm
+    slr_x = slr_cm,    ### rDataList$slr_cm
     imp_x = slrImpacts ### rDataList$slrImpacts
   )
   # loadDataList[["slrExtremes"]] <- slrExtremes; rm("slrExtremes")
@@ -145,6 +148,7 @@ createSystemData <- function(
   df_results0 <- df_info0 %>% left_join(df_default0, by="dummyCol") %>% select(-c("dummyCol"))
   rm("df_sectorsInfo", "df_defaultScenario", "df_info0", "df_default0")
   ### Physical adjustment
+  # df_mainScalars %>% names %>% print; df_results0 %>% names %>% print
   df_results0 <- df_results0  %>% match_scalarValues(df_mainScalars, scalarType="physAdj")
   ### Damage adjustment
   df_results0 <- df_results0  %>% match_scalarValues(df_mainScalars, scalarType="damageAdj")
@@ -158,24 +162,16 @@ createSystemData <- function(
   ###### Get Scenario Info for Scaled Impacts  ######
   ### Refactor adaptation, impact years, impact types
   ### Add a column with a scenario id
-  #print(get_scenario_id(include=c("model_dot", "region_dot")))
-
-  #data_scaledImpacts <- data_scaledImpacts %>% get_scenario_id(include=c("model_dot", "region_dot"))
-
+  # data_scaledImpacts <- data_scaledImpacts %>% mutate(scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region_dot, sep="_"))
+  data_scaledImpacts <- data_scaledImpacts %>% get_scenario_id(include=c("model_dot", "region_dot"))
+  # data_scaledImpacts
   
-  data_scaledImpacts <- data_scaledImpacts %>%
-    mutate(
-      scenario_id = paste(sector, variant, impactYear, impactType, model_type, model_dot, region_dot, sep="_")
-    )
   ### Get list of scenarios for scenarios with at least some non-NA values
-  impactScenariosList <- (
-    data_scaledImpacts %>% 
-      filter(!is.na(scaledImpact)) %>%
-      as.data.frame
-  )$scenario_id %>% unique
-  
   ### Add information on non-missing scenarios to scaled impacts data
-  data_scaledImpacts    <- data_scaledImpacts %>% mutate(hasScenario = (scenario_id %in% impactScenariosList))
+  # c_scenariosList <- data_scaledImpacts %>% filter(!is.na(scaledImpact)) %>% select(c("scenario_id")) %>% as.data.frame %>% as.vector %>% unique
+  c_scenariosList    <- data_scaledImpacts %>% filter(!is.na(scaledImpact)) %>% get_uniqueValues(column="scenario_id")
+  data_scaledImpacts <- data_scaledImpacts %>% mutate(hasScenario = (scenario_id %in% c_scenariosList))
+  rm("c_scenariosList")
   
   ###### Get Interpolation Functions for Scenarios ######
   ### Iterate over sectors to get interpolation functions with fun_getImpactFunctions()
