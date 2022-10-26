@@ -292,12 +292,10 @@ calc_tractImpacts <- function(
   c_svJoinImpactsCols <- c("fips", "year")
   ### Columns to drop
   c_svNACols <- c()
-  if(sector=="Air Quality"){
-    c_svNACols   <- c("sv_noHS", "sv_plus65")
-  }
+  if     (sector=="Air Quality - Childhood Asthma"   ) {c_svNACols <- c("sv_noHS", "sv_plus65")}
+  else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
   c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
   c_svWeightCols <- c("children", "highRiskLabor")
-
 
   ###### Other Info ######
   ### Eventually, import from svDemographics
