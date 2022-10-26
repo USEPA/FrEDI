@@ -801,10 +801,6 @@ test1$driverUnit %>% unique
 
 First checks: There are more NA values than non NA values
 
-[1] 42777 12222
-[1] 54999     0
-[1] 6111    0
-
 52143 16044
 [1] 68187     0
 [1] 4011    0
@@ -855,15 +851,15 @@ SLR
 
 Check missing values
 
-```{r check_slr}
-check_slr <- test1 %>% filter(driverUnit=="cm") %>% filter(is.na(annual_impacts))
-check_slr %>% glimpse
+```{r slr_check}
+slr_check <- test1 %>% filter(driverUnit=="cm") %>% filter(is.na(annual_impacts))
+slr_check %>% glimpse
 ```
 
 
 Look at results
 
-```{r test1 slr, fig.width=8, fig.height=5}
+```{r slr test plots, fig.width=8, fig.height=5}
 test1 %>% 
   filter(driverUnit=="cm") %>% 
   ggplot() + 

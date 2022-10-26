@@ -11,7 +11,8 @@ createSVData <- function(
   sectors = NULL,
   format        = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
-  rDataExt      = "rda", ### r Object Extension
+  # rDataExt      = "rda", ### r Object Extension
+  rDataExt      = "rds", ### r Object Extension
   silent        = NULL,  ### Whether to message the user
   save          = F, ### Whether to save
   return        = T  ### Whether to return
