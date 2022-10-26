@@ -105,7 +105,7 @@ frediPath %>% load_all
 #c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
-c_sv_sectors     <- c("Air Quality - Premature Mortality") #put rest of sectors here
+c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
 ```
 
 ### Screening
@@ -124,9 +124,9 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = TRUE, ### Update SV population data
+  pop      = FALSE, ### Update SV population data
   format   = TRUE,  ### Update formats
-  impacts  = TRUE, ### Update impact lists
+  impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
 )
 ```
@@ -145,11 +145,34 @@ test_svData <- createSVData(
   sv      = list_screening$sv, 
   format  = list_screening$format, 
   impacts = list_screening$impacts, 
-  sectors = list_screening$sectors
+  sectors = list_screening$sectors,
+  return  = TRUE
 )
 time2       <- Sys.time()
 time_create <- time2 - time1; time_create
 ```
+
+Check outputs
+
+```{r check test_svData}
+test_svData %>% names
+test_svData$svDataList %>% names
+test_svData$svDataList[["sectorInfo"]] %>% class
+test_svData$svDataList[["sectorInfo"]] %>% class
+```
+
+Check dataframes:
+
+```{r check_svItems}
+check_svItems <- c("sectorInfo", "svSectorInfo") %>% 
+  lapply(function(item_j, list_x=test_svData$svDataList){
+    df_j    <- list_x[[item_j]]
+    class_j <- df_j %>% class %>% paste(collapse=", ")
+    item_j %>% paste0(": Classes = ", class_j) %>% print
+    df_j %>% glimpse
+  }) %>% unlist
+```
+
 
 
 ### Update FrEDI Data
@@ -157,18 +180,27 @@ time_create <- time2 - time1; time_create
 Use the following code to update the FrEDI system data with the SV configuration data.
 
 ```{r update_sysdata}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-codeNames
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }; codeNames
 time3 <- Sys.time()
 update_sysdata(
   save    = list_screening$save,
-  # sv      = list_screening$sv, 
-  sv      = FALSE, 
+  sv      = list_screening$sv,
+  # sv      = FALSE, 
   impacts = list_screening$impacts
   )
 time4       <- Sys.time()
 time_update <- time4 - time3; time_update
 ```
+
+
+Test FrEDI SV
+
+```{r test get_sv_sectorInfo}
+frediPath %>% load_all
+get_sv_sectorInfo()
+```
+
+
 
 ## Test Package
 
@@ -245,11 +277,10 @@ Test SV tool:
 ```{r test sv}
 frediPath %>% load_all
 test_sv <- 
-  # FrEDI::get_sv_sectorInfo() %>% 
-  # c_sv_sectors %>% 
+  # get_sv_sectorInfo() %>% 
+  c_sv_sectors %>%
   # c("Air Quality") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
-  c_sv_sectors %>%
   (function(
     sectors, 
     all = FALSE,
