@@ -7,7 +7,8 @@ update_sysdata <- function(
   sv            = T, ### Whether to update SV, population, formatting info
   impacts       = F, ### Whether to update impact info
   # impactSectors = NULL,
-  rDataExt      = "rda", ### r Object Extension
+  # rDataExt      = "rda", ### r Object Extension
+  rDataExt      = "rds", ### r Object Extension
   silent        = F,  ### Whether to message the user
   save          = F, ### Whether to save
   return        = T  ### Whether to return

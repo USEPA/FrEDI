@@ -8,7 +8,8 @@ get_svDataList <- function(
   tableName      = tableSheet, ### Defaults to `dataSheet`` value
   outPath        = file.path(getwd(), "R"), ### Where to save rdata objects
   saveFile       = "svDataList",
-  rDataExt       = "rda", ### R data extension
+  # rDataExt       = "rda", ### R data extension
+  rDataExt       = "rds", ### R data extension
   save           = F,
   return         = T,
   msg0           = ""
