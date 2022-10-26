@@ -283,8 +283,8 @@ test_sv <-
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors, 
-    all = FALSE,
-    inputs = testInputs[4],
+    all     = TRUE,
+    inputs  = testInputs[4],
     outpath = resultsPath, save = TRUE, addDate = T
 ){
   ### SLR sectors
