@@ -52,14 +52,14 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20221006"
+mostRecentDate <- "20221025"
 ```
 
 
 
 ```{r declare paths}
 ### Set print options
-options(digits = 20)
+# options(digits = 20)
 ### Set system paths
 # projectPath      <- getwd()
 projectPath      <- "."
@@ -148,6 +148,35 @@ time_create     <- time2 - time1; time_create
 
 
 Use the following code chunks to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+
+### Scalars
+
+
+```{r test_scalars}
+### test_scalars: dataframe with configuration values for scalars 
+test_scalars <- test_systemData$scalarDataframe
+test_scalars %>% glimpse
+### test_mainScalars: dataframe with annual values for scalars 
+test_mainScalars <- test_systemData$df_mainScalars
+test_mainScalars$scalarType %>% unique
+(test_mainScalars %>% filter(scalarType=="econScalar"))$scalarName %>% unique
+test_mainScalars %>% glimpse
+# test_mainScalars_sum <- test_mainScalars %>% group_by_at(.vars=c(""))
+### test_mainScalars: dataframe with info about scalars
+test_scalarInfo <- test_systemData$co_scalarInfo
+test_scalarInfo %>% glimpse
+
+### test_sectorsInfo: dataframe with info about sectors and scalars
+test_sectorsInfo <- test_systemData$df_sectorsInfo
+test_sectorsInfo %>% glimpse
+
+test_sectorsInfo %>% filter(sector=="Rail") %>% glimpse
+### Initial results
+test_systemData$df_results0 %>% glimpse
+```
+
+
+
 
 ### Check SLR Outputs
 
@@ -249,15 +278,43 @@ plots_imp_cm[[1]]
 
 #### SLR Scaled Extremes
 
+
+
+```{r}
+frediPath %>% load_all
+test_ext_cm <- fun_slrConfigExtremes(
+    slr_x = test_systemData$slr_cm,    ### rDataList$slr_cm
+    imp_x = test_systemData$slrImpacts ### rDataList$slrImpacts
+  )
+# test_ext_cm %>% filter(driverValue2 < driverValue1) %>% nrow
+# test_ext_cm %>% filter(driverValue2 == driverValue1) %>% nrow
+# test_ext_cm %>% filter(is.na(driverValue)) %>% nrow
+test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+test_ext_cm %>% glimpse
+```
+
+
 SLR scaled impacts should have no missing values past 2090 and only one row for each `year~sector~variant~impactType~impactYear~region~model` combo:
 
 
-```{r test_imp_cm}
+```{r test_ext_cm}
+# frediPath %>% load_all
 test_ext_cm <- test_systemData$slrExtremes #%>% mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
 test_ext_cm %>% glimpse
+test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
 test_ext_cm %>% filter(year > 2090) %>% filter(is.na(impacts_slope)) %>% nrow
 test_ext_cm %>% mutate(n=1) %>% group_by_at(.vars=c("year", "sector", "variant", "impactType", "impactYear", "region")) %>% summarize_at(.vars=c("n"), sum) %>% filter(n>1) %>% nrow
 ```
+
+
+Check values
+
+```{r}
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+```
+
 
 
 Function to get breaks and limits
@@ -313,7 +370,7 @@ Visual check of impacts
 plots_ext_imp <- test_ext_cm %>% 
   mutate(impact = impacts_intercept + impacts_slope * driverValue_ref) %>% 
   mutate(value = impact) %>%
-  filter(year %in% seq(2000, 2300, by=10)) %>%
+  # filter(year %in% seq(2000, 2300, by=10)) %>%
   (function(data_x, title = "SLR Impact Values"){
     sectors_x <- data_x$sector %>% unique
     list_x    <- sectors_x %>% lapply(function(sector_i){
@@ -337,7 +394,8 @@ plots_ext_imp <- test_ext_cm %>%
         facet_grid(.~region)
       plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
       plot_i <- plot_i + ggtitle(title)
-      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      # plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      plot_i <- plot_i + scale_y_continuous()
       return(plot_i)
     })
     names(list_x) <- sectors_x
@@ -394,7 +452,7 @@ Visual check of intercepts
 
 ```{r plots_ext_int, fig.width=6, fig.height=4}
 plots_ext_int <- test_ext_cm %>% 
-  mutate(value = impacts_slope) %>%
+  mutate(value = impacts_intercept) %>%
   filter(year %in% seq(2000, 2300, by=10)) %>%
   (function(data_x, title = "SLR Impact Intercepts"){
     sectors_x <- data_x$sector %>% unique
@@ -429,14 +487,14 @@ plots_ext_int
 
 Visual check of slopes
 
-```{r plots_ext_intDriv, fig.width=6, fig.height=4}
-plots_ext_intDriv <- test_ext_cm %>% 
-  mutate(value = impacts_intercept) %>%
+```{r plots_ext_slope, fig.width=6, fig.height=4}
+plots_ext_slope <- test_ext_cm %>% 
+  mutate(value = impacts_slope) %>%
   filter(year %in% seq(2000, 2300, by=10)) %>%
-  (function(data_x, title = "SLR Impact Intercepts"){
+  (function(data_x, title = "SLR Impact Slope"){
     sectors_x <- data_x$sector %>% unique
     list_x    <- sectors_x %>% lapply(function(sector_i){
-      # ySub   <- "SLR Impact Intercepts"
+      ySub   <- "SLR Impact Slope"
       ## Filter data
       # data_i <- data_x
       data_i <- data_x %>% filter(sector==sector_i)
@@ -445,7 +503,7 @@ plots_ext_intDriv <- test_ext_cm %>%
       # var_i  <- data_i$variant %>% unique; var_i %>% print
       ### Get breaks
       list_i <- data_i$value %>% get_plotBreaks
-      list_i %>% print
+      # list_i %>% print
       # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
       ### Adjust data
       rnd_i  <- list_i$div %>% log10 %>% abs
@@ -462,7 +520,7 @@ plots_ext_intDriv <- test_ext_cm %>%
     names(list_x) <- sectors_x
     return(list_x)
   })
-plots_ext_intDriv
+plots_ext_slope
 ```
 
 
@@ -671,6 +729,30 @@ file.copy(
 ```
 
 
+## Update Data
+
+If tests pass, update the data
+
+```{r test_systemData0}
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+frediPath %>% load_all
+### Uncomment following two lines to create and save data and check the outputs
+time1           <- Sys.time()
+test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
+time2           <- Sys.time()
+time_create     <- time2 - time1; time_create
+```
+
+Then copy and paste the data to the tool
+
+```{r copy sysdata}
+file.copy(
+  from = sysUseName,
+  to   = frediPath %>% file.path("R", sysFileName) %>% paste0(".", "rda"),
+  overwrite = TRUE
+)
+```
+
 
 ## Test R Tool
 
@@ -678,7 +760,7 @@ Change the following code if there are new sectors
 
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
-c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
+c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties")
 ```
 
 
@@ -706,8 +788,11 @@ frediPath %>% load_all
 # test1 <- testInputs$max %>% run_fredi(sectorList = c_sectorsList, aggLevels="all")
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", thru2300=T)
+time3 <- Sys.time()
 test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2200)
+time4 <- Sys.time(); time4 - time3
 test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
+test1 %>% glimpse
 # test1 <- test1 %>% aggregate_impacts(aggLevels = "all")
 test1$driverUnit %>% unique
 ```
@@ -716,15 +801,28 @@ test1$driverUnit %>% unique
 
 First checks: There are more NA values than non NA values
 
+52143 16044
+[1] 68187     0
+[1] 4011    0
+
 ```{r}
 test1$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
 test1$annual_impacts %>% (function(x){c(length(which(!is.nan(x))), length(which(is.nan(x))))})
+(test1 %>% filter(driverUnit=="cm"))$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
+
+test1_na <- test1 %>% filter(is.na(annual_impacts))
+test1_na %>% glimpse
+
+test1_na$sector %>% unique
+test1_na$year %>% range
 ```
 
 
 Examine missing values
 
 ```{r test1_na}
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
 test1_na <- test1 %>% filter(is.na(annual_impacts))
 test1_na %>% glimpse
 test1_na$sector %>% unique
@@ -751,7 +849,17 @@ test1 %>%
 
 SLR
 
-```{r test1 slr, fig.width=8, fig.height=5}
+Check missing values
+
+```{r slr_check}
+slr_check <- test1 %>% filter(driverUnit=="cm") %>% filter(is.na(annual_impacts))
+slr_check %>% glimpse
+```
+
+
+Look at results
+
+```{r slr test plots, fig.width=8, fig.height=5}
 test1 %>% 
   filter(driverUnit=="cm") %>% 
   ggplot() + 

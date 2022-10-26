@@ -8,7 +8,8 @@ get_svDataList <- function(
   tableName      = tableSheet, ### Defaults to `dataSheet`` value
   outPath        = file.path(getwd(), "R"), ### Where to save rdata objects
   saveFile       = "svDataList",
-  rDataExt       = "rda", ### R data extension
+  # rDataExt       = "rda", ### R data extension
+  rDataExt       = "rds", ### R data extension
   save           = F,
   return         = T,
   msg0           = ""
@@ -261,7 +262,6 @@ get_svDataList <- function(
 }
 
 
-
 ###### get_svPopList ######
 get_svPopList <- function(
   dataFile   = "ICLUS_v2_UN_Probabilistic_Median",
@@ -413,7 +413,7 @@ get_svPopList <- function(
   if(is.null(svData)){
     df_sv_path <- outPath %>% file.path("svDataList") %>% paste0(".", rDataExt)
     load(df_sv_path)
-    svData    <- svDataList[["svData"]]; rm("svDataList")
+    svData    <- svDataList[["svData"]]#; rm("svDataList")
   }
   ### Unique regions
   x_regions <- svData$region %>% unique
@@ -750,7 +750,10 @@ get_svImpactsList <- function(
   ### Percents for tracking
   status_pcts <- c(25, 50, 75, 100)
   
+  
   ### Get information about type
+  #print(dataOutPath %>% file.path("sv/svDataList") %>% paste0(".", rDataExt))
+  #load(file = dataOutPath %>% file.path("sv/svDataList") %>% paste0(".", rDataExt))
   sector_h <- sector
   info_h   <- svDataList$sectorInfo %>% filter(sector == sector_h) 
   type_h   <- info_h$modelType %>% unique
