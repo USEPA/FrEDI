@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20221006"
+mostRecentDate <- "20221025"
 ```
 
 
@@ -148,6 +148,35 @@ time_create     <- time2 - time1; time_create
 
 
 Use the following code chunks to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+
+### Scalars
+
+
+```{r test_scalars}
+### test_scalars: dataframe with configuration values for scalars 
+test_scalars <- test_systemData$scalarDataframe
+test_scalars %>% glimpse
+### test_mainScalars: dataframe with annual values for scalars 
+test_mainScalars <- test_systemData$df_mainScalars
+test_mainScalars$scalarType %>% unique
+(test_mainScalars %>% filter(scalarType=="econScalar"))$scalarName %>% unique
+test_mainScalars %>% glimpse
+# test_mainScalars_sum <- test_mainScalars %>% group_by_at(.vars=c(""))
+### test_mainScalars: dataframe with info about scalars
+test_scalarInfo <- test_systemData$co_scalarInfo
+test_scalarInfo %>% glimpse
+
+### test_sectorsInfo: dataframe with info about sectors and scalars
+test_sectorsInfo <- test_systemData$df_sectorsInfo
+test_sectorsInfo %>% glimpse
+
+test_sectorsInfo %>% filter(sector=="Rail") %>% glimpse
+### Initial results
+test_systemData$df_results0 %>% glimpse
+```
+
+
+
 
 ### Check SLR Outputs
 
@@ -731,7 +760,7 @@ Change the following code if there are new sectors
 
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
-c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
+c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties")
 ```
 
 
@@ -759,7 +788,9 @@ frediPath %>% load_all
 # test1 <- testInputs$max %>% run_fredi(sectorList = c_sectorsList, aggLevels="all")
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", thru2300=T)
-test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2300)
+time3 <- Sys.time()
+test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2200)
+time4 <- Sys.time(); time4 - time3
 test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
 test1 %>% glimpse
 # test1 <- test1 %>% aggregate_impacts(aggLevels = "all")
@@ -770,10 +801,24 @@ test1$driverUnit %>% unique
 
 First checks: There are more NA values than non NA values
 
+[1] 42777 12222
+[1] 54999     0
+[1] 6111    0
+
+52143 16044
+[1] 68187     0
+[1] 4011    0
+
 ```{r}
 test1$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
 test1$annual_impacts %>% (function(x){c(length(which(!is.nan(x))), length(which(is.nan(x))))})
 (test1 %>% filter(driverUnit=="cm"))$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
+
+test1_na <- test1 %>% filter(is.na(annual_impacts))
+test1_na %>% glimpse
+
+test1_na$sector %>% unique
+test1_na$year %>% range
 ```
 
 

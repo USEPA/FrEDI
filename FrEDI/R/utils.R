@@ -830,7 +830,7 @@ fun_slrConfigExtremes <- function(
       driverValue = vals_i[1:2],
       valueType   = bounds0[2:1]
       )
-    if(year_i %in% slrYears[1]){"got here2" %>% print; ref_i %>% head %>% glimpse}
+    # if(year_i %in% slrYears[1]){"got here2" %>% print; ref_i %>% head %>% glimpse}
     ### Filter dfx_i to driver values %in% first_i and add an order
     dfx_i     <- dfx_i %>% left_join(ref_i, by=c(all_of(cYear0), all_of(cDriver0)))
     dfx_i     <- dfx_i %>% filter(!is.na(valueType))
@@ -1207,7 +1207,7 @@ fredi_slrInterp <- function(
   ### Observations that are greater than zero
   if(nrow(data_xOther)){
     ### Lower and upper column names and new names
-    slrSumCols %>% print
+    # slrSumCols %>% print
     lowerSumCols   <- slrSumCols %>% paste("lower", sep="_")
     upperSumCols   <- slrSumCols %>% paste("upper", sep="_")
     ### Filter lower model_dot observations to those with a lower model_dot value == "0 cm" and others and drop model_dot column
@@ -1265,7 +1265,7 @@ fredi_slrInterp <- function(
 
   ### Bind SLR averages together
   # c(nrow(data_xEqual), nrow(data_xOther)) %>% print
-  data_xEqual %>% names %>% print; data_xOther %>% names %>% print
+  # data_xEqual %>% names %>% print; data_xOther %>% names %>% print
   data_x <- data_xEqual %>% rbind(data_xOther)
   # data_x %>% nrow %>% print
   rm("data_xEqual", "data_xOther")
