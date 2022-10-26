@@ -51,10 +51,11 @@ get_sv_sectorInfo <- function(
   if(is.null(description)){description<-F}
   if(is.null(gcmOnly    )){gcmOnly    <-F}
   if(is.null(slrOnly    )){slrOnly    <-F}
+  #svDataList <- load(file = "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData/data/sv/svDataList.rda")
   # co_sectorsRef$sector_label
-  assign("sectorInfo"  , svDataList[["sectorInfo"]])
-  assign("svSectorInfo", svDataList[["svSectorInfo"]])
-
+  assign("sectorInfo"  , svDataList["sectorInfo"])
+  assign("svSectorInfo", svDataList["svSectorInfo"])
+  print(sectorInfo)
   sectorInfo <- sectorInfo %>%
     select(c("sector", "modelType", "impactUnit")) %>%
     mutate(modelType  = modelType %>% toupper) %>%

@@ -99,10 +99,13 @@ Select a specific sector if not all sectors have been updated.
 
 
 ```{r c_sv_sectors}
-c_sv_sectors     <- FrEDI::get_sv_sectorInfo()
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+frediPath %>% load_all
+
+#c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
-c_sv_sectors     <- c("Roads")
+c_sv_sectors     <- c("Air Quality - Premature Mortality") #put rest of sectors here
 ```
 
 ### Screening
@@ -121,7 +124,7 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = FALSE, ### Update SV population data
+  pop      = TRUE, ### Update SV population data
   format   = TRUE,  ### Update formats
   impacts  = TRUE, ### Update impact lists
   sectors  = c_sv_sectors
@@ -229,6 +232,7 @@ testInputs <- inputSpecs %>% (function(list_x){
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
+#resultsPath <- "G:/Share/CIRA_Synthesis/03 Temperature Binning/RTool/analysis/20221025_newAQ_sv_qc"
 ```
 
 Test SV tool:
@@ -244,7 +248,8 @@ test_sv <-
   # FrEDI::get_sv_sectorInfo() %>% 
   # c_sv_sectors %>% 
   # c("Air Quality") %>%
-  FrEDI::get_sv_sectorInfo() %>% (function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
+  #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
+  c_sv_sectors %>%
   (function(
     sectors, 
     all = FALSE,
@@ -252,7 +257,7 @@ test_sv <-
     outpath = resultsPath, save = TRUE, addDate = T
 ){
   ### SLR sectors
-  c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
+  c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
   ### Only run one sector
   if(!all){sectors <- sectors[1]}
   ### Scenarios
@@ -266,8 +271,8 @@ test_sv <-
       # name_j %>% print
       list_i   <- inputs[[name_i]]
       temp_i   <- list_i$tempInput
-      slr_i    <- list_i$slrInput
-      inputs_i <- temp_i %>% left_join(slr_i, by = c("year")) %>% mutate(scenario = name_i)
+      #slr_i    <- list_i$slrInput
+      inputs_i <- temp_i %>% mutate(scenario = name_i)#%>% left_join(slr_i, by = c("year")) 
       return(inputs_i)
     }) %>% (function(names_i){do.call(rbind, names_i)})
   }
