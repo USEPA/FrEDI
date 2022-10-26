@@ -12,13 +12,13 @@ output:
 <style>
 /* Simplified version of Bootstrap's responsive table CSS */
 .table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
+display: block;
+width: 100%;
+overflow-x: auto;
 }
 
 .table-responsive > table {
-    width: 100%;
+width: 100%;
 }
 </style>
 
@@ -52,14 +52,14 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20220907"
+mostRecentDate <- "20221025"
 ```
 
 
 
 ```{r declare paths}
 ### Set print options
-options(digits = 20)
+# options(digits = 20)
 ### Set system paths
 # projectPath      <- getwd()
 projectPath      <- "."
@@ -134,6 +134,7 @@ codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 Test system data
 
 ```{r test_systemData0}
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
@@ -143,39 +144,557 @@ time_create     <- time2 - time1; time_create
 ```
 
 
-Use the following code chunk to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+## Check Outputs
 
-Well, none of the SLR impacts are not not missing past 2100 so there's that...
 
-```{r}
-test_systemData$slrImpacts %>% names
-test_systemData$slrImpacts %>% filter(year > 2100) %>% filter(!is.na(scaled_impacts)) %>% nrow
+Use the following code chunks to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+
+### Scalars
+
+
+```{r test_scalars}
+### test_scalars: dataframe with configuration values for scalars 
+test_scalars <- test_systemData$scalarDataframe
+test_scalars %>% glimpse
+### test_mainScalars: dataframe with annual values for scalars 
+test_mainScalars <- test_systemData$df_mainScalars
+test_mainScalars$scalarType %>% unique
+(test_mainScalars %>% filter(scalarType=="econScalar"))$scalarName %>% unique
+test_mainScalars %>% glimpse
+# test_mainScalars_sum <- test_mainScalars %>% group_by_at(.vars=c(""))
+### test_mainScalars: dataframe with info about scalars
+test_scalarInfo <- test_systemData$co_scalarInfo
+test_scalarInfo %>% glimpse
+
+### test_sectorsInfo: dataframe with info about sectors and scalars
+test_sectorsInfo <- test_systemData$df_sectorsInfo
+test_sectorsInfo %>% glimpse
+
+test_sectorsInfo %>% filter(sector=="Rail") %>% glimpse
+### Initial results
+test_systemData$df_results0 %>% glimpse
 ```
 
-But the SLR driver values appear to be ok (1400 out of 1400 are not missing)
 
-```{r}
-test_systemData$slr_cm %>% names
-test_systemData$slr_cm %>% filter(year > 2100) %>% nrow
-test_systemData$slr_cm %>% filter(year > 2100) %>% filter(!is.na(driverValue)) %>% nrow
+
+
+### Check SLR Outputs
+
+#### SLR Drivers 
+
+
+
+SLR drivers should have no missing values past 2090 and only one row for each `year~model` combo:
+
+```{r test_slr_cm}
+# fun_slrModel2Height <- utils::getFromNamespace("fun_slrModel2Height", "FrEDI")
+test_slr_cm <- test_systemData$slr_cm %>% 
+  mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
+test_slr_cm %>% glimpse
+test_slr_cm %>% filter(year > 2090) %>% filter(is.na(driverValue)) %>% nrow
+test_slr_cm %>% mutate(n=1) %>% group_by_at(.vars=c("year", "model")) %>% summarize_at(.vars=c("n"), sum) %>% filter(n>1) %>% nrow
 ```
 
+Visual check of drivers 
+
+```{r, fig.width=6, fig.height=4}
+test_slr_cm %>% ggplot() + geom_line(aes(x=year, y=driverValue, color = model_fact))
+```
+
+#### SLR Scaled Impacts
+
+SLR scaled impacts should have no missing values past 2090 and only one row for each `year~sector~variant~impactType~impactYear~region~model` combo:
+
+
+```{r test_imp_cm}
+test_imp_cm <- test_systemData$slrImpacts %>% 
+  mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
+test_imp_cm %>% glimpse
+test_imp_cm %>% filter(year > 2090) %>% filter(is.na(scaled_impacts)) %>% nrow
+test_imp_cm %>% mutate(n=1) %>% group_by_at(.vars=c("year", "sector", "variant", "impactType", "impactYear", "region", "model")) %>% summarize_at(.vars=c("n"), sum) %>% filter(n>1) %>% nrow
+```
+
+Visual check of scaled impacts 
+
+```{r, fig.width=9, fig.height=5}
+plots_imp_cm <- test_imp_cm %>% 
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      ### Filter data
+      data_i <- data_x %>% filter(sector==sector_i)
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Adjust data
+      lim_i  <- data_i$scaled_impact %>% min(na.rm=T) %>% c(data_i$scaled_impact %>% max(na.rm=T))
+      rng_i  <- lim_i[2] - lim_i[1]
+      # c(lim_i) %>% print
+      ### Log
+      log_i  <- rng_i %>% log10 %>% floor %>% as.integer
+      ord_i  <- (log_i %/% 3) %>% floor %>% as.integer
+      div_i  <- (10e3)^ord_i
+      # c(rng_i, log_i, ord_i) %>% print
+      ### Scale limits
+      lim2_i <- c(floor(round(lim_i[1] / div_i, 3)), round(lim_i[2] / div_i, 3))
+      rng2_i <- (lim2_i[2] - lim2_i[1])
+      log2_i <-  rng2_i %>% log10 %>% floor %>% as.integer
+      c(lim2_i, rng2_i, log2_i) %>% print
+      ###
+      adj_i  <- ifelse(log2_i<0, -1, 1) %>% as.integer
+      adj2_i <- (adj_i*log2_i + 1)      %>% as.integer
+      adj3_i <- (10^as.integer(adj2_i)) %>% as.integer
+      c(adj_i, adj2_i, adj2_i) %>% print
+      ### Steps
+      stp1_i <- (rng2_i / 5)*10^adj2_i
+      stp2_i <- stp1_i %>% ceiling
+      stp3_i <- stp2_i / 10^(adj2_i + 0)
+      
+      c(stp1_i, stp2_i, stp3_i) %>% print
+      ### Labs and breaks
+      yLab_i <- c("thousands", "millions", "billions")[ord_i]
+      brk_i  <- seq(lim2_i[1], lim2_i[2], by = stp3_i) %>% round(2)
+      lab_i  <- brk_i %>% as.character
+      c(yLab_i) %>% print; c(brk_i) %>% print; c(lab_i) %>% print
+      data_i <- data_i %>% mutate(scaled_impacts=scaled_impacts/div_i)
+      data_i <- data_i %>% mutate(scaled_impacts=scaled_impacts %>% round(6))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() +
+        geom_line(aes(x=year, y=scaled_impacts, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~model_fact)
+      plot_i <- plot_i +
+        theme(legend.position = "bottom") +
+        theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(sector_i)
+      plot_i <- plot_i + scale_y_continuous(yLab_i, breaks = brk_i, labels=lab_i)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_imp_cm[[1]]
+```
+
+
+#### SLR Scaled Extremes
+
+
+
+```{r}
+frediPath %>% load_all
+test_ext_cm <- fun_slrConfigExtremes(
+    slr_x = test_systemData$slr_cm,    ### rDataList$slr_cm
+    imp_x = test_systemData$slrImpacts ### rDataList$slrImpacts
+  )
+# test_ext_cm %>% filter(driverValue2 < driverValue1) %>% nrow
+# test_ext_cm %>% filter(driverValue2 == driverValue1) %>% nrow
+# test_ext_cm %>% filter(is.na(driverValue)) %>% nrow
+test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+test_ext_cm %>% glimpse
+```
+
+
+SLR scaled impacts should have no missing values past 2090 and only one row for each `year~sector~variant~impactType~impactYear~region~model` combo:
+
+
+```{r test_ext_cm}
+# frediPath %>% load_all
+test_ext_cm <- test_systemData$slrExtremes #%>% mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
+test_ext_cm %>% glimpse
+test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+test_ext_cm %>% filter(year > 2090) %>% filter(is.na(impacts_slope)) %>% nrow
+test_ext_cm %>% mutate(n=1) %>% group_by_at(.vars=c("year", "sector", "variant", "impactType", "impactYear", "region")) %>% summarize_at(.vars=c("n"), sum) %>% filter(n>1) %>% nrow
+```
+
+
+Check values
+
+```{r}
+test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+```
+
+
+
+Function to get breaks and limits
+
+```{r get_plotBreaks}
+get_plotBreaks  <- function(col_x){
+  lim_i  <- col_x %>% range(na.rm=T)
+  rng_i  <- lim_i[2] - lim_i[1]
+  # c(lim_i) %>% print
+  ### Log
+  log_i  <- rng_i %>% log10 %>% floor %>% as.integer
+  ord_i  <- (log_i %/% 3) %>% floor %>% as.integer
+  div_i  <- (10e3)^ord_i
+  # c(rng_i, log_i, ord_i) %>% print
+  ### Scale limits
+  lim2_i <- c(floor(round(lim_i[1] / div_i, 3)), round(lim_i[2] / div_i, 3))
+  rng2_i <- (lim2_i[2] - lim2_i[1])
+  log2_i <-  rng2_i %>% log10 %>% floor %>% as.integer
+  # c(lim2_i, rng2_i, log2_i) %>% print
+  
+  ### Adjustment
+  # adj_i  <- ifelse(log2_i<0, -1, 1) %>% as.integer
+  adj2_i <- (abs(log2_i) + 1)       %>% as.integer
+  adj3_i <- (10^as.integer(adj2_i)) %>% as.integer
+  # c(adj_i, adj2_i, adj2_i) %>% print
+  
+  ### Steps
+  stp1_i <- (rng2_i / 5)*10^adj2_i
+  stp2_i <- stp1_i %>% ceiling
+  stp3_i <- stp2_i / 10^(adj2_i + 0)
+  # c(stp1_i, stp2_i, stp3_i) %>% print
+  ### Labs and breaks
+  yLab_i <- c("Thousands", "Millions", "Billions")[ord_i]
+  brk_i  <- seq(lim2_i[1], lim2_i[2], by = stp3_i) %>% round(2)
+  lab_i  <- brk_i %>% as.character
+  # c(yLab_i) %>% print; c(brk_i) %>% print; c(lab_i) %>% print
+  ### Return x
+  return_x <- list(
+    div    = div_i, 
+    yLab   = yLab_i, 
+    limits = lim_i / div_i, 
+    breaks = brk_i, 
+    labels = lab_i
+  )
+  return(return_x)
+}
+```
+
+
+Visual check of impacts
+
+```{r plots_ext_imp, fig.width=6, fig.height=4}
+plots_ext_imp <- test_ext_cm %>% 
+  mutate(impact = impacts_intercept + impacts_slope * driverValue_ref) %>% 
+  mutate(value = impact) %>%
+  # filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Values"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      # ySub   <- "SLR Impact Slopes"
+      ## Filter data
+      # data_i <- data_x
+      data_i <- data_x %>% filter(sector==sector_i)
+      data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      list_i %>% print
+      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=year, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      # plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      plot_i <- plot_i + scale_y_continuous()
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_ext_imp
+```
+
+
+
+Visual check of extreme impact driver values
+
+
+
+```{r plots_ext_cm, fig.width=6, fig.height=4}
+plots_ext_cm <- test_ext_cm %>% 
+  mutate(value = driverValue_ref) %>%
+  group_by_at(.vars=c("year")) %>% summarize_at(.vars = c("value"), mean) %>% 
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "Maximum Driver Value"){
+    # sectors_x <- data_x$sector %>% unique
+    # list_x    <- sectors_x %>% lapply(function(sector_i){
+      ### Standardize value column
+      # data_x <- data_x %>% mutate(value = driverValue_ref)
+      # ySub   <- "Maximum Driver Value"
+      ### Filter data
+    data_i <- data_x
+      # data_i <- data_x %>% filter(sector==sector_i)
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      list_i %>% print
+      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() +geom_line(aes(x=year, y=value), alpha = 0.4)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    # })
+    # names(list_x) <- sectors_x
+    # return(list_x)
+  })
+plots_ext_cm
+```
+
+
+Visual check of intercepts
+
+```{r plots_ext_int, fig.width=6, fig.height=4}
+plots_ext_int <- test_ext_cm %>% 
+  mutate(value = impacts_intercept) %>%
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Intercepts"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      ySub   <- "SLR Impact Intercepts"
+      ## Filter data
+      data_i <- data_x %>% filter(sector==sector_i)
+      # data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      # list_i %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=year, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_ext_int
+```
+
+
+Visual check of slopes
+
+```{r plots_ext_slope, fig.width=6, fig.height=4}
+plots_ext_slope <- test_ext_cm %>% 
+  mutate(value = impacts_slope) %>%
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Slope"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      ySub   <- "SLR Impact Slope"
+      ## Filter data
+      # data_i <- data_x
+      data_i <- data_x %>% filter(sector==sector_i)
+      data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      # list_i %>% print
+      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=year, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_ext_slope
+```
+
+
+
+Visual check of intercepts versus driver value
+
+```{r, fig.width=6, fig.height=4}
+plots_ext_slope <- test_ext_cm %>% 
+  mutate(value = impacts_slope) %>%
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Slopes"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      # ySub   <- "SLR Impact Slopes"
+      ## Filter data
+      data_i <- data_x %>% filter(sector==sector_i)
+      # data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      # list_i %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=driverValue_ref, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_ext_slope
+```
+
+
+Visual check of slopes
+
+```{r, fig.width=6, fig.height=4}
+plots_ext_slDriv <- test_ext_cm %>% 
+  mutate(value = impacts_slope) %>%
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Slopes"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      ySub   <- "SLR Impact Slopes"
+      ## Filter data
+      # data_i <- data_x
+      data_i <- data_x %>% filter(sector==sector_i)
+      data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      list_i %>% print
+      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=driverValue_ref, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+plots_ext_slDriv
+```
+
+
+
+
+
+
+#### GCM Functions
 
 Check GCM impact functions:
 
-```{r check outputs}
-test_impactVals1 <- c(-1, 2:4, 10:11)
-test_impactVals2 <- c(-1, 5:7, 10:11)
+```{r test_impactVals1}
+test_impactVals1 <- -1:20
+```
+
+
+Regions
+
+
+```{r test_co_regions}
+test_co_regions <- test_systemData$co_regions; test_co_regions
+```
+
+
+Examine model types
+
+```{r}
+test_systemData$co_models %>% glimpse
+test_systemData$co_modelTypes %>% glimpse
+```
+
+
+
+Model types
+
+```{r test_co_models}
+test_co_models  <- test_systemData$co_models %>% select(c("model_dot", "modelType")); test_co_models %>% glimpse
+test_models_dot <- (test_co_models %>% filter(modelType %in% c("gcm")))$model_dot; test_models_dot
+test_gcm_impact <- test_systemData$list_impactFunctions[1:1e3]; test_gcm_impact %>% head %>% names
+test_gcm_names  <- test_gcm_impact %>% names; test_gcm_names %>% head
+# test_gcm_names[30:60]
 ```
 
 
 * GISS-E2-R defined up to 3 degrees of warming: Should have NA values for values above 3 degrees
 * GFDL-CM3 defined up to 6 degrees of warming: : Should have same values for values 10C and above
 
-```{r}
-test_impactVals1 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GISS.E2.R_Midwest()
-test_impactVals2 %>% test_systemData$list_impactFunctions$Labor_NA_NA_LostWages_gcm_GFDL.CM3_Midwest()
+```{r test_gcm_impacts}
+# test_gcm_impact[["ATSExtremeTemp_high_CI_NA_NA_gcm_CCSM4_Northeast"]](-1)
+### function(str_x, vals_x=test_impactVals1, data_x=test_gcm_impact, models_x=test_models_dot)
+test_gcm_impacts <- test_co_regions$region_dot %>% lapply(function(region_j){
+  df_j <- test_models_dot  %>% lapply(function(
+    model_i, 
+    sector_i = "ATSExtremeTemp",
+    variant_i = "high_CI",
+    impType_i = "NA",
+    impYear_i = "NA"){
+    ### String
+    str_x    <- paste(sector_i, variant_i, impType_i, impYear_i, "gcm", sep="_"); 
+    ### Region and name
+    region_i <- region_j
+    name_i   <- paste(str_x, model_i, region_i, sep="_"); 
+    check_i  <- (name_i %in% test_gcm_names)
+    
+    # paste0(name_i, ": ", check_i) %>% print
+    df_i     <- data.frame(driverValue   = test_impactVals1, scaled_impacts = NA)
+    df_i     <- df_i %>% mutate(model_id = model_i)
+    df_i     <- df_i %>% mutate(region   = region_i)
+    df_i     <- df_i %>% mutate(func_id  = str_x)
+    df_i     <- df_i %>% mutate(scaled_impacts = NA)
+    str_x="ATSExtremeTemp_high_CI_NA_NA_gcm"
+    if(check_i){
+      fun_i  <- test_gcm_impact[[name_i]]
+      vals_i <- fun_i(df_i$driverValue)
+      df_i   <- df_i %>% mutate(scaled_impacts = vals_i)
+    }
+    return(df_i)
+  }) %>% (function(df_i){do.call(rbind, df_i)})
+}) %>% (function(df_j){do.call(rbind, df_j)})
+
+test_gcm_impacts %>% glimpse
 ```
+
+
+View Impacts
+
+```{r, fig.height=5, fig.width=9}
+test_gcm_impacts %>% 
+  mutate(scaled_impacts = scaled_impacts %>% round(6)) %>%
+  ggplot() + 
+  geom_line(aes(x=driverValue, y =scaled_impacts, color = region)) + facet_grid(.~model_id) +
+  # geom_line(aes(x=driverValue, y =scaled_impacts, color = model_id)) + facet_grid(.~region) + 
+  scale_y_continuous(breaks = seq(0, 5, by=1)*5e-4, labels = (seq(0, 5, by=1)*5e-4) %>% as.character) +
+  theme(legend.position = "bottom")
+```
+
+
 
 
 
@@ -210,39 +729,29 @@ file.copy(
 ```
 
 
-## Update SV
+## Update Data
 
-Use the following code to compile the SV configuration data
+If tests pass, update the data
 
-```{r test createSVData}
-# ## Uncomment following five lines to create and save data and check the outputs
-# for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-# time1           <- Sys.time()
-# test_svData     <- createSVData(save=T, sv = T, pop = F, impacts=F, format=T)
-# time2           <- Sys.time()
-# time_create     <- time2 - time1; time_create
-
-## "Air Quality", "Extreme Temperature", "Labor", "Roads", "High Tide Flooding and Traffic", "Coastal Properties"
-## Uncomment following six lines to create and save data and check the outputs
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-test_sector     <- c("Roads")
+```{r test_systemData0}
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+frediPath %>% load_all
+### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_svData     <- createSVData(save=T, sv = F, format=F, impacts=T, impactSectors = test_sector)
+test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
 
+Then copy and paste the data to the tool
 
-
-Use the following code to update the FrEDI system data with the SV data
-
-```{r update_sysdata}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-update_sysdata(sv=T, impacts=T, save=T)
+```{r copy sysdata}
+file.copy(
+  from = sysUseName,
+  to   = frediPath %>% file.path("R", sysFileName) %>% paste0(".", "rda"),
+  overwrite = TRUE
+)
 ```
-
-
-After running, [update the R tool](#updateRtool).
 
 
 ## Test R Tool
@@ -251,64 +760,182 @@ Change the following code if there are new sectors
 
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
-c_sectorsList <- c("ATS Extreme Temperature", "Coastal Properties")
+c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties")
 ```
 
 
 Test inputs
 
-```{r}
+```{r testInputs}
 ### Values above maximum values
 testInputs <- list(
-  ### Values above maximum values
-  max = list(
-    tempInput = data.frame( year = 2000:2300, temp_C = 11),
-    slrInput  = data.frame( year = 2000:2300, slr_cm = 260)
-  ),
-  ### Values below minimum
-  min = list(
-  tempInput = data.frame(year = 2000:2020, temp_C = 1) %>% 
-    rbind(data.frame(year=2021:2300, temp_C = -1))
-  ),
-   ### Continuous function
-  oth = list(
-    tempInput = data.frame( year = 2000:2300, temp_C = 11),
+  ramp = list(
+    tempInput = data.frame( year = 2000:2300, temp_C = seq(-1, 20, length.out=301)),
     slrInput  = data.frame( year = 2000:2300, slr_cm = seq(0, 270, length.out=301))
   )
 )
 ```
 
 
-```{r df_defaults, message=T}
+
+
+
+Try running the function
+
+```{r test FrEDI function, message=T}
 ### Results are fine for ATS Extreme Temperature and Coastal Properties
 frediPath %>% load_all
 # test1 <- testInputs$max %>% run_fredi(sectorList = c_sectorsList, aggLevels="all")
-test1 <- testInputs$oth %>% run_fredi(sectorList = c_sectorsList, aggLevels="all")
+# test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
+# test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", thru2300=T)
+time3 <- Sys.time()
+test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2200)
+time4 <- Sys.time(); time4 - time3
+test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
+test1 %>% glimpse
+# test1 <- test1 %>% aggregate_impacts(aggLevels = "all")
 test1$driverUnit %>% unique
-test1 %>% filter(is.infinite(annual_impacts)) %>% nrow()
-check1 <- test1 %>% filter(driverUnit=="cm", region=="Northeast"); check1 %>% head
-(test1 %>% filter(driverUnit=="cm", region=="Northeast"))$model %>% unique
-test1 %>% filter(is.na(annual_impacts)) %>% nrow()
-check1 <- test1 %>% filter(is.na(annual_impacts))
-### @Temp=4: -131031543004.56610107  518117915169.87200928; @Temp = 10: -131031543004.56610107  518117915169.87200928
-test1 %>% filter(driverValue >3) %>% filter(model == "GISS-E2-R")  %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
 ```
+
+
+
+First checks: There are more NA values than non NA values
+
+52143 16044
+[1] 68187     0
+[1] 4011    0
+
+```{r}
+test1$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
+test1$annual_impacts %>% (function(x){c(length(which(!is.nan(x))), length(which(is.nan(x))))})
+(test1 %>% filter(driverUnit=="cm"))$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})
+
+test1_na <- test1 %>% filter(is.na(annual_impacts))
+test1_na %>% glimpse
+
+test1_na$sector %>% unique
+test1_na$year %>% range
+```
+
+
+Examine missing values
+
+```{r test1_na}
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
+(test1 %>% filter(driverUnit=="cm"))$year %>% range
+test1_na <- test1 %>% filter(is.na(annual_impacts))
+test1_na %>% glimpse
+test1_na$sector %>% unique
+test1_na_sum <- test1_na %>% mutate(n=1) %>% 
+  group_by_at(.vars=c("sector", "variant", "impactYear", "impactType", "region", "model", "driverValue2")) %>% 
+  summarize_at(.vars=c("n"), sum) %>% ungroup
+test1_na_sum %>% glimpse
+```
+
 
 
 Try plotting
 
-```{r}
-test1 %>% filter(driverUnit=="cm", region=="Northeast") %>% ggplot() + geom_line(aes(x=year, y=annual_impacts, color=variant))
+```{r test1 gcm, fig.width=8, fig.height=5}
+test1 %>% 
+  filter(driverUnit!="cm") %>% 
+  ggplot() + 
+  geom_line(aes(x=year, y=annual_impacts, color=region, group=interaction(impactType, variant, impactYear, model, region)), alpha = 0.4) + 
+  facet_grid(sector~model) + 
+  theme(legend.position="bottom", axis.text.x = element_text(angle=90))
 ```
 
 
-```{r}
+
+SLR
+
+Check missing values
+
+```{r slr_check}
+slr_check <- test1 %>% filter(driverUnit=="cm") %>% filter(is.na(annual_impacts))
+slr_check %>% glimpse
+```
+
+
+Look at results
+
+```{r slr test plots, fig.width=8, fig.height=5}
+test1 %>% 
+  filter(driverUnit=="cm") %>% 
+  ggplot() + 
+  geom_line(aes(x=year, y=annual_impacts, color=region, group=interaction(impactType, variant, impactYear, model, region)), alpha = 0.4) + 
+  facet_grid(sector~region) + 
+  theme(legend.position="bottom", axis.text.x = element_text(angle=90))
+```
+
+
+
+Test ramp function
+
+
+
+
+
+
+```{r test_slr0}
+# test_Inputs
+test_slr0 <- testInputs$ramp$slrInput; test_slr0 %>% glimpse
+# test_slr1 <- test_systemData$slrExtremes; test_slr1 %>% glimpse
+test_slr2 <- test_slr0 %>% left_join(test_slr1, by=c("year")) %>% arrange_at(.vars=c("sector", "variant", "impactType", "impactYear", "region", "year")); test_slr2 %>% glimpse
+test_slr3 <- test_slr2 %>% mutate(impact = impacts_intercept + impacts_slope * driverValue_ref); test_slr3 %>% glimpse
+```
+
+
+
+
+
+
+
+Visual check of impacts
+
+```{r test_plots_imp, fig.width=6, fig.height=4}
+test_plots_imp <- test_slr3 %>% 
+  mutate(impact = impacts_intercept + impacts_slope * (slr_cm - driverValue_ref)) %>% 
+  mutate(value = impact) %>%
+  filter(year %in% seq(2000, 2300, by=10)) %>%
+  (function(data_x, title = "SLR Impact Values"){
+    sectors_x <- data_x$sector %>% unique
+    list_x    <- sectors_x %>% lapply(function(sector_i){
+      # ySub   <- "SLR Impact Slopes"
+      ## Filter data
+      # data_i <- data_x
+      data_i <- data_x %>% filter(sector==sector_i)
+      data_i$value %>% range %>% print
+      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+      # var_i  <- data_i$variant %>% unique; var_i %>% print
+      ### Get breaks
+      list_i <- data_i$value %>% get_plotBreaks
+      list_i %>% print
+      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+      ### Adjust data
+      rnd_i  <- list_i$div %>% log10 %>% abs
+      # data_i <- data_i %>% mutate(value=value/list_i$div)
+      # data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+      #### Plot data
+      plot_i <- data_i %>% ggplot() + geom_line(aes(x=year, y=value, group=interaction(impactType, variant, region), color = region, linetype=impactType), alpha = 0.4) +
+        facet_grid(.~region)
+      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+      plot_i <- plot_i + ggtitle(title)
+      # plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+      return(plot_i)
+    })
+    names(list_x) <- sectors_x
+    return(list_x)
+  })
+test_plots_imp
+```
+
+
+
+
+```{r test2}
 frediPath %>% load_all
-test2 <- testInputs2 %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
-test2 %>% filter(is.infinite(annual_impacts)) %>% nrow
-test2 %>% filter(is.na(annual_impacts)) %>% nrow
-test2 %>% filter(driverValue <0) %>% filter(model == "GISS-E2-R") %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
-test2 %>% filter(driverValue <0) %>% select(annual_impacts) %>% as.vector %>% range(na.rm=T)
+test2 <- testInputs$ramp %>% run_fredi(aggLevels="none")
 ```
 
 
@@ -357,7 +984,7 @@ Use the following code to save the results:
 ```{r saveOutputsPath}
 saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(saveOutputsPath)){saveOutputsPath %>% dir.create}
-df_defaults %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
+test1 %>% write.csv(file = file.path(saveOutputsPath, paste0(today, "_qc_outputs.csv")), row.names=F, na="")
 ```
 
 
@@ -377,106 +1004,6 @@ defPlots <- df_defaults %>% get_plots(plotTypes="heatmaps")
 defPlots$heatmaps$SLR
 ```
 
-
-Test SV tool 
-
-```{r test sv}
-frediPath %>% load_all
-saveOutputsPath <- frediPath %>% file.path("..", "analysis", "qc", "20220913")
-test_sv <- run_fredi_sv(sector="Coastal Properties", save = T, outpath = saveOutputsPath, addDate = T)
-
-# # test_sv <- FrEDI::run_fredi_sv(sector="Coastal Properties")
-# test_sv <- FrEDI::run_fredi_sv(sector="Coastal Properties", save = T, outpath = saveOutputsPath, addDate = T)
-# test_sv <- FrEDI::run_fredi_sv(sector="Roads", save = T, outpath = saveOutputsPath, addDate = T)
-# test_sv <- FrEDI::run_fredi_sv(sector="Labor", save = T, outpath = saveOutputsPath, addDate = T)
-# test_sv <- FrEDI::run_fredi_sv(sector="Air Quality", save = T, outpath = saveOutputsPath, addDate = T)
-# test_sv <- FrEDI::run_fredi_sv(sector="High Tide Flooding and Traffic", save = T, outpath = saveOutputsPath, addDate = T)
-# test_sv <- FrEDI::run_fredi_sv(sector="Extreme Temperature", save = T, outpath = saveOutputsPath, addDate = T)
-```
-
-
-```{r}
-test_sv$aveRate_sv %>% is.na %>% which %>% length
-```
-
-
-
-## Update R Tool [#updateRtool]
-### Update Default Outputs
-
-Use the following section to update R defaults
-
-```{r defaultResults}
-# ###### Update and Save Default Scenario ######
-frediPath %>% load_all
-defaultResults <- run_fredi()
-# defaultResults <- FrEDI::run_fredi()
-save(defaultResults, file=frediPath %>% file.path("data", "defaultResults.rda"))
-```
-
-
-
-### Update Documentation
-
-Use the following code to update documentation
-<!-- usethis::use_data() -->
-
-```{r datasets to include}
-# usethis::use_data_raw()
-```
-
-
-```{r updateDocs}
-###### Update Documentation ######
-###### - Build Manual
-###### - Add and build vignettes
-###### - Generate Documentation
-roxygen2::roxygenise(frediPath)
-devtools::document(pkg = frediPath)
-# devtools::build_manual(pkg = frediPath)
-# devtools::build_vignettes(pkg = frediPath)
-```
-
-
-
-### Build the Package
-
-Use the following code to build the package
-
-```{r bldPackage}
-###### Build Package ######
-###### - Build Package but don't include vignettes
-devtools::build(pkg=frediPath)
-```
-
-
-### Copy Package Build to Library
-
-```{r package paths}
-### Copy the file
-packageName      <- "FrEDI"
-packageVersion   <- "3.3.3"
-packageFile_name <- packageName %>% paste0("_", packageVersion, ".tar.gz")
-packageFile_path <- frediPath %>% file.path("..", packageFile_name)
-packageDest      <- .libPaths()[1]
-packageDest_path <- packageDest %>% file.path(packageFile_name)
-### Copy file
-file.copy(from = packageFile_path, to = packageDest, overwrite = T)
-```
-
-<!-- Copy file -->
-
-<!-- ```{r copy package} -->
-<!-- file.copy(from = packageFile_path, to = packageDest, overwrite = T) -->
-<!-- ``` -->
-
-<!-- Examine impacts data -->
-
-<!-- ```{r} -->
-<!-- testx <- getwd() %>% file.path("inst", "extdata",  "sv", "impacts", "Coastal Flooding and SLR - With Adaptation.csv") %>% read.csv -->
-<!-- testx %>% glimpse -->
-<!-- testx$block_group %>% unique %>% length -->
-<!-- ``` -->
 
 
 
