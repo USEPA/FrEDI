@@ -284,7 +284,7 @@ test_sv <-
   (function(
     sectors, 
     all     = TRUE,
-    inputs  = testInputs[4],
+    inputs  = testInputs,
     outpath = resultsPath, save = TRUE, addDate = T
 ){
   ### SLR sectors
