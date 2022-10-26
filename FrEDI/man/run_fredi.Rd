@@ -25,6 +25,8 @@ run_fredi(
 
 \item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \verb{c("national"}, \code{"modelaverage"}, \code{"impactyear"}, \code{"impacttype"}, \verb{"all")}. Defaults to all levels (i.e., \code{aggLevels="all"}). Uses the same aggregation levels as \code{\link[=aggregate_impacts]{aggregate_impacts()}}.}
 
+\item{thru2300}{A \code{ TRUE/FALSE} shortcut that overrides the maxYear argument to run the model to 2300}
+
 \item{pv}{A \code{TRUE/FALSE} value indicating Whether to calculate present values for the annual impacts. Defaults to \code{pv=TRUE}. Present values (i.e., discounted impacts) are calculated as \code{discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)}. Set an annual discounting rate and a base year using \code{baseYear} and \code{rate}.}
 
 \item{baseYear}{Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to \code{baseYear=2010}.}
@@ -34,6 +36,8 @@ run_fredi(
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 
 \item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If \code{elasticity=NULL} (default), \code{\link[=run_fredi]{run_fredi()}} uses default elasticities.}
+
+\item{maxYear=2090}{A numeric value indicating the maximum year for the analysis}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
