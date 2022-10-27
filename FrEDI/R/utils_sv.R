@@ -295,7 +295,7 @@ calc_tractImpacts <- function(
   if     (sector=="Air Quality - Childhood Asthma"   ) {c_svNACols <- c("sv_noHS", "sv_plus65")}
   else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
   c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
-  c_svWeightCols <- c("children", "highRiskLabor")
+  c_svWeightCols <- c("children", "highRiskLabor", "sv_plus65")
 
   ###### Other Info ######
   ### Eventually, import from svDemographics
