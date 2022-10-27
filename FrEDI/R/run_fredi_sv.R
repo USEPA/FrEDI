@@ -110,6 +110,8 @@ run_fredi_sv <- function(
   ### Objects <-
   sectorInfo    <- svDataList$sectorInfo
   svSectorInfo  <- svDataList$svSectorInfo
+  svDemoInfo    <- svDataList$svDemoInfo
+  svValidTypes  <- svDataList$svValidTypes
   co_formatting <- svDataList$co_formatting
   co_formatting <- svDataList$co_formatting
   # co_modelTypes <- rDataList$co_modelTypes
@@ -132,7 +134,30 @@ run_fredi_sv <- function(
   paste0("Running FrEDI SV for sector '", c_sector, "':") %>% message
   ### Sector info
   which_sector    <- (sectorInfo$sector == c_sector) %>% which
-  c_modelType     <- sectorInfo$modelType[which_sector] %>% tolower
+  c_popWtCol      <- sectorInfo[["popWeightCol"]][which_sector] %>% tolower
+  c_modelType     <- sectorInfo[["modelType"   ]][which_sector] %>% tolower
+  df_validGroups  <- svDemoInfo %>% (function(df0, df1 = svValidTypes, col0 = c_popWtCol){
+    old0 <- c("colName"    , "valid_popWeightCols")
+    new0 <- c("svGroupType", "validGroups")
+    ### Reshape svDemoInfo
+    df0  <- df0 %>% filter(colType %in% c("minority")) %>% select(c(old0[1]))
+    df0  <- df0 %>% rename_at(.vars=c(old0[1]), ~c(new0[1]))
+    df0  <- df0 %>% mutate(validGroups = "none")
+    ### Reshape svValidTypes
+    df1  <- df1 %>% select(c(new0[1], old0[2]))
+    df1  <- df1 %>% rename_at(.vars=c(old0[2]), ~c(new0[2]))
+    ### Bind
+    df0  <- df1 %>% rbind(df0)
+    ### Calculate weight columns
+    df0  <- df0 %>% mutate(weightCol = col0)
+    df0  <- df0 %>% mutate(validType = validGroups %>% str_match(weightCol) %>% as.vector)
+    df0  <- df0 %>% mutate(valueAdj  = (1*!is.na(validType)))
+    # df0  <- df0 %>% mutate(valueAdj  = (1*!is.na(validType)) %>% na_if(0))
+    ### Return
+    return(df0)
+  })
+  # return(df_validGroups)
+  # df_validGroups %>% class
   # paste0("Running FrEDI SV for sector ", c_sector) %>% message
 
   # df_sectorInfo <- svSectorInfo %>% filter(sector==sector)
@@ -592,15 +617,34 @@ run_fredi_sv <- function(
       ###### Return Impacts ######
       return(impacts_j)
     })
-    ### Bind results
+    ###### Bind Results ######
+    ### Bind results and add variant level
     results_i <- results_i %>% (function(y){do.call(rbind, y)})
-    ### Add variant level and return
     results_i <- results_i %>% mutate(variant = variantLabel_i)
+
+    ###### Adjust SV Group Values ######
+    valSuff0  <- c("ref", "sv")
+    valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
+    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    ### Join and adjust results valueAdj
+    results_i <- results_i %>% left_join(df_validGroups, by = c("svGroupType"))
+    results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols0)), function(col_j){col_j * results_i$valueAdj})
+    rm("valSuff0", "valCols0")
+    ### Drop cols and return
+    drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
+    results_i <- results_i %>% select(-c(all_of(drop0))); rm("drop0")
+
+    ###### Replace Driver Values
+    ### Replace extreme driver values
+    # maxDriver0 <- ifelse(c_modelType == "gcm", 6, 250)
+
+    ### Return
     return(results_i)
   })
   ###### Format Results ######
+  ### Bind results and ungroup
   df_results <- df_results %>% (function(x){do.call(rbind, x)})
-  df_results   <- df_results %>% ungroup %>% as.data.frame
+  df_results <- df_results %>% ungroup %>% as.data.frame
 
   ###### Save Results ######
   if(save){
