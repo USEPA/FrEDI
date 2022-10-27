@@ -251,8 +251,8 @@ calcScalars <- function(
   ###### Adjust Elasticity for VSL ######
   ### Adjust Elasticity for VSL only
   if(!is.null(elasticity)){
-    df_not_vsl <- df_x %>% filter(econMultiplierName!="vsl_usd")
-    df_vsl     <- df_x %>% filter(econMultiplierName=="vsl_usd") %>% mutate(exp0 = elasticity)
+    df_not_vsl <- df_x %>% filter(econScalarName!="vsl_usd")
+    df_vsl     <- df_x %>% filter(econScalarName=="vsl_usd") %>% mutate(exp0 = elasticity)
     df_x       <- df_not_vsl %>% rbind(df_vsl); rm("df_not_vsl", "df_vsl")
     # if(is.numeric(elasticity)){df_x   <- df_x %>% mutate(exp0 = elasticity)}
   }
