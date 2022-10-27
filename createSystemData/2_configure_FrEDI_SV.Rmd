@@ -157,8 +157,9 @@ Check outputs
 ```{r check test_svData}
 test_svData %>% names
 test_svData$svDataList %>% names
-test_svData$svDataList[["sectorInfo"]] %>% class
-test_svData$svDataList[["sectorInfo"]] %>% class
+test_svData$svDataList[["sectorInfo"  ]] %>% glimpse
+test_svData$svDataList[["svValidTypes"]] %>% glimpse
+test_svData$svDataList[["svDemoInfo"  ]] %>% glimpse
 ```
 
 Check dataframes:
@@ -172,6 +173,71 @@ check_svItems <- c("sectorInfo", "svSectorInfo") %>%
     df_j %>% glimpse
   }) %>% unlist
 ```
+
+
+Reform `svValidTypes`:
+
+
+```{r view svValidTypes}
+test_svData$svDataList[["svValidTypes"]] %>% glimpse
+```
+
+Reshape `svValidTypes`
+
+```{r reshape svValidTypes}
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]][1] %>% str_split(", ") %>% unlist
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]][3] %>% str_match("children") %>% as.vector
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]] %>% str_match("children") %>% as.vector
+
+test_svData$svDataList[["svValidTypes"]] %>% (function(df_x, weight_i = "children"){
+ df_x   <- df_x %>% mutate(weightCol = weight_i)
+ df_x   <- df_x %>% mutate(validType = valid_popWeightCols %>%  str_match(weightCol) %>% as.vector)
+ return(df_x)
+})
+```
+
+
+Add `svValidTypes` info to sector info:
+
+```{r view svDemoInfo}
+test_svData$svDataList[["svDemoInfo"]] %>% glimpse
+```
+
+
+Reshape `svDemoInfo`
+
+```{r reshape svDemoInfo}
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("sv", "minority")) %>% 
+  select(c("colName")) %>% rename_at(.vars=c("colName"), ~c("svGroupType"))
+
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>% 
+  select(c("colName")) %>% mutate(validGroups = "none")
+
+test_svData$svDataList[["svValidTypes"]] %>% 
+      select(c("svGroupType", "valid_popWeightCols")) %>%
+      rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
+# test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority"))
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>% 
+  select(c("colName")) %>% rename_at(.vars=c("colName"), ~c("svGroupType")) %>% 
+  mutate(validGroups = "none") %>% rbind(
+    test_svData$svDataList[["svValidTypes"]] %>% 
+      select(c("svGroupType", "valid_popWeightCols")) %>%
+      rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
+  ) %>% 
+  (function(df_x, weight_i = "children"){
+    df_x   <- df_x %>% mutate(weightCol = weight_i)
+    df_x   <- df_x %>% mutate(validType = validGroups %>% str_match(weightCol) %>% as.vector)
+    # df_x   <- df_x %>% mutate(valueAdj  = (1*!is.na(validType)) %>% na_if(0))
+    df_x   <- df_x %>% mutate(valueAdj  = (1*!is.na(validType)))
+    return(df_x)
+  }) %>%
+  mutate(x = 1, y = 2) %>%
+  (function(dfx){
+    dfx %>% mutate_at(.vars=c("x", "y"), function(colx, valx = dfx$valueAdj){colx * valx})
+  })
+  
+```
+
 
 
 
@@ -261,6 +327,7 @@ testInputs <- inputSpecs %>% (function(list_x){
 ### Paths for Saving Results
 
 ```{r resultsPath}
+# today <- "20221026"
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
@@ -278,14 +345,15 @@ Test SV tool:
 frediPath %>% load_all
 test_sv <- 
   # get_sv_sectorInfo() %>% 
-  c_sv_sectors %>%
+  c_sv_sectors[1] %>%
   # c("Air Quality") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors, 
     all     = TRUE,
-    inputs  = testInputs,
-    outpath = resultsPath, save = TRUE, addDate = T
+    inputs  = testInputs[4],
+    outpath = resultsPath, 
+    save = TRUE, addDate = T
 ){
   ### SLR sectors
   c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
