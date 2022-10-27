@@ -72,7 +72,7 @@ update_sysdata <- function(
         paste0("File '", file_i, "' does not exist...") %>% print
         paste0("Looking for file '", file_i, "' instead...") %>% print
         ### Update file names
-        file_i   <- file_i %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
+        # file_i   <- file_i %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
         path_i   <- path_i %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
       }
       ### Load object

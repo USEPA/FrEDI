@@ -789,9 +789,10 @@ frediPath %>% load_all
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none")
 # test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", thru2300=T)
 time3 <- Sys.time()
-test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2200)
+test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="all", maxYear=2300)
+# test1 <- testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels="none", maxYear=2300)
 time4 <- Sys.time(); time4 - time3
-test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
+# test1 <- test1 %>% mutate(driverValue2 = driverValue %>% round(0))
 test1 %>% glimpse
 # test1 <- test1 %>% aggregate_impacts(aggLevels = "all")
 test1$driverUnit %>% unique
@@ -804,6 +805,10 @@ First checks: There are more NA values than non NA values
 52143 16044
 [1] 68187     0
 [1] 4011    0
+
+[1] 104760  27936
+[1] 132696      0
+[1] 6984    0
 
 ```{r}
 test1$annual_impacts %>% (function(x){c(length(which(!is.na(x))), length(which(is.na(x))))})

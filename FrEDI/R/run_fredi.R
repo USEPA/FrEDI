@@ -12,7 +12,7 @@
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
 # @param doPrimary = F whether to filter to primary impacts
 #' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are: Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
-#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis 
+#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
@@ -141,18 +141,15 @@ run_fredi <- function(
     ### Aggregation levels
     aggLevels    <- aggLevels %>% tolower()
     aggLevels    <- aggLevels[which(aggLevels %in% c(aggList0, "all", "none"))]
+    doAgg        <- "none" %in% aggLevels
     ### If none specified, no aggregation (only SLR interpolation)
     ### Otherwise, aggregation depends on length of agg levels
-    if("none" %in% aggLevels){
-      aggLevels   <- c()
-      requiresAgg <- F
-    } else if("all"  %in% aggLevels){
-      aggLevels   <- aggList0
-      requiresAgg <- T
-    } else{
-      requiresAgg <- length(aggLevels) > 0
-    }
-  } else{aggLevels <- aggList0; requiresAgg  <- F}
+    if     ("none" %in% aggLevels) {aggLevels   <- c()     }
+    else if("all"  %in% aggLevels) {aggLevels   <- aggList0}
+    else                           {requiresAgg <- length(aggLevels) > 0}
+  } ### End if(!is.null(aggLevels))
+  else{aggLevels <- aggList0}
+  requiresAgg <- length(aggLevels) > 0
 
   # ### Aggregate to impact years or national...reduces the columns in output
   # impactYearsAgg <- ifelse("impactyear"   %in% aggLevels, T, F)
@@ -270,7 +267,8 @@ run_fredi <- function(
     temp_df  <- temp_df  %>% rename(temp_C_conus = temp_C)
     temp_df  <- temp_df  %>% mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
     rm("tempInput")
-  } else{
+  } ### End if(has_tempUpdate)
+  else{
     ### No need to interpolate these values since they're already interpolated
     message("Creating temperature scenario from defaults...")
     # tempInput <- co_defaultScenario %>% filter(region==co_regions$region_dot[1])
@@ -320,7 +318,8 @@ run_fredi <- function(
       return(x_interp)
     })
     rm("slrInput")
-  }  else{
+  }  ### else(has_slrUpdate)
+  else{
     ### If there is no SLR scenario, calculate from temperatures
     ### First convert temperatures to global temperatures
     ### Then convert global temps to SLR
@@ -359,28 +358,34 @@ run_fredi <- function(
     gdp_df <- gdpInput %>% filter(!is.na(gdp_usd)) %>% filter(!is.na(year))
     gdp_df <- gdp_df   %>% interpolate_annual(years= c(list_years), column = "gdp_usd", rule = 2)
     rm("gdpInput")
-  } else{
+  } ### End if(has_gdpUpdate)
+  else{
     message("Creating GDP scenario from defaults...")
     gdp_df <- gdp_default %>% select(c(all_of(gdpCols0), "region"))
     rm("gdp_default")
-  }
+  } ### End else(has_gdpUpdate)
+
   ### Population inputs
   if(has_popUpdate){
     message("Creating Population scenario from user inputs...")
     ### Standardize region and then interpolate
     pop_df         <- popInput %>% mutate(region = gsub(" ", ".", region))
-    pop_df         <- pop_df   %>% interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2)
+    # pop_df %>% nrow %>% print
+    pop_df         <- pop_df   %>% interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2) %>% ungroup
+    # pop_df %>% glimpse
     ### Calculate national population
-    national_pop   <- pop_df   %>% group_by_at(.vars=c("year")) %>% summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>% ungroup
-    national_pop   <- pop_df   %>% rename(national_pop = reg_pop) %>% mutate(region="National.Total")
+    national_pop   <- pop_df       %>% group_by_at(.vars=c("year")) %>% summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>% ungroup
+    national_pop   <- national_pop %>% rename(national_pop = reg_pop) %>% mutate(region="National.Total")
+    # national_pop %>% glimpse
     rm("popInput")
-  } else{
+  } ### if(has_popUpdate)
+  else{
     message("Creating Population scenario from defaults...")
     ### Select columns and filter
     pop_df        <- pop_default          %>% select(c(all_of(popCols0)))
     national_pop  <- national_pop_default %>% mutate(region="National.Total") %>% select("year", "national_pop", "region")
     rm("pop_default", "national_pop_default")
-  }
+  } ### End else(has_popUpdate)
   ### Message user
   if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_tempBin[["updatePopGDP"]]}}
   ### Filter to correct years
@@ -388,12 +393,16 @@ run_fredi <- function(
   pop_df            <- pop_df            %>% filter(year >= minYear) %>% filter(year <= maxYear)
   national_pop      <- national_pop      %>% filter(year >= minYear) %>% filter(year <= maxYear)
   ### National scenario
+  # gdp_df %>% glimpse; national_pop %>% glimpse;
   national_scenario <- gdp_df            %>% left_join(national_pop, by=c("year", "region"))
   national_scenario <- national_scenario %>% mutate(gdp_percap = gdp_usd/national_pop)
   national_scenario <- national_scenario %>% select(-c("region"))
+  # gdp_df %>% nrow %>% print; national_pop %>% nrow %>% print; national_scenario %>% nrow %>% print
   rm("gdp_df", "national_pop")
   ### Updated scenario
   updatedScenario   <- national_scenario %>% left_join(pop_df, by = "year")
+  updatedScenario   <- updatedScenario   %>% arrange_at(.vars=c("region", "year"))
+  # updatedScenario %>% group_by_at(.vars=c("region", "year")) %>% summarize(n=n(), .groups="keep") %>% ungroup %>% filter(n>1) %>% nrow %>% print
 
   ###### Update Scalars ######
   if(msgUser) message("", messages_tempBin[["updateScalars"]]$try, "")
@@ -510,19 +519,21 @@ run_fredi <- function(
     message("\t", "Incorrect value type provided for argument 'elasticity'...")
     message("\t\t", "Using default elasticity values.")
   }}
+
   initialResults <- df_results0    %>% filter(year >= minYear) %>% filter(year <= maxYear)
   initialResults <- initialResults %>% filter(sector %in% sectorList)
   rm("df_results0")
+  # paste0("Initial Results: ", nrow(initialResults)) %>% print; initialResults %>% glimpse
+  # updatedScenario %>% glimpse
+
   ### Update scalar values
+  # initialResults$region %>% unique %>% print; updatedScenario$region %>% unique %>% print
   initialResults <- initialResults %>% left_join(updatedScenario, by = c("year", "region"))
   initialResults <- initialResults %>% match_scalarValues(df_mainScalars, scalarType="physScalar")
-
-  # initialResults %>% head %>% glimpse
-  # initialResults$econMultiplierName %>% unique %>% print
-
   initialResults <- initialResults %>% get_econAdjValues(scenario = updatedScenario, multipliers=co_econMultipliers[,1])
   initialResults <- initialResults %>% calcScalars(elasticity = elasticity)
   rm("df_mainScalars", "updatedScenario") ### df_mainScalars no longer needed
+  # paste0("Initial Results: ", nrow(initialResults)) %>% print; initialResults %>% head %>% glimpse
 
   ###### Initialize Results for NPD ######
   if(do_npd){
@@ -851,7 +862,10 @@ run_fredi <- function(
     if( doPrimary){df_results     <- df_results %>% filter(includeaggregate==1) %>% select(-c(all_of(includeAggCol)))}
     if(!doPrimary){aggGroupByCols <- aggGroupByCols %>% c(includeAggCol)}
     ### If the user specifies primary type, filter to primary types and variants and drop that column
+    # df_results %>% nrow %>% print; df_results %>% head %>% glimpse
     df_results <- df_results %>% as.data.frame %>% aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupByCols)
+    # df_results %>% nrow %>% print; df_results %>% head %>% glimpse
+
     rm("aggGroupByCols")
   }
   # df_results %>% names %>% print

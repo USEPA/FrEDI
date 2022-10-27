@@ -221,7 +221,7 @@ get_econAdjValues <- function(
   drop0       <- c("econAdjName")
   ### Filter the data to those for which the scalar identifier == "none"...value = 1
   ### Set econMultiplierValue, econAdjValue == 1 if scalarMultiplierName=none
-  df_none[,mutate0] <- 1
+  if(nrow(df_none)) {df_none[,mutate0] <- 1}
   ###### Other Multipliers
   df_oth      <- df_oth %>% left_join(scalars  , by=c(cols0[!(cols0 %in% mutate0)]))
   # df_oth %>% names %>% print; scalars %>% names %>% print
