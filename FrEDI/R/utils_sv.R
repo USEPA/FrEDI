@@ -51,36 +51,43 @@ get_sv_sectorInfo <- function(
   if(is.null(description)){description<-F}
   if(is.null(gcmOnly    )){gcmOnly    <-F}
   if(is.null(slrOnly    )){slrOnly    <-F}
+  #svDataList <- load(file = "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData/data/sv/svDataList.rda")
   # co_sectorsRef$sector_label
-  assign("sectorInfo"  , svDataList[["sectorInfo"]])
-  assign("svSectorInfo", svDataList[["svSectorInfo"]])
+  cData <- c("sectorInfo", "svSectorInfo")
+  for(item_i in cData){assign(item_i, svDataList[[item_i]])}
+  # print(sectorInfo)
 
-  sectorInfo <- sectorInfo %>%
-    select(c("sector", "modelType", "impactUnit")) %>%
-    mutate(modelType  = modelType %>% toupper) %>%
-    mutate(variants = sector %>% lapply(function(sector_i){
+  select0 <- c("sector", "modelType", "impactUnit")
+  select1 <- c("sector", "modelType", "driverUnit", "variants", "impactUnit")
+  ### - Select appropriate columns
+  ### - Format modelType as uppercase
+  ### - Add variant label
+  ### - Add driver value
+  sectorInfo <- sectorInfo %>% select(c(all_of(select0)))
+  sectorInfo <- sectorInfo %>% mutate(modelType  = modelType %>% toupper)
+  sectorInfo <- sectorInfo %>% mutate(
+    variants = sector %>% lapply(function(sector_i){
       variants_i <- (svSectorInfo %>% filter(sector==sector_i))$variant_label %>% paste(collapse=", ")
       return(variants_i)
-    }) %>% unlist) %>%
-    mutate(driverUnit=ifelse(modelType=="GCM", "degrees Celsius", "cm")) %>%
-    select(c("sector", "modelType", "driverUnit", "variants", "impactUnit"))
-  ### Arrange
+    }) %>% unlist)
+  sectorInfo <- sectorInfo %>% mutate(driverUnit=ifelse(modelType=="GCM", "degrees Celsius", "cm"))
+  ### Select and arrange
+  sectorInfo <- sectorInfo %>% select(c(all_of(select1)))
   sectorInfo <- sectorInfo %>% arrange_at(.vars=c("sector"))
   ### GCM or SLR
-  gcm_string <- "GCM"
-  if(gcmOnly){
-    sectorInfo <- sectorInfo %>% filter(modelType==gcm_string)
-  } else if(slrOnly){
-    sectorInfo <- sectorInfo %>% filter(modelType!=gcm_string)
+  doFilter   <- (gcmOnly | slrOnly)
+  if(doFilter){
+    cFilter    <- ifelse(gcmOnly, TRUE, FALSE)
+    gcm_string <- "GCM"
+    sectorInfo <- sectorInfo %>% mutate(is_gcm =  modelType==gcm_string)
+    sectorInfo <- sectorInfo %>% filter(is_gcm == cFilter)
+    sectorInfo <- sectorInfo %>% select(-c("is_gcm"))
   }
 
   ### If not description, return names only
-  if(!description){
-    return_obj <- sectorInfo$sector
-  } else{
-    return_obj <- sectorInfo %>% as.data.frame
-  }
-
+  if(!description) {return_obj <- sectorInfo$sector}
+  else             {return_obj <- sectorInfo %>% as.data.frame}
+  ### Return
   return(return_obj)
 }
 
@@ -285,12 +292,10 @@ calc_tractImpacts <- function(
   c_svJoinImpactsCols <- c("fips", "year")
   ### Columns to drop
   c_svNACols <- c()
-  if(sector=="Air Quality"){
-    c_svNACols   <- c("sv_noHS", "sv_plus65")
-  }
+  if     (sector=="Air Quality - Childhood Asthma"   ) {c_svNACols <- c("sv_noHS", "sv_plus65")}
+  else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
   c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
   c_svWeightCols <- c("children", "highRiskLabor")
-
 
   ###### Other Info ######
   ### Eventually, import from svDemographics

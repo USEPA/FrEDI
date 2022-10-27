@@ -7,7 +7,8 @@ update_sysdata <- function(
   sv            = T, ### Whether to update SV, population, formatting info
   impacts       = F, ### Whether to update impact info
   # impactSectors = NULL,
-  rDataExt      = "rda", ### r Object Extension
+  # rDataExt      = "rda", ### r Object Extension
+  rDataExt      = "rds", ### r Object Extension
   silent        = F,  ### Whether to message the user
   save          = F, ### Whether to save
   return        = T  ### Whether to return
@@ -38,23 +39,42 @@ update_sysdata <- function(
   df_sv <- data.frame(
     file   = c("svDataList", "svPopData", "format_styles"),
     object = c("svDataList", "svPopList", "format_styles")
-  ) %>%
-    mutate(fileName = file %>% paste0(".", rDataExt)) %>%
-    mutate(filePath = inPath_sv %>% file.path(fileName))
+  )
+  ### Add file name and file path
+  df_sv <- df_sv %>% mutate(fileName = file %>% paste0(".", rDataExt))
+  df_sv <- df_sv %>% mutate(filePath = inPath_sv %>% file.path(fileName))
 
   ###### Import sysdata.rda ######
   sysDataPath   <- outPath %>% file.path(sysDataName)
-  # sysDataPath2   <- outPath %>% file.path(sysDataName2)
-  sysDataList   <- sysDataPath %>% (function(x){admisc::objRDA(x)})
   # sysDataList %>% print
-  load(sysDataPath)
+  
 
+  ###### Update file paths
+  ### Check file exists
+  new_ext       <- ifelse(tolower(rDataExt) == "rds", "rda", "rds")
+  nChar_ext     <- rDataExt %>% nchar
+  checkFile     <- sysDataPath %>% file.exists()
+  if(!checkFile){
+    sysDataPath   <- sysDataPath %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
+  }
+  sysDataList   <- sysDataPath %>% (function(x){admisc::objRDA(x)})
+  load(sysDataPath)
+  
   ###### Update sysdata: SV, pop, formatting ######
   if(sv){
     for(i in 1:nrow(df_sv)){
       file_i   <- df_sv$file[i]
       object_i <- df_sv$object[i]
       path_i   <- df_sv$filePath[i]
+      ### Check that file exists
+      checkFile   <- path_i %>% file.exists()
+      if(!checkFile){
+        paste0("File '", file_i, "' does not exist...") %>% print
+        paste0("Looking for file '", file_i, "' instead...") %>% print
+        ### Update file names
+        # file_i   <- file_i %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
+        path_i   <- path_i %>% (function(j, nChar0=nChar_ext){substr(j, start=1, stop = nchar(j) - nChar0)}) %>% paste0(new_ext)
+      }
       ### Load object
       load(path_i)
       ### Add object to list
@@ -63,7 +83,8 @@ update_sysdata <- function(
       ## Save the results
       if(save){
         paste0("Updating '", file_i, "'...") %>% print
-        ### Names
+          
+        ### Object Names
         names_sysdata   <- sysDataList
         pattern_sysdata <- paste(names_sysdata, collapse = "|")
         eval(substitute(save(list=ls(pattern = x), file=y), list(x=pattern_sysdata, y=sysDataPath)))

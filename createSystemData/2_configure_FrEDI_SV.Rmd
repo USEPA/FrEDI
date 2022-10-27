@@ -99,10 +99,13 @@ Select a specific sector if not all sectors have been updated.
 
 
 ```{r c_sv_sectors}
-c_sv_sectors     <- FrEDI::get_sv_sectorInfo()
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+frediPath %>% load_all
+
+#c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
-c_sv_sectors     <- c("Roads")
+c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
 ```
 
 ### Screening
@@ -123,7 +126,7 @@ list_screening <- list(
   sv       = TRUE,  ### Update SV demographic data
   pop      = FALSE, ### Update SV population data
   format   = TRUE,  ### Update formats
-  impacts  = TRUE, ### Update impact lists
+  impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
 )
 ```
@@ -142,11 +145,100 @@ test_svData <- createSVData(
   sv      = list_screening$sv, 
   format  = list_screening$format, 
   impacts = list_screening$impacts, 
-  sectors = list_screening$sectors
+  sectors = list_screening$sectors,
+  return  = TRUE
 )
 time2       <- Sys.time()
 time_create <- time2 - time1; time_create
 ```
+
+Check outputs
+
+```{r check test_svData}
+test_svData %>% names
+test_svData$svDataList %>% names
+test_svData$svDataList[["sectorInfo"  ]] %>% glimpse
+test_svData$svDataList[["svValidTypes"]] %>% glimpse
+test_svData$svDataList[["svDemoInfo"  ]] %>% glimpse
+```
+
+Check dataframes:
+
+```{r check_svItems}
+check_svItems <- c("sectorInfo", "svSectorInfo") %>% 
+  lapply(function(item_j, list_x=test_svData$svDataList){
+    df_j    <- list_x[[item_j]]
+    class_j <- df_j %>% class %>% paste(collapse=", ")
+    item_j %>% paste0(": Classes = ", class_j) %>% print
+    df_j %>% glimpse
+  }) %>% unlist
+```
+
+
+Reform `svValidTypes`:
+
+
+```{r view svValidTypes}
+test_svData$svDataList[["svValidTypes"]] %>% glimpse
+```
+
+Reshape `svValidTypes`
+
+```{r reshape svValidTypes}
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]][1] %>% str_split(", ") %>% unlist
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]][3] %>% str_match("children") %>% as.vector
+test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]] %>% str_match("children") %>% as.vector
+
+test_svData$svDataList[["svValidTypes"]] %>% (function(df_x, weight_i = "children"){
+ df_x   <- df_x %>% mutate(weightCol = weight_i)
+ df_x   <- df_x %>% mutate(validType = valid_popWeightCols %>%  str_match(weightCol) %>% as.vector)
+ return(df_x)
+})
+```
+
+
+Add `svValidTypes` info to sector info:
+
+```{r view svDemoInfo}
+test_svData$svDataList[["svDemoInfo"]] %>% glimpse
+```
+
+
+Reshape `svDemoInfo`
+
+```{r reshape svDemoInfo}
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("sv", "minority")) %>% 
+  select(c("colName")) %>% rename_at(.vars=c("colName"), ~c("svGroupType"))
+
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>% 
+  select(c("colName")) %>% mutate(validGroups = "none")
+
+test_svData$svDataList[["svValidTypes"]] %>% 
+      select(c("svGroupType", "valid_popWeightCols")) %>%
+      rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
+# test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority"))
+test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>% 
+  select(c("colName")) %>% rename_at(.vars=c("colName"), ~c("svGroupType")) %>% 
+  mutate(validGroups = "none") %>% rbind(
+    test_svData$svDataList[["svValidTypes"]] %>% 
+      select(c("svGroupType", "valid_popWeightCols")) %>%
+      rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
+  ) %>% 
+  (function(df_x, weight_i = "children"){
+    df_x   <- df_x %>% mutate(weightCol = weight_i)
+    df_x   <- df_x %>% mutate(validType = validGroups %>% str_match(weightCol) %>% as.vector)
+    # df_x   <- df_x %>% mutate(valueAdj  = (1*!is.na(validType)) %>% na_if(0))
+    df_x   <- df_x %>% mutate(valueAdj  = (1*!is.na(validType)))
+    return(df_x)
+  }) %>%
+  mutate(x = 1, y = 2) %>%
+  (function(dfx){
+    dfx %>% mutate_at(.vars=c("x", "y"), function(colx, valx = dfx$valueAdj){colx * valx})
+  })
+  
+```
+
+
 
 
 ### Update FrEDI Data
@@ -154,18 +246,27 @@ time_create <- time2 - time1; time_create
 Use the following code to update the FrEDI system data with the SV configuration data.
 
 ```{r update_sysdata}
-for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }
-codeNames
+for(name_i in codeNames){ source(paste(codePath, name_i, sep="/")) }; codeNames
 time3 <- Sys.time()
 update_sysdata(
   save    = list_screening$save,
-  # sv      = list_screening$sv, 
-  sv      = FALSE, 
+  sv      = list_screening$sv,
+  # sv      = FALSE, 
   impacts = list_screening$impacts
   )
 time4       <- Sys.time()
 time_update <- time4 - time3; time_update
 ```
+
+
+Test FrEDI SV
+
+```{r test get_sv_sectorInfo}
+frediPath %>% load_all
+get_sv_sectorInfo()
+```
+
+
 
 ## Test Package
 
@@ -226,9 +327,11 @@ testInputs <- inputSpecs %>% (function(list_x){
 ### Paths for Saving Results
 
 ```{r resultsPath}
+# today <- "20221026"
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
+#resultsPath <- "G:/Share/CIRA_Synthesis/03 Temperature Binning/RTool/analysis/20221025_newAQ_sv_qc"
 ```
 
 Test SV tool:
@@ -241,18 +344,19 @@ Test SV tool:
 ```{r test sv}
 frediPath %>% load_all
 test_sv <- 
-  # FrEDI::get_sv_sectorInfo() %>% 
-  # c_sv_sectors %>% 
+  # get_sv_sectorInfo() %>% 
+  c_sv_sectors[1] %>%
   # c("Air Quality") %>%
-  FrEDI::get_sv_sectorInfo() %>% (function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
+  #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors, 
-    all = FALSE,
-    inputs = testInputs[4],
-    outpath = resultsPath, save = TRUE, addDate = T
+    all     = TRUE,
+    inputs  = testInputs[4],
+    outpath = resultsPath, 
+    save = TRUE, addDate = T
 ){
   ### SLR sectors
-  c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
+  c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
   ### Only run one sector
   if(!all){sectors <- sectors[1]}
   ### Scenarios
@@ -266,8 +370,8 @@ test_sv <-
       # name_j %>% print
       list_i   <- inputs[[name_i]]
       temp_i   <- list_i$tempInput
-      slr_i    <- list_i$slrInput
-      inputs_i <- temp_i %>% left_join(slr_i, by = c("year")) %>% mutate(scenario = name_i)
+      #slr_i    <- list_i$slrInput
+      inputs_i <- temp_i %>% mutate(scenario = name_i)#%>% left_join(slr_i, by = c("year")) 
       return(inputs_i)
     }) %>% (function(names_i){do.call(rbind, names_i)})
   }
