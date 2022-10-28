@@ -240,7 +240,7 @@ run_fredi_sv <- function(
         ### Check non-missing values
         if(driverInput %>% nrow){
           df_nonNA        <- driverInput %>%
-            group_by_at(.vars=c("year", "scenario")) %>%
+            group_by_at(.vars=c("scenario")) %>%
             summarize(n=n(), .groups="keep") %>% ungroup
           naIssues    <- !all(df_nonNA$n >= 2)
           rm("df_nonNA")
@@ -451,7 +451,7 @@ run_fredi_sv <- function(
     rm("driverInput", "refYearTemp")
   } ### End if(checkTemp0 | checkTemp1 | checkTemp2 | checkTemp3)
   ### Remove intermediate objects
-  rm("checkTemp0", "checkTemp1", "checkTemp2", "checkTemp3")
+  rm("checkTemp0", "checkTemp1", "checkTemp2")
 
 
   ###### SLR Scenario ######

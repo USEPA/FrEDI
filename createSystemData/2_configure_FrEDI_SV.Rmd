@@ -102,10 +102,10 @@ Select a specific sector if not all sectors have been updated.
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 
-#c_sv_sectors     <- get_sv_sectorInfo()
+c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
-c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
+#c_sv_sectors     <- c("Labor","Roads","Extreme Temperature")
 ```
 
 ### Screening
@@ -331,7 +331,6 @@ testInputs <- inputSpecs %>% (function(list_x){
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
-#resultsPath <- "G:/Share/CIRA_Synthesis/03 Temperature Binning/RTool/analysis/20221025_newAQ_sv_qc"
 ```
 
 Test SV tool:
@@ -343,63 +342,64 @@ Test SV tool:
 
 ```{r test sv}
 frediPath %>% load_all
-test_sv <- 
-  # get_sv_sectorInfo() %>% 
-  c_sv_sectors[1] %>%
-  # c("Air Quality") %>%
+test_sv <-
+  # get_sv_sectorInfo() %>%
+  # c_sv_sectors[1] %>%
+  c("Coastal Properties") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
-    sectors, 
+    sectors,
     all     = TRUE,
-    inputs  = testInputs[4],
-    outpath = resultsPath, 
+    inputs  = testInputs[2:4],
+    outpath = resultsPath,
     save = TRUE, addDate = T
-){
-  ### SLR sectors
-  c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
-  ### Only run one sector
-  if(!all){sectors <- sectors[1]}
-  ### Scenarios
-  c_scenarios_x <- inputs %>% names
-  ### Create drivers if not null
-  if(is.null(inputs)){
-    inputs_x <- NULL
-  }
-  else{
-    inputs_x <- c_scenarios_x %>% lapply(function(name_i, dataList = inputs){
-      # name_j %>% print
-      list_i   <- inputs[[name_i]]
-      temp_i   <- list_i$tempInput
-      #slr_i    <- list_i$slrInput
-      inputs_i <- temp_i %>% mutate(scenario = name_i)#%>% left_join(slr_i, by = c("year")) 
-      return(inputs_i)
-    }) %>% (function(names_i){do.call(rbind, names_i)})
-  }
-  paste0("Input names: ", paste(inputs_x %>% names, collapse=", "), "...") %>% message()
-  c_check_x <- inputs_x$scenario %>% unique; c_check_x %>% print
-  check_x   <- all(c_check_x %in% c_scenarios_x) & all(c_scenarios_x %in% c_check_x)
-  
-  ### Run scenarios if all are present
-  if(check_x){
+  ){
+    ### SLR sectors
+    # c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
+    c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
+    ### Only run one sector
+    if(!all){sectors <- sectors[1]}
+    
     ### Iterate over sectors
     results_x <- sectors %>% lapply(function(sector_i, inputs_i=inputs_x){
       paste0("Running ", sector_i, "...") %>% message()
       sysTime_x <- Sys.time()
-      ### Driver inputs
-      if(sector_i %in% c_slr){df_dri <- inputs_i %>% select(c("year", "slr_cm", "scenario"))}
-      else{df_dri <- inputs_i %>% select(c("year", "temp_C", "scenario"))}
-      sv_i <- run_fredi_sv(
-        sector = sector_i, 
-        driverInput = df_dri,
-        outpath = outpath, save = save, addDate = addDate,
-        silent=FALSE
-      )
-      sysTime_y <- Sys.time(); (sysTime_y - sysTime_x) %>% print
-      return(sv_i)
+      ### Get inputs
+      type_i  <- ifelse(sector_i %in% c_slr, "slrInput", "tempInput")
+      col_i   <- ifelse(sector_i %in% c_slr, "slr_cm"  , "temp_C")
+      ### Create drivers if not null
+      inputs_i <- NULL
+      if(!is.null(inputs)){
+        ### Scenarios
+        c_scenarios_i <- inputs %>% names
+        inputs_i      <- c_scenarios_i %>% lapply(function(scen_j, dataList = inputs, type_j=type_i){
+          paste0(scen_j, ": ", type_j) %>% print
+          list_j   <- dataList[[scen_j]]
+          inputs_j <- list_j[[type_j]]
+          inputs_j <- inputs_j %>% mutate(scenario = scen_j)
+          inputs_j <- inputs_j %>% select(c("year", all_of(col_i), "scenario"))
+          # inputs_j %>% glimpse
+          return(inputs_j)
+        }) %>% (function(scen_j){do.call(rbind, scen_j)})
+      } ### End if(!is.null(inputs))
+      paste0("\t", "Input names: ", paste(inputs_i %>% names, collapse=", "), "...") %>% message()
+      c_check_i <- inputs_i$scenario %>% unique; inputs_i %>% glimpse
+      check_i   <- all(c_check_i %in% c_scenarios_i) & all(c_scenarios_i %in% c_check_i)
+      ### Run scenarios if all are present
+      if(check_i){
+        ### Driver inputs
+        sv_i   <- run_fredi_sv(
+          sector      = sector_i,
+          driverInput = inputs_i,
+          outpath     = outpath, save = save, addDate = addDate,
+          silent      = FALSE
+        )
+        sysTime_y <- Sys.time(); (sysTime_y - sysTime_x) %>% print
+      } ### End if(check_x)
+      ### End if(!is.null(inputs))
     }) %>% (function(sectors_i){do.call(rbind, sectors_i)})
     return(results_x)
-  }
-})
+  })
 test_sv %>% glimpse
 ```
 

@@ -296,6 +296,7 @@ calc_tractImpacts <- function(
   else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
   c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
   c_svWeightCols <- c("children", "highRiskLabor", "sv_plus65")
+  c_svWeightCols1<- c_svWeightCols %>% (function(x){x[which(!(x %in% c("sv_plus65")))]})
 
   ###### Other Info ######
   ### Eventually, import from svDemographics
@@ -331,7 +332,7 @@ calc_tractImpacts <- function(
     }
     else{
       xCol <- x[,weightsCol] %>% as.vector
-      x    <- x %>% mutate(popWeight = xCol) %>% select(-c(all_of(c_svWeightCols)))
+      x    <- x %>% mutate(popWeight = xCol) %>% select(-c(all_of(c_svWeightCols1)))
       rm("xCol")
     }
     return(x)
