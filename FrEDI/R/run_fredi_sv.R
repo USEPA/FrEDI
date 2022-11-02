@@ -133,16 +133,26 @@ run_fredi_sv <- function(
   c_sector        <- sector
   paste0("Running FrEDI SV for sector '", c_sector, "':") %>% message
   ### Sector info
-  which_sector    <- (sectorInfo$sector == c_sector) %>% which
+  which_sector    <- (svSectorInfo$sector == c_sector) %>% which #; which_sector %>% print
+  df_sectorInfo   <- svSectorInfo[which_sector,]
+  c_variants      <- df_sectorInfo[["variant_abbr" ]][which_sector]
+  c_variantLabels <- df_sectorInfo[["variant_label"]][which_sector]
+  rm("which_sector")
+  ###### Invalid Sectors ######
+  which_sector    <- (sectorInfo$sector == c_sector) %>% which #; which_sector %>% print
   c_popWtCol      <- sectorInfo[["popWeightCol"]][which_sector] %>% tolower
   c_modelType     <- sectorInfo[["modelType"   ]][which_sector] %>% tolower
+  rm("which_sector")
+
   df_validGroups  <- svDemoInfo %>% (function(df0, df1 = svValidTypes, col0 = c_popWtCol){
     old0 <- c("colName"    , "valid_popWeightCols")
     new0 <- c("svGroupType", "validGroups")
     ### Reshape svDemoInfo
     df0  <- df0 %>% filter(colType %in% c("minority")) %>% select(c(old0[1]))
     df0  <- df0 %>% rename_at(.vars=c(old0[1]), ~c(new0[1]))
-    df0  <- df0 %>% mutate(validGroups = "none")
+    # df0  <- df0 %>% mutate(validGroups = "none")
+    # children, highRiskLabor, sv_plus65, none
+    df0  <- df0 %>% mutate(validGroups = "children, highRiskLabor, sv_plus65, none")
     ### Reshape svValidTypes
     df1  <- df1 %>% select(c(new0[1], old0[2]))
     df1  <- df1 %>% rename_at(.vars=c(old0[2]), ~c(new0[2]))
@@ -157,14 +167,6 @@ run_fredi_sv <- function(
     return(df0)
   })
   # return(df_validGroups)
-  # df_validGroups %>% class
-  # paste0("Running FrEDI SV for sector ", c_sector) %>% message
-
-  # df_sectorInfo <- svSectorInfo %>% filter(sector==sector)
-  which_sector    <- (svSectorInfo$sector == c_sector) %>% which #; which_sector %>% print
-  df_sectorInfo   <- svSectorInfo[which_sector,]
-  c_variants      <- df_sectorInfo$variant_abbr
-  c_variantLabels <- df_sectorInfo$variant_label
 
   ###### Check Driver Inputs ######
   ### Initialize whether to check for inputs
@@ -239,8 +241,8 @@ run_fredi_sv <- function(
         driverInput     <- driverInput %>% filter(!is.na(year) & !is.na(slr_cm) & !is.na(scenario))
         ### Check non-missing values
         if(driverInput %>% nrow){
-          df_nonNA        <- driverInput %>%
-            group_by_at(.vars=c("year", "scenario")) %>%
+          df_nonNA      <- driverInput %>%
+            group_by_at(.vars=c("scenario")) %>%
             summarize(n=n(), .groups="keep") %>% ungroup
           naIssues    <- !all(df_nonNA$n >= 2)
           rm("df_nonNA")
@@ -451,7 +453,7 @@ run_fredi_sv <- function(
     rm("driverInput", "refYearTemp")
   } ### End if(checkTemp0 | checkTemp1 | checkTemp2 | checkTemp3)
   ### Remove intermediate objects
-  rm("checkTemp0", "checkTemp1", "checkTemp2", "checkTemp3")
+  rm("checkTemp0", "checkTemp1", "checkTemp2")
 
 
   ###### SLR Scenario ######
@@ -468,12 +470,12 @@ run_fredi_sv <- function(
   ### Then convert global temps to SLR
   if(checkSLR0){
     msg3 %>% message("Using SLR scenario from user inputs...")
-    driverInput  <- driverInput %>% select(c(all_of(slrCols))) %>% rename(driverValue = slr_cm)
+    driverInput  <- driverInput %>% select(c(all_of(slrCols)))
     ### Scenarios
     c_scenarios <- driverInput$scenario %>% unique
     n_scenarios <- c_scenarios %>% length
     ### Ref year
-    refYearSLR <- (rDataList$co_modelTypes %>% filter(modelUnitType=="slr"))$modelRefYear[1]
+    refYearSLR  <- (rDataList$co_modelTypes %>% filter(modelUnitType=="slr"))$modelRefYear[1]
     ### Drivers
     drivers_df  <- c_scenarios %>% lapply(function(
     scenario_i, data_x = driverInput,
@@ -484,7 +486,7 @@ run_fredi_sv <- function(
       ### - Zero out series at the temperature reference year
       # tempInput %>% names %>% print
       input_i <- data_x  %>% filter(scenario==scenario_i) %>% select(-c("scenario"))
-      input_i <- input_i %>% filter(year > refYear_x) %>% filter(year <= maxYear_x)
+      input_i <- input_i %>% filter(year > refYear_x) %>% filter(year <= maxYear_x) %>% rename(driverValue = slr_cm)
       input_i <- data.frame(year= refYear_x, driverValue = refValue_x) %>% rbind(input_i)
 
       ### Then, interpolate
@@ -520,6 +522,7 @@ run_fredi_sv <- function(
     ### Add driver unit
     drivers_df <- drivers_df %>% mutate(driverUnit  = "cm")
   } ### End else if(checkSLR0)
+  # drivers_df %>% names %>% print
   ### Remove intermediate objects
   rm("checkSLR0", "checkSLR1")
 
