@@ -197,7 +197,7 @@ createSystemData <- function(
         yCol        = "scaledImpact",
         extend_from = maxOutput_i,
         extend_to   = maxExtrap_i,
-        extend_all  = TRUE,
+        extend_all  = FALSE,
         unitScale   = unitScale_i
       ); # paste(modelType_i, length(functions_i)) %>% print
     ### Add values to list
