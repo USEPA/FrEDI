@@ -184,8 +184,9 @@ run_fredi_sv <- function(
   slrCols         <- c("year", "slr_cm", "scenario")
   popCols         <- c("year", "reg_pop", "region")
   ### Scenario ranges
-  tempRange       <- c(0, 10)
-  slrRange        <- c(0, 250)
+  tempRange       <- c(0, 6)
+  slrRange        <- c(0, 200)
+  driverRange     <- c(0) %>% c(ifelse(c_modelType=="slr", slrRange[2], tempRange[2]))
 
   ### Check inputs
   if(has_driverInput){
@@ -627,20 +628,27 @@ run_fredi_sv <- function(
 
     ###### Adjust SV Group Values ######
     valSuff0  <- c("ref", "sv")
+    ### Join and adjust results valueAdj
     valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
     valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
-    ### Join and adjust results valueAdj
+    drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
+    ### Adjust results
     results_i <- results_i %>% left_join(df_validGroups, by = c("svGroupType"))
     results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols0)), function(col_j){col_j * results_i$valueAdj})
-    rm("valSuff0", "valCols0")
-    ### Drop cols and return
-    drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
     results_i <- results_i %>% select(-c(all_of(drop0))); rm("drop0")
-
-    ###### Replace Driver Values
-    ### Replace extreme driver values
-    # maxDriver0 <- ifelse(c_modelType == "gcm", 6, 250)
-
+    rm("valCols0")
+    ###### Replace Driver Values ######
+    valCols0  <- c("impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
+    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    # driverRange %>% print; results_i$driverValue %>% range %>% print
+    which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
+    results_i[which0_i, valCols0] <- NA
+    # results_i <- results_i %>% mutate(insideRange = (driverValue >= driverRange[1]) | (driverValue <= driverRange[2]))
+    # results_i <- results_i %>% mutate(insideRange = (insideRange * 1) %>% na_if(0))
+    # results_i$insideRange %>% is.na %>% which %>% print
+    # results_i <- results_i %>% mutate_at(.vars = c(all_of(valCols0)), function(y){y * results_i[["insideRange"]]})
+    # results_i <- results_i %>% select(-c("insideRange"))
+    rm("valCols0", "valSuff0")
     ### Return
     return(results_i)
   })
@@ -754,7 +762,7 @@ run_fredi_sv <- function(
         ### Save results
         excel_wb %>% writeData(
           x        = results_i, sheet = sheet_i,
-          startCol = 1, startRow = 2, colNames = F
+          startCol = 1, startRow = 2, colNames = F, na.string = ""
         )
         rm("i", "variant_i", "sheet_i", "label_i", "results_i")
       }
