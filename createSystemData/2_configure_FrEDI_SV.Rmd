@@ -327,10 +327,11 @@ testInputs <- inputSpecs %>% (function(list_x){
 ### Paths for Saving Results
 
 ```{r resultsPath}
-# today <- "20221026"
+today <- "20221101"
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
+resultsPath <- "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData"
 ```
 
 Test SV tool:
@@ -343,14 +344,15 @@ Test SV tool:
 ```{r test sv}
 frediPath %>% load_all
 test_sv <-
-  # get_sv_sectorInfo() %>%
+  get_sv_sectorInfo() %>%
   # c_sv_sectors[1] %>%
-  c("Coastal Properties") %>%
+  #c("Coastal Properties") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors,
     all     = TRUE,
-    inputs  = testInputs[2:4],
+    inputs = NULL,
+    #inputs  = testInputs[2:4],
     outpath = resultsPath,
     save = TRUE, addDate = T
   ){
