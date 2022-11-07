@@ -351,9 +351,10 @@ test_sv <-
   (function(
     sectors, 
     all     = TRUE,
-    inputs  = testInputs[4],
+    # inputs  = testInputs[4],
+    inputs = NULL,
     outpath = resultsPath, 
-    save = TRUE, addDate = T
+    save = TRUE, addDate = T, overwrite=TRUE
 ){
   ### SLR sectors
   c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
@@ -362,10 +363,8 @@ test_sv <-
   ### Scenarios
   c_scenarios_x <- inputs %>% names
   ### Create drivers if not null
-  if(is.null(inputs)){
-    inputs_x <- NULL
-  }
-  else{
+  if(is.null(inputs)) {inputs_x <- NULL}
+  else                {
     inputs_x <- c_scenarios_x %>% lapply(function(name_i, dataList = inputs){
       # name_j %>% print
       list_i   <- inputs[[name_i]]
@@ -386,13 +385,15 @@ test_sv <-
       paste0("Running ", sector_i, "...") %>% message()
       sysTime_x <- Sys.time()
       ### Driver inputs
-      if(sector_i %in% c_slr){df_dri <- inputs_i %>% select(c("year", "slr_cm", "scenario"))}
-      else{df_dri <- inputs_i %>% select(c("year", "temp_C", "scenario"))}
+      if(!is.null(inputs_i)){
+        if(sector_i %in% c_slr) {inputs_i <- inputs_i %>% select(c("year", "slr_cm", "scenario"))}
+        else                    {inputs_i <- inputs_i %>% select(c("year", "temp_C", "scenario"))}
+      }
       sv_i <- run_fredi_sv(
-        sector = sector_i, 
-        driverInput = df_dri,
-        outpath = outpath, save = save, addDate = addDate,
-        silent=FALSE
+        sector      = sector_i, 
+        driverInput = inputs_i,
+        outpath     = outpath, save = save, addDate = addDate, overwrite=overwrite,
+        silent      = FALSE
       )
       sysTime_y <- Sys.time(); (sysTime_y - sysTime_x) %>% print
       return(sv_i)
@@ -409,10 +410,19 @@ Make sure at least some values are not missing:
 ```{r}
 test_sv$scenario %>% unique
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x %>% is.na)) %>% which %>% length})
+test_sv$driverValue %>% range
 test_sv$aveRate_sv %>% (function(x, na=T){   x %>% is.na   %>% which %>% length})
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x == 0)) %>% which %>% length})
 ```
 
+Check high risk populations (should be zero)
+
+
+```{r check_sv}
+check_sv <- test_sv %>% filter(regional_highRiskPop_sv > impPop_sv)
+check_sv %>% glimpse
+check_sv$svGroupType %>% unique
+```
 
 
 ## Build Package
