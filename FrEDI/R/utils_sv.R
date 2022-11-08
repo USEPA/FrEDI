@@ -381,22 +381,9 @@ calc_tractImpacts <- function(
   rm("c_tract0", "c_risk0")
   # Sys.sleep(sleep)
 
-  ###### Average Rates ######
-  ### Convert 0 values to NA and then to zero
-  c_rateCols0   <- c("tract_aveRate") %>% paste(c_suffix0, sep="_")
-  x_impacts[, c_rateCols0] <- x_impacts[,c_impact0] / x_impacts[,c_impPop0]
-  # x_impacts <- x_impacts %>% mutate(tract_aveRate_ref = tract_impact_ref / tract_impPop_ref)
-  # x_impacts <- x_impacts %>% mutate(tract_aveRate_sv  = tract_impact_sv  / tract_impPop_sv )
-  ### Replace NA values
-  which0_ref    <- (x_impacts$tract_impPop_ref == 0) %>% which
-  which0_sv     <- (x_impacts$tract_impPop_sv  == 0) %>% which
-  x_impacts[which0_ref, "tract_aveRate_ref"] <- 0
-  x_impacts[which0_sv , "tract_aveRate_sv" ] <- 0
-  rm("which0_ref", "which0_sv")
-
   ###### Regional Summaries ######
   if(msgUser){msg1 %>% paste0( "Calculating regional summaries...") %>% message}
-  c_sumCols0   <- c(c_impPop0, c_impact0) %>% c(c_quantColsNat, c_quantColsReg, c_rateCols0)
+  c_sumCols0   <- c(c_impPop0, c_impact0) %>% c(c_quantColsNat, c_quantColsReg)
   c_groupCols0 <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
   ### Group by the grouping columns and summarize the summary columns
   x_impacts     <- x_impacts %>%
@@ -406,6 +393,19 @@ calc_tractImpacts <- function(
   x_impacts     <- x_impacts %>% select(c(all_of(c_groupCols0), all_of(c_sumCols0)))
   ### Replace tract in summary names
   x_impacts     <- x_impacts %>% rename_at(.vars=c(all_of(c_sumCols0)), ~gsub("tract_", "", c_sumCols0));
+
+  ###### Average Rates ######
+  ### Convert 0 values to NA and then to zero
+  c_impPop0     <- c("impPop") %>% paste(c_suffix0, sep="_")
+  c_impact0     <- c("impact") %>% paste(c_suffix0, sep="_")
+  c_rateCols0   <- c("aveRate") %>% paste(c_suffix0, sep="_")
+  x_impacts[, c_rateCols0] <- x_impacts[,c_impact0] / x_impacts[,c_impPop0]
+  ### Replace NA values
+  which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
+  which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
+  x_impacts[which0_ref, "aveRate_ref"] <- 0
+  x_impacts[which0_sv , "aveRate_sv" ] <- 0
+  rm("which0_ref", "which0_sv")
   # Sys.sleep(sleep)
 
   ### Dataframe
