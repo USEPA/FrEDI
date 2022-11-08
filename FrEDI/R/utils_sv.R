@@ -326,7 +326,7 @@ calc_tractImpacts <- function(
   ######  National Tertiles ######
   # x_impacts %>% glimpse
   if(msgUser) {msg1 %>% paste0("Calculating national tertiles...") %>% message}
-  else        {msg3 %>% paste0("...") %>% message}
+  else        {msg2 %>% paste0("...") %>% message}
   quants_national <- x_impacts       %>% select(c(all_of(c_groupsNat0), all_of(c_sum0)))
   quants_national <- quants_national %>%
     group_by_at(.vars=c(all_of(c_groupsNat0))) %>%
@@ -368,7 +368,7 @@ calc_tractImpacts <- function(
   x_impacts <- x_impacts %>% left_join(quants_regional, by = c(all_of(c_groupsReg0)));
   rm("quants_regional");
   ### Regional High Risk Tracts
-  if(msgUser) {msg1 %>% paste0("Calculating regional high risk populations...") %>% message}
+  if(msgUser) {msg2 %>% paste0("Calculating regional high risk populations...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
   c_tract0  <- c("regional_highRiskTract")
   c_risk0   <- c_quantColsReg
