@@ -241,25 +241,21 @@ calc_tractImpacts <- function(
 
   ###### Column Names  ######
   ### Other info
-  c_suffix0           <- c("ref", "sv")
-
-  ### Columns to drop
-  c_svNACols <- c()
-  if     (sector=="Air Quality - Childhood Asthma"   ) {c_svNACols <- c("sv_noHS", "sv_plus65")}
-  else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
-  c_svGroupCols  <- svGroups[svGroups %in% names(svInfo)]
+  c_suffix0     <- c("ref", "sv")
+  c_svGroupCols <- svGroups[svGroups %in% names(svInfo)]
+  # svGroups %>% print; c_svGroupCols %>% print
 
   ###### Join Data ######
   msg0 %>% paste0("Calculating total impacts for each tract...") %>% message
   ### Format svInfo - Add column for none and drop other columns
   c_dropCols0 <- c("svCounty")
   x_impacts   <- svInfo %>% mutate(none = 1) %>% select(-c(all_of(c_dropCols0)))
-  rm("svInfo", "c_dropCols0")
+  rm("svInfo"); rm("c_dropCols0")
   ### Join svInfo with population projections by FIPS
   # x_impacts %>% head %>% glimpse %>% print; popData %>% head %>% glimpse %>% print
   c_joinCols0 <- c("region", "state", "geoid10")
   x_impacts   <- x_impacts %>% left_join(popData, by = all_of(c_joinCols0))
-  rm("popData", "c_joinCols0")
+  rm("popData"); rm("c_joinCols0")
   ### Join svInfo with the impacts by fips number
   # x_impacts %>% head %>% glimpse %>% print; scaledImpacts %>% head %>% glimpse %>% print
   x_impacts   <- x_impacts %>% left_join(scaledImpacts, by = c("year", "fips"))
@@ -271,12 +267,9 @@ calc_tractImpacts <- function(
 
   ###### Population Weight ######
   ### Add population weight column
-  ### Convert non-meaningful column values to zero
-  ### Calculate weights
-  c_weightCols <- c("children", "highRiskLabor")
+  c_weightCols <- c("children", "highRiskLabor") %>% (function(y){y[y %in% names(x_impacts)]})
   x_impacts   <- x_impacts %>% mutate(popWeight = x_impacts[[weightsCol]])
   x_impacts   <- x_impacts %>% select(-c(all_of(c_weightCols)))
-  x_impacts   <- x_impacts %>% mutate_at(.vars=c(all_of(c_svNACols)), function(z){0})
   rm("c_weightCols")
 
   ###### Tract Population ######
@@ -287,6 +280,14 @@ calc_tractImpacts <- function(
   x_impacts   <- x_impacts %>% mutate(tract_totPop_tot = county_pop * ratioTract2CountyPop)
   x_impacts   <- x_impacts %>% select(-c(all_of(c_dropCols1)))
   rm("c_dropCols1")
+
+  ###### Non-Meaningful Groups ######
+  ### Convert values for non-meaningful SV groups to zero
+  if     (sector=="Air Quality - Childhood Asthma"   ) {c_svNACols <- c("sv_noHS", "sv_plus65")}
+  else if(sector=="Air Quality - Premature Mortality") {c_svNACols <- c("sv_plus65")}
+  else                                                 {c_svNACols <- c()}
+  x_impacts   <- x_impacts %>% mutate_at(.vars=c(all_of(c_svNACols)), function(z){0})
+  rm("c_svNACols")
 
   ###### Gather Groups ######
   ### Gather by svGroupType: all the main SV variables, and racial vars
@@ -302,14 +303,14 @@ calc_tractImpacts <- function(
   ### - Impacts = population*popWeight
   c_pop0      <- c("tract_totPop") %>% paste(c_suffix0, sep="_")
   c_impPop0   <- c("tract_impPop") %>% paste(c_suffix0, sep="_")
-  c_imp0      <- c("tract_impact") %>% paste(c_suffix0, sep="_")
+  c_impact0   <- c("tract_impact") %>% paste(c_suffix0, sep="_")
   ### - Impacted population (e.g., children for Air Quality) (Impacted population = population*popWeight)
   x_impacts[, c_impPop0] <- x_impacts[, c_pop0   ] * x_impacts$popWeight
   ### - Calculate SV impacts for ref pop and impacted SV pop (Impacts = impacted population*sv_impact)
-  x_impacts[, c_imp0   ] <- x_impacts[, c_impPop0] * x_impacts$sv_impact
+  x_impacts[, c_impact0] <- x_impacts[, c_impPop0] * x_impacts$sv_impact
   ### Drop columns
   x_impacts   <- x_impacts %>% select(-c("popWeight"))
-  rm("c_pop0", "c_impPop0", "c_imp0")
+  rm("c_pop0")
 
   ###### Tertiles ######
   ### Probability values for tertiles
@@ -319,8 +320,8 @@ calc_tractImpacts <- function(
   c_groupsNat0     <- c("year")
   c_groupsReg0     <- c(c_groupsNat0, "region")
   c_sum0           <- c("tract_impact_sv")
-  c_quantColsNat   <- c("national_highRiskPop_sv", "national_highRiskPop_ref")
-  c_quantColsReg   <- c("regional_highRiskPop_sv", "regional_highRiskPop_ref")
+  c_quantColsNat   <- c("national_highRiskPop") %>% paste(c_suffix0, sep="_")
+  c_quantColsReg   <- c("regional_highRiskPop") %>% paste(c_suffix0, sep="_")
 
   ######  National Tertiles ######
   if(msgUser) {msg1 %>% paste0("Calculating national tertiles...") %>% message}
@@ -341,14 +342,13 @@ calc_tractImpacts <- function(
   else        {msg3 %>% paste0(msg1, "...") %>% message}
   ### National
   c_tract0  <- c("national_highRiskTract")
-  c_pop0    <- c("tract_impPop") %>% paste(c_suffix0, sep="_")
-  c_risk0   <- c("national_highRiskPop") %>% paste(c_suffix0, sep="_")
+  c_risk0   <- c_quantColsNat
   x_impacts <- x_impacts %>% mutate(national_highRiskTract = (tract_impact_sv > national_cutoff))
   x_impacts <- x_impacts %>% mutate(national_highRiskTract = national_highRiskTract * 1)
-  x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_pop0]
+  x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_impPop0]
   x_impacts <- x_impacts %>% select(-c(all_of(c_tract0)));
-  rm("c_tract0", "c_pop0", "c_risk0")
-  Sys.sleep(sleep)
+  rm("c_tract0", "c_risk0")
+  # Sys.sleep(sleep)
 
   ###### Regional Tertiles ######
   if(msgUser) {msg1 %>% paste0("Calculating regional tertiles...") %>% message}
@@ -368,47 +368,39 @@ calc_tractImpacts <- function(
   if(msgUser) {msg1 %>% paste0("Calculating regional high risk populations...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
   c_tract0  <- c("regional_highRiskTract")
-  c_pop0    <- c("tract_impPop") %>% paste(c_suffix0, sep="_")
-  c_risk0   <- c("regional_highRiskPop") %>% paste(c_suffix0, sep="_")
+  c_risk0   <- c_quantColsReg
   x_impacts <- x_impacts %>% mutate(regional_highRiskTract = (tract_impact_sv > regional_cutoff) %>% na_if(F))
   x_impacts <- x_impacts %>% mutate(regional_highRiskTract = regional_highRiskTract*1)
-  x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_pop0]
+  x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_impPop0]
   x_impacts <- x_impacts %>% select(-c(all_of(c_tract0)));
-  rm("c_tract0", "c_pop0", "c_risk0")
-  Sys.sleep(sleep)
+  rm("c_tract0", "c_risk0")
+  # Sys.sleep(sleep)
+
+  ###### Average Rates ######
+  ### Convert 0 values to NA and then to zero
+  c_rateCols0   <- c("aveRate") %>% paste(c_suffix0, sep="_")
+  x_impacts[, c_rateCols0] <- x_impacts[,c_impact0] / x_impacts[,c_impPop0]
+  ### Replace NA values
+  which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
+  which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
+  x_impacts[which0_ref, "aveRate_ref"] <- 0
+  x_impacts[which0_sv , "aveRate_sv" ] <- 0
+  rm("which0_ref", "which0_sv")
 
   ###### Regional Summaries ######
   if(msgUser){msg1 %>% paste0( "Calculating regional summaries...") %>% message}
-  c_impPop0     <- c("tract_impPop") %>% paste(c_suffix0, sep="_")
-  c_impact0     <- c("tract_impact") %>% paste(c_suffix0, sep="_")
-  c_svSumCols   <- c(c_impPop0, c_impact0) %>% c(c_quantColsNat, c_quantColsReg)
-  c_svGroupCols <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
-
-  ### Select all of the relevant columns
-  ### Group by the grouping columns
-  ### Summarize the summary columns
-  x_impacts     <- x_impacts %>% select(c(all_of(c_svSumCols), all_of(c_svGroupCols)))
+  c_sumCols0   <- c(c_impPop0, c_impact0) %>% c(c_quantColsNat, c_quantColsReg, c_rateCols0)
+  c_groupCols0 <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
+  ### Group by the grouping columns and summarize the summary columns
   x_impacts     <- x_impacts %>%
-    group_by_at(.vars  = c(all_of(c_svGroupCols))) %>%
-    summarize_at(.vars = c(all_of(c_svSumCols)), sum, na.rm=T) %>% ungroup
+    group_by_at(.vars  = c(all_of(c_groupCols0))) %>%
+    summarize_at(.vars = c(all_of(c_sumCols0)), sum, na.rm=T) %>% ungroup
+  ### Select all of the relevant columns
+  x_impacts     <- x_impacts %>% select(c(all_of(c_groupCols0), all_of(c_sumCols0)))
   ### Replace tract in summary names
-  x_impacts     <- x_impacts %>% rename_at(.vars=c(all_of(c_svSumCols)), ~gsub("tract_", "", c_svSumCols));
+  x_impacts     <- x_impacts %>% rename_at(.vars=c(all_of(c_sumCols0)), ~gsub("tract_", "", c_sumCols0));
   # Sys.sleep(sleep)
 
-  ### Calculate average rates
-  ### Convert 0 values to NA and then to zero
-  x_impacts     <- x_impacts %>% mutate(aveRate_sv  = impact_sv  / impPop_sv)
-  x_impacts     <- x_impacts %>% mutate(aveRate_ref = impact_ref / impPop_ref)
-  ### Replace NA values
-  which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
-  which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
-  x_impacts[which0_sv , "aveRate_sv" ] <- 0
-  x_impacts[which0_ref, "aveRate_ref"] <- 0
-  # c_mutate0     <- c("aveRate") %>% paste(c_suffix0, sep="_")
-  # x_impacts     <- x_impacts %>% mutate_at(.vars = c(all_of(c_mutate0)), is.infinite)
-  # x_impacts     <- x_impacts %>% mutate_at(.vars = c(all_of(c_mutate0)), na_if, TRUE)
-  # x_impacts     <- x_impacts %>% mutate_at(.vars = c(all_of(c_mutate0)), replace_na, 0)
-  # Sys.sleep(sleep)
   ### Dataframe
   x_impacts     <- x_impacts %>% as.data.frame
 
