@@ -381,8 +381,10 @@ run_fredi_sv <- function(
     rm("class_popInput", "popInputCols", "popCols_inInput")
   } ### End if(check_popInput)
 
+  ###### Driver Scenario ######
+  paste0("\n", msg1) %>% message("Preparing driver scenario...")
 
-  ###### Temperature Scenario ######
+  ###### ** Temperature Scenario ######
   ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
   ### Add the point where impacts are zero (the reference year temperature)
   ### For user inputs:
@@ -396,15 +398,13 @@ run_fredi_sv <- function(
   if(checkTemp0 | checkTemp1){
     ### Message user
     # if(checkTemp1){msg1 %>% message("No SLR inputs provided...")}
-    ifelse(checkTemp1, msg3, msg2) %>% message("Using temperature scenario from user inputs...")
+    msg2 %>% message("Using temperature scenario from user inputs...")
     ### Format inputs
     driverInput    <- driverInput %>% select(c(all_of(tempCols))) %>% rename(driverValue = temp_C)
   } ### End if(checkTemp0 | checkTemp1)
   else if(checkTemp2 | checkTemp3){
     ### Otherwise use default scenario and add scenario column
-    # if(checkTemp3){msg1 %>% message("No SLR inputs provided...")}
-    # ifelse(checkTemp3, msg3, msg2) %>% message("No temperature scenario provided by user...")
-    ifelse(checkTemp3, msg3, msg2) %>% message("Using default temperature scenario...")
+    msg2 %>% message("Using default temperature scenario...")
     # rDataList$co_defaultTemps %>% names %>% print
     driverInput <- rDataList$co_defaultTemps %>%
       mutate(temp_C = temp_C_global %>% convertTemps(from="global")) %>%
@@ -457,7 +457,7 @@ run_fredi_sv <- function(
   rm("checkTemp0", "checkTemp1", "checkTemp2")
 
 
-  ###### SLR Scenario ######
+  ###### ** SLR Scenario ######
   ### Year where SLR impacts are zero
   ### Follow similar procedure to temperatures:
   ### - Select appropriate columns
@@ -470,7 +470,7 @@ run_fredi_sv <- function(
   ### First convert temperatures to global temperatures
   ### Then convert global temps to SLR
   if(checkSLR0){
-    msg3 %>% message("Using SLR scenario from user inputs...")
+    msg2 %>% message("Using SLR scenario from user inputs...")
     driverInput  <- driverInput %>% select(c(all_of(slrCols)))
     ### Scenarios
     c_scenarios <- driverInput$scenario %>% unique
@@ -509,7 +509,7 @@ run_fredi_sv <- function(
     rm("driverInput", "refYearSLR")
   } ### End if(checkSLR0)
   else if(checkSLR1){
-    ifelse(checkTemp3, msg3, msg2) %>% message("Creating SLR scenario from temperature scenario...")
+    msg2 %>% message("Creating SLR scenario from temperature scenario...")
     drivers_df <- c_scenarios %>% lapply(function(
     scenario_i, data_x = drivers_df
     ){
@@ -527,21 +527,24 @@ run_fredi_sv <- function(
   ### Remove intermediate objects
   rm("checkSLR0", "checkSLR1")
 
-  ###### Standardize Driver Scenarios ######
+  ###### ** Standardize Driver Scenarios ######
   ### Subset to desired years
   drivers_df <- drivers_df %>% filter(year %in% list_years_by5)
+
+  ###### Population Scenario ######
+  paste0("\n", msg1) %>% message("Preparing population scenario...")
 
   ###### Region Population Scenario ######
   ### Population inputs
   if(has_popInput) {
-    msg1 %>% message("Creating population scenario from user inputs...")
+    msg2 %>% message("Creating population scenario from user inputs...")
     pop_df    <- popInput %>% select(c(all_of(popCols)))
     pop_df    <- pop_df   %>% interpolate_annual(years= list_years_by5, column = "reg_pop", rule = 2:2)
     pop_df    <- pop_df   %>% rename(region_pop = reg_pop)
     rm("popInput")
   } ### End if(has_popInput)
   else              {
-    msg1 %>% message("No population scenario provided...")
+    # msg1 %>% message("No population scenario provided...")
     msg2 %>% message("Using default population scenario...")
     pop_df <- svPopList$iclus_region_pop
   } ### End else(has_popInput)
@@ -550,107 +553,106 @@ run_fredi_sv <- function(
   pop_df <- pop_df %>% mutate(region = gsub("\\.", " ", region))
 
   ###### County Population Scenario ######
-  msg1 %>% message("Calculating county population from regional population...")
+  msg2 %>% message("Calculating county population from regional population...")
   df_popProj <- calc_countyPop(
     regPop  = pop_df,
     funList = svPopList$popProjList,
     years   = list_years_by5
-  ); #rm("popProjList")
+  ) #rm("popProjList")
 
 
   ###### Calculate Impacts ######
   ### Iterate over adaptations/variants
-  # df_results  <- 1:1 %>% lapply(function(
-    df_results  <- 1:nrow(df_sectorInfo) %>% lapply(function(
+  df_results  <- 1:nrow(df_sectorInfo) %>% lapply(function(
     row_i, info_x = df_sectorInfo, scenarios_x = c_scenarios
-    ){
-      # scenarios_x %>% print
-      ### Which SV data to use
-      svName_i       <- ifelse(c_sector=="Coastal Properties", "svDataCoastal", "svData"); # svName_i %>% print
-      # svDataList[[svName_i]] %>% names %>% print; # return()
-      ### Sector info
-      info_i         <- info_x[row_i,]
-      sectorAbbr_i   <- info_i$impactList_fileExt[1]
-      variantLabel_i <- info_i$variant_label[1]
-      variantAbbr_i  <- info_i$variant_abbr[1]
-      weightsCol_i   <- info_i$popWeightCol[1]
-      # info_i %>% print
+  ){
+    # scenarios_x %>% print
+    ### Which SV data to use
+    svName_i       <- ifelse(c_sector=="Coastal Properties", "svDataCoastal", "svData"); # svName_i %>% print
+    # svDataList[[svName_i]] %>% names %>% print; # return()
+    ### Sector info
+    info_i         <- info_x[row_i,]
+    sectorAbbr_i   <- info_i$impactList_fileExt[1]
+    variantLabel_i <- info_i$variant_label[1]
+    variantAbbr_i  <- info_i$variant_abbr[1]
+    weightsCol_i   <- info_i$popWeightCol[1]
+    # info_i %>% print
 
-      ### Which impacts list to use
-      impactsName_i  <- "impactsList" %>%
-        paste(sectorAbbr_i, sep="_") %>%
-        paste0(ifelse(is.na(variantAbbr_i), "", "_")) %>%
-        paste0(ifelse(is.na(variantAbbr_i), "", variantAbbr_i))
-      impactsPath_i  <- impactsPath %>% file.path(impactsName_i) %>% paste0(".", rDataType)
+    ### Which impacts list to use
+    impactsName_i  <- "impactsList" %>%
+      paste(sectorAbbr_i, sep="_") %>%
+      paste0(ifelse(is.na(variantAbbr_i), "", "_")) %>%
+      paste0(ifelse(is.na(variantAbbr_i), "", variantAbbr_i))
+    impactsPath_i  <- impactsPath %>% file.path(impactsName_i) %>% paste0(".", rDataType)
 
-      ###### Iterate Over Scenarios ######
-      results_i <- scenarios_x %>% lapply(function(scenario_j){
-        paste0("\n", msg1, "Calculating impacts for sector='", c_sector, "', variant='",
-               variantLabel_i, "', scenario='", scenario_j, "'...") %>% message
-        ###### Scaled Impacts ######
-        drivers_j <- drivers_df %>% filter(scenario == scenario_j) %>% select(-c("scenario"))
-        # drivers_j %>% glimpse
-        ### Get impact list, calculate scaled impacts, remove impact list
-        if(!exists("impactsList_j")){impactsList_j <- impactsPath_i %>% readRDS}
-        impacts_j <- calc_tractScaledImpacts(
-          funList      = impactsList_j,
-          driverValues = drivers_j,
-          silent       = silent,
-          .msg0        = msg2
-        )
-        if(exists("impactsList_j")){remove(list=c("impactsList_j"), inherits = T)}
+    ###### Iterate Over Scenarios ######
+    results_i <- scenarios_x %>% lapply(function(scenario_j){
+      paste0("\n", msg1) %>% message("Calculating impacts for sector='", c_sector, "', variant='",
+             variantLabel_i, "', scenario='", scenario_j, "'...")
+      ###### Scaled Impacts ######
+      drivers_j <- drivers_df %>% filter(scenario == scenario_j) %>% select(-c("scenario"))
+      # drivers_j %>% glimpse
+      ### Get impact list, calculate scaled impacts, remove impact list
+      if(!exists("impactsList_j")){impactsList_j <- impactsPath_i %>% readRDS}
+      impacts_j <- calc_tractScaledImpacts(
+        funList      = impactsList_j,
+        driverValues = drivers_j,
+        silent       = silent,
+        .msg0        = msg2
+      )
+      if(exists("impactsList_j")){remove(list=c("impactsList_j"), inherits = T)}
 
-        ###### Total Impacts ######
-        ### Confirm year is numeric and filter out missing impacts
-        impacts_j <- impacts_j %>% mutate(year = year %>% as.character %>% as.numeric)
+      ###### Total Impacts ######
+      ### Confirm year is numeric and filter out missing impacts
+      impacts_j <- impacts_j %>% mutate(year = year %>% as.character %>% as.numeric)
 
-        ### Calculate impacts by tract
-        impacts_j <- impacts_j %>% calc_tractImpacts(
-          sector    = c_sector,
-          popData   = df_popProj,
-          svInfo    = svDataList[[svName_i]],
-          svGroups  = c_svGroupTypes,
-          weightCol = weightsCol_i,
-          years     = list_years_by5,
-          silent    = silent,
-          .msg0     = msg2
-        )
-        impacts_j <- impacts_j %>% mutate(scenario = scenario_j)
+      ### Calculate impacts by tract
+      impacts_j <- impacts_j %>% calc_tractImpacts(
+        sector    = c_sector,
+        popData   = df_popProj,
+        svInfo    = svDataList[[svName_i]],
+        svGroups  = c_svGroupTypes,
+        weightCol = weightsCol_i,
+        years     = list_years_by5,
+        silent    = silent,
+        .msg0     = msg2
+      )
+      impacts_j <- impacts_j %>% mutate(scenario = scenario_j)
 
-        ###### Return Impacts ######
-        return(impacts_j)
-      })
-      ###### Bind Results ######
-      ### Bind results and add variant level
-      results_i <- results_i %>% (function(y){do.call(rbind, y)})
-      results_i <- results_i %>% mutate(variant = variantLabel_i)
-
-      ###### Adjust SV Group Values ######
-      valSuff0  <- c("ref", "sv")
-      ### Join and adjust results valueAdj
-      valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-      valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
-      drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
-      ### Adjust results
-      results_i <- results_i %>% left_join(df_validGroups, by = c("svGroupType"))
-      results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols0)), function(col_j){col_j * results_i$valueAdj})
-      results_i <- results_i %>% select(-c(all_of(drop0))); rm("drop0")
-      rm("valCols0")
-      ###### Replace Driver Values ######
-      valCols0  <- c("impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-      valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
-      # driverRange %>% print; results_i$driverValue %>% range %>% print
-      which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
-      results_i[which0_i, valCols0] <- NA
-      # results_i <- results_i %>% mutate(insideRange = (driverValue >= driverRange[1]) | (driverValue <= driverRange[2]))
-      # results_i <- results_i %>% mutate(insideRange = (insideRange * 1) %>% na_if(0))
-      # results_i$insideRange %>% is.na %>% which %>% print
-      # results_i <- results_i %>% mutate_at(.vars = c(all_of(valCols0)), function(y){y * results_i[["insideRange"]]})
-      # results_i <- results_i %>% select(-c("insideRange"))
-      rm("valCols0", "valSuff0")
-      ### Return
-      return(results_i)
+      ###### Return Impacts ######
+      return(impacts_j)
     })
+    ###### Bind Results ######
+    ### Bind results and add variant level
+    results_i <- results_i %>% (function(y){do.call(rbind, y)})
+    results_i <- results_i %>% mutate(variant = variantLabel_i)
+
+    ###### Adjust SV Group Values ######
+    valSuff0  <- c("ref", "sv")
+    ### Join and adjust results valueAdj
+    valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
+    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
+    ### Adjust results
+    results_i <- results_i %>% left_join(df_validGroups, by = c("svGroupType"))
+    results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols0)), function(col_j){col_j * results_i$valueAdj})
+    results_i <- results_i %>% select(-c(all_of(drop0))); rm("drop0")
+    rm("valCols0")
+    ###### Replace Driver Values ######
+    valCols0  <- c("impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
+    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    # driverRange %>% print; results_i$driverValue %>% range %>% print
+    which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
+    results_i[which0_i, valCols0] <- NA
+    # results_i <- results_i %>% mutate(insideRange = (driverValue >= driverRange[1]) | (driverValue <= driverRange[2]))
+    # results_i <- results_i %>% mutate(insideRange = (insideRange * 1) %>% na_if(0))
+    # results_i$insideRange %>% is.na %>% which %>% print
+    # results_i <- results_i %>% mutate_at(.vars = c(all_of(valCols0)), function(y){y * results_i[["insideRange"]]})
+    # results_i <- results_i %>% select(-c("insideRange"))
+    rm("valCols0", "valSuff0")
+    ### Return
+    return(results_i)
+  })
   ###### Format Results ######
   ### Bind results and ungroup
   df_results <- df_results %>% (function(x){do.call(rbind, x)})
@@ -695,13 +697,11 @@ run_fredi_sv <- function(
     if(!excel_wb_exists){
       msg2 %>% paste0("Warning: Excel template '", inFileName, "' not found in '", inFilePath, "'...") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
-      msg1 %>% paste0("Finished.") %>% message
     }
     ### What to do if the directory doesn't exist
     if(!outDirExists){
       msg2 %>% paste0("Warning: `outpath='", outpath, "' does not exist...", "\n") %>% message
       msg2 %>% paste0("Exiting without saving...") %>% message
-      msg1 %>% paste0("Finished.") %>% message
     }
     ### What to do if the directory exists
     if(outFileExists & !overwrite){
@@ -715,8 +715,8 @@ run_fredi_sv <- function(
     writeFile <- (outFileExists & overwrite) | (!outFileExists)
     if(!writeFile){
       msg2 %>% paste0("Exiting without saving...") %>% message
-      msg1 %>% paste0("Finished.") %>% message
-    } else{
+    } ### End if(!writeFile)
+    else{
       ### Open the workbook and write  ReadMe info
       if(msgUser){ msg2 %>% paste0("Formatting workbook...") %>% message}
       excel_wb      <- excel_wb_path %>% loadWorkbook()
@@ -773,7 +773,7 @@ run_fredi_sv <- function(
     # sysTime4 <- Sys.time(); (sysTime4 - sysTime3) %>% print
   } ### End if save
   ###### Return Object ######
-  message("\n", "Finished", ".")
+  msg1 %>% paste0("Finished.") %>% message
   df_results   <- df_results %>% ungroup %>% as.data.frame
 }
 

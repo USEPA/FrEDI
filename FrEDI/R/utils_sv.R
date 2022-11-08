@@ -314,27 +314,28 @@ calc_tractImpacts <- function(
 
   ###### Tertiles ######
   ### Probability values for tertiles
-  n_quants         <- 3
-  c_probs          <- seq(0, 1, length.out=n_quants + 1)
+  n_quants        <- 3
+  c_probs         <- seq(0, 1, length.out=n_quants + 1)
   ### Columns
-  c_groupsNat0     <- c("year")
-  c_groupsReg0     <- c(c_groupsNat0, "region")
-  c_sum0           <- c("tract_impact_sv")
-  c_quantColsNat   <- c("national_highRiskPop") %>% paste(c_suffix0, sep="_")
-  c_quantColsReg   <- c("regional_highRiskPop") %>% paste(c_suffix0, sep="_")
+  c_groupsNat0    <- c("year", "svGroupType")
+  c_groupsReg0    <- c(c_groupsNat0, "region")
+  c_sum0          <- c("tract_impact_sv")
+  c_quantColsNat  <- c("national_highRiskPop") %>% paste(c_suffix0, sep="_")
+  c_quantColsReg  <- c("regional_highRiskPop") %>% paste(c_suffix0, sep="_")
 
   ######  National Tertiles ######
+  # x_impacts %>% glimpse
   if(msgUser) {msg1 %>% paste0("Calculating national tertiles...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
-  quants_national  <- x_impacts %>% select(c(all_of(c_groupsNat0), all_of(c_sum0)))
-  quants_national  <- quants_national %>%
+  quants_national <- x_impacts       %>% select(c(all_of(c_groupsNat0), all_of(c_sum0)))
+  quants_national <- quants_national %>%
     group_by_at(.vars=c(all_of(c_groupsNat0))) %>%
     summarize_at(.vars=c(all_of(c_sum0)), function(x){quantile(x, na.rm=T, probs = c_probs)[3]}) %>%
     ungroup %>% rename(national_cutoff = tract_impact_sv)
   ### Join with national quantiles
   if(msgUser) {msg2 %>% paste0("Joining national tertiles to tract-level data...") %>% message}
   else        {msg3 %>% paste0(msg1, "...") %>% message}
-  x_impacts <- x_impacts %>% left_join(quants_national, by = c("year"));
+  x_impacts <- x_impacts %>% left_join(quants_national, by = c(all_of(c_groupsNat0)));
   rm("quants_national");
   ### National high risk tracts
   ### Message, add new columns, drop unnecessary columns
@@ -343,8 +344,10 @@ calc_tractImpacts <- function(
   ### National
   c_tract0  <- c("national_highRiskTract")
   c_risk0   <- c_quantColsNat
+  ### Figure out which tracts are high risk
   x_impacts <- x_impacts %>% mutate(national_highRiskTract = (tract_impact_sv > national_cutoff))
   x_impacts <- x_impacts %>% mutate(national_highRiskTract = national_highRiskTract * 1)
+  ### Calculate high risk columns
   x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_impPop0]
   x_impacts <- x_impacts %>% select(-c(all_of(c_tract0)));
   rm("c_tract0", "c_risk0")
@@ -362,15 +365,17 @@ calc_tractImpacts <- function(
   ### Join with regional quantiles
   if(msgUser){msg2 %>% paste0("Joining regional tertiles to tract-level data...") %>% message}
   else       {msg3 %>% paste0(msg1, "...") %>% message}
-  x_impacts <- x_impacts %>% left_join(quants_regional, by = c("year", "region"));
+  x_impacts <- x_impacts %>% left_join(quants_regional, by = c(all_of(c_groupsReg0)));
   rm("quants_regional");
   ### Regional High Risk Tracts
   if(msgUser) {msg1 %>% paste0("Calculating regional high risk populations...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
   c_tract0  <- c("regional_highRiskTract")
   c_risk0   <- c_quantColsReg
-  x_impacts <- x_impacts %>% mutate(regional_highRiskTract = (tract_impact_sv > regional_cutoff) %>% na_if(F))
+  ### Figure out which tracts are high risk
+  x_impacts <- x_impacts %>% mutate(regional_highRiskTract = (tract_impact_sv > regional_cutoff))
   x_impacts <- x_impacts %>% mutate(regional_highRiskTract = regional_highRiskTract*1)
+  ### Calculate high risk columns
   x_impacts[, c_risk0] <- x_impacts[[c_tract0]] * x_impacts[, c_impPop0]
   x_impacts <- x_impacts %>% select(-c(all_of(c_tract0)));
   rm("c_tract0", "c_risk0")
@@ -378,13 +383,15 @@ calc_tractImpacts <- function(
 
   ###### Average Rates ######
   ### Convert 0 values to NA and then to zero
-  c_rateCols0   <- c("aveRate") %>% paste(c_suffix0, sep="_")
+  c_rateCols0   <- c("tract_aveRate") %>% paste(c_suffix0, sep="_")
   x_impacts[, c_rateCols0] <- x_impacts[,c_impact0] / x_impacts[,c_impPop0]
+  # x_impacts <- x_impacts %>% mutate(tract_aveRate_ref = tract_impact_ref / tract_impPop_ref)
+  # x_impacts <- x_impacts %>% mutate(tract_aveRate_sv  = tract_impact_sv  / tract_impPop_sv )
   ### Replace NA values
-  which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
-  which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
-  x_impacts[which0_ref, "aveRate_ref"] <- 0
-  x_impacts[which0_sv , "aveRate_sv" ] <- 0
+  which0_ref    <- (x_impacts$tract_impPop_ref == 0) %>% which
+  which0_sv     <- (x_impacts$tract_impPop_sv  == 0) %>% which
+  x_impacts[which0_ref, "tract_aveRate_ref"] <- 0
+  x_impacts[which0_sv , "tract_aveRate_sv" ] <- 0
   rm("which0_ref", "which0_sv")
 
   ###### Regional Summaries ######
