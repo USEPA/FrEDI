@@ -345,14 +345,16 @@ Test SV tool:
 frediPath %>% load_all
 test_sv <- 
   # get_sv_sectorInfo() %>% 
-  c_sv_sectors[1] %>%
+  # c_sv_sectors[1] %>%
+  # c("Labor") %>%
   # c("Coastal Properties") %>%
+  c("Roads") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors, 
     all     = TRUE,
     # inputs  = testInputs[4],
-    inputs = NULL,
+    inputs  = NULL,
     outpath = resultsPath, 
     save = TRUE, addDate = T, overwrite=TRUE
 ){

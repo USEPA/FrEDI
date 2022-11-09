@@ -143,29 +143,7 @@ run_fredi_sv <- function(
   c_popWtCol      <- sectorInfo[["popWeightCol"]][which_sector] %>% tolower
   c_modelType     <- sectorInfo[["modelType"   ]][which_sector] %>% tolower
   rm("which_sector")
-
-  df_validGroups  <- svDemoInfo %>% (function(df0, df1 = svValidTypes, col0 = c_popWtCol){
-    old0 <- c("colName"    , "valid_popWeightCols")
-    new0 <- c("svGroupType", "validGroups")
-    ### Reshape svDemoInfo
-    df0  <- df0 %>% filter(colType %in% c("minority")) %>% select(c(old0[1]))
-    df0  <- df0 %>% rename_at(.vars=c(old0[1]), ~c(new0[1]))
-    # df0  <- df0 %>% mutate(validGroups = "none")
-    # children, highRiskLabor, sv_plus65, none
-    df0  <- df0 %>% mutate(validGroups = "children, highRiskLabor, sv_plus65, none")
-    ### Reshape svValidTypes
-    df1  <- df1 %>% select(c(new0[1], old0[2]))
-    df1  <- df1 %>% rename_at(.vars=c(old0[2]), ~c(new0[2]))
-    ### Bind
-    df0  <- df1 %>% rbind(df0)
-    ### Calculate weight columns
-    df0  <- df0 %>% mutate(weightCol = col0)
-    df0  <- df0 %>% mutate(validType = validGroups %>% str_match(weightCol) %>% as.vector)
-    df0  <- df0 %>% mutate(valueAdj  = (1*!is.na(validType)))
-    # df0  <- df0 %>% mutate(valueAdj  = (1*!is.na(validType)) %>% na_if(0))
-    ### Return
-    return(df0)
-  })
+  df_validGroups  <- svDemoInfo %>% get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
   # return(df_validGroups)
 
   ###### Check Driver Inputs ######
@@ -619,6 +597,7 @@ run_fredi_sv <- function(
       )
       impacts_j <- impacts_j %>% mutate(scenario = scenario_j)
 
+      # (impacts_j$impPop_ref != 0) %>% which %>% length %>% print
       ###### Return Impacts ######
       return(impacts_j)
     })
@@ -631,24 +610,24 @@ run_fredi_sv <- function(
     valSuff0  <- c("ref", "sv")
     ### Join and adjust results valueAdj
     valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    valCols1  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
     drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
     ### Adjust results
+    # df_validGroups %>% glimpse; results_i %>% glimpse
     results_i <- results_i %>% left_join(df_validGroups, by = c("svGroupType"))
-    results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols0)), function(col_j){col_j * results_i$valueAdj})
+    results_i <- results_i %>% mutate_at(.vars=c(all_of(valCols1)), function(col_j){col_j * results_i$valueAdj})
     results_i <- results_i %>% select(-c(all_of(drop0))); rm("drop0")
-    rm("valCols0")
+    # (results_i$impPop_ref != 0) %>% which %>% length %>% print
+    # results_i %>% names %>% print
+    rm("valCols1")
     ###### Replace Driver Values ######
-    valCols0  <- c("impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-    valCols0  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    valCols0  <- valCols0[!(valCols0 %in% c("impPop"))]
+    valCols1  <- valCols0  %>% lapply(function(col_j){col_j %>% paste(valSuff0, sep="_")}) %>% unlist
+    # valCols1 %>% print
     # driverRange %>% print; results_i$driverValue %>% range %>% print
     which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
-    results_i[which0_i, valCols0] <- NA
-    # results_i <- results_i %>% mutate(insideRange = (driverValue >= driverRange[1]) | (driverValue <= driverRange[2]))
-    # results_i <- results_i %>% mutate(insideRange = (insideRange * 1) %>% na_if(0))
-    # results_i$insideRange %>% is.na %>% which %>% print
-    # results_i <- results_i %>% mutate_at(.vars = c(all_of(valCols0)), function(y){y * results_i[["insideRange"]]})
-    # results_i <- results_i %>% select(-c("insideRange"))
+    # results_i %>% glimpse
+    results_i[which0_i, valCols1] <- NA
     rm("valCols0", "valSuff0")
     ### Return
     return(results_i)
