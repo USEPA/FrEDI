@@ -346,9 +346,9 @@ frediPath %>% load_all
 test_sv <- 
   # get_sv_sectorInfo() %>% 
   # c_sv_sectors[1] %>%
-  # c("Labor") %>%
+  c("Labor") %>%
   # c("Coastal Properties") %>%
-  c("Roads") %>%
+  # c("Roads") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors, 
