@@ -102,10 +102,10 @@ Select a specific sector if not all sectors have been updated.
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 
-#c_sv_sectors     <- get_sv_sectorInfo()
+c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
-c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
+#c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
 ```
 
 ### Screening
@@ -124,7 +124,7 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = FALSE, ### Update SV population data
+  pop      = TRUE, ### Update SV population data
   format   = TRUE,  ### Update formats
   impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors

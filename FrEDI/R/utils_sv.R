@@ -1,26 +1,33 @@
 ###### Overview ######
 ### This file contains helper functions for the FrEDI SV module.
 ###### get_sv_sectorInfo ######
-#' This function provides information about the sectors in the FrEDI SV Module.
+#' Retrieve a character vector of sectors available in the FrEDI Social Vulnerability (SV) module ([FrEDI::run_fredi_sv]) or a data frame with SV sectors and additional information.
 #'
 #' @description
-#' This helper function returns a character vector with the names of sectors in the FrEDI SV module (default) *or* a data frame of those sectors with related information (`description=TRUE`). If `description=TRUE`, [FrEDI::get_sv_sectorInfo] will return a data frame with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), available variants. Users can use [FrEDI::get_sv_sectorInfo] to determine which sectors can be passed to the [FrEDI::run_sv_fredi()] `sector` argument and/or to determine whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#' `get_sv_sectorInfo` returns a character vector with the names of sectors in the FrEDI Social Vulnerability (SV) module (default) **or** a data frame of SV sectors with additional information (e.g., associated variants, model type, etc.).
 #'
-#' @param description=FALSE. Logical value indicating whether to include information about each sector. Returns a data frame if `description=TRUE` and returns a character vector of sector names if `description=FALSE` (default).
-#' @param gcmOnly=FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.
-#' @param slrOnly=FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.
+#'
+#' @param description Logical value indicating whether to include information about each sector. Returns a data frame if `description=TRUE` and returns a character vector of sector names if `description=FALSE` (default).
+#'
+#' @param gcmOnly     Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.
+#'
+#' @param slrOnly     Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.
+#'
 #'
 #' @details
-#' This helper function returns a character vector with the names of sectors in FrEDI (default) *or* a data frame of those sectors with related information (`description=TRUE`). If `description=TRUE`, [FrEDI::get_sv_sectorInfo] will return a data frame with sector names, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), and available variants. Users can use [FrEDI::get_sv_sectorInfo] to determine which sectors can be passed to the [FrEDI::run_sv_fredi()] `sector` argument and/or to determine whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#' `get_sv_sectorInfo` returns a character vector with the names of sectors in the FrEDI SV module (`description=FALSE`, default) **or** a data frame with SV sectors and additional information (`description=TRUE`).
 #'
-#' If `description=FALSE` (default), this helper function returns a character vector of names of sectors that can be passed to the [FrEDI::run_sv_fredi()] `sector` argument. If `description=TRUE`, `get_sv_sectorInfo()` returns a data frame of sectors with related information, such as whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
+#' * If `description=FALSE` (default), `get_sv_sectorInfo` returns a character vector of names of sectors that can be passed to the [FrEDI::run_sv_fredi()] `sector` argument. Specify whether to return only GCM sectors by running `get_sv_sectorInfo(gcmOnly=TRUE)` or SLR sectors by running `get_sv_sectorInfo(slrOnly=TRUE)`.
+#' * If `description=TRUE`, `get_sv_sectorInfo` returns a data frame of sectors with related information, such as whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`), associated driver units (`"degrees Celsius"` for temperature-driven sectors, `"cm"` for SLR-driven sectors), impact units (e.g., mortality, etc.), and sector variants. Users can use [FrEDI::get_sv_sectorInfo] to determine which sectors can be passed to the [FrEDI::run_sv_fredi()] `sector` argument and/or to determine whether a particular sector is driven primarily by temperature (`modelType="GCM"`) or sea level rise (`modelType="SLR"`).
 #'
-#' Users can specify whether to return only GCM sectors *or* SLR sectors by setting `gcmOnly=TRUE` or `slrOnly=TRUE`, respectively. [FrEDI::get_sv_sectorInfo()] will return the sectors in the form specified by `description` (see above).
+#' Users can specify whether to return only GCM sectors by setting `gcmOnly=TRUE` **or** SLR sectors by setting `slrOnly=TRUE`.
 #'
 #' @return
 #'
+#' [FrEDI::get_sv_sectorInfo()] will return SV sectors in the form specified by `description`:
+#'
 #' * If `description=FALSE` (default), outputs a character vector containing the names of sectors available for the FrEDI SV Module.
-#' * If `description=TRUE`, `, outputs a data frame containing the names of sectors available for the FrEDI SV Module in one column, with information about the sector model type, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ),  impact units (e.g., mortality, etc.), and available variants in the remaining columns.
+#' * If `description=TRUE`, outputs a data frame containing the names of sectors available for the FrEDI SV Module in one column, with information about the sector model type, model type ("GCM" or "SLR") and associated driver unit ("degrees Celsius" or "cm", respectively ), impact units (e.g., mortality, etc.), and available variants in the remaining columns.
 #'
 #' @examples
 #'
@@ -153,14 +160,11 @@ calc_countyPop <- function(
 ### Use this function to calculate tract level impacts
 calc_tractScaledImpacts <- function(
     funList, ### List of impact functions
-    # scenarios, ### Character vector of scenarios
-    # driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
-    # tracts ### Character vectors of tracts
     driverValues, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
-    xCol  = "driverValue",
-    sleep = 1e-7,
+    xCol   = "driverValue",
+    sleep  = 1e-7,
     silent = FALSE,
-    .msg0 = ""
+    .msg0  = ""
 ){
   ### Messaging
   msg0 <- .msg0
@@ -175,7 +179,10 @@ calc_tractScaledImpacts <- function(
   years_x  <- driverValues$year %>% as.vector
   values_x <- driverValues[,xCol] %>% as.vector
   funcs_x  <- funList %>% names
-  # c_tracts <- c_tracts[1:1e3]; funcs_x <- funcs_x[1:1e3]
+  # # c_tracts <- c_tracts[1:1e3]; funcs_x <- funcs_x[1:1e3]
+  # c_tracts <- c(29031880500);
+  # c_tracts <- seq(c_tracts - 10, c_tracts + 10);
+  # c_tracts <- c_tracts %>% as.character
 
   ###### Iterate over Tracts ######
   data_x   <- c_tracts %>% lapply(function(tract_i){
@@ -192,6 +199,7 @@ calc_tractScaledImpacts <- function(
     if(has_fun_i){y_i <- fun_i(values_x)}
     ### Add values
     df_i      <- df_i %>% mutate(sv_impact = y_i)
+    # fun_i(1.667535543) %>% print; df_i %>% print
     ### Sleep and return
     # Sys.sleep(sleep)
     return(df_i)
@@ -228,7 +236,8 @@ calc_tractImpacts <- function(
     years     = seq(2010, 2090, by=5),
     sleep     = 1e-5,
     silent    = FALSE,
-    .msg0     = ""
+    .msg0     = "",
+    .testing  = TRUE
 ){
   ###### Constants  ######
   # paste0("Calculating total impacts for each tract...") %>% message
@@ -298,20 +307,6 @@ calc_tractImpacts <- function(
   x_impacts   <- x_impacts %>% mutate_at(.vars=c(all_of(c_svNACols)), function(z){0})
   rm("c_svNACols")
 
-  ### - Impacts = population*popWeight
-  c_pop0      <- c("tract_totPop")
-  c_impPop0   <- c("tract_impPop")
-  c_impact0   <- c("tract_impact")
-  ### - Impacted population (e.g., children for Air Quality) (Impacted population = population*popWeight)
-  x_impacts[[c_impPop0]] <- x_impacts[[c_pop0   ]] * x_impacts[["popWeight"]]
-  # (x_impacts$tract_impPop != 0) %>% which %>% length %>% print
-  ### - Calculate SV impacts for ref pop and impacted SV pop (Impacts = impacted population*sv_impact)
-  x_impacts[[c_impact0]] <- x_impacts[[c_impPop0]] * x_impacts[["sv_impact"]]
-  # (x_impacts$tract_impact != 0) %>% which %>% length %>% print
-  ### Drop columns
-  x_impacts   <- x_impacts %>% select(-c("popWeight", "sv_impact", all_of(c_pop0)))
-  rm("c_pop0")
-
   ######  National Tertiles ######
   # x_impacts %>% glimpse
   if(msgUser) {msg1 %>% paste0("Calculating national tertiles...") %>% message}
@@ -320,13 +315,15 @@ calc_tractImpacts <- function(
   groupsNat0    <- c("year")
   tractNat0     <- c("national_highRiskTract")
   cutoffNat0    <- c("national_cutoff")
+  scaledImpact0 <- c("sv_impact")
   ### Calculate terciles and rename column
-  quants_national <- x_impacts       %>% select(c(all_of(groupsNat0), all_of(c_impact0)))
+  quants_national <- x_impacts       %>% select(c(all_of(groupsNat0), all_of(scaledImpact0)))
   quants_national <- quants_national %>%
     group_by_at (.vars = c(all_of(groupsNat0))) %>%
-    summarize_at(.vars = c(all_of(c_impact0)), calc_terciles) %>% ungroup
+    summarize_at(.vars = c(all_of(scaledImpact0)), calc_terciles) %>% ungroup
   ### Rename
-  quants_national <- quants_national %>% rename_at(.vars=all_of(c_impact0), ~all_of(cutoffNat0))
+  quants_national <- quants_national %>% rename_at(.vars=all_of(scaledImpact0), ~all_of(cutoffNat0))
+  # quants_national %>% print
   ### Join with national quantiles
   if(msgUser) {msg2 %>% paste0("Joining national tertiles to tract-level data...") %>% message}
   else        {msg3 %>% paste0(msg1, "...") %>% message}
@@ -336,7 +333,7 @@ calc_tractImpacts <- function(
   ### Calculate high risk populations
   if(msgUser) {msg2 %>% paste0("Calculating national high risk populations...") %>% message}
   else        {msg3 %>% paste0(msg1, "...") %>% message}
-  x_impacts[[tractNat0]] <- (x_impacts[[c_impact0]] > x_impacts[[cutoffNat0]]) * 1
+  x_impacts[[tractNat0]] <- (x_impacts[[scaledImpact0]] > x_impacts[[cutoffNat0]]) * 1
   x_impacts <- x_impacts %>% select(-c(all_of(cutoffNat0)));
   rm("cutoffNat0")
   # Sys.sleep(sleep)
@@ -350,12 +347,12 @@ calc_tractImpacts <- function(
   cutoffReg0    <- c("regional_cutoff")
   ### 126 rows
   ### Calculate terciles and rename column
-  quants_regional  <- x_impacts %>% select(c(all_of(groupsReg0), all_of(c_impact0)))
+  quants_regional  <- x_impacts %>% select(c(all_of(groupsReg0), all_of(scaledImpact0)))
   quants_regional  <- quants_regional %>%
     group_by_at(.vars=c(all_of(groupsReg0))) %>%
-    summarize_at(.vars=c(all_of(c_impact0)), calc_terciles) %>% ungroup
+    summarize_at(.vars=c(all_of(scaledImpact0)), calc_terciles) %>% ungroup
   ### Rename
-  quants_regional <- quants_regional %>% rename_at(.vars=all_of(c_impact0), ~all_of(cutoffReg0))
+  quants_regional <- quants_regional %>% rename_at(.vars=all_of(scaledImpact0), ~all_of(cutoffReg0))
   ### Join with regional quantiles
   if(msgUser){msg2 %>% paste0("Joining regional tertiles to tract-level data...") %>% message}
   else       {msg3 %>% paste0(msg1, "...") %>% message}
@@ -366,10 +363,26 @@ calc_tractImpacts <- function(
   ### Calculate high risk populations
   if(msgUser) {msg2 %>% paste0("Calculating regional high risk populations...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
-  x_impacts[[tractReg0]] <- (x_impacts[[c_impact0]] > x_impacts[[cutoffReg0]]) * 1
+  x_impacts[[tractReg0]] <- (x_impacts[[scaledImpact0]] > x_impacts[[cutoffReg0]]) * 1
   x_impacts <- x_impacts %>% select(-c(all_of(cutoffReg0)));
   rm("cutoffReg0")
   # Sys.sleep(sleep)
+
+  ###### Total Impacts ######
+  ### - Impacts = population*popWeight
+  c_pop0      <- c("tract_totPop")
+  c_impPop0   <- c("tract_impPop")
+  c_impact0   <- c("tract_impact")
+  ### - Impacted population (e.g., children for Air Quality) (Impacted population = population*popWeight)
+  x_impacts[[c_impPop0]] <- x_impacts[[c_pop0   ]] * x_impacts[["popWeight"]]
+  # (x_impacts$tract_impPop != 0) %>% which %>% length %>% print
+  ### - Calculate SV impacts for ref pop and impacted SV pop (Impacts = impacted population*sv_impact)
+  x_impacts[[c_impact0]] <- x_impacts[[c_impPop0]] * x_impacts[["sv_impact"]]
+  # x_impacts %>% print # (x_impacts$tract_impact != 0) %>% which %>% length %>% print
+  ### Drop columns
+  # x_impacts   <- x_impacts %>% select(-c("popWeight", "sv_impact", all_of(c_pop0)))
+  x_impacts   <- x_impacts %>% select(-c(all_of(c_pop0)))
+  rm("c_pop0")
 
   ###### Gather Groups ######
   ### Gather by svGroupType: all the main SV variables, and racial vars
@@ -398,32 +411,34 @@ calc_tractImpacts <- function(
   rm("tractNat0", "tractReg0")
 
   ###### Regional Summaries ######
-  if(msgUser){msg1 %>% paste0( "Calculating regional summaries...") %>% message}
-  sumCols0     <- c(c_impPop1, c_impact1) %>% c(popNat1, popReg1)
-  groupCols0   <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
-  ### Group by the grouping columns and summarize the summary columns
-  x_impacts    <- x_impacts %>%
-    group_by_at (.vars=c(all_of(groupCols0))) %>%
-    summarize_at(.vars=c(all_of(sumCols0)), sum, na.rm=T) %>% ungroup
-  # (x_impacts$tract_impPop_ref != 0) %>% which %>% length %>% print
-  ### Select all of the relevant columns
-  x_impacts    <- x_impacts %>% select(c(all_of(groupCols0), all_of(sumCols0)))
-  ### Replace tract in summary names
-  x_impacts    <- x_impacts %>% rename_at(.vars=c(all_of(sumCols0)), ~gsub("tract_", "", sumCols0));
-  rm("sumCols0", "groupCols0")
+  if(!.testing){
+    if(msgUser){msg1 %>% paste0( "Calculating regional summaries...") %>% message}
+    sumCols0     <- c(c_impPop1, c_impact1) %>% c(popNat1, popReg1)
+    groupCols0   <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
+    ### Group by the grouping columns and summarize the summary columns
+    x_impacts    <- x_impacts %>%
+      group_by_at (.vars=c(all_of(groupCols0))) %>%
+      summarize_at(.vars=c(all_of(sumCols0)), sum, na.rm=T) %>% ungroup
+    # (x_impacts$tract_impPop_ref != 0) %>% which %>% length %>% print
+    ### Select all of the relevant columns
+    x_impacts    <- x_impacts %>% select(c(all_of(groupCols0), all_of(sumCols0)))
+    ### Replace tract in summary names
+    x_impacts    <- x_impacts %>% rename_at(.vars=c(all_of(sumCols0)), ~gsub("tract_", "", sumCols0));
+    rm("sumCols0", "groupCols0")
 
-  ###### Average Rates ######
-  ### Convert 0 values to NA and then to zero
-  rateCols0    <- c("aveRate") %>% paste(c_suffix0, sep="_")
-  c_impPop1    <- gsub("tract_", "", c_impPop1)
-  c_impact1    <- gsub("tract_", "", c_impact1)
-  x_impacts[, rateCols0] <- x_impacts[,c_impact1] / x_impacts[,c_impPop1]
-  ### Replace NA values
-  which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
-  which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
-  x_impacts[["aveRate_ref"]][which0_ref] <- 0
-  x_impacts[["aveRate_sv" ]][which0_sv ] <- 0
-  rm("which0_ref", "which0_sv")
+    ###### Average Rates ######
+    ### Convert 0 values to NA and then to zero
+    rateCols0    <- c("aveRate") %>% paste(c_suffix0, sep="_")
+    c_impPop1    <- gsub("tract_", "", c_impPop1)
+    c_impact1    <- gsub("tract_", "", c_impact1)
+    x_impacts[, rateCols0] <- x_impacts[,c_impact1] / x_impacts[,c_impPop1]
+    ### Replace NA values
+    which0_ref    <- (x_impacts$impPop_ref == 0) %>% which
+    which0_sv     <- (x_impacts$impPop_sv  == 0) %>% which
+    x_impacts[["aveRate_ref"]][which0_ref] <- 0
+    x_impacts[["aveRate_sv" ]][which0_sv ] <- 0
+    rm("which0_ref", "which0_sv")
+  }
 
   # Sys.sleep(sleep)
 
