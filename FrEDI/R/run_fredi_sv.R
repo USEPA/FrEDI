@@ -120,6 +120,8 @@ run_fredi_sv <- function(
   ### Update years,
   minYear <- 2010; maxYear <- 2090; list_years_by5 <- seq(minYear, maxYear, by=5)
 
+  ### Testing
+  save    <- ifelse(.testing, FALSE, save)
 
   ### Level of messaging (default is to message the user)
   silent  <- ifelse(is.null(silent), T, silent)

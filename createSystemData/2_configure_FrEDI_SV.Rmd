@@ -357,7 +357,7 @@ test_sv <-
     inputs  = NULL,
     outpath = resultsPath, 
     # .testing = TRUE,
-    save = TRUE, addDate = T, overwrite=TRUE
+    save = FALSE, addDate = T, overwrite=TRUE
 ){
   ### SLR sectors
   c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
@@ -395,6 +395,7 @@ test_sv <-
       sv_i <- run_fredi_sv(
         sector      = sector_i, 
         driverInput = inputs_i,
+        .testing    = TRUE,
         outpath     = outpath, save = save, addDate = addDate, overwrite=overwrite,
         silent      = FALSE
       )
