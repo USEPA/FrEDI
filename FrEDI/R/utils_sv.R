@@ -216,7 +216,7 @@ calc_tractScaledImpacts <- function(
 
 ###### calc_terciles ######
 calc_terciles <- function(data_x){
-  ### Probability values for tertiles
+  ### Probability values for terciles
   n_quants <- 3
   c_probs  <- seq(0, 1, length.out=n_quants + 1)
   c_quants <- quantile(data_x, na.rm=T, probs = c_probs)
@@ -237,7 +237,7 @@ calc_tractImpacts <- function(
     sleep     = 1e-5,
     silent    = FALSE,
     .msg0     = "",
-    .testing  = TRUE
+    .testing  = FALSE
 ){
   ###### Constants  ######
   # paste0("Calculating total impacts for each tract...") %>% message
@@ -307,9 +307,9 @@ calc_tractImpacts <- function(
   x_impacts   <- x_impacts %>% mutate_at(.vars=c(all_of(c_svNACols)), function(z){0})
   rm("c_svNACols")
 
-  ######  National Tertiles ######
+  ######  National Terciles ######
   # x_impacts %>% glimpse
-  if(msgUser) {msg1 %>% paste0("Calculating national tertiles...") %>% message}
+  if(msgUser) {msg1 %>% paste0("Calculating national terciles...") %>% message}
   else        {msg2 %>% paste0("...") %>% message}
   ### Columns
   groupsNat0    <- c("year")
@@ -323,9 +323,9 @@ calc_tractImpacts <- function(
     summarize_at(.vars = c(all_of(scaledImpact0)), calc_terciles) %>% ungroup
   ### Rename
   quants_national <- quants_national %>% rename_at(.vars=all_of(scaledImpact0), ~all_of(cutoffNat0))
-  # quants_national %>% print
+  if(.testing){quants_national %>% filter(year==2050) %>% glimpse}
   ### Join with national quantiles
-  if(msgUser) {msg2 %>% paste0("Joining national tertiles to tract-level data...") %>% message}
+  if(msgUser) {msg2 %>% paste0("Joining national terciles to tract-level data...") %>% message}
   else        {msg3 %>% paste0(msg1, "...") %>% message}
   x_impacts <- x_impacts %>% left_join(quants_national, by = c(all_of(groupsNat0)));
   rm("quants_national");
@@ -338,8 +338,8 @@ calc_tractImpacts <- function(
   rm("cutoffNat0")
   # Sys.sleep(sleep)
 
-  ###### Regional Tertiles ######
-  if(msgUser) {msg1 %>% paste0("Calculating regional tertiles...") %>% message}
+  ###### Regional Terciles ######
+  if(msgUser) {msg1 %>% paste0("Calculating regional terciles...") %>% message}
   else        {msg3 %>% paste0("...") %>% message}
   ### Columns
   groupsReg0    <- c(groupsNat0, "region")
@@ -353,8 +353,9 @@ calc_tractImpacts <- function(
     summarize_at(.vars=c(all_of(scaledImpact0)), calc_terciles) %>% ungroup
   ### Rename
   quants_regional <- quants_regional %>% rename_at(.vars=all_of(scaledImpact0), ~all_of(cutoffReg0))
+  if(.testing){quants_regional %>% filter(year==2050) %>% glimpse}
   ### Join with regional quantiles
-  if(msgUser){msg2 %>% paste0("Joining regional tertiles to tract-level data...") %>% message}
+  if(msgUser){msg2 %>% paste0("Joining regional terciles to tract-level data...") %>% message}
   else       {msg3 %>% paste0(msg1, "...") %>% message}
   x_impacts <- x_impacts %>% left_join(quants_regional, by = c(all_of(groupsReg0)));
   rm("quants_regional");
