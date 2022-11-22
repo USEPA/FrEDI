@@ -356,6 +356,7 @@ test_sv <-
     # inputs  = testInputs[4],
     inputs  = NULL,
     outpath = resultsPath, 
+    # .testing = TRUE,
     save = TRUE, addDate = T, overwrite=TRUE
 ){
   ### SLR sectors
