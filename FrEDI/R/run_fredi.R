@@ -485,30 +485,30 @@ run_fredi <- function(
     npdScalars <- npdScalars %>% filter(year > refYear)
   }
 
-  ### Update values for specific cases in initial results:
-  ## Rail,
-  df_results0 <- df_results0 %>% (function(df0, do_npd0 = do_npd){
-    ### Columns
-    chrCols0 <- ifelse(do_npd0, "damageAdjName", "econMultiplierName")
-    # chrVals0 <- ifelse(do_npd, "none", "gdp_usd")
-    chrVals0 <- "none"
-    doAdj0   <- "damageAdjName" %in% chrCols0
-    ### Separate data
-    df1      <- df0 %>% filter(sector == "Rail")
-    df0      <- df0 %>% filter(sector != "Rail")
-    ### Iterate over character columns
-    for(j in 1:length(chrCols0)){
-      col_j <- chrCols0[j]; val_j <- chrVals0[j]
-      df1 <- df1 %>% mutate_at(.vars=c(all_of(col_j)), function(k){val_j})
-    }; rm("col_j", "val_j")
-    ### Numeric adjustment
-    if(doAdj0){
-      df1 <- df1 %>% mutate(damageAdjName = 1)
-    }
-    ### Bind and return
-    df0 <- df0 %>% rbind(df1)
-    return(df0)
-  })
+  # ### Update values for specific cases in initial results:
+  # ## Rail,
+  # df_results0 <- df_results0 %>% (function(df0, do_npd0 = do_npd){
+  #   ### Columns
+  #   chrCols0 <- ifelse(do_npd0, "damageAdjName", "econMultiplierName")
+  #   # chrVals0 <- ifelse(do_npd, "none", "gdp_usd")
+  #   chrVals0 <- "none"
+  #   doAdj0   <- "damageAdjName" %in% chrCols0
+  #   ### Separate data
+  #   df1      <- df0 %>% filter(sector == "Rail")
+  #   df0      <- df0 %>% filter(sector != "Rail")
+  #   ### Iterate over character columns
+  #   for(j in 1:length(chrCols0)){
+  #     col_j <- chrCols0[j]; val_j <- chrVals0[j]
+  #     df1 <- df1 %>% mutate_at(.vars=c(all_of(col_j)), function(k){val_j})
+  #   }; rm("col_j", "val_j")
+  #   ### Numeric adjustment
+  #   if(doAdj0){
+  #     df1 <- df1 %>% mutate(damageAdjName = 1)
+  #   }
+  #   ### Bind and return
+  #   df0 <- df0 %>% rbind(df1)
+  #   return(df0)
+  # })
 
 
   ###### Initialize Results ######
