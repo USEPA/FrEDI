@@ -153,6 +153,7 @@ Use the following code chunks to view/check outputs for the new sector (all data
 
 
 ```{r test_scalars}
+test_systemData$slrImpacts$scaled_impacts %>% range(na.rm=T)
 ### test_scalars: dataframe with configuration values for scalars 
 test_scalars <- test_systemData$scalarDataframe
 test_scalars %>% glimpse
@@ -283,14 +284,14 @@ plots_imp_cm[[1]]
 ```{r}
 frediPath %>% load_all
 test_ext_cm <- fun_slrConfigExtremes(
-    slr_x = test_systemData$slr_cm,    ### rDataList$slr_cm
-    imp_x = test_systemData$slrImpacts ### rDataList$slrImpacts
-  )
+  slr_x = test_systemData$slr_cm,    ### rDataList$slr_cm
+  imp_x = test_systemData$slrImpacts ### rDataList$slrImpacts
+)
 # test_ext_cm %>% filter(driverValue2 < driverValue1) %>% nrow
 # test_ext_cm %>% filter(driverValue2 == driverValue1) %>% nrow
 # test_ext_cm %>% filter(is.na(driverValue)) %>% nrow
 test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
-test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+test_ext_cm %>% filter(impacts_slope     < 0) %>% nrow
 test_ext_cm %>% glimpse
 ```
 
@@ -313,6 +314,8 @@ Check values
 
 ```{r}
 test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
+
+test_ext_cm %>% filter(impacts_slope %>% is.infinite) %>% nrow
 ```
 
 
@@ -322,40 +325,62 @@ Function to get breaks and limits
 ```{r get_plotBreaks}
 get_plotBreaks  <- function(col_x){
   lim_i  <- col_x %>% range(na.rm=T)
-  rng_i  <- lim_i[2] - lim_i[1]
-  # c(lim_i) %>% print
-  ### Log
-  log_i  <- rng_i %>% log10 %>% floor %>% as.integer
-  ord_i  <- (log_i %/% 3) %>% floor %>% as.integer
-  div_i  <- (10e3)^ord_i
-  # c(rng_i, log_i, ord_i) %>% print
-  ### Scale limits
-  lim2_i <- c(floor(round(lim_i[1] / div_i, 3)), round(lim_i[2] / div_i, 3))
-  rng2_i <- (lim2_i[2] - lim2_i[1])
-  log2_i <-  rng2_i %>% log10 %>% floor %>% as.integer
-  # c(lim2_i, rng2_i, log2_i) %>% print
-  
-  ### Adjustment
-  # adj_i  <- ifelse(log2_i<0, -1, 1) %>% as.integer
-  adj2_i <- (abs(log2_i) + 1)       %>% as.integer
-  adj3_i <- (10^as.integer(adj2_i)) %>% as.integer
-  # c(adj_i, adj2_i, adj2_i) %>% print
-  
-  ### Steps
-  stp1_i <- (rng2_i / 5)*10^adj2_i
-  stp2_i <- stp1_i %>% ceiling
-  stp3_i <- stp2_i / 10^(adj2_i + 0)
-  # c(stp1_i, stp2_i, stp3_i) %>% print
-  ### Labs and breaks
-  yLab_i <- c("Thousands", "Millions", "Billions")[ord_i]
-  brk_i  <- seq(lim2_i[1], lim2_i[2], by = stp3_i) %>% round(2)
-  lab_i  <- brk_i %>% as.character
-  # c(yLab_i) %>% print; c(brk_i) %>% print; c(lab_i) %>% print
+  # lim_i %>% print
+  ### Do range 
+  doNull1 <- lim_i %>% range(na.rm=T) %>% is.infinite %>% any
+  doNull2 <- lim_i %>% range(na.rm=T) %>% is.na       %>% any
+  doNull3 <- lim_i[1] == lim_i[2]
+  doNull  <- doNull1 | doNull2 | doNull3
+  if(doNull) {
+    "got here yay!" %>% print
+    lab_i <- brk_i <- yLab_i <- div_i <- lim_i <- NULL
+  }
+  else       {
+    rng_i  <- lim_i[2] - lim_i[1]
+    # "got here1.0" %>% print
+    # c(lim_i) %>% print
+    
+    ### Log
+    log_i  <- rng_i %>% log10 %>% floor %>% as.integer
+    ord_i  <- (log_i %/% 3) %>% floor %>% as.integer
+    div_i  <- (10e3)^ord_i
+    # "got here1.1" %>% print
+    # c(rng_i, log_i, ord_i) %>% print
+    
+    ### Scale limits
+    lim2_i <- c(floor(round(lim_i[1] / div_i, 3)), round(lim_i[2] / div_i, 3))
+    rng2_i <- (lim2_i[2] - lim2_i[1])
+    log2_i <-  rng2_i %>% log10 %>% floor %>% as.integer
+    # "got here1.2" %>% print
+    # c(lim2_i, rng2_i, log2_i) %>% print
+    
+    ### Adjustment
+    # adj_i  <- ifelse(log2_i<0, -1, 1) %>% as.integer
+    adj2_i <- (abs(log2_i) + 1)       %>% as.integer
+    adj3_i <- (10^as.integer(adj2_i)) %>% as.integer
+    # "got here1.3" %>% print
+    # c(adj2_i, adj3_i) %>% print
+    
+    ### Steps
+    stp1_i <- (rng2_i / 5)*10^adj2_i
+    stp2_i <- stp1_i %>% ceiling
+    stp3_i <- stp2_i / 10^(adj2_i + 0)
+    # c(stp1_i, stp2_i, stp3_i) %>% print
+    # "got here1.4" %>% print
+    
+    ### Labs and breaks
+    yLab_i <- c("Thousands", "Millions", "Billions")[ord_i]
+    brk_i  <- seq(lim2_i[1], lim2_i[2], by = stp3_i) %>% round(2)
+    lab_i  <- brk_i %>% as.character
+    ### Limits
+    lim_i  <- lim_i / div_i
+    # c(yLab_i) %>% print; c(brk_i) %>% print; c(lab_i) %>% print
+  }
   ### Return x
   return_x <- list(
     div    = div_i, 
     yLab   = yLab_i, 
-    limits = lim_i / div_i, 
+    limits = lim_i, 
     breaks = brk_i, 
     labels = lab_i
   )
@@ -378,7 +403,7 @@ plots_ext_imp <- test_ext_cm %>%
       ## Filter data
       # data_i <- data_x
       data_i <- data_x %>% filter(sector==sector_i)
-      data_i$value %>% range %>% print
+      # data_i$value %>% range(na.rm=TRUE) %>% print
       # data_i <- data_i %>% mutate(variant=variant %>% as.character)
       # var_i  <- data_i$variant %>% unique; var_i %>% print
       ### Get breaks
@@ -418,28 +443,28 @@ plots_ext_cm <- test_ext_cm %>%
   (function(data_x, title = "Maximum Driver Value"){
     # sectors_x <- data_x$sector %>% unique
     # list_x    <- sectors_x %>% lapply(function(sector_i){
-      ### Standardize value column
-      # data_x <- data_x %>% mutate(value = driverValue_ref)
-      # ySub   <- "Maximum Driver Value"
-      ### Filter data
+    ### Standardize value column
+    # data_x <- data_x %>% mutate(value = driverValue_ref)
+    # ySub   <- "Maximum Driver Value"
+    ### Filter data
     data_i <- data_x
-      # data_i <- data_x %>% filter(sector==sector_i)
-      # data_i <- data_i %>% mutate(variant=variant %>% as.character)
-      # var_i  <- data_i$variant %>% unique; var_i %>% print
-      ### Get breaks
-      list_i <- data_i$value %>% get_plotBreaks
-      list_i %>% print
-      # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
-      ### Adjust data
-      rnd_i  <- list_i$div %>% log10 %>% abs
-      data_i <- data_i %>% mutate(value=value/list_i$div)
-      data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
-      #### Plot data
-      plot_i <- data_i %>% ggplot() +geom_line(aes(x=year, y=value), alpha = 0.4)
-      plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
-      plot_i <- plot_i + ggtitle(title)
-      plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
-      return(plot_i)
+    # data_i <- data_x %>% filter(sector==sector_i)
+    # data_i <- data_i %>% mutate(variant=variant %>% as.character)
+    # var_i  <- data_i$variant %>% unique; var_i %>% print
+    ### Get breaks
+    list_i <- data_i$value %>% get_plotBreaks
+    list_i %>% print
+    # list_i[c("breaks", "labels")] %>% lapply(function(y){length(y)}) %>% unlist %>% print
+    ### Adjust data
+    rnd_i  <- list_i$div %>% log10 %>% abs
+    data_i <- data_i %>% mutate(value=value/list_i$div)
+    data_i <- data_i %>% mutate(value=value %>% round(rnd_i))
+    #### Plot data
+    plot_i <- data_i %>% ggplot() +geom_line(aes(x=year, y=value), alpha = 0.4)
+    plot_i <- plot_i + theme(legend.position = "bottom") + theme(axis.text.x = element_text(angle=90))
+    plot_i <- plot_i + ggtitle(title)
+    plot_i <- plot_i + scale_y_continuous(list_i$yLab, limits=list_i$limits, breaks = list_i$breaks, labels=list_i$labels)
+    return(plot_i)
     # })
     # names(list_x) <- sectors_x
     # return(list_x)
