@@ -124,7 +124,7 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = FALSE, ### Update SV population data
+  pop      = TRUE, ### Update SV population data
   format   = TRUE,  ### Update formats
   impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
@@ -143,6 +143,7 @@ time1       <- Sys.time()
 test_svData <- createSVData(
   save    = list_screening$save, 
   sv      = list_screening$sv, 
+  pop     = list_screening$pop,
   format  = list_screening$format, 
   impacts = list_screening$impacts, 
   sectors = list_screening$sectors,
@@ -152,15 +153,114 @@ time2       <- Sys.time()
 time_create <- time2 - time1; time_create
 ```
 
-Check outputs
+Check outputs:
 
 ```{r check test_svData}
 test_svData %>% names
+```
+
+#### Examine SV Pop List
+
+`iclusDataInfo`    has information about underlying ICLUS data
+`iclusData`        has ICLUS data
+`iclus_region_pop` has ICLUS region population scenario
+`popProjList`      has functions for population projections
+
+```{r svPopList names}
+test_svData$svPopList %>% names
+```
+
+Look at `popProjList`:
+
+* First level: Regions
+* Second Level: 
+
+```{r}
+test_svData$svPopList$popProjList %>% names
+```
+
+Look at ICLUS data:
+
+* 55,926 rows
+* 15 columns
+
+```{r}
+test_svData$svPopList$iclusData %>% glimpse
+```
+
+Join SV Data and ICLUS Data
+
+* Filter to years 2010, 2050
+* `sample_iclusData` has 6214  rows
+* `sample_svData`    has 72538 rows
+
+```{r Subset data}
+sample_iclusData <- test_svData$svPopList$iclusData %>% filter(year %in% c(2010, 2050))
+sample_svData    <- test_svData$svData$svData
+```
+
+<!-- Missing data for three tracts. Which tracts are missing? -->
+
+
+<!-- ```{r check_svTracts_na} -->
+<!-- check_svTracts_na <- sample_svData %>%  -->
+<!--   rename_at(.vars=c("fips", "county"), ~("sv" %>% paste(c("fips", "county"), sep="_"))) %>% -->
+<!--   left_join(sample_iclusData, by=c("region", "state", "geoid10"))  -->
+<!-- check_svTracts_na %>% glimpse -->
+<!-- check_svTracts_na %>% filter(is.na("county_pop")) %>% dim -->
+<!-- ``` -->
+
+Calculate population
+
+```{r sample_tractPop}
+sample_tractPopCols <- c("region", "state", "geoid10", "iclus_county", "sv_county", "iclus_fips", "sv_fips", "region_pop", "ratioStatePop2Region", "ratioCountyPop2State", "ratioTract2CountyPop", "year")
+# sample_tractPop  <- sample_iclusData %>% left_join(sample_svData, by=c("iclusgeoid", "county"))
+sample_tractPop  <- sample_iclusData %>% 
+  rename_at(.vars=c("fips", "county"), ~("iclus" %>% paste(c("fips", "county"), sep="_"))) %>%
+  # left_join(sample_svData, by=c("region", "state", "geoid10")); sample_tractPop %>% glimpse
+  left_join(sample_svData, by=c("region", "state", "geoid10")) %>%
+# sample_tractPop  <- sample_iclusData %>%
+#   rename_at(.vars=c("fips"), ~("sv" %>% paste(c("fips"), sep="_"))) %>%
+#   left_join(sample_svData, by=c("region", "state", "geoid10", "county")) %>%
+  mutate(tract_pop = region_pop * ratioStatePop2Region * ratioCountyPop2State * ratioTract2CountyPop) %>%
+  rename(sv_county = county, sv_fips = fips) %>%
+  select(c(all_of(sample_tractPopCols))) %>% 
+  arrange_at(.vars=c("region", "state", "geoid10", "year"))
+# sample_tractPop %>% write.csv(file = resultsPath %>% file.path(today) %>% paste0("_svPop", ".", "csv"), row.names = F)
+sample_tractPop %>% glimpse
+c(nrow(sample_tractPop), (nrow(sample_svData)*2))
+```
+
+
+#### Examine SV Data List
+
+```{r svDataList items}
 test_svData$svDataList %>% names
+```
+
+
+#### SV Data List: SV Data
+
+```{r test_svData_svData}
+test_svData$svData %>% names
+```
+
+Check SV Data 
+
+```{r test_svData}
+test_svData$svData$svData %>% glimpse
+```
+
+#### 
+
+```{r}
 test_svData$svDataList[["sectorInfo"  ]] %>% glimpse
 test_svData$svDataList[["svValidTypes"]] %>% glimpse
 test_svData$svDataList[["svDemoInfo"  ]] %>% glimpse
 ```
+
+
+#### Check SV Data Frames
 
 Check dataframes:
 
@@ -237,6 +337,7 @@ test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>
   })
   
 ```
+
 
 
 
@@ -327,11 +428,11 @@ testInputs <- inputSpecs %>% (function(list_x){
 ### Paths for Saving Results
 
 ```{r resultsPath}
-today <- "20221101"
+# today <- "20221101"
 frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
 resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
-resultsPath <- "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData"
+# resultsPath <- "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData"
 ```
 
 Test SV tool:
