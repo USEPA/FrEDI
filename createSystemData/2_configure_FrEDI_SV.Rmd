@@ -12,13 +12,13 @@ output:
 <style>
 /* Simplified version of Bootstrap's responsive table CSS */
 .table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
+display: block;
+width: 100%;
+overflow-x: auto;
 }
 
 .table-responsive > table {
-    width: 100%;
+width: 100%;
 }
 </style>
 
@@ -106,6 +106,7 @@ c_sv_sectors     <- get_sv_sectorInfo()
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
 #c_sv_sectors     <- c("Labor","Roads","Extreme Temperature")
+#c_sv_sectors     <- c("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma") #put rest of sectors here
 ```
 
 ### Screening
@@ -219,9 +220,9 @@ sample_tractPop  <- sample_iclusData %>%
   rename_at(.vars=c("fips", "county"), ~("iclus" %>% paste(c("fips", "county"), sep="_"))) %>%
   # left_join(sample_svData, by=c("region", "state", "geoid10")); sample_tractPop %>% glimpse
   left_join(sample_svData, by=c("region", "state", "geoid10")) %>%
-# sample_tractPop  <- sample_iclusData %>%
-#   rename_at(.vars=c("fips"), ~("sv" %>% paste(c("fips"), sep="_"))) %>%
-#   left_join(sample_svData, by=c("region", "state", "geoid10", "county")) %>%
+  # sample_tractPop  <- sample_iclusData %>%
+  #   rename_at(.vars=c("fips"), ~("sv" %>% paste(c("fips"), sep="_"))) %>%
+  #   left_join(sample_svData, by=c("region", "state", "geoid10", "county")) %>%
   mutate(tract_pop = region_pop * ratioStatePop2Region * ratioCountyPop2State * ratioTract2CountyPop) %>%
   rename(sv_county = county, sv_fips = fips) %>%
   select(c(all_of(sample_tractPopCols))) %>% 
@@ -290,9 +291,9 @@ test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]][3] %>% str_mat
 test_svData$svDataList[["svValidTypes"]][["valid_popWeightCols"]] %>% str_match("children") %>% as.vector
 
 test_svData$svDataList[["svValidTypes"]] %>% (function(df_x, weight_i = "children"){
- df_x   <- df_x %>% mutate(weightCol = weight_i)
- df_x   <- df_x %>% mutate(validType = valid_popWeightCols %>%  str_match(weightCol) %>% as.vector)
- return(df_x)
+  df_x   <- df_x %>% mutate(weightCol = weight_i)
+  df_x   <- df_x %>% mutate(validType = valid_popWeightCols %>%  str_match(weightCol) %>% as.vector)
+  return(df_x)
 })
 ```
 
@@ -314,8 +315,8 @@ test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>
   select(c("colName")) %>% mutate(validGroups = "none")
 
 test_svData$svDataList[["svValidTypes"]] %>% 
-      select(c("svGroupType", "valid_popWeightCols")) %>%
-      rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
+  select(c("svGroupType", "valid_popWeightCols")) %>%
+  rename_at(.vars=c("valid_popWeightCols"), ~c("validGroups"))
 # test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority"))
 test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>% 
   select(c("colName")) %>% rename_at(.vars=c("colName"), ~c("svGroupType")) %>% 
@@ -335,7 +336,7 @@ test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>
   (function(dfx){
     dfx %>% mutate_at(.vars=c("x", "y"), function(colx, valx = dfx$valueAdj){colx * valx})
   })
-  
+
 ```
 
 
@@ -354,7 +355,7 @@ update_sysdata(
   sv      = list_screening$sv,
   # sv      = FALSE, 
   impacts = list_screening$impacts
-  )
+)
 time4       <- Sys.time()
 time_update <- time4 - time3; time_update
 ```
@@ -409,7 +410,7 @@ testInputs <- inputSpecs %>% (function(list_x){
     slrInput  = data.frame(year = years_i[1:h_years_i], slr_cm = list_x$slr$min) %>%
       rbind(data.frame(year = years_i[(h_years_i + 1):n_years_i], slr_cm = list_x$slr$max))
   )
-   ### Increasing between minimum and maximum
+  ### Increasing between minimum and maximum
   ramp_i <- list(
     tempInput = data.frame(year   = years_i, 
                            temp_C = seq(list_x$temps$min, list_x$temps$max, length.out=n_years_i)),
@@ -444,64 +445,68 @@ Test SV tool:
 
 ```{r test sv}
 frediPath %>% load_all
-test_sv <-
-  get_sv_sectorInfo() %>%
+test_sv <- 
+  # get_sv_sectorInfo() %>% 
   # c_sv_sectors[1] %>%
-  #c("Coastal Properties") %>%
+  c("Labor") %>%
+  # c("Coastal Properties") %>%
+  # c("Roads") %>%
   #FrEDI::get_sv_sectorInfo() %>% #(function(x){x[which(!(x %in% c("Roads", "Labor", "Air Quality")))]}) %>%
   (function(
     sectors,
     all     = TRUE,
-    inputs = NULL,
-    #inputs  = testInputs[2:4],
-    outpath = resultsPath,
-    save = TRUE, addDate = T
+    # inputs  = testInputs[4],
+    inputs  = NULL,
+    outpath = resultsPath, 
+    # .testing = TRUE,
+    save = FALSE, addDate = T, overwrite=TRUE
   ){
     ### SLR sectors
-    # c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
-    c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
+    c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
     ### Only run one sector
     if(!all){sectors <- sectors[1]}
+    ### Scenarios
+    c_scenarios_x <- inputs %>% names
+    ### Create drivers if not null
+    doInputs <- is.null(inputs)
+    if(doInputs) {inputs_x <- NULL}
+    else         {
+      inputs_x <- c_scenarios_x %>% lapply(function(name_i, dataList = inputs){
+        # name_j %>% print
+        list_i   <- inputs[[name_i]]
+        temp_i   <- list_i$tempInput
+        #slr_i    <- list_i$slrInput
+        inputs_i <- temp_i %>% mutate(scenario = name_i)#%>% left_join(slr_i, by = c("year")) 
+        return(inputs_i)
+      }) %>% (function(names_i){do.call(rbind, names_i)})
+    } ### End else(doInputs)
+    paste0("Input names: ", paste(inputs_x %>% names, collapse=", "), "...") %>% message()
+    c_check_x <- inputs_x$scenario %>% unique; c_check_x %>% print
+    check_x   <- all(c_check_x %in% c_scenarios_x) & all(c_scenarios_x %in% c_check_x)
     
-    ### Iterate over sectors
-    results_x <- sectors %>% lapply(function(sector_i, inputs_i=inputs_x){
-      paste0("Running ", sector_i, "...") %>% message()
-      sysTime_x <- Sys.time()
-      ### Get inputs
-      type_i  <- ifelse(sector_i %in% c_slr, "slrInput", "tempInput")
-      col_i   <- ifelse(sector_i %in% c_slr, "slr_cm"  , "temp_C")
-      ### Create drivers if not null
-      inputs_i <- NULL
-      if(!is.null(inputs)){
-        ### Scenarios
-        c_scenarios_i <- inputs %>% names
-        inputs_i      <- c_scenarios_i %>% lapply(function(scen_j, dataList = inputs, type_j=type_i){
-          paste0(scen_j, ": ", type_j) %>% print
-          list_j   <- dataList[[scen_j]]
-          inputs_j <- list_j[[type_j]]
-          inputs_j <- inputs_j %>% mutate(scenario = scen_j)
-          inputs_j <- inputs_j %>% select(c("year", all_of(col_i), "scenario"))
-          # inputs_j %>% glimpse
-          return(inputs_j)
-        }) %>% (function(scen_j){do.call(rbind, scen_j)})
-      } ### End if(!is.null(inputs))
-      paste0("\t", "Input names: ", paste(inputs_i %>% names, collapse=", "), "...") %>% message()
-      c_check_i <- inputs_i$scenario %>% unique; inputs_i %>% glimpse
-      check_i   <- all(c_check_i %in% c_scenarios_i) & all(c_scenarios_i %in% c_check_i)
-      ### Run scenarios if all are present
-      if(check_i){
+    ### Run scenarios if all are present
+    if(check_x){
+      ### Iterate over sectors
+      results_x <- sectors %>% lapply(function(sector_i, inputs_i=inputs_x){
+        paste0("Running ", sector_i, "...") %>% message()
+        sysTime_x <- Sys.time()
         ### Driver inputs
-        sv_i   <- run_fredi_sv(
-          sector      = sector_i,
+        if(doInputs) {
+          if(sector_i %in% c_slr) {inputs_i <- inputs_i %>% select(c("year", "slr_cm", "scenario"))}
+          else                    {inputs_i <- inputs_i %>% select(c("year", "temp_C", "scenario"))}
+        } ### End if(doInputs)
+        sv_i <- run_fredi_sv(
+          sector      = sector_i, 
           driverInput = inputs_i,
-          outpath     = outpath, save = save, addDate = addDate,
+          # .testing    = .testing,
+          outpath     = outpath, save = save, addDate = addDate, overwrite=overwrite,
           silent      = FALSE
         )
         sysTime_y <- Sys.time(); (sysTime_y - sysTime_x) %>% print
-      } ### End if(check_x)
-      ### End if(!is.null(inputs))
-    }) %>% (function(sectors_i){do.call(rbind, sectors_i)})
-    return(results_x)
+        return(sv_i)
+      }) %>% (function(sectors_i){do.call(rbind, sectors_i)})
+      return(results_x)
+    } ### End check_x
   })
 test_sv %>% glimpse
 ```
@@ -512,10 +517,19 @@ Make sure at least some values are not missing:
 ```{r}
 test_sv$scenario %>% unique
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x %>% is.na)) %>% which %>% length})
+test_sv$driverValue %>% range
 test_sv$aveRate_sv %>% (function(x, na=T){   x %>% is.na   %>% which %>% length})
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x == 0)) %>% which %>% length})
 ```
 
+Check high risk populations (should be zero)
+
+
+```{r check_sv}
+check_sv <- test_sv %>% filter(regional_highRiskPop_sv > impPop_sv)
+check_sv %>% glimpse
+check_sv$svGroupType %>% unique
+```
 
 
 ## Build Package
