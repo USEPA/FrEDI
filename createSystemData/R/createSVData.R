@@ -8,10 +8,11 @@ createSVData <- function(
   sv            = T, ### Whether to run demographic info
   pop           = F, ### Whether to run population functions,
   impacts       = F,
-  impactSectors = NULL,
+  sectors = NULL,
   format        = T, ### Whether to update formatting styles
   # drivers     = F, ### Whether to run driver info
-  rDataExt      = "rda", ### r Object Extension
+  # rDataExt      = "rda", ### r Object Extension
+  rDataExt      = "rds", ### r Object Extension
   silent        = NULL,  ### Whether to message the user
   save          = F, ### Whether to save
   return        = T  ### Whether to return
@@ -34,7 +35,7 @@ createSVData <- function(
   outPath_imp <- outPath %>% file.path("impactsLists")
   
   ### SV demo data
-  sv_fileName <- "svDataList" %>% paste(rDataExt, sep=".")
+  sv_fileName <- "svDataList" %>% paste0(".", rDataExt)
   sv_filePath <- outPath_sv %>% file.path(sv_fileName)
   
   ###### Import Functions from ciraTempBin ######
@@ -98,7 +99,7 @@ createSVData <- function(
       return(x)
     })
   if(save){
-    formatFile <- "format_styles" %>% paste("rda", sep=".")
+    formatFile <- "format_styles" %>% paste0(".", rDataExt)
     formatPath <- outPath_sv %>% file.path(formatFile)
     save(format_styles, file=formatPath)
   }
@@ -108,8 +109,8 @@ createSVData <- function(
     ### Filter sector info to sectors specified by user
     svSectorInfo <- svDataList$svSectorInfo; 
     
-    if(!is.null(impactSectors)){
-      svSectorInfo <- svSectorInfo %>% filter(sector %in% impactSectors)
+    if(!is.null(sectors)){
+      svSectorInfo <- svSectorInfo %>% filter(sector %in% sectors)
     }
 
     ### Iterate over sectors
@@ -135,7 +136,7 @@ createSVData <- function(
         paste0(ifelse(is.na(variant_abbr_i), "", variant_abbr_i))
       
       # outfile_i     <- outName_i %>% paste(rDataExt, sep=".")
-      outfile_i     <- outName_i %>% paste("rds", sep=".")
+      outfile_i     <- outName_i %>% paste0(".", rDataExt)
       
       ### SV Data
       if(!is.null(svDataList)){

@@ -200,41 +200,41 @@ import_inputs <- function(
           df_input_i <- df_input_i %>% mutate(temp_C = temp_C %>% convertTemps(from="global"))
         }
 
-        ###### Check Input ######
-        msg2 %>% paste0("Checking values...") %>% message
-        ### Values
-        values_i <- df_input_i[,valueCol_i]
-        ### Substitute NULL for missing values for min and max
-        if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
-        ### Check the status
-        flag_i <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
-        ### Return and message the user if there is a flag:
-        flagStatus_i <- flag_i$flagged
-        flagRows_i   <- flag_i$rows
-        ### If flag, message user and return flagStatus_i
-        if(flagStatus_i){
-          ### Message labels
-          numrows_i    <- flagRows_i %>% length
-          years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
-          rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
-          ### Create message and message user
-          msg1_i       <- msg2 %>% paste("Error in importing inputs for", msgName_i) %>% paste0("!")
-          msg2_i       <- msg3 %>% paste(inputName_i, "has", numrows_i,  "values outside of defined range", rangeLabel_i)
-          msg3_i       <- msg3 %>% paste("Please correct values", msgName_i, "values for years", yearsLabel_i) %>% paste0("...")
-          ### Message user
-          "\n" %>% paste0(msg0) %>% paste0("Warning:") %>% message
-          msg1_i %>% message; msg2_i %>% message; msg3_i %>% message
-          "\n" %>% paste0(msg0) %>% paste0("Exiting...") %>% message
-
-          ### Return list with error and flagged rows
-          returnList <- list(
-            error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
-            flagged_rows = flagRows_i
-            )
-
-          ### Return list and not an inputs list if an error occurred
-          return(returnList)
-        } ### End if flagged
+        # ###### Check Input ######
+        # msg2 %>% paste0("Checking values...") %>% message
+        # ### Values
+        # values_i <- df_input_i[,valueCol_i]
+        # ### Substitute NULL for missing values for min and max
+        # if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
+        # ### Check the status
+        # flag_i <- values_i %>% check_inputs(xmin = min_i, xmax = max_i)
+        # ### Return and message the user if there is a flag:
+        # flagStatus_i <- flag_i$flagged
+        # flagRows_i   <- flag_i$rows
+        # ### If flag, message user and return flagStatus_i
+        # if(flagStatus_i){
+        #   ### Message labels
+        #   numrows_i    <- flagRows_i %>% length
+        #   years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
+        #   rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
+        #   ### Create message and message user
+        #   msg1_i       <- msg2 %>% paste("Error in importing inputs for", msgName_i) %>% paste0("!")
+        #   msg2_i       <- msg3 %>% paste(inputName_i, "has", numrows_i,  "values outside of defined range", rangeLabel_i)
+        #   msg3_i       <- msg3 %>% paste("Please correct values", msgName_i, "values for years", yearsLabel_i) %>% paste0("...")
+        #   ### Message user
+        #   "\n" %>% paste0(msg0) %>% paste0("Warning:") %>% message
+        #   msg1_i %>% message; msg2_i %>% message; msg3_i %>% message
+        #   "\n" %>% paste0(msg0) %>% paste0("Exiting...") %>% message
+        #
+        #   ### Return list with error and flagged rows
+        #   returnList <- list(
+        #     error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
+        #     flagged_rows = flagRows_i
+        #     )
+        #
+        #   ### Return list and not an inputs list if an error occurred
+        #   return(returnList)
+        # } ### End if flagged
 
         ###### Update Results List Element ######
         ### Add results to the file
