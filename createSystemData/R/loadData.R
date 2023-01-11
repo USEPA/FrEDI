@@ -329,13 +329,13 @@ loadData <- function(
   
 if(.testing == TRUE){
     test_table <- test_DataList(
-    data_list1 = dl_orig,
-    data_list2 = dataList,
+    data_list1 = dataList,
+    data_list2 = dl_orig,
     outPath = getwd(),
+    fileName = "loaddata",
     save = saveTest,
     return = returnTest
-    );
-    NULL}
+    )}
     
     
   ### Return the list of dataframes

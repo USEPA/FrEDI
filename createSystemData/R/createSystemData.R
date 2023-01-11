@@ -8,7 +8,7 @@ createSystemData <- function(
     save        = NULL,
     silent      = NULL,  ### Whether to message the user
     .testing = TRUE,
-    testFile = TRUE,
+    testFile = NULL, ## Path to rda file to compare against
     saveTest = TRUE,
     returnTest = TRUE
 ){
@@ -16,6 +16,11 @@ createSystemData <- function(
   outPath = "."
   excelName = excelFileName
   projectPath = file.path("./createSystemData/")
+  silent      = NULL
+  .testing = TRUE
+  testFile = TRUE
+  saveTest = TRUE
+  returnTest = TRUE
   require(tidyverse)
   
   ###### Set up the environment ######
@@ -239,9 +244,9 @@ createSystemData <- function(
     rdat_new <-rDataList
     new_dat <- rdat_new[-length(rdat_new)]
     new_fred_config <-fredi_config
-    old_dat <- load("~/FrEDI/createSystemData/data/sysdata.rda",object = "rDataList")
+    load("~/FrEDI/createSystemData/data/sysdata.rda")
     old_dat <- rDataList[-length(rDataList)]
-    test_tab <-test_DataList(new_dat,old_dat,save = TRUE,return = TRUE)
+    test_tab <-test_DataList(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
     rDataList <- rdat_new
     fredi_config <- new_fred_config
   }
