@@ -6,10 +6,18 @@ createSystemData <- function(
     excelName   = NULL, ### name of excel file with config information
     outPath     = NULL,
     save        = NULL,
-    silent      = NULL  ### Whether to message the user
+    silent      = NULL,  ### Whether to message the user
+    .testing = TRUE,
+    testFile = TRUE,
+    saveTest = TRUE,
+    returnTest = TRUE
 ){
   
+  outPath = "."
+  excelName = excelFileName
+  projectPath = file.path("./createSystemData/")
   require(tidyverse)
+  
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   silent  <- ifelse(is.null(silent), F, silent)
@@ -54,7 +62,10 @@ createSystemData <- function(
   loadDataList    <- loadData(
     fileName  = extDataFile,
     sheetName = "tableNames",
-    silent    = silent
+    silent    = silent,
+    .testing = TRUE,
+    saveTest = TRUE,
+    returnTest = TRUE
   )
   
   if(msgUser){message("\t", messages_data[["loadInputs"]]$success)}
@@ -221,7 +232,20 @@ createSystemData <- function(
   )
   ### Combine with the data list
   rDataList <- c(loadDataList, rDataList)
- 
+  
+  
+  ###### Test Data objects ######
+  if(.testing){
+    rdat_new <-rDataList
+    new_dat <- rdat_new[-length(rdat_new)]
+    new_fred_config <-fredi_config
+    old_dat <- load("~/FrEDI/createSystemData/data/sysdata.rda",object = "rDataList")
+    old_dat <- rDataList[-length(rDataList)]
+    test_tab <-test_DataList(new_dat,old_dat,save = TRUE,return = TRUE)
+    rDataList <- rdat_new
+    fredi_config <- new_fred_config
+  }
+  
   ###### Save R Data objects ######
   ### If save:
   ### - Message the user
