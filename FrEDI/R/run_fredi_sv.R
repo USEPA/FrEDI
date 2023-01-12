@@ -194,7 +194,7 @@ run_fredi_sv <- function(
   ### Check inputs
   if(has_driverInput){
     msg1 %>% message("Checking `driverInput` values...")
-    ### Check that the input is a dataframe
+    ### Check that the input is a data frame
     class_driverInput <- driverInput %>% class
     if(!("data.frame" %in% class_driverInput)){
       msg2 %>% message("Error: `driverInput` must have `class='data.frame'`!", "\n")
@@ -324,7 +324,7 @@ run_fredi_sv <- function(
   # checkIssues <- (driverInput$temp_C < tempRange[1]) | (driverInput$temp_C > tempRange[2])
 
   ###### Check Population Inputs ######
-  ### Check that the input is a dataframe
+  ### Check that the input is a data frame
   if(check_popInput){
     msg1 %>% message("Checking `popInput` values...")
     class_popInput <- popInput %>% class

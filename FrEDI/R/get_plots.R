@@ -4,7 +4,7 @@
 #' @description
 #' This function creates plots for the summarized FrEDI outputs. [FrEDI::get_plots()] returns a list with heatmaps for model types present in the data (GCMs and SLR scenarios) and ribbon plots, by sector.
 #'
-#' @param data Dataframe of summarized outputs produced by [FrEDI::run_fredi()]. Do not change column names of the [FrEDI::run_fredi()] output before running [FrEDI::get_plots()].
+#' @param data Data frame of summarized outputs produced by [FrEDI::run_fredi()]. Do not change column names of the [FrEDI::run_fredi()] output before running [FrEDI::get_plots()].
 #' @param column A character string indicating the name of the column in the data for which to create plots.
 #' @param undiscounted A `TRUE/FALSE` value indicating whether the values in column represent undiscounted values or discounted values (i.e., present values). Defaults to `undiscounted=TRUE`.
 #' @param plotTypes Character string or character vector indicating which types of plots to produce. Options are `c("heatmaps", "ribbon", "all")`. Set `plotTypes="all"` (default) to produce both types of plots.
@@ -19,7 +19,7 @@
 #'
 #' The argument `undiscounted` is used by [FrEDI::get_plots()] for plot labels and in file and directory names for saving results.
 #'
-#' [FrEDI::get_plots()] produces heatmaps (`plotTypes="heatmaps"`) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (`plotTypes="ribbon"`) for each sector-variant-region combination. Users can specify which plot types to produce by setting `plotTypes`. Set `plotTypes="all"` (default) to produce both heat maps and annual results) or specify a single type (`plotTypes="heatmaps"` and `plotTypes="ribbon"`, respectively).
+#' [FrEDI::get_plots()] produces heatmaps (`plotTypes="heatmaps"`) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (`plotTypes="ribbon"`) for each sector-variant-region combination. Users can specify which plot types to produce by setting `plotTypes`. Set `plotTypes="all"` (default) to produce both heat maps and annual results or specify a single type (`plotTypes="heatmaps"` and `plotTypes="ribbon"`, respectively).
 #'
 #' The heatmaps display the numeric values in the specified column (e.g., "annual_impacts") as a grid of colored pixels. Each row in the grid corresponds to a sector-variant combination (e.g., "Coastal Properties, No Adaptation"), while columns in the grid correspond to years. In other words, the heatmaps display the relative intensity of the impacts of a sector and variant compared to others. The colors in the heatmap are a gradient ranging from dark blue (impacts with values below zero) to dark red (impacts with values above zero), with a midpoint at zero (missing values appear as grey pixels). The scale of the gradient is determined from the underlying data, with the darkest points corresponding to the minimum and maximum values.
 #'
@@ -442,7 +442,7 @@ get_plots <- function(
 
         ann_power1000 <- ann_scaleInfo$power1000
 
-        ### Subset the unit dataframe
+        ### Subset the unit data frame
         which_i_unit     <- which(df_units$log10mod3<=ann_power1000)
 
         ### If there is a scalar that exists, scale the data

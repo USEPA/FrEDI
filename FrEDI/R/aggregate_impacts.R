@@ -5,13 +5,13 @@
 #' @description
 #' Summarize and aggregate impacts from FrEDI (calculate national totals, average across models, sum impact types, and interpolate between impact estimate years).
 #'
-#' @param data      Dataframe of results FrEDI (outputs from [FrEDI::run_fredi()])
+#' @param data      Data frame of results FrEDI (outputs from [FrEDI::run_fredi()])
 #' @param columns   Character vector of columns for which to aggregate results (defaults to `columns=c("annual_impacts"`)).
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelAverage"`, `"impactYear"`, `"impactType"`, `"all")`. Defaults to all levels (i.e., `aggLevels="all"`).
-#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=``c("sector"`, `"variant"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"variant"` column referred to below contains information about the adaptation or variant name or `“N/A”`, as applicable.
+#' @param groupByCols Character vector indicating which columns to use for grouping. Defaults to `groupByCols=`c("sector"`, `"variant"`, `"impactYear"`, `"impactType"`, `"model_type"`, `"model"`, `"region")`. Note that the `"variant"` column referred to below contains information about the adaptation or variant name or `“N/A”`, as applicable.
 #'
 #' @details
-#' This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelAverage"`), summing over all impact types (`aggLevels="impactType"`), and interpolate between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default).
+#' This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelAverage"`), summing over all impact types (`aggLevels="impactType"`), and interpolating between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default).
 #' This post-processing helper function aggregates and summarizes temperature binning results to levels of aggregation specified by the user (passed to `aggLevels`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelaverage"`), summing over all impact types (`aggLevels="impacttype"`), and interpolate between impact year estimates (`aggLevels="impactyear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default) or no aggregation levels (`aggLevels="none"`).
 #'
 #' Before aggregating impacts for national totals and/or model averages, [FrEDI::aggregate_impacts()] will drop any pre-summarized results  (i.e., values for which `region="National Total"` and/or for which `model="average"`, respectively) that are already present in the data `and then reaggregate at those levels.
@@ -19,8 +19,8 @@
 #' For each of the `aggLevels`, [FrEDI::aggregate_impacts()] performs the following summarization (note that the `"variant"` column referred to below contains information about the adaptation or variant name or `“N/A”`, as applicable):
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
-#' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the dataframe of national values (with column `region="National Total"`) are then added as rows to the results. \cr
-#' `modelaverage` \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"model_type"`, `"region"`, and `"year"` and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as `NA`. The rows of model averages (with column `model="Average"` are then added as rows to the results dataframe. \cr
+#' `national` \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`,  `"impactYear"`, `"model_type"`, `"model"`, and `"year"`) and summed across regions. Years which have missing column data for all regions return as `NA`. The rows of the data frame of national values (with column `region="National Total"`) are then added as rows to the results. \cr
+#' `modelaverage` \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"model_type"`, `"region"`, and `"year"` and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as `NA`. The rows of model averages (with column `model="Average"` are then added as rows to the results data frame. \cr
 #' `impactType` \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`,`"model_type"`, `"model"`, `"region"`, and `"year"` and summed across impact types. Mutates column `impactType="all"` for all values. Years which have missing column data for all impact types return as `NA`. If results are aggregated across impact types, information about physical impacts (columns `"physicalmeasure"` and `"physical_impacts"`) are dropped.\cr
 #' `impactYear` \tab Annual results for sectors with only one impact year estimate (i.e., `impactYear == "N/A"`) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns `"sector", "variant", "impactType, "model_type", "model", "region", "year"` and interpolated across years with the 2010 run assigned to year 2010 and the 2090 run assigned to year 2090. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear="Interpolation"` for all values. \cr
 #' }
@@ -45,7 +45,7 @@
 #'
 ### This function aggregates outputs produced by temperature binning
 aggregate_impacts <- function(
-    data,             ### Dataframe of outputs from temperature binning
+    data,             ### Data frame of outputs from temperature binning
     aggLevels   = c("national", "modelaverage", "impactyear", "impacttype"),  ### Levels of aggregation
     columns     = c("annual_impacts"), ### Columns to aggregate
     groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"), ### Columns to group by
@@ -593,7 +593,7 @@ aggregate_impacts <- function(
 
   ###### Return ######
   ### Grouping columns, driver columns, scenario columns
-  ### Make sure data is ungrouped and a dataframe object
+  ### Make sure data is ungrouped and a data frame object
   df_return <- df_return %>% select( all_of(standardCols))
   df_return <- df_return %>% ungroup %>% as.data.frame
 
