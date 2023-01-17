@@ -8,6 +8,7 @@
 #' @param data_list1 a list of named dataframes for comparison
 #' @param data_list2 a list of named dataframes for comparison
 #' @param outPath path to where test table will be written
+#' @param fileName name of the file to be written
 #' @param save TRUE/FALSE option to save outputs that have been flagged for cheking, to csv
 #' @param return TRUE/FALSE option to return outputs to environment
 #'
