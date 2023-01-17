@@ -10,12 +10,6 @@ loadData <- function(
     returnTest = TRUE
 ){
   
-  fileName  = extDataFile
-  sheetName = "tableNames"
-  silent    = silent
-  .testing = TRUE
-  saveTest = TRUE
-  returnTest = TRUE
   # if(is.null(sheetName)){sheetName <- "tableNames"}
   if(is.null(silent   )){silent    <- F}
   ###### Load Table of Tables ######
@@ -325,7 +319,7 @@ loadData <- function(
   rm("levels0", "labels0")
   
   
-  ###### ** Check Data ######
+  ###### ** TEST DATA ######
   
 if(.testing == TRUE){
     test_table <- test_DataList(

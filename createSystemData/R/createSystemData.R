@@ -9,18 +9,10 @@ createSystemData <- function(
     silent      = NULL,  ### Whether to message the user
     .testing = TRUE,
     testFile = NULL, ## Path to rda file to compare against
-    saveTest = TRUE,
+    saveTest = TRUE, 
     returnTest = TRUE
 ){
-  
-  outPath = "."
-  excelName = excelFileName
-  projectPath = file.path("./createSystemData/")
-  silent      = NULL
-  .testing = TRUE
-  testFile = TRUE
-  saveTest = TRUE
-  returnTest = TRUE
+ 
   require(tidyverse)
   
   ###### Set up the environment ######
@@ -199,7 +191,7 @@ createSystemData <- function(
   # c_modelTypes   <- co_modelTypes$modelType_id
   c_modelTypes   <- c("gcm")
   for(modelType_i in c_modelTypes){
-    ### Max output value, maximum extrapolation value, unit scale, extend type
+    ### Max output value, maximum extrapolation value, unit scale,   extend type
     df_model_i  <- (co_modelTypes %>% filter(modelType_id==modelType_i))
     maxOutput_i <- df_model_i$modelMaxOutput %>% unique
     maxExtrap_i <- df_model_i$modelMaxExtrap %>% unique
@@ -239,16 +231,20 @@ createSystemData <- function(
   rDataList <- c(loadDataList, rDataList)
   
   
-  ###### Test Data objects ######
+  ###### Test Data  ######
+  
+ 
   if(.testing){
     rdat_new <-rDataList
-    new_dat <- rdat_new[-length(rdat_new)]
+    new_dat <- rdat_new[-length(rdat_new)] 3 # Drop the list of impact functions
+    #new_dat$co_sectors <- do.call("rbind",replicate(2,new_dat$co_sectors,simplify = FALSE))
     new_fred_config <-fredi_config
-    load("~/FrEDI/createSystemData/data/sysdata.rda")
+    load(testFile) # load the test file
+    ### When loading the objects it loads two objects
     old_dat <- rDataList[-length(rDataList)]
     test_tab <-test_DataList(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
     rDataList <- rdat_new
-    fredi_config <- new_fred_config
+    fredi_config <- new_fred_config ## make sure the object is back to the form we want
   }
   
   ###### Save R Data objects ######
