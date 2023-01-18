@@ -24,7 +24,6 @@ test_DataList <- function(
     save = TRUE,
     return = TRUE){
   
-  require(tidyverse)
   # Read in the first list of data frames ####
   dat_1 <- tibble(
     # get names of each table
