@@ -1,11 +1,15 @@
-### Last updated: 2021.02.10
-### 2021.02.10: Added SLR sectors
+### Last updated: 2022.01.10
+### 2022.01.10: Added SLR sectors
 ### This function loads the data from a directory specified by the user. There is a default directory structure it will try to load from.
 loadData <- function(
     fileName,  ### Full file path, including the directory and file name and extension
     sheetName,
-    silent    = NULL
+    silent    = NULL,
+    .testing = TRUE,
+    saveTest = TRUE,
+    returnTest = TRUE
 ){
+  
   # if(is.null(sheetName)){sheetName <- "tableNames"}
   if(is.null(silent   )){silent    <- F}
   ###### Load Table of Tables ######
@@ -15,6 +19,7 @@ loadData <- function(
     sheet    = sheetName,
     rowNames = T,
     startRow = 2
+    
   )
   ### Filter to those for importing and replace NA values in some columns
   mutate0       <- c("excludeCol_ids", "Notes")
@@ -66,6 +71,9 @@ loadData <- function(
     ### Remove intermediate values
     rm("table_i", "tableInfo_i", "tableName_i", "i")
   } ### End lapply
+
+  ##### assign datalist to another object so that original data can be maintained 
+  dl_orig <- dataList
   
   # ###### Add list names   ###### Deprecated...now done in iteration loop
   # ### Add table names to the list
@@ -310,6 +318,20 @@ loadData <- function(
   ### Remove intermediate objects
   rm("levels0", "labels0")
   
+  
+  ###### ** TEST DATA ######
+  
+if(.testing == TRUE){
+    test_table <- test_DataList(
+    data_list1 = dataList,
+    data_list2 = dl_orig,
+    outPath = getwd(),
+    fileName = "loaddata",
+    save = saveTest,
+    return = returnTest
+    )}
+    
+    
   ### Return the list of dataframes
   return(dataList)
   
