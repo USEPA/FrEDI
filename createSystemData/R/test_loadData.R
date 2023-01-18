@@ -24,7 +24,7 @@ test_DataList <- function(
     save = TRUE,
     return = TRUE){
   
-
+  require(tidyverse)
   # Read in the first list of data frames ####
   dat_1 <- tibble(
     # get names of each table
@@ -124,14 +124,15 @@ test_DataList <- function(
     save == TRUE,
     true = {
       message("Saving Data Checks");
+      tmp_dir <- dir.create(file.path(outPath,"tmp_dat"));
       ## Save the Summary test table
-      write_csv(test_tab,file.path(outPath,paste0("test_table_",fileName,".csv")));
+      write_csv(test_tab,tempfile(pattern = paste0("test_table_",fileName), tmpdir = tmp_dir, fileext = ".csv"));
       if(nrow(check_flags)>0){
         message("Creating flagged datasets1");
         test_tab %>%
           filter(check_flag == TRUE) %>%
           select(tab_name) %>%
-          map(~ write_csv(data_list1[[.]], paste0(outPath,"/", .,fileName, "_dat1.csv")))
+          map(~ write_csv(data_list1[[.]], tempfile(pattern = paste0("test_table_",fileName,"_dat1"), tmpdir = tmp_dir, fileext = ".csv")))
       };
       ## Save the flagged datasets
       if(nrow(check_flags)>0){
@@ -139,14 +140,14 @@ test_DataList <- function(
         test_tab %>%
           filter(check_flag == TRUE) %>%
           select(tab_name) %>%
-          map(~ write_csv(data_list2[[.]], paste0(outPath,"/", .,fileName, "_dat2.csv")))
+          map(~ write_csv(data_list2[[.]], tempfile(pattern = paste0("test_table_",fileName,"_dat2"), tmpdir = tmp_dir, fileext = ".csv")))
       };
       ## Save the anti_join table
       if(exists("diff_tables")){diff_tables %>%
           message("Creating flagged anti_join table");
           test_tab %>%
           names(.) %>%
-          map(~ write_csv(diff_tables[[.]], paste0(outPath,"/", .,fileName, "_difftables.csv")))}
+          map(~ write_csv(diff_tables[[.]], tempfile(pattern = paste0("test_table_",fileName,"_difftable"), tmpdir = tmp_dir, fileext = ".csv")))}
     },
     false = NULL
   )
