@@ -1,12 +1,12 @@
 
-#' Title
+#' test_loadData
 #'
-#' @param data_list 
-#' @param outPath 
-#' @param save 
-#' @param return 
+#' @param data_list A list of named tables to be examined
+#' @param outPath A filepath to where test files are saved
+#' @param save  A TRUE/FALSE option to save files or not
+#' @param return A TRUE/FALSE option to return the test_table
 #'
-#' @return
+#' @return Returns a table object if "return" option is TRUE
 #' @export
 #'
 #' @examples
