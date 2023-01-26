@@ -5,9 +5,6 @@ loadData <- function(
     fileName,  ### Full file path, including the directory and file name and extension
     sheetName,
     silent    = NULL,
-    .testing = TRUE,
-    saveTest = TRUE,
-    returnTest = TRUE
 ){
   
   # if(is.null(sheetName)){sheetName <- "tableNames"}
@@ -71,19 +68,35 @@ loadData <- function(
     ### Remove intermediate values
     rm("table_i", "tableInfo_i", "tableName_i", "i")
   } ### End lapply
+  
+  return(dataList)
+}
 
-  ##### assign datalist to another object so that original data can be maintained 
-  dl_orig <- dataList
+
+#' reshape_loadData
+#'
+#' @param dataList 
+#' @param .testing 
+#' @param save_test 
+#' @param return_test 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+reshape_loadData <- function(
+    dataList = NULL,
+    .testing = TRUE,
+    save_test = TRUE,
+    return_test = TRUE
+    ) {
   
-  # ###### Add list names   ###### Deprecated...now done in iteration loop
-  # ### Add table names to the list
-  # # names(dataList) <- tableNames
-  # 
-  # ###### Assign tables to objects   ###### Deprecated...now done in iteration loop
-  # ### Assign data tables to objects in this namespace
-  # # num_dataTables <- dataList %>% length
-  # # for(i in 1:num_dataTables) {assign(tableNames[i], dataList[[i]])}
+  ## Assign data tables to objects in Global Environment
+  dataList %>%
+    names() %>% 
+    map(~ assign(.,dataList[[.]],envir = .GlobalEnv))
   
+ 
   ###### Modify Tables and Update in List  ######
   ###### ** Sector info     ######
   ### Filter to those tables to include
@@ -321,16 +334,18 @@ loadData <- function(
   
   ###### ** TEST DATA ######
   
+  check_flag_exp <- dataList$tableCheckRules %>% 
+                    as_tibble() %>%
+                              separate(load_dat_cf,c("dim","dup","vals"),sep = ",") %>%
+                              select(Table.Name,dim,dup,vals)
+  
 if(.testing == TRUE){
-    test_table <- test_DataList(
-    data_list1 = dataList,
-    data_list2 = dl_orig,
-    outPath = getwd(),
-    fileName = "loaddata",
-    save = saveTest,
-    return = returnTest
+    test_table <- test_loadData(
+      data_list = dataList,
+      outPath = getwd(),
+      save = save_test,
+      return = return_test
     )}
-    
     
   ### Return the list of dataframes
   return(dataList)
