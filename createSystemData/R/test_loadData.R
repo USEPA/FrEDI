@@ -87,7 +87,7 @@ test_loadData <- function(
     true = {
       message("Saving Data Checks")
       outdir <- file.path(outPath, "test_data")
-      tmp_dir <- dir.create(outdir, showWarnings = F)
+      tmp_dir <- dir.create(outdir, showWarnings = FALSE);
       ## Save the Summary test table
       write_csv(test_tab, file.path(outdir, "loadData_tests.csv"))
       if (any(test_tab$test_pass == FALSE)) {
