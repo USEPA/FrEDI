@@ -15,7 +15,7 @@ get_plots(
 )
 }
 \arguments{
-\item{data}{Dataframe of summarized outputs produced by \code{\link[=run_fredi]{run_fredi()}}. Do not change column names of the \code{\link[=run_fredi]{run_fredi()}} output before running \code{\link[=get_plots]{get_plots()}}.}
+\item{data}{Data frame of summarized outputs produced by \code{\link[=run_fredi]{run_fredi()}}. Do not change column names of the \code{\link[=run_fredi]{run_fredi()}} output before running \code{\link[=get_plots]{get_plots()}}.}
 
 \item{column}{A character string indicating the name of the column in the data for which to create plots.}
 
@@ -48,7 +48,7 @@ By default, \code{\link[=get_plots]{get_plots()}} plots results from the \code{"
 
 The argument \code{undiscounted} is used by \code{\link[=get_plots]{get_plots()}} for plot labels and in file and directory names for saving results.
 
-\code{\link[=get_plots]{get_plots()}} produces heatmaps (\code{plotTypes="heatmaps"}) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (\code{plotTypes="ribbon"}) for each sector-variant-region combination. Users can specify which plot types to produce by setting \code{plotTypes}. Set \code{plotTypes="all"} (default) to produce both heat maps and annual results) or specify a single type (\code{plotTypes="heatmaps"} and \code{plotTypes="ribbon"}, respectively).
+\code{\link[=get_plots]{get_plots()}} produces heatmaps (\code{plotTypes="heatmaps"}) for the outputs of FrEDI and/or plots the average value and range of impacts as a time series (\code{plotTypes="ribbon"}) for each sector-variant-region combination. Users can specify which plot types to produce by setting \code{plotTypes}. Set \code{plotTypes="all"} (default) to produce both heat maps and annual results or specify a single type (\code{plotTypes="heatmaps"} and \code{plotTypes="ribbon"}, respectively).
 
 The heatmaps display the numeric values in the specified column (e.g., "annual_impacts") as a grid of colored pixels. Each row in the grid corresponds to a sector-variant combination (e.g., "Coastal Properties, No Adaptation"), while columns in the grid correspond to years. In other words, the heatmaps display the relative intensity of the impacts of a sector and variant compared to others. The colors in the heatmap are a gradient ranging from dark blue (impacts with values below zero) to dark red (impacts with values above zero), with a midpoint at zero (missing values appear as grey pixels). The scale of the gradient is determined from the underlying data, with the darkest points corresponding to the minimum and maximum values.
 

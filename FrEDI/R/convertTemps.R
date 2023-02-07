@@ -2,7 +2,7 @@
 #' Convert contiguous U.S. (CONUS) temperatures to global temperatures or vice versa
 #'
 #' @description
-#' This pre-processing helper function converts a list of warming temperatures in degrees Celsius (`temps`) from global to CONUS (`from="global"`) or vice versa (`from="global"`). The equations for converting between CONUS and global temperatures and back again are described elsewhere in this report.
+#' This pre-processing helper function converts a list of warming temperatures in degrees Celsius (`temps`) from global to CONUS (`from="global"`) or vice versa (`from="conus"`). The equations for converting between CONUS and global temperatures and back again are described elsewhere in this report.
 #'
 #' @param temps A numeric vector of CONUS or global temperatures in degrees Celsius.
 #' @param from A character string (one of  `c("conus", "global")`), indicating whether users are converting from CONUS to global temperatures (`from="conus"`) or from global to CONUS (`from="global"`).

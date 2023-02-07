@@ -28,7 +28,7 @@
 #' And \eqn{\tau_1}{k1} and \eqn{\tau_2}{k2} are both constants.
 #'
 #' @return
-#' Outputs a dataframe with two columns: `year`, which has the years from the `years` input that fall within the range from 2000 through 2090 and `slr_cm` which has the GMSL in centimeters.
+#' Outputs a data frame with two columns: `year`, which has the years from the `years` input that fall within the range from 2000 through 2090 and `slr_cm` which has the GMSL in centimeters.
 #'
 #' @examples
 #temps2slr(years = seq(2020, 2080, 10), temps =1:7)
@@ -45,7 +45,7 @@
 #' ### Import example temperature scenario
 #' example_inputsList <- import_inputs(tempfile = tempInputFile)
 #'
-#' ### Extract the example temperature scenario dataframe from the list
+#' ### Extract the example temperature scenario data frame from the list
 #' ### Example has global temperatures in degrees Celsius
 #' x_tempInput <- example_inputsList$tempInput
 #'

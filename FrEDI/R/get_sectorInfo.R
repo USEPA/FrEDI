@@ -2,7 +2,7 @@
 #' This function provides information about the sectors in FrEDI.
 #'
 #' @description
-#' This helper function returns a character vector of sector names (default) *or* a dataframe of sectors with related information (e.g., associated variants, impact types, etc.), which the user can supply to the [FrEDI::run_fredi()] `sectorList` argument.
+#' This helper function returns a character vector of sector names (default) *or* a data frame of sectors with related information (e.g., associated variants, impact types, etc.), which the user can supply to the [FrEDI::run_fredi()] `sectorList` argument.
 #'
 #' @param description = FALSE. Logical value indicating whether to include information about each sector. Returns a dataframe if `description=TRUE` and returns a character vector of sector names if `description=FALSE` (default).
 #' @param gcmOnly = FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.
