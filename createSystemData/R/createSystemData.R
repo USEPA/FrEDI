@@ -2,15 +2,11 @@
 ### 2021.02.10: Updated to process SLRs separately from other sectors
 ### The purpose of this function is to import data from Excel and use this data to create and save R data objects.
 createSystemData <- function(
-    projectPath = NULL, ### Path to project
-    excelName   = NULL, ### name of excel file with config information
+    dataList    = list(), ### List of data created by reshapeData
     outPath     = NULL,
-    save        = NULL,
-    silent      = NULL,  ### Whether to message the user
-    .testing = TRUE,
-    testFile = NULL, ## Path to rda file to compare against
-    saveTest = TRUE, 
-    returnTest = TRUE
+    save        = FALSE,
+    silent      = FALSE,  ### Whether to message the user
+    return      = TRUE
 ){
  
   require(tidyverse)
@@ -23,10 +19,6 @@ createSystemData <- function(
   
   ###### Create File Paths ######
   projectPath <- ifelse(is.null(projectPath), ".", projectPath)
-  ### Excel configuration file
-  extDataPath <- file.path(projectPath, "inst", "extdata")
-  excelName   <- ifelse(is.null(excelName), "FrEDI_config.xlsx", excelName)
-  extDataFile <- extDataPath %>% file.path(excelName)
   
   ### Output file
   sysDataPath <- projectPath %>% file.path("data")
@@ -37,13 +29,9 @@ createSystemData <- function(
   ### Read in configuration data
   ### Assign data tables to objects in the list
   configFile <- projectPath %>% file.path("R", "fredi_config.R")
-  source(configFile)
-  # configFile %>% file.exists %>% print
-  # fredi_config %>% print
-  # fredi_config %>% names %>% print
-  for(i in 1:length(fredi_config)){
-    assign(names(fredi_config)[i], fredi_config[[i]])
-  }
+  configFile %>% source
+  # configFile %>% file.exists %>% print; fredi_config %>% print; fredi_config %>% names %>% print
+  for(name_i in names(fredi_config)) {assign(name_i, fredi_config[[name_i]]); rm("name_i")}
 
   ###### Import Functions from ciraTempBin ######
   interpolate_annual  <- utils::getFromNamespace("interpolate_annual", "FrEDI")
@@ -56,27 +44,11 @@ createSystemData <- function(
   if(msgUser){message("Loading Excel file from '", extDataPath, "'...")}
   if(msgUser){message(messages_data[["loadInputs"]]$try)}
   ### Load data from file
-  loadDataList    <- loadData(
-    fileName  = extDataFile,
-    sheetName = "tableNames",
-    silent    = silent
-  )
-  
-  
-  loadDataList <- reshape_loadData(
-    dataList = loadDataList,
-    .testing = TRUE,
-    save_test = TRUE,
-    return_test = TRUE
-  )
-  
-  
+  loadDataList    <- dataList
   if(msgUser){message("\t", messages_data[["loadInputs"]]$success)}
   
   ### Assign data tables to objects in the list
-  for(i in 1:length(loadDataList)){
-    assign(names(loadDataList)[i], loadDataList[[i]])
-  } ### End iterate over i
+  for(name_i in names(loadDataList)) {assign(name_i, loadDataList[[name_i]]); rm("name_i")} 
   
   ###### Sector Info ######
   ### Exclude some sectors, get the number of sectors and sector info
@@ -169,7 +141,7 @@ createSystemData <- function(
   ### Economic scalar
   df_results0 <- df_results0  %>% match_scalarValues(df_mainScalars, scalarType="econScalar")
   ### Drop extra columns
-  df_results0 <- df_results0 %>% select(-c("gdp_usd", "reg_pop", "national_pop", "gdp_percap"))
+  df_results0 <- df_results0  %>% select(-c("gdp_usd", "reg_pop", "national_pop", "gdp_percap"))
   ### Message the user
   if(msgUser){message("\t", messages_data[["calcScalars"]]$success)}
 
@@ -236,22 +208,8 @@ createSystemData <- function(
   ### Combine with the data list
   rDataList <- c(loadDataList, rDataList)
   
-  
-  ###### Test Data  ######
-  
  
-  if(.testing){
-    rdat_new <-rDataList
-    new_dat <- rdat_new[-length(rdat_new)]  # Drop the list of impact functions
-    #new_dat$co_sectors <- do.call("rbind",replicate(2,new_dat$co_sectors,simplify = FALSE))
-    new_fred_config <-fredi_config
-    load("./createSystemData/data/sysdata.rda") # load the test file
-    ### When loading the objects it loads two objects
-    old_dat <- rDataList[-length(rDataList)]
-    test_tab <-test_createSystemData(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
-    rDataList <- rdat_new
-    fredi_config <- new_fred_config ## make sure the object is back to the form we want
-  }
+
   
   ###### Save R Data objects ######
   ### If save:
