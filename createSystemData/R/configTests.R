@@ -39,7 +39,7 @@ dataInfo_test <- function(
   except0   <- c("data_scaledImpacts")
   df_info   <- df_info %>% mutate(has_dups = case_when((row_count == unique_rows) ~ F, (Table.Name %in% except0) ~ F))
   ### Check whether all tests are passed
-  df_info   <- df_info %>% mutate(passed   = case_when((has_dups == T | has_nonNA == T) ~ F, (has_dups == F & has_nonNA == F) ~ T))
+  df_info   <- df_info %>% mutate(passed   = case_when((has_dups == T | na_flag == T) ~ F, (has_dups == F & na_flag == F) ~ T))
   ### Mutate logicals to numeric
   mutate0   <- c("has_dups", "passed")
   df_info   <- df_info %>% mutate_at(.vars=c(all_of(mutate0)), as.numeric)
