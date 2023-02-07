@@ -93,7 +93,7 @@ excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
 sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
 ```
 
-### Configuration Files
+<!-- ### Configuration Files -->
 
 Load all configuration functions
 
@@ -123,57 +123,111 @@ basename(configArchName) %in% (configLogPath %>% list.files("rda"))
 
 ## Create Tool Configuration Data
 
+### 1. Load Data
 
-Load all R functions and configuration files
+Load data from Excel configuration file:
 
-```{r load code}
+```{r list_loadData}
 ### Load all functions
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+### list_loadData
+list_loadData <- loadData(excelName = excelFileName, silent=T)
 ```
 
-Test system data
+### 2. Reshape Loaded Data
+
+Reshape loaded Excel data
+
+```{r list_reshapeData}
+### Load all functions
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+### list_reshapeData
+list_reshapeData <- list_loadData %>% reshapeData(silent=T)
+```
+
+Test reshaped data
+
+```{r test_reshapeData}
+test_reshapeData <- list_reshapeData %>% dataInfo_test(
+  outPath = getwd(),
+  csvName = "reshapeData_testResults",
+  save    = save_test,
+  return  = return_test
+)
+```
+
+
+### Configure Data
+
+Test `createSystemData()` function (configure reshaped data):
+
+```{r list_systemData0}
+codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+# frediPath %>% load_all
+### Uncomment following two lines to create and save data and check the outputs
+time1            <- Sys.time()
+list_systemData0 <- list_reshapeData %>% createSystemData(save=F, silent=T)
+time2            <- Sys.time()
+time_create      <- time2 - time1; time_create
+```
+
+
+Run data info tests
 
 ```{r test_systemData0}
-codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
-frediPath %>% load_all
-### Uncomment following two lines to create and save data and check the outputs
-time1           <- Sys.time()
-test_systemData <- createSystemData(save=F, excelName = excelFileName, silent=T)
-time2           <- Sys.time()
-time_create     <- time2 - time1; time_create
+test_systemData0 <- list_systemData0 %>% dataInfo_test(
+  outPath = getwd(),
+  csvName = "systemData0_infoResults",
+  save    = save_test,
+  return  = return_test
+)
+```
+
+
+Run `createSystemData()` tests:
+
+(remove objects )
+```{r test_systemData0}
+test_systemData0 <- list_systemData0 %>% configTest_newSectors(
+  oldDataFile = projectPath %>% file.dir("createSystemData", "data", "sysdata.rda"),
+  # oldDataFile = projectPath %>% file.dir("createSystemData", "data", "dataLog", basename(configArchName)),
+  csvName = "configTest_newSectors_results.csv",
+  save    = T,
+  return  = T,
+)
 ```
 
 
 ## Check Outputs
 
 
-Use the following code chunks to view/check outputs for the new sector (all data stored in a list called `test_systemData`)
+Use the following code chunks to view/check outputs for the new sector (all data stored in a list called `list_systemData`)
 
 ### Scalars
 
 
 ```{r test_scalars}
-test_systemData$slrImpacts$scaled_impacts %>% range(na.rm=T)
+list_systemData$slrImpacts$scaled_impacts %>% range(na.rm=T)
 ### test_scalars: dataframe with configuration values for scalars 
-test_scalars <- test_systemData$scalarDataframe
+test_scalars <- list_systemData$scalarDataframe
 test_scalars %>% glimpse
 ### test_mainScalars: dataframe with annual values for scalars 
-test_mainScalars <- test_systemData$df_mainScalars
+test_mainScalars <- list_systemData$df_mainScalars
 test_mainScalars$scalarType %>% unique
 (test_mainScalars %>% filter(scalarType=="econScalar"))$scalarName %>% unique
 test_mainScalars %>% glimpse
 # test_mainScalars_sum <- test_mainScalars %>% group_by_at(.vars=c(""))
 ### test_mainScalars: dataframe with info about scalars
-test_scalarInfo <- test_systemData$co_scalarInfo
+test_scalarInfo <- list_systemData$co_scalarInfo
 test_scalarInfo %>% glimpse
 
 ### test_sectorsInfo: dataframe with info about sectors and scalars
-test_sectorsInfo <- test_systemData$df_sectorsInfo
+test_sectorsInfo <- list_systemData$df_sectorsInfo
 test_sectorsInfo %>% glimpse
 
 test_sectorsInfo %>% filter(sector=="Rail") %>% glimpse
 ### Initial results
-test_systemData$df_results0 %>% glimpse
+list_systemData$df_results0 %>% glimpse
 ```
 
 
@@ -189,7 +243,7 @@ SLR drivers should have no missing values past 2090 and only one row for each `y
 
 ```{r test_slr_cm}
 # fun_slrModel2Height <- utils::getFromNamespace("fun_slrModel2Height", "FrEDI")
-test_slr_cm <- test_systemData$slr_cm %>% 
+test_slr_cm <- list_systemData$slr_cm %>% 
   mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
 test_slr_cm %>% glimpse
 test_slr_cm %>% filter(year > 2090) %>% filter(is.na(driverValue)) %>% nrow
@@ -208,7 +262,7 @@ SLR scaled impacts should have no missing values past 2090 and only one row for 
 
 
 ```{r test_imp_cm}
-test_imp_cm <- test_systemData$slrImpacts %>% 
+test_imp_cm <- list_systemData$slrImpacts %>% 
   mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
 test_imp_cm %>% glimpse
 test_imp_cm %>% filter(year > 2090) %>% filter(is.na(scaled_impacts)) %>% nrow
@@ -284,8 +338,8 @@ plots_imp_cm[[1]]
 ```{r}
 frediPath %>% load_all
 test_ext_cm <- fun_slrConfigExtremes(
-  slr_x = test_systemData$slr_cm,    ### rDataList$slr_cm
-  imp_x = test_systemData$slrImpacts ### rDataList$slrImpacts
+  slr_x = list_systemData$slr_cm,    ### rDataList$slr_cm
+  imp_x = list_systemData$slrImpacts ### rDataList$slrImpacts
 )
 # test_ext_cm %>% filter(driverValue2 < driverValue1) %>% nrow
 # test_ext_cm %>% filter(driverValue2 == driverValue1) %>% nrow
@@ -301,7 +355,7 @@ SLR scaled impacts should have no missing values past 2090 and only one row for 
 
 ```{r test_ext_cm}
 # frediPath %>% load_all
-test_ext_cm <- test_systemData$slrExtremes #%>% mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
+test_ext_cm <- list_systemData$slrExtremes #%>% mutate(model_fact = model_dot %>% fun_slrModel2Height(include="values", valType="factor",labelType="character"))
 test_ext_cm %>% glimpse
 test_ext_cm %>% filter(impacts_intercept < 0) %>% nrow
 test_ext_cm %>% filter(impacts_slope < 0) %>% nrow
@@ -643,15 +697,15 @@ Regions
 
 
 ```{r test_co_regions}
-test_co_regions <- test_systemData$co_regions; test_co_regions
+test_co_regions <- list_systemData$co_regions; test_co_regions
 ```
 
 
 Examine model types
 
 ```{r}
-test_systemData$co_models %>% glimpse
-test_systemData$co_modelTypes %>% glimpse
+list_systemData$co_models %>% glimpse
+list_systemData$co_modelTypes %>% glimpse
 ```
 
 
@@ -659,9 +713,9 @@ test_systemData$co_modelTypes %>% glimpse
 Model types
 
 ```{r test_co_models}
-test_co_models  <- test_systemData$co_models %>% select(c("model_dot", "modelType")); test_co_models %>% glimpse
+test_co_models  <- list_systemData$co_models %>% select(c("model_dot", "modelType")); test_co_models %>% glimpse
 test_models_dot <- (test_co_models %>% filter(modelType %in% c("gcm")))$model_dot; test_models_dot
-test_gcm_impact <- test_systemData$list_impactFunctions[1:1e3]; test_gcm_impact %>% head %>% names
+test_gcm_impact <- list_systemData$list_impactFunctions[1:1e3]; test_gcm_impact %>% head %>% names
 test_gcm_names  <- test_gcm_impact %>% names; test_gcm_names %>% head
 # test_gcm_names[30:60]
 ```
@@ -729,8 +783,8 @@ If above works, overwrite previous config
 ```{r save and overwrite data}
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_systemData <- createSystemData(save=T, excelName = excelFileName, outPath = sysArchName)
-test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
+list_systemData <- createSystemData(save=T, excelName = excelFileName, outPath = sysArchName)
+list_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -758,12 +812,12 @@ file.copy(
 
 If tests pass, update the data
 
-```{r test_systemData0}
+```{r list_systemData0}
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
-test_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
+list_systemData <- createSystemData(save=T, excelName = excelFileName, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -910,7 +964,7 @@ Test ramp function
 ```{r test_slr0}
 # test_Inputs
 test_slr0 <- testInputs$ramp$slrInput; test_slr0 %>% glimpse
-# test_slr1 <- test_systemData$slrExtremes; test_slr1 %>% glimpse
+# test_slr1 <- list_systemData$slrExtremes; test_slr1 %>% glimpse
 test_slr2 <- test_slr0 %>% left_join(test_slr1, by=c("year")) %>% arrange_at(.vars=c("sector", "variant", "impactType", "impactYear", "region", "year")); test_slr2 %>% glimpse
 test_slr3 <- test_slr2 %>% mutate(impact = impacts_intercept + impacts_slope * driverValue_ref); test_slr3 %>% glimpse
 ```
