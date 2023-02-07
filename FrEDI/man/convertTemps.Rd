@@ -19,7 +19,7 @@ Global temperatures in degrees Celsius are converted to CONUS temperatures (\cod
 Outputs a numeric vector of temperatures in degrees Celsius.
 }
 \description{
-This pre-processing helper function converts a list of warming temperatures in degrees Celsius (\code{temps}) from global to CONUS (\code{from="global"}) or vice versa (\code{from="global"}). The equations for converting between CONUS and global temperatures and back again are described elsewhere in this report.
+This pre-processing helper function converts a list of warming temperatures in degrees Celsius (\code{temps}) from global to CONUS (\code{from="global"}) or vice versa (\code{from="conus"}). The equations for converting between CONUS and global temperatures and back again are described elsewhere in this report.
 }
 \examples{
 convertTemps(1:7, from = "global")

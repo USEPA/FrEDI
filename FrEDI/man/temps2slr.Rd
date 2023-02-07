@@ -12,7 +12,7 @@ temps2slr(temps, years)
 \item{years}{A numeric vector of years (common era) corresponding to the temperatures provided to \code{temps}. The temperature series and corresponding years must begin in 2000 or earlier.}
 }
 \value{
-Outputs a dataframe with two columns: \code{year}, which has the years from the \code{years} input that fall within the range from 2000 through 2090 and \code{slr_cm} which has the GMSL in centimeters.
+Outputs a data frame with two columns: \code{year}, which has the years from the \code{years} input that fall within the range from 2000 through 2090 and \code{slr_cm} which has the GMSL in centimeters.
 }
 \description{
 This pre-processing helper function converts a vector of global temperatures to global mean sea level rise (GMSL). This function adapts the method described by Kopp et al. (2016) (see references, below).
@@ -50,7 +50,7 @@ tempInputFile <- scenariosPath \%>\% file.path("GCAM_scenario.csv")
 ### Import example temperature scenario
 example_inputsList <- import_inputs(tempfile = tempInputFile)
 
-### Extract the example temperature scenario dataframe from the list
+### Extract the example temperature scenario data frame from the list
 ### Example has global temperatures in degrees Celsius
 x_tempInput <- example_inputsList$tempInput
 

@@ -20,7 +20,7 @@ get_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 }
 }
 \description{
-This helper function returns a character vector of sector names (default) \emph{or} a dataframe of sectors with related information (e.g., associated variants, impact types, etc.), which the user can supply to the \code{\link[=run_fredi]{run_fredi()}} \code{sectorList} argument.
+This helper function returns a character vector of sector names (default) \emph{or} a data frame of sectors with related information (e.g., associated variants, impact types, etc.), which the user can supply to the \code{\link[=run_fredi]{run_fredi()}} \code{sectorList} argument.
 }
 \details{
 If \code{description=FALSE} (default), this helper function returns a character vector of sector names, which the user can supply to the \code{sectorList} argument to \code{\link[=run_fredi]{run_fredi()}}. If \code{description=TRUE}, \code{get_sectorInfo()} returns dataframe of sectors with related information returns a dataframe containing the sectors available for FrEDI along with additional information. Sector names are in the first column, with additional columns for the associated model type ("GCM" or "SLR"), variants, impact years, and impact types in the remaining columns. Variants, impact years, and impact types vary by sector.
