@@ -59,11 +59,17 @@ createSystemData <- function(
   loadDataList    <- loadData(
     fileName  = extDataFile,
     sheetName = "tableNames",
-    silent    = silent,
-    .testing = TRUE,
-    saveTest = TRUE,
-    returnTest = TRUE
+    silent    = silent
   )
+  
+  
+  loadDataList <- reshape_loadData(
+    dataList = loadDataList,
+    .testing = TRUE,
+    save_test = TRUE,
+    return_test = TRUE
+  )
+  
   
   if(msgUser){message("\t", messages_data[["loadInputs"]]$success)}
   
@@ -236,13 +242,13 @@ createSystemData <- function(
  
   if(.testing){
     rdat_new <-rDataList
-    new_dat <- rdat_new[-length(rdat_new)] 3 # Drop the list of impact functions
+    new_dat <- rdat_new[-length(rdat_new)]  # Drop the list of impact functions
     #new_dat$co_sectors <- do.call("rbind",replicate(2,new_dat$co_sectors,simplify = FALSE))
     new_fred_config <-fredi_config
-    load(testFile) # load the test file
+    load("./createSystemData/data/sysdata.rda") # load the test file
     ### When loading the objects it loads two objects
     old_dat <- rDataList[-length(rDataList)]
-    test_tab <-test_DataList(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
+    test_tab <-test_createSystemData(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
     rDataList <- rdat_new
     fredi_config <- new_fred_config ## make sure the object is back to the form we want
   }
