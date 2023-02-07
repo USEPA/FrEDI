@@ -6,10 +6,15 @@ createSystemData <- function(
     excelName   = NULL, ### name of excel file with config information
     outPath     = NULL,
     save        = NULL,
-    silent      = NULL  ### Whether to message the user
+    silent      = NULL,  ### Whether to message the user
+    .testing = TRUE,
+    testFile = NULL, ## Path to rda file to compare against
+    saveTest = TRUE, 
+    returnTest = TRUE
 ){
-  
+ 
   require(tidyverse)
+  
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user) and save behavior
   silent  <- ifelse(is.null(silent), F, silent)
@@ -56,6 +61,15 @@ createSystemData <- function(
     sheetName = "tableNames",
     silent    = silent
   )
+  
+  
+  loadDataList <- reshape_loadData(
+    dataList = loadDataList,
+    .testing = TRUE,
+    save_test = TRUE,
+    return_test = TRUE
+  )
+  
   
   if(msgUser){message("\t", messages_data[["loadInputs"]]$success)}
   
@@ -183,7 +197,7 @@ createSystemData <- function(
   # c_modelTypes   <- co_modelTypes$modelType_id
   c_modelTypes   <- c("gcm")
   for(modelType_i in c_modelTypes){
-    ### Max output value, maximum extrapolation value, unit scale, extend type
+    ### Max output value, maximum extrapolation value, unit scale,   extend type
     df_model_i  <- (co_modelTypes %>% filter(modelType_id==modelType_i))
     maxOutput_i <- df_model_i$modelMaxOutput %>% unique
     maxExtrap_i <- df_model_i$modelMaxExtrap %>% unique
@@ -221,7 +235,24 @@ createSystemData <- function(
   )
   ### Combine with the data list
   rDataList <- c(loadDataList, rDataList)
+  
+  
+  ###### Test Data  ######
+  
  
+  if(.testing){
+    rdat_new <-rDataList
+    new_dat <- rdat_new[-length(rdat_new)]  # Drop the list of impact functions
+    #new_dat$co_sectors <- do.call("rbind",replicate(2,new_dat$co_sectors,simplify = FALSE))
+    new_fred_config <-fredi_config
+    load("./createSystemData/data/sysdata.rda") # load the test file
+    ### When loading the objects it loads two objects
+    old_dat <- rDataList[-length(rDataList)]
+    test_tab <-test_createSystemData(new_dat,old_dat,save = TRUE,return = TRUE,fileName = "createSystemData")
+    rDataList <- rdat_new
+    fredi_config <- new_fred_config ## make sure the object is back to the form we want
+  }
+  
   ###### Save R Data objects ######
   ### If save:
   ### - Message the user
