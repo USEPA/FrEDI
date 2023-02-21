@@ -93,7 +93,7 @@ sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rds")
 
 ### SV Sectors
 
-List of SV sectors ("Air Quality", "Coastal Properties", "Extreme Temperature", "High Tide Flooding and Traffic", "Labor", "Roads")
+List of SV sectors ("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma", "Coastal Properties", "Extreme Temperature", "High Tide Flooding and Traffic", "Labor", "Roads")
 
 Select a specific sector if not all sectors have been updated.
 
@@ -125,7 +125,7 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = TRUE, ### Update SV population data
+  pop      = TRUE,  ### Update SV population data
   format   = TRUE,  ### Update formats
   impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
@@ -430,10 +430,9 @@ testInputs <- inputSpecs %>% (function(list_x){
 
 ```{r resultsPath}
 # today <- "20221101"
-frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
-resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
+# frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
+resultsPath <- projectParentDir %>% file.path("analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
-# resultsPath <- "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData"
 ```
 
 Test SV tool:
@@ -455,11 +454,11 @@ test_sv <-
   (function(
     sectors,
     all     = TRUE,
-    # inputs  = testInputs[4],
-    inputs  = NULL,
+    inputs  = testInputs[4],
+    #inputs  = NULL,
     outpath = resultsPath, 
     # .testing = TRUE,
-    save = FALSE, addDate = T, overwrite=TRUE
+    save = T, addDate = T, overwrite=TRUE
   ){
     ### SLR sectors
     c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
