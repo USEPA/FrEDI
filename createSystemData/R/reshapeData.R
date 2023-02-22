@@ -12,12 +12,16 @@
 reshapeData <- function(
     dataList = NULL,
     .testing = TRUE,
+    silent = T,
     save_test = TRUE,
     return_test = TRUE) {
+  
+  
   ###### Assign Objects ######
   ### Assign tables in dataList to object in local environment
   listNames <- dataList %>% names
-  for(name_i in listNames) {name_i %>% assign(dataList[[name_i]])}
+  print(listNames)
+  for(name_i in listNames) {name_i %>% assign(dataList[[name_i]],envir = .GlobalEnv)}
   
   
   ###### Modify Tables and Update in List  ######

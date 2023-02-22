@@ -3,18 +3,23 @@
 ### This function loads the data from a directory specified by the user. There is a default directory structure it will try to load from.
 loadData <- function(
     fileDir   = "." %>% file.path("inst", "extdata"), ### Path to project
-    fileName  = "FrEDI_config.xlsx", ### name of excel file with config information
+    fileName  = NULL, ### name of excel file with config information
     sheetName = "tableNames",
     silent = NULL) {
   # if(is.null(sheetName)){sheetName <- "tableNames"}
+  
+
+  print(getwd())
   if (is.null(silent)) {silent <- F}
   
   ###### File Path ######
-  fileExt       <- "xlsx"
-  fileName      <- fileName %>% paste0(".", fileExt)
+  #fileExt       <- "xlsx"
+  #fileName      <- fileName %>% paste0(".", fileExt)
   filePath      <- fileDir %>% file.path(fileName)
   ###### Load Table of Tables ######
   ### Load table with names of data tables
+  print(filePath)
+  
   df_tableNames <- openxlsx::read.xlsx(
     filePath,
     sheet    = sheetName,
@@ -46,7 +51,7 @@ loadData <- function(
     tableInfo_i <- df_tableNames[i, ]
     ### Read in the table
     table_i     <- openxlsx::read.xlsx(
-      fileName,
+      filePath,
       colNames = T,
       rowNames = T,
       sheet = tableInfo_i$Worksheet,
