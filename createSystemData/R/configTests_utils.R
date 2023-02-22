@@ -1,7 +1,6 @@
 ## Function to check if column has at least one non NA value
 has_nonNA_values <- function(x) {
   ### Check whether values in x are NA
-  x <- dataList$co_sectors
   x <- x %>% is.na
   ### Calculate number of rows
   y <- tibble(numRows = x %>% nrow)
