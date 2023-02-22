@@ -1,9 +1,6 @@
 #' reshape_loadData
 #'
 #' @param dataList
-#' @param .testing
-#' @param save_test
-#' @param return_test
 #'
 #' @return
 #' @export
@@ -11,10 +8,8 @@
 #' @examples
 reshapeData <- function(
     dataList = NULL,
-    .testing = TRUE,
-    silent = T,
-    save_test = TRUE,
-    return_test = TRUE) {
+    silent = T
+) {
   
   
   ###### Assign Objects ######
