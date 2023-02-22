@@ -132,12 +132,11 @@ Load data from Excel configuration file:
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 ### list_loadData
 list_loadData <- loadData( 
-    fileDir   = "." %>% file.path("..", "createSystemData","inst", "extdata"), ### Path to project
-    fileName  = excelFileName, ### name of excel file with config information
-    sheetName = "tableNames",
-    silent = NULL)
-
-
+  fileDir   = "." %>% file.path("..", "createSystemData","inst", "extdata"), ### Path to project
+  fileName  = excelFileName, ### name of excel file with config information
+  sheetName = "tableNames",
+  silent = NULL
+)
 ```
 
 ### 2. Reshape Loaded Data
@@ -149,26 +148,12 @@ Reshape loaded Excel data
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 ### list_reshapeData
 list_reshapeData <- list_loadData %>% reshapeData(silent=T)
-
-### Write out workbook with base test and configuration information
-
-```
-
-Test reshaped data
-
-```{r test_reshapeData}
-save_test <- TRUE
-return_test <- TRUE
-test_reshapeData <- list_reshapeData %>% dataInfo_test(
-  outPath = getwd(),
-  csvName = "reshapeData_testResults",
-  save    = save_test,
-  return  = return_test
-)
 ```
 
 
-### Configure Data
+
+
+### 3. Configure Data
 
 Test `createSystemData()` function (configure reshaped data)
 
@@ -183,59 +168,99 @@ time_create      <- time2 - time1; time_create
 ```
 
 
-Run data info tests
+### 4. Tests 
 
-```{r test_systemData0}
-test_systemData0 <- list_systemData0 %>% dataInfo_test(
-  outPath = getwd(),
-  csvName = "systemData0_infoResults",
+#### Parameters
+
+Parameters for saving tests
+
+```{r test parameters}
+save_test   <- TRUE
+return_test <- TRUE
+```
+
+#### Reshaped Data Test
+
+Try the test for the reshaped data:
+
+```{r test_reshapeData}
+test_reshapeData   <- list_reshapeData %>% dataInfo_test(
+  csvName = "reshapedData_testResults",
   save    = save_test,
   return  = return_test
 )
 ```
+
+
+#### General Config Tests
+
+Try the general tests for configured data:
+
+```{r test_systemData0}
+test_systemData0 <- list_systemData0 %>% dataInfo_test(
+  csvName = "configuredData_testResults",
+  save    = save_test,
+  return  = return_test
+)
+```
+
+
+Wrap the general tests into a single wrapper function:
+
+```{r test general_config_test}
+test_general_config <- ""
+
+```
+
+
+#### General Tests
+
 ```{r initial test workbook}
 ######### THIS NEEDS TO BE FUNCTIONALIZED
 # put initial tests into their own workbook
 init_test_wb <- createWorkbook()
- addWorksheet(init_test_wb, sheetName = "reshape_data_base_test")
- addWorksheet(init_test_wb,sheetName = "createsystemData_base_test")
- 
- writeDataTable(init_test_wb,sheet = "reshape_data_base_test",test_reshapeData)
- writeDataTable(init_test_wb,sheet = "createsystemData_base_test",test_systemData0)
-  
- ## Get base config Data
- default_config <- tibble(
-    Param_name = c("minYear","maxYear","discount_rate"),
-    val = c(fredi_config$minYear,fredi_config$maxYear,fredi_config$discountRate0)
-  )
- 
- addWorksheet(init_test_wb,sheetName = "base_params")
- writeDataTable(init_test_wb,sheet = "base_params",default_config)
- 
- ## plot GDP and Population
- addWorksheet(init_test_wb, sheetName = "default_plots")
- 
- gdp_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = gdp_usd, color = region)) +
-             geom_line()
-   print(gdp_plot)
- insertPlot(init_test_wb,  "default_plots", width = 6, height = 4.5, fileType = "png", units = "in")
+addWorksheet(init_test_wb, sheetName = "reshape_data_base_test")
+addWorksheet(init_test_wb,sheetName = "createsystemData_base_test")
 
-   
- pop_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = reg_pop, color = region)) +
-             geom_line()
- print(pop_plot)
- insertPlot(init_test_wb,  "default_plots", xy = c("K", 2), width = 16, height = 10, fileType = "png", units = "cm")
+writeDataTable(init_test_wb,sheet = "reshape_data_base_test",test_reshapeData)
+writeDataTable(init_test_wb,sheet = "createsystemData_base_test",test_systemData0)
 
- 
- temp_plot <- ggplot(list_systemData0$co_defaultTemps, aes(x = year, y = temp_C_global)) +
-             geom_line()
- print(temp_plot)
- insertPlot(init_test_wb,  "default_plots", xy = c("A", 25), width = 16, height = 10, fileType = "png", units = "cm")
- 
- ## Save Workbook
- saveWorkbook(init_test_wb, "base_test_results.xlsx",overwrite=TRUE)
+## Get base config Data
+default_config <- tibble(
+  Param_name = c("minYear","maxYear","discount_rate"),
+  val = c(fredi_config$minYear,fredi_config$maxYear,fredi_config$discountRate0)
+)
+
+addWorksheet(init_test_wb,sheetName = "base_params")
+writeDataTable(init_test_wb,sheet = "base_params",default_config)
+
+## plot GDP and Population
+addWorksheet(init_test_wb, sheetName = "default_plots")
+
+gdp_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = gdp_usd, color = region)) +
+  geom_line()
+print(gdp_plot)
+insertPlot(init_test_wb,  "default_plots", width = 6, height = 4.5, fileType = "png", units = "in")
+
+
+pop_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = reg_pop, color = region)) +
+  geom_line()
+print(pop_plot)
+insertPlot(init_test_wb,  "default_plots", xy = c("K", 2), width = 16, height = 10, fileType = "png", units = "cm")
+
+
+temp_plot <- ggplot(list_systemData0$co_defaultTemps, aes(x = year, y = temp_C_global)) +
+  geom_line()
+print(temp_plot)
+insertPlot(init_test_wb,  "default_plots", xy = c("A", 25), width = 16, height = 10, fileType = "png", units = "cm")
+
+## Save Workbook
+saveWorkbook(init_test_wb, "base_test_results.xlsx",overwrite=TRUE)
 
 ```
+
+
+#### New Sector Tests
 
 Run `createSystemData()` tests:
 
@@ -246,7 +271,8 @@ test_systemData0 <- list_systemData0 %>%
     old_data_file = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
     xslxName = "configTest_newSectors_results.xlsx",
     save    = T,
-    return  = T)
+    return  = T
+  )
 ```
 
 
