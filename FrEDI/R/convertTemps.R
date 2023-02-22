@@ -7,9 +7,9 @@
 #' @param temps A numeric vector of CONUS or global temperatures in degrees Celsius.
 #' @param from A character string (one of  `c("conus", "global")`), indicating whether users are converting from CONUS to global temperatures (`from="conus"`) or from global to CONUS (`from="global"`).
 #'
-#' Temperatures for the contiguous U.S. (CONUS) in degrees Celsius are converted to global temperatures (`convertTemps(temps, from="conus")`) in degrees Celsius by multiplying CONUS temperatures by a constant *k* (where *k=1.421*).
+#' Temperatures for the contiguous U.S. (CONUS) in degrees Celsius are converted to global temperatures (`convertTemps(temps, from="conus")`) in degrees Celsius by multiplying CONUS temperatures by a constant *1/k* (where *k=1.421*).
 #'
-#' Global temperatures in degrees Celsius are converted to CONUS temperatures (`convertTemps(temps, from="global")`) in degrees Celsius by multiplying global temperatures by a constant *1/k* (where *k=1.421*).
+#' Global temperatures in degrees Celsius are converted to CONUS temperatures (`convertTemps(temps, from="global")`) in degrees Celsius by multiplying global temperatures by a constant *k* (where *k=1.421*).
 #'
 #' @return
 #' Outputs a numeric vector of temperatures in degrees Celsius.
