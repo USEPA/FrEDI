@@ -41,7 +41,7 @@ createSystemData <- function(
   ###### Load input data ######
   ###### This section reads in data from the data file and returns a list of tables
   ###### Table names physScalars_table1, econScalars_table1, outputs_table1, co_sectors
-  if(msgUser){message("Loading Excel file from '", extDataPath, "'...")}
+  if(msgUser){message("Loading Excel file from '", configFile, "'...")}
   if(msgUser){message(messages_data[["loadInputs"]]$try)}
   ### Load data from file
   loadDataList    <- dataList

@@ -5,7 +5,7 @@ has_nonNA_values <- function(x) {
   ### Calculate number of rows
   y <- tibble(numRows = x %>% nrow)
   ### Number of NA values
-  y <- y %>% mutate(numNA = x %>% colSums)
+  y <- y %>% mutate(numNA = x %>% colSums %>% nrow %>% if_else(is.null(.),0,.))
   ### Whether all results are missing
   y <- y %>% mutate(allNA = (numRows == numNA))
   ### Filter to values with allNA
