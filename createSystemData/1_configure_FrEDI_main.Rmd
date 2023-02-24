@@ -91,6 +91,10 @@ sysFileName      <- "sysdata"
 sysArchName      <- dataOutLog %>% file.path(sysFileName) %>% paste(today, sep="_") %>% paste0(".rda")
 excelFileName    <- mostRecentDate %>% paste("FrEDI_config.xlsx", sep="_")
 sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
+
+### Name of most recent sysdata.rda file in archive
+dataOutLogFiles  <- dataOutLog %>% list.files %>% sort(decreasing = T); dataOutLogFiles %>% head
+sysFileRef       <- dataOutLog %>% file.path(dataOutLogFiles[1]); sysFileRef
 ```
 
 <!-- ### Configuration Files -->
@@ -205,58 +209,19 @@ test_systemData0 <- list_systemData0 %>% dataInfo_test(
 ```
 
 
-Wrap the general tests into a single wrapper function:
 
-```{r test general_config_test}
-test_general_config <- ""
-
-```
 
 
 #### General Tests
 
-```{r initial test workbook}
-######### THIS NEEDS TO BE FUNCTIONALIZED
-# put initial tests into their own workbook
-init_test_wb <- createWorkbook()
-addWorksheet(init_test_wb, sheetName = "reshape_data_base_test")
-addWorksheet(init_test_wb,sheetName = "createsystemData_base_test")
+Wrap the general tests into a single wrapper function:
 
-writeDataTable(init_test_wb,sheet = "reshape_data_base_test",test_reshapeData)
-writeDataTable(init_test_wb,sheet = "createsystemData_base_test",test_systemData0)
-
-## Get base config Data
-default_config <- tibble(
-  Param_name = c("minYear","maxYear","discount_rate"),
-  val = c(fredi_config$minYear,fredi_config$maxYear,fredi_config$discountRate0)
+```{r test general_config_test}
+test_general_config <- general_config_test(
+  reshapedData   = test_reshapeData,
+  configuredData = list_systemData0,
+  overwrite      = TRUE
 )
-
-addWorksheet(init_test_wb,sheetName = "base_params")
-writeDataTable(init_test_wb,sheet = "base_params",default_config)
-
-## plot GDP and Population
-addWorksheet(init_test_wb, sheetName = "default_plots")
-
-gdp_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = gdp_usd, color = region)) +
-  geom_line()
-print(gdp_plot)
-insertPlot(init_test_wb,  "default_plots", width = 6, height = 4.5, fileType = "png", units = "in")
-
-
-pop_plot <- ggplot(list_systemData0$co_defaultScenario, aes(x = year, y = reg_pop, color = region)) +
-  geom_line()
-print(pop_plot)
-insertPlot(init_test_wb,  "default_plots", xy = c("K", 2), width = 16, height = 10, fileType = "png", units = "cm")
-
-
-temp_plot <- ggplot(list_systemData0$co_defaultTemps, aes(x = year, y = temp_C_global)) +
-  geom_line()
-print(temp_plot)
-insertPlot(init_test_wb,  "default_plots", xy = c("A", 25), width = 16, height = 10, fileType = "png", units = "cm")
-
-## Save Workbook
-saveWorkbook(init_test_wb, "base_test_results.xlsx",overwrite=TRUE)
-
 ```
 
 
@@ -265,13 +230,14 @@ saveWorkbook(init_test_wb, "base_test_results.xlsx",overwrite=TRUE)
 Run `createSystemData()` tests:
 
 (remove objects )
-```{r test_systemData0}
+```{r test configTest_newSectors}
 test_systemData0 <- list_systemData0 %>% 
   configTest_newSectors(
-    old_data_file = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
-    xslxName = "configTest_newSectors_results.xlsx",
-    save    = T,
-    return  = T
+    # refDataFile = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
+    refDataFile = sysFileRef,
+    save      = T,
+    return    = T,
+    overwrite = T
   )
 ```
 
