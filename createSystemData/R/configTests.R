@@ -18,22 +18,126 @@ dataInfo_test <- function(
     save     = TRUE, ### Whether to save results to file
     return   = TRUE  ### Whether to return results
 ) {
-  
   #dataList <- list_reshapeData 
-  ### List of names
-  listNames <- dataList %>% names
+  ###### List Info ######
+  ### List names
+  ### Length of list and list names
+  listNames <- dataList  %>% names
+  lenList   <- dataList  %>% length
+  lenName   <- listNames %>% length
+  # c(lenList, lenName, lenList==lenName) %>% print
+  
+  ###### List Object Types ######
+  ### Get info on object types and add names
+  ### Simplify list of types
+  # cTypes    <- c("data.frame", "list", "character", "numeric")
+  listTypes <- listNames %>% map(~ (dataList[[.]] %>% class))
+  ### Add names back to list
+  listTypes <- listTypes %>% (function(x){names(x) <- listNames; return(x)})
+  # listTypes[1] %>% print
+  ### Simplify types
+  listTypes <- listNames %>% map(~ case_when(
+    ("data.frame" %in% listTypes[[.]]) ~ "data.frame",
+    ("list"       %in% listTypes[[.]]) ~ "list",
+    ("character"  %in% listTypes[[.]]) ~ "character",
+    ("numeric"    %in% listTypes[[.]]) ~ "numeric",
+    TRUE ~ "N/A"
+  ))
+  ### Add names back to list
+  listTypes <- listTypes %>% (function(x){names(x) <- listNames; return(x)})
+  # c(length(listTypes), names(listTypes) %>% length) %>% print
   
   ###### Initial Table Info ######
-  ### Get table of info
+  # ### Get table of info
+  # df_info   <- tibble(table = listNames)
+  # ### Count number of columns in each table
+  # df_info   <- df_info %>% mutate(num_cols    = listNames %>% map(~ (dataList[[.]] %>% ncol)) %>% unlist)
+  # ### Count number of rows in each table
+  # df_info   <- df_info %>% mutate(num_rows    = listNames %>% map(~ (dataList[[.]] %>% nrow)) %>% unlist)
+  # ### Count number of distinct rows in each table
+  # df_info   <- df_info %>% mutate(unique_rows = listNames %>% map(~ (dataList[[.]] %>% distinct %>% nrow)) %>% unlist)
+  # ### Count number of missing values 
+  # df_info   <- df_info %>% mutate(cols_wAllNA = listNames %>% map(~ (dataList[[.]] %>% has_nonNA_values)) %>% unlist)
+  
+  ### Example
+  # test_types <- c("data.frame", "tibble")
+  # test_list <- list(a=test_types, b=c("list"))
+  # test_list1 <- test_list %>% names %>% map(~case_when(("data.frame" %in% test_list[[.]])~1, ("list" %in% test_list[[.]])~2, TRUE~0))
+  # test_list2 <- test_list %>% names %>% map(~case_when(("data.frame" %in% test_list[[.]])~"data.frame", ("list" %in% test_list[[.]])~"list", TRUE~"N/A"))
+  # test_list2 %>% length %>% seq_len %>% map(~(test_list2[[.]] %>% print))
+  # test_list2 %>% length %>% seq_len %>% map(~(if_else("data.frame" %in% test_list2[[.]], 1, 0)))
+  
+  ### Initialize table of info...make methods specific to class
+  ### Get class of table object
   df_info   <- tibble(table = listNames)
+  df_info   <- df_info %>% mutate(itemClass = listTypes %>% unlist)
+  
   ### Count number of columns in each table
-  df_info   <- df_info %>% mutate(num_cols    = listNames %>% map(~ (dataList[[.]] %>% ncol)) %>% unlist)
   ### Count number of rows in each table
-  df_info   <- df_info %>% mutate(num_rows    = listNames %>% map(~ (dataList[[.]] %>% nrow)) %>% unlist)
   ### Count number of distinct rows in each table
-  df_info   <- df_info %>% mutate(unique_rows = listNames %>% map(~ (dataList[[.]] %>% distinct %>% nrow)) %>% unlist)
   ### Count number of missing values 
-  df_info   <- df_info %>% mutate(cols_wAllNA = listNames %>% map(~ (dataList[[.]] %>% has_nonNA_values)) %>% unlist)
+  
+  # ### Expressions
+  # expr_nCol <- function(a, b){if_else("data.frame" %in% a, b %>% ncol, 0 %>% as.integer)}
+  # expr_nRow <- function(a, b){if_else("data.frame" %in% a, b %>% nrow, b %>% length)}
+  # expr_nUnq <- function(a, b){if_else("data.frame" %in% a, b %>% distinct %>% nrow,  b %>% distinct %>% length)}
+  # expr_nNna <- function(a, b){if_else("data.frame" %in% a, b %>% has_nonNA_values_df, b %>% has_nonNA_values_misc)}
+  # ### Eval
+  # num_cols    <- listNames %>% map(~ listTypes[[.x]] %>% expr_nCol(dataList[[.x]])) %>% unlist
+  # num_rows    <- listNames %>% map(~ listTypes[[.x]] %>% expr_nRow(dataList[[.x]])) %>% unlist
+  # unique_rows <- listNames %>% map(~ listTypes[[.x]] %>% expr_nUnq(dataList[[.x]])) %>% unlist
+  # cols_wAllNA <- listNames %>% map(~ listTypes[[.x]] %>% expr_nNna(dataList[[.x]])) %>% unlist
+  
+  # ### Expressions
+  # expr_nCol <- function(z, a=listTypes, b=dataList){print(z); if_else("data.frame" %in% a[[z]], b[[z]] %>% ncol, 0 %>% as.integer)}
+  # expr_nRow <- function(z, a=listTypes, b=dataList){print(z); if_else("data.frame" %in% a[[z]], b[[z]] %>% nrow, b[[z]] %>% length)}
+  # expr_nUnq <- function(z, a=listTypes, b=dataList){print(z); if_else("data.frame" %in% a[[z]], b[[z]] %>% distinct %>% nrow,   b[[z]] %>% distinct %>% length)}
+  # expr_nNna <- function(z, a=listTypes, b=dataList){print(z); if_else("data.frame" %in% a[[z]], b[[z]] %>% has_nonNA_values_df, b[[z]] %>% has_nonNA_values_misc)}
+  # ### Eval
+  # num_cols    <- listNames %>% map(~ .x %>% expr_nCol) %>% unlist
+  # num_rows    <- listNames %>% map(~ .x %>% expr_nRow) %>% unlist
+  # unique_rows <- listNames %>% map(~ .x %>% expr_nUnq) %>% unlist
+  # cols_wAllNA <- listNames %>% map(~ .x %>% expr_nNna) %>% unlist
+  
+  ### Eval
+  num_cols    <- listNames %>% map(~ .x %>% fun_nCol(a=listTypes, b=dataList)) %>% unlist
+  num_rows    <- listNames %>% map(~ .x %>% fun_nRow(a=listTypes, b=dataList)) %>% unlist
+  unique_rows <- listNames %>% map(~ .x %>% fun_nUnq(a=listTypes, b=dataList)) %>% unlist
+  cols_wAllNA <- listNames %>% map(~ .x %>% fun_nNna(a=listTypes, b=dataList)) %>% unlist
+  
+  ### Add to df_info
+  df_info   <- df_info %>% mutate(num_cols    = num_cols)
+  df_info   <- df_info %>% mutate(num_rows    = num_rows)
+  df_info   <- df_info %>% mutate(unique_rows = unique_rows)
+  df_info   <- df_info %>% mutate(cols_wAllNA = cols_wAllNA)
+  # ### Count number of columns in each table
+  # df_info   <- df_info %>% mutate(
+  #   num_cols    = listNames %>% map(~ if_else(
+  #     "data.frame" %in% listTypes[[.]], dataList[[.]] %>% ncol, 0%>% as.integer #%>% as.integer
+  #   )) %>% unlist)
+  # ### Count number of rows in each table
+  # df_info   <- df_info %>% mutate(
+  #   num_rows    = listNames %>% map(~ if_else(
+  #     "data.frame" %in% listTypes[[.]], dataList[[.]] %>% nrow, dataList[[.]] %>% length
+  #   )) %>% unlist)
+  # ### Count number of distinct rows in each table
+  # df_info   <- df_info %>% mutate(
+  #   unique_rows = listNames %>% map(~ if_else(
+  #     "data.frame" %in% listTypes[[.]], dataList[[.]] %>% distinct %>% nrow, dataList[[.]] %>% distinct %>% length
+  #     )) %>% unlist)
+  # ### Count number of missing values 
+  # listNames %>% map(~ if_else(
+  #   "data.frame" %in% listTypes[[.]], 
+  #   dataList[[.]] %>% has_nonNA_values, 
+  #   dataList[[.]] %>% (function(x){((x[!is.na(x)] %>% length)==0) * 1}) %>% as.integer
+  # )) %>% unlist
+  
+  # df_info   <- df_info %>% mutate(
+  #   cols_wAllNA = listNames %>% map(~ if_else(
+  #     "data.frame" %in% listTypes[[.]], 
+  #     dataList[[.]] %>% has_nonNA_values, 
+  #     dataList[[.]] %>% (function(x){((x[!is.na(x)] %>% length)==0) * 1}) %>% as.integer
+  #   )) %>% unlist)
   
   ###### Check Tests ######
   ### Check number of columns with some non-missing values is equal to the number of columns 
@@ -51,13 +155,14 @@ dataInfo_test <- function(
   rm("except0", "mutate0")
   
   ### Print Out tables if there are any values that don't pass
-  df_flags  <- df_info %>% filter(passed==0)
+  df_flags  <- df_info  %>% filter(passed==0)
   numFlags  <- df_flags %>% nrow
   hasFlags  <- numFlags > 0
   
   ### Message user
+  "Checking tables..." %>% message
   msg_flags <- ifelse(hasFlags, "Some tables don't pass", "All tables pass") %>% paste0("...")
-  msg_flags %>% message
+  "\t" %>% paste0(msg_flags) %>% message
   rm("msg_flags")
   
   ### Print flagged table results
@@ -81,6 +186,7 @@ dataInfo_test <- function(
   } ### End if_else
   
   ## Return options ####
+  "Finished." %>% message
   if(return) {return(df_info)}
   
   ### End Function
@@ -366,10 +472,10 @@ newSectors_config_test <- function(
   df_status <- df_status %>% mutate(numRows_ref = Table.Name %>% map(~ (ifelse(is.null(refData[[.]]), yes = NA , no = refData[[.]] %>% nrow))) %>% unlist)
   df_status <- df_status %>% mutate(sameDims    = 1*(numCols_new == numCols_ref) & (numRows_new == numRows_ref))
   df_status <- df_status %>% mutate(sameVals    = (Table.Name %>% 
-                                                       map(~(ifelse(
-                                                         is.null(refData[[.]]),
-                                                         yes = NA,
-                                                         identical(newData[[.]],refData[[.]]))))) %>% unlist)
+                                                     map(~(ifelse(
+                                                       is.null(refData[[.]]),
+                                                       yes = NA,
+                                                       identical(newData[[.]],refData[[.]]))))) %>% unlist)
   df_status <- df_status %>% mutate(hasDiffs    = 1*(!sameDims | !sameVals))
   
   ###### Arrange Values ######
@@ -424,7 +530,7 @@ newSectors_config_test <- function(
   ###### New impact functions ######
   ### Figure out which functions are new and then filter to those functions
   ### Function lists
-
+  
   ### Names
   newFunNames <- newFunList %>% names
   refFunNames <- refFunList %>% names
