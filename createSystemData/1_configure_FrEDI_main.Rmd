@@ -52,7 +52,8 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "vibrio"
+# mostRecentDate <- "vibrio"
+mostRecentDate <- "20221130"
 ```
 
 
