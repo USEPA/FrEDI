@@ -11,8 +11,6 @@ reshapeData <- function(
     dataList = NULL,
     silent = T
 ) {
-  
-  
   ###### Assign Objects ######
   ### Assign tables in dataList to object in local environment
   listNames <- dataList %>% names
