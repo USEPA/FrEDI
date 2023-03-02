@@ -70,8 +70,9 @@ loadData <- function(
       excludeCols_i <- excludeIds_i %>% str_split(", ") %>% unlist() %>% as.numeric()
       excludeCols_i <- excludeCols_i - 1
       table_i       <- table_i %>% select(-c(all_of(excludeCols_i)))
+      rm("excludeCols_i")
     }
-    rm("excludeIds_i", "doExclude_i", "excludeCols_i")
+    rm("excludeIds_i", "doExclude_i")
 
     ### Add the table to the list
     # dataList[[i]] <- table_i
