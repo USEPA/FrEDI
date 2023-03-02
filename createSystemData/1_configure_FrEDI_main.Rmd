@@ -163,8 +163,8 @@ list_reshapeData <- list_loadData %>% reshapeData(silent=T)
 Test `createSystemData()` function (configure reshaped data)
 
 ```{r list_systemData0}
-codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
-frediPath %>% load_all
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+# frediPath %>% load_all
 ### Uncomment following two lines to create and save data and check the outputs
 time1            <- Sys.time()
 list_systemData0 <- list_reshapeData %>% createSystemData(save=F, silent=T)
@@ -182,13 +182,27 @@ Parameters for saving tests
 ```{r test parameters}
 save_test   <- TRUE
 return_test <- TRUE
+
 ```
 
 #### Reshaped Data Test
 
+<!-- Try different methods -->
+
+<!-- ```{r} -->
+<!-- test_types <- c("data.frame", "tibble") -->
+<!-- test_list  <- list(a=test_types, b=c("list")) -->
+<!-- test_list1 <- test_list %>% names %>% map(~case_when(("data.frame" %in% test_list[[.]])~1, ("list" %in% test_list[[.]])~2, TRUE~0)) -->
+<!-- test_list2 <- test_list %>% names %>% map(~case_when(("data.frame" %in% test_list[[.]])~"data.frame", ("list" %in% test_list[[.]])~"list", TRUE~"N/A")) -->
+<!-- test_list2 %>% length %>% seq_len %>% map(~(test_list2[[.]] %>% print)) -->
+<!-- test_list2 %>% length %>% seq_len %>% map(~(if_else("data.frame" %in% test_list2[[.]], 1, 0))) -->
+<!-- ``` -->
+
+
 Try the test for the reshaped data:
 
 ```{r test_reshapeData}
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 test_reshapeData   <- list_reshapeData %>% dataInfo_test(
   csvName = "reshapedData_testResults",
   save    = save_test,
@@ -202,11 +216,15 @@ test_reshapeData   <- list_reshapeData %>% dataInfo_test(
 Try the general tests for configured data:
 
 ```{r test_systemData0}
-test_systemData0 <- list_systemData0[-length(list_systemData0)] %>% dataInfo_test(
-  csvName = "configuredData_testResults",
-  save    = save_test,
-  return  = return_test
-)
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+test_systemData0 <-
+  # list_systemData0 %>% names
+  # list_systemData0 %>% (function(x){((x %>% names) %in% c("fredi_config")) %>% which}) #%>% names
+  list_systemData0 %>% dataInfo_test(
+    csvName = "configuredData_testResults",
+    save    = save_test,
+    return  = return_test
+  )
 ```
 
 
@@ -218,9 +236,10 @@ test_systemData0 <- list_systemData0[-length(list_systemData0)] %>% dataInfo_tes
 Wrap the general tests into a single wrapper function:
 
 ```{r test general_config_test}
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 test_general_config <- general_config_test(
-  reshapedData   = list_reshapeData[-length(list_reshapeData)],
-  configuredData = list_systemData0[-length(list_systemData0)],
+  reshapedData   = list_reshapeData,
+  configuredData = list_systemData0,
   overwrite      = TRUE,
   fredi_config = fredi_config
 )
@@ -234,13 +253,13 @@ Run `createSystemData()` tests:
 (remove objects )
 ```{r test configTest_newSectors}
 test_systemData0 <- newSectors_config_test(
-    newData = list_systemData0,
-    # refDataFile = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
-    refDataFile = sysFileRef,
-    save      = T,
-    return    = T,
-    overwrite = T
-  )
+  newData = list_systemData0,
+  # refDataFile = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
+  refDataFile = sysFileRef,
+  save      = T,
+  return    = T,
+  overwrite = T
+)
 ```
 
 
