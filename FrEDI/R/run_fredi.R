@@ -888,7 +888,7 @@ run_fredi <- function(
   if(pv){
     ### Discount rate info
     df_rates   <- data.frame(year = list_years, rate = rate, baseYear = baseYear)
-    df_rates   <- df_rates %>% mutate(discountFactor = 1 / (1 + rate)^(year - baseYear))
+    df_rates   <- df_rates   %>% mutate(discountFactor = 1 / (1 + rate)^(year - baseYear))
     ### Discounted impacts
     df_results <- df_results %>% left_join(df_rates, by = c("year"))
     df_results <- df_results %>% mutate(discounted_impacts = annual_impacts * discountFactor)
