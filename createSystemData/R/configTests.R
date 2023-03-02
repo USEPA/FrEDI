@@ -95,8 +95,11 @@ general_config_test <- function(
     xlsxName  = "testResults_general_config.xlsx",
     save      = TRUE,
     return    = TRUE,
-    overwrite = TRUE ### Whether to overwrite an existing file
+    overwrite = TRUE, ### Whether to overwrite an existing file,
+    fredi_config = NULL ### fredi_config list object
 ){
+  
+  
   ###### Initialize List ######
   ### Initialize list for saving values
   ### Initialize list for default plots
@@ -128,8 +131,7 @@ general_config_test <- function(
       reshape0 <- reshapedData %>% dataInfo_test(save = F, return = T)
     } ### End else(!is_list0) 
     rm("class0", "is_list0")
-  } ### End if(has_reshape0)
-  else           {reshape0 <- data.frame()}
+  } else           {reshape0 <- data.frame()}
   # ### If no reshapedData passed to argument, try to load from file
   # else          {
   #   expr0    <- reshapedFile %>% read.csv()
@@ -173,7 +175,7 @@ general_config_test <- function(
   
   ###### Default Values ######
   ### Items from fredi_config: 
-  listConfig0   <- configuredData[["fredi_config"]]
+  listConfig0   <- fredi_config
   c_defaults0   <- c("aggList0" , "minYear", "maxYear", "baseYear0", "rate0")
   c_defaults1   <- c("aggLevels", "minYear", "maxYear", "baseYear" , "rate" )
   n_defaults0   <- listConfig0 %>% names
@@ -188,7 +190,7 @@ general_config_test <- function(
     val0_i <- list0[[name_i]]
     type_i <- val0_i %>% class %>% paste(collapse=", ")
     val1_i <- val0_i %>% paste(collapse=", ")
-    df_i   <- tibble(parameter=name_i, class=type_i, value=val_i)
+    df_i   <- tibble(parameter=name_i, class=type_i, value=val1_i)
     return(df_i)
   }) %>% (function(x){do.call(rbind, x)})
   ### Update parameter names
@@ -219,7 +221,7 @@ general_config_test <- function(
   brk_yrs0  <- seq(2010, 2300, by=20)
   ### Temp plot
   temp_plot <- configuredData[["co_defaultTemps"]] %>% 
-    mutate(temp_C_conus = FrEDI::converTemps(temp_C_global, from="global")) %>%
+    mutate(temp_C_conus = FrEDI::convertTemps(temp_C_global, from="global")) %>%
     ggplot() +
     geom_line(aes(x = year, y = temp_C_conus)) +
     scale_x_continuous(lab_yrs0, breaks=brk_yrs0) +
@@ -323,6 +325,10 @@ newSectors_config_test <- function(
     return    = T,
     overwrite = T
 ){
+  
+  
+  newFunList  <- newData[["list_impactFunctions"]]
+  newData <- newData[-length(newData)]
   ###### Initialize Save List ######
   saveList  <- list()
   
@@ -335,8 +341,9 @@ newSectors_config_test <- function(
   
   ###### Load Reference Data ######
   ### Load ref data
-  refData   <- refDataFile %>% load(verbose = T)
-  refData   <- refData[["rDataList"]]
+  refDataFile %>% load(verbose = T)
+  refFunList  <- rDataList[["list_impactFunctions"]]
+  refData   <- rDataList[-length(rDataList)]
   
   ###### Table Info ######
   ### Create table of status, rename and drop some columns
@@ -355,10 +362,14 @@ newSectors_config_test <- function(
   ### When no changes are expected still get dimensions and check that values are identical
   df_status <- df_status %>% mutate(numCols_new = Table.Name %>% map(~ (newData[[.]] %>% ncol)) %>% unlist)
   df_status <- df_status %>% mutate(numRows_new = Table.Name %>% map(~ (newData[[.]] %>% nrow)) %>% unlist)
-  df_status <- df_status %>% mutate(numCols_ref = Table.Name %>% map(~ (refData[[.]] %>% ncol)) %>% unlist)
-  df_status <- df_status %>% mutate(numRows_ref = Table.Name %>% map(~ (refData[[.]] %>% nrow)) %>% unlist)
+  df_status <- df_status %>% mutate(numCols_ref = Table.Name %>% map(~ (ifelse(is.null(refData[[.]]), yes = NA , no = refData[[.]] %>% ncol))) %>% unlist)
+  df_status <- df_status %>% mutate(numRows_ref = Table.Name %>% map(~ (ifelse(is.null(refData[[.]]), yes = NA , no = refData[[.]] %>% nrow))) %>% unlist)
   df_status <- df_status %>% mutate(sameDims    = 1*(numCols_new == numCols_ref) & (numRows_new == numRows_ref))
-  df_status <- df_status %>% mutate(sameVals    = 1*(Table.Name %>% map(~(identical(newData[[.]],refData[[.]])))))
+  df_status <- df_status %>% mutate(sameVals    = (Table.Name %>% 
+                                                       map(~(ifelse(
+                                                         is.null(refData[[.]]),
+                                                         yes = NA,
+                                                         identical(newData[[.]],refData[[.]]))))) %>% unlist)
   df_status <- df_status %>% mutate(hasDiffs    = 1*(!sameDims | !sameVals))
   
   ###### Arrange Values ######
@@ -381,7 +392,7 @@ newSectors_config_test <- function(
   
   ###### Print tables ######
   ### Filter to tables with differences and add to list and workbook
-  df_diff <- df_status %>% filter(print == 1)
+  df_diff <- df_status %>% filter(hasDiffs == 1)
   saveList[[c_diff0]] <- df_diff
   
   
@@ -413,8 +424,7 @@ newSectors_config_test <- function(
   ###### New impact functions ######
   ### Figure out which functions are new and then filter to those functions
   ### Function lists
-  newFunList  <- newData[["list_impactFunctions"]]
-  refFunList  <- refData[["list_impactFunctions"]]
+
   ### Names
   newFunNames <- newFunList %>% names
   refFunNames <- refFunList %>% names
@@ -429,7 +439,7 @@ newSectors_config_test <- function(
   ### Execute the impact functions across new sectors, then gather values
   df_temps    <- tibble(temp_C = -1:11)
   df_vals     <- df_temps %>% map_df(~ funList %>% map_df(exec,.x))
-  df_vals     <- df_vals  %>% gather(key="scenario_id",value="scaled_impact")
+  df_vals     <- df_vals  %>% gather(key="scenario_id",value="scaled_impact") %>% mutate( temp_C = rep(-1:11,length(scaled_impact)/length(df_temps$temp_C)))
   rm("df_temps")
   
   ### Separate scenario_id into components
@@ -462,7 +472,7 @@ newSectors_config_test <- function(
     data_j = data_i %>% filter(variant==variant_j)
     ){
       ### yColumn
-      yCol_j   <- "scaled_impacts"
+      yCol_j   <- "scaled_impact"
       ### Initialize scalar labels
       lvl_y0   <- 10**c(0, 3, 6, 9)
       lbl_y0   <- c("") %>% c(paste0(", ", c("Thousands", "Millions", "Billions")))
@@ -493,18 +503,18 @@ newSectors_config_test <- function(
       
       ### Regional plots
       ### Groups
-      groups_j <- c("sector", "variant", "impactYear", "impactType", "model_dot", "region_dot") 
+      groups_j <- c("sector", "variant", "impactYear", "impactType", "model_dot", "region_dot","temp_C") 
       reg_j    <- data_j %>%
-        group_by_at(.vars=c(all_of(groups_j))) +
+        group_by_at(.vars=c(all_of(groups_j))) %>%
         ggplot() +
-        geom_line(aes_string(x="temp_C", y=yCol_j, color="region_dot"), alpha = 0.7, linewidth = 0.7)
+        geom_line(aes(x=temp_C, y=scaled_impact, color=region_dot), alpha = 0.7, linewidth = 0.7)
       ### Add facets
       reg_j    <- reg_j + facet_wrap(facets=c("model_dot", "impactType"),scales = "free") 
       ### Add scales
       reg_j    <- reg_j + scale_x_continuous(lab_x0, breaks=brk_x0)
-      reg_j    <- reg_j + scale_y_continuous(.$impactType %>% unique %>% paste(lab_y0))
+      reg_j    <- reg_j + scale_y_continuous(lab_y0)
       ### Add title
-      reg_j    <- reg_j + ggtitle(paste0(.$sector %>% unique, " -- ", .$impactType %>% unique))
+      reg_j    <- reg_j + ggtitle(paste0(reg_j$data$sector %>% unique, " -- ","Regional"))
       ### Add regional plot
       plots_j[["regional"]] <- reg_j
       rm("reg_j", "groups_j")
@@ -513,21 +523,22 @@ newSectors_config_test <- function(
       # plots_j[["national"]]
       ### Regional plots
       ### Groups
-      groups_j <- c("sector", "variant", "impactYear", "impactType", "model_dot") 
+      groups_j <- c("sector", "variant", "impactYear", "impactType", "model_dot","temp_C") 
       nat_j    <- data_j %>% 
-        group_by_at(.vars=c(all_of(groups_j))) +
-        summarize_at(.vars=c("scaled_impacts")) +
+        group_by_at(.vars=c(all_of(groups_j))) %>%
+        summarize_at(.vars=c("scaled_impact"),.funs = sum) %>%
         ggplot() +
-        geom_line(aes(x = temp_C, y =scaled_impacts, color = model_dot), alpha = 0.7, linewidth = 0.7)
+        geom_line(aes(x = temp_C, y = scaled_impact, color = model_dot), alpha = 0.7, linewidth = 0.7)
+      
       ### Add facets
       nat_j    <- nat_j + facet_wrap(facets=c("impactType"),scales = "free") 
       ### Add scales
       nat_j    <- nat_j + scale_x_continuous(lab_x0, breaks=brk_x0)
-      nat_j    <- nat_j + scale_y_continuous(.$impactType %>% unique)
+      nat_j    <- nat_j + scale_y_continuous(lab_y0)
       ### Add title
-      nat_j    <- nat_j + ggtitle(paste0(.$sector %>% unique," -- ",.$impactType %>% unique, " (Region Sums)"))
+      nat_j    <- nat_j + ggtitle(paste0(nat_j$data$sector %>% unique," -- ",nat_j$data$impactType %>% unique, " (Region Sums)"))
       ### Add regional plot
-      plots_j[["national"]] <- reg_j
+      plots_j[["national"]] <- nat_j
       rm("nat_j", "groups_j")
       
       ### Return plot
@@ -553,7 +564,7 @@ newSectors_config_test <- function(
       ### Add worksheet
       sheet_i <- "plots" %>% paste0("_", sector_i)
       wbook0 %>% addWorksheet(sheetName = sheet_i)
-      wbook0 %>% writeDataTable(sheet = sheet_i,diff)
+      #wbook0 %>% writeDataTable(sheet = sheet_i,diff)
       
       ### Plot vals
       width_i  <- 20
@@ -566,25 +577,25 @@ newSectors_config_test <- function(
       ### Add regional plots
       for(j in 1:nVar_i){
         variant_j <- variants_i[j]
-        plots_j   <- plots_i[[plot_j]]
+        plots_j   <- plots_i[[j]]
         # col_j     <- 11 * (j - 1) + 1
         col_j     <- 1
         row_j     <- 35 * (j - 1) + 2
         xy_j      <- c(col_j, row_j)
-        print(plots_j[["regional"]])
-        wbook0 %>% insertPlot(sheet = sheet_i, width = width_i, height = height_i, fileType = ftype_i, units = units_i)
+        print(plots_j$`NA`["regional"])
+        wbook0 %>% insertPlot(sheet = sheet_i, xy = xy_j, width = width_i, height = height_i, fileType = ftype_i, units = units_i)
       }
       
       ### Add national plots
       for(j in 1:nVar_i){
         variant_j <- variants_i[j]
-        plots_j   <- plots_i[[plot_j]]
+        plots_j   <- plots_i[[j]]
         # col_j     <- 11 * (j - 1) + 1
         col_j     <- 1
         row_j     <- 35 * (j - 1) + (4 + 35 * (nVar_i - 1))
         xy_j      <- c(col_j, row_j)
-        print(plots_j[["national"]])
-        wbook0 %>% insertPlot(sheet = sheet_i, width = width_i, height = height_i, fileType = ftype_i, units = units_i)
+        print(plots_j$`NA`["national"])
+        wbook0 %>% insertPlot(sheet = sheet_i,xy = xy_j, width = width_i, height = height_i, fileType = ftype_i, units = units_i)
       }
       
     }) ### End function, end walk
@@ -594,8 +605,7 @@ newSectors_config_test <- function(
   if(save){
     "Saving new sector results" %>% paste0("...") %>% message
     outDir    <- outPath %>% file.path("data_tests")
-    outFile   <- outDir %>% file.path(xlsxName)
-    rm("xlsxName")
+    outFile   <- outDir %>% file.path(xslxName)
     ### Check if outDir exists and, if not, create one
     odExists  <- outDir %>% dir.exists()
     if(!odExists){outDir %>% dir.create(showWarnings = F)}

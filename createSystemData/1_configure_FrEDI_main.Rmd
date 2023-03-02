@@ -201,7 +201,7 @@ test_reshapeData   <- list_reshapeData %>% dataInfo_test(
 Try the general tests for configured data:
 
 ```{r test_systemData0}
-test_systemData0 <- list_systemData0 %>% dataInfo_test(
+test_systemData0 <- list_systemData0[-length(list_systemData0)] %>% dataInfo_test(
   csvName = "configuredData_testResults",
   save    = save_test,
   return  = return_test
@@ -218,9 +218,10 @@ Wrap the general tests into a single wrapper function:
 
 ```{r test general_config_test}
 test_general_config <- general_config_test(
-  reshapedData   = test_reshapeData,
-  configuredData = list_systemData0,
-  overwrite      = TRUE
+  reshapedData   = list_reshapeData[-length(list_reshapeData)],
+  configuredData = list_systemData0[-length(list_systemData0)],
+  overwrite      = TRUE,
+  fredi_config = fredi_config
 )
 ```
 
@@ -231,8 +232,8 @@ Run `createSystemData()` tests:
 
 (remove objects )
 ```{r test configTest_newSectors}
-test_systemData0 <- list_systemData0 %>% 
-  configTest_newSectors(
+test_systemData0 <- newSectors_config_test(
+    newData = list_systemData0,
     # refDataFile = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
     refDataFile = sysFileRef,
     save      = T,
