@@ -53,7 +53,8 @@ Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
 # mostRecentDate <- "vibrio"
-mostRecentDate <- "20221130"
+# mostRecentDate <- "20230303"
+mostRecentDate <- "20230303_vibrio"
 ```
 
 
@@ -96,6 +97,7 @@ sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rda")
 ### Name of most recent sysdata.rda file in archive
 dataOutLogFiles  <- dataOutLog %>% list.files %>% sort(decreasing = T); dataOutLogFiles %>% head
 sysFileRef       <- dataOutLog %>% file.path(dataOutLogFiles[1]); sysFileRef
+# sysFileRef       <- dataOutLog %>% file.path("sysdata_20221021.rda"); sysFileRef
 ```
 
 <!-- ### Configuration Files -->
@@ -144,6 +146,18 @@ list_loadData <- loadData(
 )
 ```
 
+<!-- Check scaled impacts -->
+
+<!-- ```{r} -->
+<!-- test_impacts0  <- list_loadData$data_scaledImpacts -->
+<!-- names_impacts0 <- test_impacts0 %>% names -->
+<!-- check_impacts0 <- test_impacts0 %>% group_by_at(.vars=c(all_of(names_impacts0))) %>% summarize(n=n(), .groups="keep") %>% ungroup  -->
+<!-- test_impacts0 %>% glimpse -->
+<!-- check_impacts0 %>% glimpse -->
+<!-- check_impacts0 %>% filter(n>1) %>% glimpse -->
+<!-- ``` -->
+
+
 ### 2. Reshape Loaded Data
 
 Reshape loaded Excel data
@@ -155,7 +169,16 @@ codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 list_reshapeData <- list_loadData %>% reshapeData(silent=T)
 ```
 
+<!-- Check scaled impacts -->
 
+<!-- ```{r} -->
+<!-- test_impacts0  <- list_reshapeData$data_scaledImpacts -->
+<!-- names_impacts0 <- test_impacts0 %>% names -->
+<!-- check_impacts0 <- test_impacts0 %>% group_by_at(.vars=c(all_of(names_impacts0))) %>% summarize(n=n(), .groups="keep") %>% ungroup  -->
+<!-- test_impacts0 %>% glimpse -->
+<!-- check_impacts0 %>% glimpse -->
+<!-- check_impacts0 %>% filter(n>1) %>% glimpse -->
+<!-- ``` -->
 
 
 ### 3. Configure Data
@@ -182,7 +205,6 @@ Parameters for saving tests
 ```{r test parameters}
 save_test   <- TRUE
 return_test <- TRUE
-
 ```
 
 #### Reshaped Data Test
@@ -217,10 +239,7 @@ Try the general tests for configured data:
 
 ```{r test_systemData0}
 for(i in codeNames){ source(paste(codePath, i, sep="/")) }
-test_systemData0 <-
-  # list_systemData0 %>% names
-  # list_systemData0 %>% (function(x){((x %>% names) %in% c("fredi_config")) %>% which}) #%>% names
-  list_systemData0 %>% dataInfo_test(
+test_systemData0 <- list_systemData0 %>% dataInfo_test(
     csvName = "configuredData_testResults",
     save    = save_test,
     return  = return_test
@@ -252,9 +271,9 @@ Run `createSystemData()` tests:
 
 (remove objects )
 ```{r test configTest_newSectors}
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 test_systemData0 <- newSectors_config_test(
-  newData = list_systemData0,
-  # refDataFile = projectPath %>% file.path("createSystemData", "data", "sysdata.rda"),
+  newData     = list_systemData0,
   refDataFile = sysFileRef,
   save      = T,
   return    = T,
