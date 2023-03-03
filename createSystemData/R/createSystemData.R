@@ -205,7 +205,7 @@ createSystemData <- function(
   rDataList[["df_results0"]] <- df_results0
   ### Message the user
   if(msgUser) {paste0("\t", messages_data[["calcScalars"]]$success) %>% message()}
-
+  
   ###### Get Scenario Info for Scaled Impacts  ######
   ### Add a column with a scenario id
   ### Get list of scenarios for scenarios with at least some non-NA values
@@ -225,14 +225,13 @@ createSystemData <- function(
   df_hasScenario       <- data_scaledImpacts %>% filter(hasScenario)
   df_hasScenario       <- df_hasScenario     %>% ungroup %>% as.data.frame
   c_modelTypes         <- c("gcm")
-  list_impactFunctions <- list()
+  # list_impactFunctions <- list()
   ### Max output value, maximum extrapolation value, unit scale,   extend type
   df_gcm         <- (co_modelTypes %>% filter(modelType_id==c_modelTypes))
   maxOutput_gcm  <- df_gcm[["modelMaxOutput"]][1]
   maxExtrap_gcm  <- df_gcm[["modelMaxExtrap"]][1]
   unitScale_gcm  <- df_gcm[["modelUnitScale"]][1]
   ### Format data
-  
   ### Get functions
   functions_gcm  <- df_hasScenario %>% get_impactFunctions(
     groupCol    = "scenario_id",
@@ -245,11 +244,12 @@ createSystemData <- function(
   ) 
   # paste(modelType_i, length(functions_i)) %>% print
   ### Add values to list and remove intermediate values
-  list_impactFunctions <- list_impactFunctions %>% c(functions_gcm)
-  rDataList[["list_impactFunctions"]] <- list_impactFunctions
+  # list_impactFunctions <- list_impactFunctions %>% c(functions_gcm)
+  # rDataList[["list_impactFunctions"]] <- list_impactFunctions
+  rDataList[["list_impactFunctions"]] <- functions_gcm
   rm("c_modelTypes", "maxOutput_gcm", "maxExtrap_gcm", "unitScale_gcm")
-  rm("df_gcm", "df_hasScenario", "functions_gcm", "list_impactFunctions")
-  
+  rm("df_gcm", "df_hasScenario", "functions_gcm")
+  "got here4" %>% print
   ###### Aggregate R Data objects ######
   ### Message the user
   if(msgUser) {paste0("\t", messages_data[["interpFuns"]]$success) %>% message()}
