@@ -13,6 +13,7 @@
 #' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
 #' @param maxYear=2090 A numeric value indicating the maximum year for the analysis
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300
+#' @param outputList A ` TRUE/FALSE` indicating whether to results as a data frame object (`outputList=FALSE`, default) or to return a list that includes results as well as input arguments (`outputList=TRUE`).
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #' @details This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
@@ -95,9 +96,10 @@ run_fredi <- function(
     maxYear    = NULL,
     thru2300   = FALSE,
     pv         = FALSE, ### T/F value indicating Whether to calculate net present value
-    baseYear   = 2010, ### Default = 2010
-    rate       = 0.03, ### Ratio, defaults to 0.03
-    silent     = TRUE  ### Whether to message the user
+    baseYear   = 2010,  ### Default = 2010
+    rate       = 0.03,  ### Ratio, defaults to 0.03
+    outputList = FALSE, ### Whether to return input arguments as well as results. Returns a list instead of a data frame
+    silent     = TRUE   ### Whether to message the user
 ){
 
 
@@ -114,6 +116,11 @@ run_fredi <- function(
   maxYear   <- ifelse(is.null(maxYear), refYear, maxYear)
   maxYear0  <- ifelse(thru2300, npdYear, maxYear)
   do_npd    <- (maxYear0 > refYear)
+
+  ###### Return List ######
+  ### Initialize list to return
+  returnList <- list()
+  argsList   <- list()
 
   ###### Create file paths ######
   ### Assign data objects to objects in this namespace
@@ -150,12 +157,6 @@ run_fredi <- function(
   else{aggLevels <- aggList0}
   requiresAgg <- length(aggLevels) > 0
 
-  # ### Aggregate to impact years or national...reduces the columns in output
-  # impactYearsAgg <- ifelse("impactyear"   %in% aggLevels, T, F)
-  # nationalAgg    <- ifelse("national"     %in% aggLevels, T, F)
-  # impactTypesAgg <- ifelse("impacttype"   %in% aggLevels, T, F)
-  # modelAveAgg    <- ifelse("modelaverage" %in% aggLevels, T, F)
-
   ###### Sectors List ######
   ### Sector names
   sector_names  <- co_sectors$sector_id
@@ -163,7 +164,8 @@ run_fredi <- function(
   ### Initialize sector list if the sectors list is null
   if(is.null(sectorList)){
     sectorList       <- sector_names
-  } else{
+  } ### End if(is.null(sectorList))
+  else{
     ### Compare inputs to names and labels in the data
     ### Subset to sector list in sector names
     which_sectors    <- which(
@@ -185,9 +187,9 @@ run_fredi <- function(
         "\n\t\t", paste(missing_sectors, collapse= "', '"), "'...",
         "\n\t", "Available sectors: '",
         "\n\t\t", paste(sector_names, collapse= "', '"), "'"
-      )
-    }
-  }
+      ) ### End message
+    } ### End if(length(missing_sectors)>=1)
+  } ### End else(is.null(sectorList))
   ### Number of sectors
   num_sectors  <- sectorList %>% length
 
@@ -229,6 +231,19 @@ run_fredi <- function(
   } ### End iterate over inputs
   # }
 
+  ### Update arguments list
+  argsList[["sectorList"]] <- sectorList
+  argsList[["aggLevels" ]] <- aggLevels
+  argsList[["elasticity"]] <- elasticity
+  argsList[["maxYear"   ]] <- maxYear
+  argsList[["thru2300"  ]] <- thru2300
+  argsList[["pv"        ]] <- pv
+  argsList[["baseYear"  ]] <- baseYear
+  argsList[["rate"      ]] <- rate
+  ### Add to return list and remove intermediate arguments
+  returnList[["arguments" ]] <- argsList
+  rm("argsList")
+
   ###### Temperature Scenario ######
   ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
   ### Name the reference year temperature
@@ -241,18 +256,14 @@ run_fredi <- function(
     message("Creating temperature scenario from user inputs...")
     ### Select appropriate columns
     ### Remove missing values of years, temperatures
-    ### Filter to appropriate years
-    tempInput <- tempInput %>%
-      select(c("year", "temp_C")) %>%
-      filter(!is.na(temp_C) & !(is.na(year))) %>%
-      filter( year >  refYear_temp & year <= maxYear)
     ### Zero out series at the temperature reference year
+    tempInput <- tempInput %>% select(c("year", "temp_C"))
+    tempInput <- tempInput %>% filter(!is.na(temp_C) & !(is.na(year)))
+    tempInput <- tempInput %>% filter(year > refYear_temp)
     tempInput <- data.frame(year= refYear_temp, temp_C = 0) %>% rbind(tempInput)
 
-    ### Add a dummy value for National Total
-    ### Interpolate annual values
-    temp_df  <- tempInput %>% mutate(region="National Total")
-    temp_df  <- temp_df   %>% (function(x){
+    ### Interpolate annual values and then drop region
+    temp_df   <- tempInput %>% (function(x){
       minYear_x <- x$year %>% min
       interpYrs <- refYear_temp:maxYear
       ### Interpolate
@@ -263,27 +274,15 @@ run_fredi <- function(
       ) %>% select(-c("region"))
       return(x_interp)
     })
-    temp_df  <- temp_df  %>% rename(temp_C_conus = temp_C)
-    temp_df  <- temp_df  %>% mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
-    rm("tempInput")
+    temp_df  <- temp_df %>% rename(temp_C_conus  = temp_C)
+    temp_df  <- temp_df %>% mutate(temp_C_global = temp_C_conus %>% convertTemps(from="conus"))
+    # rm("tempInput")
   } ### End if(has_tempUpdate)
+  ### Load default temperature scenario
   else{
-    ### No need to interpolate these values since they're already interpolated
-    message("Creating temperature scenario from defaults...")
-    # tempInput <- co_defaultScenario %>% filter(region==co_regions$region_dot[1])
-    # co_defaultTemps %>% nrow %>% print
-    ### Filter to appropriate years
-    ### Convert to CONUS
-    ### Filter to appropriate years
-    temp_df <- co_defaultTemps %>%
-      filter( year >  refYear_temp & year <= maxYear) %>%
-      mutate(temp_C_conus = temp_C_global %>% convertTemps(from="global")) %>%
-      select(c("year", "temp_C_conus")) %>%
-      filter( year >  refYear_temp & year <= maxYear)
-    ### Zero out series at the temperature reference year
-    ### Recalculate global temps
-    temp_df <- data.frame(year= refYear_temp, temp_C_conus = 0) %>% rbind(temp_df)
-    temp_df <- temp_df %>% mutate(temp_C_global=temp_C_conus %>% convertTemps(from="conus"))
+    message("No temperature scenario provided...using default temperature scenario...")
+    tempInput <- co_defaultTemps
+    temp_df   <- tempInput
   } ### End else(has_tempUpdate)
   # temp_df %>% nrow %>% print
 
@@ -295,17 +294,15 @@ run_fredi <- function(
   ### Follow similar procedure to temperatures
   ### Select appropriate columns
   ### Select out NA values and filter to appropriate years
+  ### Zero out series at the temperature reference year
   if(has_slrUpdate){
     message("Creating SLR scenario from user inputs...")
-    slrInput  <- slrInput %>%
-      select(c("year", "slr_cm")) %>%
-      filter(!is.na(slr_cm) & !is.na(year)) %>%
-      filter( year >  refYear_slr, year <= maxYear)
-    ### Zero out series at the temperature reference year
+    slrInput  <- slrInput %>% select(c("year", "slr_cm"))
+    slrInput  <- slrInput %>% filter(!is.na(slr_cm) & !is.na(year))
+    slrInput  <- slrInput %>% filter(year >  refYear_slr)
     slrInput  <- data.frame(year= refYear_slr, slr_cm = 0) %>% rbind(slrInput)
-    ### Add dummy region and interpolate values
-    slr_df <- slrInput %>% mutate(region="National Total")
-    slr_df <- slr_df   %>% (function(x){
+    ### Interpolate values
+    slr_df    <- slrInput %>% (function(x){
       minYear_x <- x$year %>% min
       interpYrs <- refYear_slr:maxYear
       ### Interpolate annual values
@@ -316,12 +313,12 @@ run_fredi <- function(
       ) %>% select(-c("region"))
       return(x_interp)
     })
-    rm("slrInput")
+    # rm("slrInput")
   }  ### else(has_slrUpdate)
+  ### If there is no SLR scenario, calculate from temperatures
+  ### First convert temperatures to global temperatures
+  ### Then convert global temps to SLR
   else{
-    ### If there is no SLR scenario, calculate from temperatures
-    ### First convert temperatures to global temperatures
-    ### Then convert global temps to SLR
     message("Creating SLR scenario from temperature scenario...")
     slr_df <- temp_df %>% (function(x){temps2slr(temps = x$temp_C_global, years = x$year)})
   } ### End else(has_slrUpdate)
@@ -335,6 +332,7 @@ run_fredi <- function(
     rename(modelUnitValue = temp_C_conus) %>% mutate(modelType="gcm")
   slr_df  <- slr_df  %>% select(c("year", "slr_cm")) %>%
     rename(modelUnitValue=slr_cm) %>% mutate(modelType="slr")
+
   ###### Combine Scenarios and bind with the model type info
   ### R Bind the SLR values
   ### Join with info about models
@@ -342,10 +340,14 @@ run_fredi <- function(
   co_modelTypes <- co_modelTypes %>% rename(modelType = modelType_id)
   co_modelType0 <- co_modelTypes %>% select(c("modelType"))
   df_drivers    <- temp_df    %>% rbind(slr_df)
-  df_drivers    <- df_drivers %>% filter( year >= minYear) %>% filter( year <= maxYear)
+  df_drivers    <- df_drivers %>% filter( year >= minYear) %>% filter(year <= maxYear)
   # df_drivers %>% names %>% print; co_modelType0 %>% names %>% print
   df_drivers    <- df_drivers %>% left_join(co_modelType0, by = "modelType")
-  rm("co_modelType0")
+  ### Update inputs in outputs list
+  returnList[["driverScenarios"]][["temp"]] <- temp_df
+  returnList[["driverScenarios"]][["slr" ]] <- slr_df
+  ### Remove intermediate values
+  rm("co_modelType0", "temp_df", "slr_df")
 
   ###### Socioeconomic Scenario ######
   ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
@@ -355,12 +357,12 @@ run_fredi <- function(
   if(has_gdpUpdate){
     message("Creating GDP scenario from user inputs...")
     gdp_df <- gdpInput %>% filter(!is.na(gdp_usd)) %>% filter(!is.na(year))
-    gdp_df <- gdp_df   %>% interpolate_annual(years= c(list_years), column = "gdp_usd", rule = 2)
+    gdp_df <- gdp_df   %>% interpolate_annual(years= c(list_years), column = "gdp_usd", rule = 2) %>% select(-c("region"))
     rm("gdpInput")
   } ### End if(has_gdpUpdate)
   else{
-    message("Creating GDP scenario from defaults...")
-    gdp_df <- gdp_default %>% select(c(all_of(gdpCols0), "region"))
+    message("No GDP scenario provided...Using default GDP scenario...")
+    gdp_df <- gdp_default %>% select(c(all_of(gdpCols0)))
     rm("gdp_default")
   } ### End else(has_gdpUpdate)
 
@@ -369,12 +371,11 @@ run_fredi <- function(
     message("Creating Population scenario from user inputs...")
     ### Standardize region and then interpolate
     pop_df         <- popInput %>% mutate(region = gsub(" ", ".", region))
-    # pop_df %>% nrow %>% print
     pop_df         <- pop_df   %>% interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2) %>% ungroup
     # pop_df %>% glimpse
     ### Calculate national population
     national_pop   <- pop_df       %>% group_by_at(.vars=c("year")) %>% summarize_at(.vars=c("reg_pop"), sum, na.rm=T) %>% ungroup
-    national_pop   <- national_pop %>% rename(national_pop = reg_pop) %>% mutate(region="National.Total")
+    national_pop   <- national_pop %>% rename(national_pop = reg_pop)
     # national_pop %>% glimpse
     rm("popInput")
   } ### if(has_popUpdate)
@@ -382,7 +383,7 @@ run_fredi <- function(
     message("Creating Population scenario from defaults...")
     ### Select columns and filter
     pop_df        <- pop_default          %>% select(c(all_of(popCols0)))
-    national_pop  <- national_pop_default %>% mutate(region="National.Total") %>% select("year", "national_pop", "region")
+    national_pop  <- national_pop_default %>% select("year", "national_pop")
     rm("pop_default", "national_pop_default")
   } ### End else(has_popUpdate)
   ### Message user
@@ -393,13 +394,16 @@ run_fredi <- function(
   national_pop      <- national_pop      %>% filter(year >= minYear) %>% filter(year <= maxYear)
   ### National scenario
   # gdp_df %>% glimpse; national_pop %>% glimpse;
-  national_scenario <- gdp_df            %>% left_join(national_pop, by=c("year", "region"))
+  national_scenario <- gdp_df            %>% left_join(national_pop, by=c("year"))
   national_scenario <- national_scenario %>% mutate(gdp_percap = gdp_usd/national_pop)
-  national_scenario <- national_scenario %>% select(-c("region"))
+  ### Update inputs in outputs list
+  returnList[["driverScenarios"]][["gdp"]] <- gdp_df
+  returnList[["driverScenarios"]][["pop"]] <- pop_df
   # gdp_df %>% nrow %>% print; national_pop %>% nrow %>% print; national_scenario %>% nrow %>% print
   rm("gdp_df", "national_pop")
+
   ### Updated scenario
-  updatedScenario   <- national_scenario %>% left_join(pop_df, by = "year")
+  updatedScenario   <- national_scenario %>% left_join(pop_df, by=c("year"))
   updatedScenario   <- updatedScenario   %>% arrange_at(.vars=c("region", "year"))
   # updatedScenario %>% group_by_at(.vars=c("region", "year")) %>% summarize(n=n(), .groups="keep") %>% ungroup %>% filter(n>1) %>% nrow %>% print
 
@@ -483,31 +487,6 @@ run_fredi <- function(
     npdScalars <- npdScalars %>% select(-c("npd_scalarValue", "npd_scalarType"))
     npdScalars <- npdScalars %>% filter(year > refYear)
   }
-
-  # ### Update values for specific cases in initial results:
-  # ## Rail,
-  # df_results0 <- df_results0 %>% (function(df0, do_npd0 = do_npd){
-  #   ### Columns
-  #   chrCols0 <- ifelse(do_npd0, "damageAdjName", "econMultiplierName")
-  #   # chrVals0 <- ifelse(do_npd, "none", "gdp_usd")
-  #   chrVals0 <- "none"
-  #   doAdj0   <- "damageAdjName" %in% chrCols0
-  #   ### Separate data
-  #   df1      <- df0 %>% filter(sector == "Rail")
-  #   df0      <- df0 %>% filter(sector != "Rail")
-  #   ### Iterate over character columns
-  #   for(j in 1:length(chrCols0)){
-  #     col_j <- chrCols0[j]; val_j <- chrVals0[j]
-  #     df1 <- df1 %>% mutate_at(.vars=c(all_of(col_j)), function(k){val_j})
-  #   }; rm("col_j", "val_j")
-  #   ### Numeric adjustment
-  #   if(doAdj0){
-  #     df1 <- df1 %>% mutate(damageAdjName = 1)
-  #   }
-  #   ### Bind and return
-  #   df0 <- df0 %>% rbind(df1)
-  #   return(df0)
-  # })
 
 
   ###### Initialize Results ######
@@ -785,6 +764,9 @@ run_fredi <- function(
   # (df_results %>% filter(modelUnit_label=="cm"))$year %>% range %>% print
   # df_results %>% filter(modelUnit_label=="cm") %>% filter(!is.na(scaled_impacts)) %>% nrow %>% print
 
+  ### Update inputs in outputs list
+  returnList[["results"]] <- df_results
+
   ###### Format Outputs ######
   ### Refactor sectors, variants, impactTypes
   co_variants    <- co_variants    %>% mutate(sector_variant    = paste(sector_id, variant_id, sep="_"))
@@ -872,14 +854,16 @@ run_fredi <- function(
   ###### Order the Output ######
   ### Convert levels to character
   ### Order the rows, then order the columns
-  resultNames   <- df_results %>% names
-  groupByCols   <- c("sector",  "variant", "impactYear", "impactType", "region", "model_type", "model", "year")
-  driverCols    <- c("driverValue", "driverUnit", "driverType")
-  nonGroupCols  <- resultNames[which(!(resultNames %in% c(groupByCols, driverCols)))]
-  orderColIndex <- which(names(data) %in% groupByCols)
-  selectCols    <- c(groupByCols, driverCols, nonGroupCols) %>% (function(x){x[x!="annual_impacts"] %>% c("annual_impacts")})
-
-  df_results    <- df_results %>% select(c(all_of(selectCols))) %>% arrange_at(.vars=c(all_of(groupByCols)))
+  if(!testing){
+    resultNames   <- df_results %>% names
+    groupByCols   <- c("sector",  "variant", "impactYear", "impactType", "region", "model_type", "model", "year")
+    driverCols    <- c("driverValue", "driverUnit", "driverType")
+    nonGroupCols  <- resultNames[which(!(resultNames %in% c(groupByCols, driverCols)))]
+    orderColIndex <- which(names(data) %in% groupByCols)
+    selectCols    <- c(groupByCols, driverCols, nonGroupCols) %>% (function(x){x[x!="annual_impacts"] %>% c("annual_impacts")})
+    ### Select columns
+    df_results    <- df_results %>% select(c(all_of(selectCols))) %>% arrange_at(.vars=c(all_of(groupByCols)))
+  }
 
   # c_aggColumns <- c("sectorprimary", "includeaggregate") %>% (function(y){y[which(y %in% names(df_results))]})
   # if(length(c_aggColumns)>0){df_results <- df_results %>% mutate_at(.vars=c(all_of(c_aggColumns)), as.numeric)}
@@ -894,12 +878,17 @@ run_fredi <- function(
     df_results <- df_results %>% mutate(discounted_impacts = annual_impacts * discountFactor)
   }
 
-  ###### Format Data Frame ######
+  ###### Format as Data Frame ######
+  ### Format as data frame
+  ### Update results in list
   df_results   <- df_results %>% ungroup %>% as.data.frame
-  # df_results %>% filter(driverUnit=="cm") %>% filter(!is.na(annual_impacts)) %>% nrow %>% print
+  returnList[["results"]] <- df_results
+  ### Which object to return
+  if(outputList) {returnObj <- returnList}
+  else           {returnObj <- df_results}
   ###### Return Object ######
   message("\n", "Finished", ".")
-  return(df_results)
+  return(returnObj)
 
 } ### End function
 
