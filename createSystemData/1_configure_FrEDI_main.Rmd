@@ -136,7 +136,8 @@ Load data from Excel configuration file:
 
 ```{r list_loadData}
 ### Load all functions
-codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+# codeNames; 
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 ### list_loadData
 list_loadData <- loadData( 
   fileDir   = "." %>% file.path("..", "createSystemData","inst", "extdata"), ### Path to project
@@ -164,7 +165,8 @@ Reshape loaded Excel data
 
 ```{r list_reshapeData}
 ### Load all functions
-codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
+# codeNames; 
+for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 ### list_reshapeData
 list_reshapeData <- list_loadData %>% reshapeData(silent=T)
 ```
@@ -272,13 +274,21 @@ Run `createSystemData()` tests:
 (remove objects )
 ```{r test configTest_newSectors}
 for(i in codeNames){ source(paste(codePath, i, sep="/")) }
-test_systemData0 <- newSectors_config_test(
+test_newSectors_config <- newSectors_config_test(
   newData     = list_systemData0,
   refDataFile = sysFileRef,
   save      = T,
   return    = T,
   overwrite = T
 )
+```
+
+
+```{r}
+test_newSectors_config$co_defaultTemps %>% identical(list_systemData0$co_defaultTemps)
+dim(test_newSectors_config$co_defaultTemps) %>% c(dim(list_systemData0$co_defaultTemps))
+test_newSectors_config$gdp_default %>% identical(list_systemData0$gdp_default)
+dim(test_newSectors_config$gdp_default) %>% c(dim(list_systemData0$gdp_default))
 ```
 
 
