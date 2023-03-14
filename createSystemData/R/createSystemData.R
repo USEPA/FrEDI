@@ -40,11 +40,17 @@ createSystemData <- function(
   for(name_i in names(fredi_config)) {assign(name_i, fredi_config[[name_i]]); rm("name_i")}
 
   ###### Import Functions to Namespace ######
-  interpolate_annual  <- utils::getFromNamespace("interpolate_annual" , "FrEDI")
-  match_scalarValues  <- utils::getFromNamespace("match_scalarValues" , "FrEDI")
-  get_impactFunctions <- utils::getFromNamespace("get_impactFunctions", "FrEDI")
-  convertTemps        <- utils::getFromNamespace("convertTemps"       , "FrEDI")
-  temps2slr           <- utils::getFromNamespace("temps2slr"          , "FrEDI")
+  fun_slrConfigExtremes <- utils::getFromNamespace("fun_slrConfigExtremes", "FrEDI")
+  fun_formatScalars     <- utils::getFromNamespace("fun_formatScalars"    , "FrEDI")
+  get_uniqueValues      <- utils::getFromNamespace("get_uniqueValues"     , "FrEDI")
+  get_scenario_id       <- utils::getFromNamespace("get_scenario_id"      , "FrEDI")
+  extend_slr            <- utils::getFromNamespace("extend_slr"           , "FrEDI")
+  
+  get_impactFunctions   <- utils::getFromNamespace("get_impactFunctions"  , "FrEDI")
+  interpolate_annual    <- utils::getFromNamespace("interpolate_annual"   , "FrEDI")
+  match_scalarValues    <- utils::getFromNamespace("match_scalarValues"   , "FrEDI")
+  convertTemps          <- utils::getFromNamespace("convertTemps"         , "FrEDI")
+  temps2slr             <- utils::getFromNamespace("temps2slr"            , "FrEDI")
   
   ###### Assign Data Objects ###### 
   ###### This section reads in data from the data file and returns a list of tables
@@ -249,7 +255,7 @@ createSystemData <- function(
   rDataList[["list_impactFunctions"]] <- functions_gcm
   rm("c_modelTypes", "maxOutput_gcm", "maxExtrap_gcm", "unitScale_gcm")
   rm("df_gcm", "df_hasScenario", "functions_gcm")
-  "got here4" %>% print
+  
   ###### Aggregate R Data objects ######
   ### Message the user
   if(msgUser) {paste0("\t", messages_data[["interpFuns"]]$success) %>% message()}
