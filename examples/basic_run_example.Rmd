@@ -104,7 +104,7 @@ FaIR is not an EPA product and is not endorsed by the Agency, please see the FaI
 
 To install FaIR, follow the install options at: https://github.com/OMS-NetZero/FAIR/blob/master/README.rst
 For example, if using Anaconda, open cmd.exe and run 'pip install fair'. Then specify the correct path to your python instance (where fair is also installed) in the 'setup' chunk above
-```{python, calc_fair, eval = TRUE}
+```{python, calc_fair, eval = FALSE}
 
 #NOTE: 
 # FaIR is not an EPA product and is not endorsed by the EPA. FaIR is one of
@@ -172,7 +172,7 @@ Use this chunk to specify the runtime parameters for FrEDI (including the specif
 # Choose to use fair or pre-processed files
 # un-comment the desired scenario
 
-use_calcd_fair = T
+use_calcd_fair = F
 
 if (use_calcd_fair ==T){
 
@@ -487,7 +487,8 @@ p_national_damages <- df_filter %>%
                                    angle = 0, 
                                    size=12),
         legend.position = 'right')+
-  labs(subtitle="Absolute Annual U.S. Climate-Driven Damages",
+  labs(subtitle=paste0("Absolute Annual U.S. Climate-Driven Damages\n
+       Scenario: ",temp_file),
        fill = "Sector Categories \n(number of sectors in
                category)")+
   #add value to plot
@@ -554,9 +555,7 @@ table1 <- output_df %>%
 # print National Total Damages by Sector (in billions of $ in $2015USD)
 #print(table1)
 colnames(table1) <- c('Sector','Category','$Billon ($2015USD)','Region','Year')
-kable(table1, caption = 'National Total Damages by Sector')
-#formattable(table1, align = c("l","l","l","l"),
-#                        format = 'f')
+kable(table1, caption = paste0('National Total Damages by Sector, Scenario: ',temp_file))
 
 
 
