@@ -36,6 +36,8 @@ For more information about FrEDI, visit: https://www.epa.gov/cira/fredi
 Code available at: 
 https://github.com/USEPA/FrEDI
 
+#### **Disclaimer: This code is meant to provide an illustrative example of how to set-up, run, and process a subset of FrEDI output. The results and code in this file should not be used for further analysis.**
+
 ***
 
 #### About R Markdown
@@ -115,6 +117,9 @@ For example, if using Anaconda, open cmd.exe and run 'pip install fair'. Then sp
 # To install FaIR, follow the install options at:
 #   https://github.com/OMS-NetZero/FAIR/blob/master/README.rst
 #   (for example, open cmd.exe and run 'pip install fair' )
+
+## FaIR is currently run with default parameters. Please see the FaIR GitHub 
+## repository for additional information on FaIR parameters. 
 
 
 import pandas as pd
