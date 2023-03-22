@@ -48,7 +48,7 @@ The [Framework for Evaluating Damages and Impacts (`FrEDI`)](https://www.epa.gov
 
 3. [Runs](#runFrEDI) `FrEDI` with inputs specified in Step 2
 
-4. [Displays example plots](#plotFrEDI) of temperature trajectory and barchart of total annual U.S. climate-driven damages across impact categories. 
+4. [Shows](#analyzeFrEDI) example types of analyses using `FrEDI` output data. 
 
 For more information about `FrEDI`, visit: https://www.epa.gov/cira/fredi
 
@@ -100,36 +100,6 @@ To run an individual chunk, hit the green 'play' button at the top right of each
     color: #fff;
 }
 
-##f2938c", "#d54309", "#ffbc78", "#86b98e","#4d8055",
-#             "#97d4ea","#1a4480
-# pre code, pre, code {
-#   white-space: pre !important;
-#   
-#   max-height: 300px;
-#   overflow-y: auto;
-#   
-#   max-width: 100%;
-#   overflow-x: auto;
-# }
-# 
-# pre[class] {
-#   max-height: 300px;
-# }
-# 
-# ### /* Simplified version of Bootstrap's responsive table CSS */
-# # .table-responsive {
-# table {
-#   display: block;
-# 
-#   max-height: 500px;
-#   # overflow-y: scroll !important;
-#   overflow-y: auto;
-# 
-#   width: 100%;
-#   overflow-x: scroll !important;
-#   word-break: keep-all !important;
-#   word-wrap: initial !important;
-# }
 ```
 
 ***
@@ -139,7 +109,7 @@ To run an individual chunk, hit the green 'play' button at the top right of each
 
 ## Step 0. Install required R packages {#installpkgs}
 
-Use this chunk to specify the required R libraries and set working directory (if needed)
+Use this chunk to specify the required R libraries and set working directory
 ```{r install_packages, results='hide', warning=FALSE, message=FALSE, echo=TRUE}
 
 library("devtools")
@@ -188,32 +158,14 @@ Use this chunk to specify the input trajectories (temperature, population, GDP) 
 
 # Set FrEDI inputs and parameters
 
-# 1. Select input trajectories
-# 1a. Select from one of the pre-processed global temperature trajectories
-
-# NOTE: these were processed using the FaIR model v1.6.4 (https://github.com/OMS-NetZero/FAIR)
-
-# Pre-processed SSPs (select one by un-commenting)
-  #temp_file = 'SSP119_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP126_globaltemp_4FrEDI.csv'
-  temp_file = 'SSP245_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP370_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP370_lowNTCF_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP434_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP460_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP534_globaltemp_4FrEDI.csv'
-  #temp_file = 'SSP585_globaltemp_4FrEDI.csv'
-  #specify path
-  temp_file_loc = paste0(getwd(),"/SSPs_for_FrEDI/",temp_file)
-
 # To run more than one scenario, the code below must be
 # adapted into a loop to format the inputs for each scenario. 
 
 #***********************************************
-#1b. Specify & Format Other Input Files
+#1. Specify & Format Input Trajectories (temperature, population, U.S. GDP)
 
 ## Input Files
-tempInputFile <- temp_file_loc
+tempInputFile <- paste0(getwd(),"/example_temperature_for_FrEDI/example_globaltemp_4FrEDI.csv")
   # Description: csv file with time series of temperature relative to 1986-2005 average 
   # (units: degC, values: >=0)
   # data must start in 2000 or earlier and can be global or CONUS
@@ -290,7 +242,7 @@ SectorListFlag <- NULL
   # Default: report output for all sectors
   # See FrEDI:get_sectorInfo() for list of all sectors
 
-aggLevelFlag <- NULL
+aggLevelFlag <- c('national','modelaverage','impactyear')
   # Purpose: 
   #   Specify the desired level of results aggregation. For example,
   #   to report national total results across all underlying climate-model 
@@ -352,205 +304,107 @@ output_df <- run_fredi(inputsList= inputs_list,
 # write.csv(output_df, './output/example_output.csv')
 ```
 
-## Step 4. Plot {#plotFrEDI}
+## Step 4. Analyze `FrEDI` {#analyzeFrEDI}
 
-The following chunks provide examples of figures generated from `FrEDI` data
+The following chunks provide examples of types of ways to analyze the raw output from `FrEDI` 
 
-### Define plotting parameters
-Use this chunk to define sector categories and global plotting parameters
-```{r plot_params, echo=TRUE}
-#Define plotting parameters
+### Example 1
+Extract national average of economic damages (in billions of dollars in 2015$) for all `FrEDI` sectors for a specified year
 
-# Define aggregate categories
-# Sample sector aggregations similar to Hartin et al., 2023
-# NOTE: the health category can include 1 of the following:
-#  'Extreme Temperature'
-#  'ATS Extreme Temperature'
-#  'CIL Extreme Temperature'
-health_cat <- c("ATS Extreme Temperature","Air Quality",
-                "Valley Fever","Wildfire","Southwest Dust",
-                "CIL Crime")
-labor_cat  <- c("Labor")
-agr_cat    <- c("CIL Agriculture")
-elect_cat  <- c("Electricity Demand and Supply", 
-                "Electricity Transmission and Distribution")
-infra_cat  <- c("Rail","Roads","Urban Drainage",
-                "Coastal Properties",
-                "High Tide Flooding and Traffic", "Inland Flooding",
-                "Wind Damage")
-eco_cat    <- c("Marine Fisheries", "Winter Recreation", 
-                "Water Quality")
-
-
-#Example color palette
-colors_6 = c("#f2938c", "#d54309", "#ffbc78", "#4d8055", "#97d4ea", "#1a4480")
-```
-
-
-### Plot Temperature Trajectory
-Plot a time series of the input U.S. temperature trajectory in units of degrees C, relative to 1986-2005 average baseline
-```{r plot_temperature, echo = TRUE, fig.width = 5, fig.height = 4}
-
-# take formatted temperature vector from the output of the import_inputs() helper function
-temp_C <- inputs_list$tempInput
-
-# plot line graph
-p_temp <- temp_C %>%
-  ggplot(aes(x=year,
-             y=temp_C)) + 
-  geom_line(linewidth=1.5, 
-            na.rm = TRUE) +
-  xlim(2020,2100)+
-  ylab('Annual U.S. Temperature Change \n(degrees C)') +
-  theme(legend.position = 'none')+
-  theme_minimal()+
-  labs(title="Annual US Temeprature Change Relative to Baseline",
-       subtitle= paste0("Scenario: ",temp_file), 
-       caption='baseline = 1986-2005 average')
-
-
-p_temp
-```
-
-### Plot National Results by Category
-Plot a bar chart of annual national total damages for select years, colored by aggregate sector categories 
-
-```{r plot_fredi_results, echo = TRUE, fig.height = 6, fig.width = 7, results = 'hold'}
-
-#specify years to plot
-c_years = c(2050, 2070, 2090)
+Output of this chunk includes a snapshot of a subset of the resulting dataframe
+```{r, example1, echo=TRUE, warning=FALSE, message=FALSE}
+#specify year
+c_years = c(2090)
 
 #filter and aggregate data, assign to aggregate categories
 df_filter <- output_df %>%
   # filter for primary sectors and variants (included to avoid double counting)
     filter(sectorprimary ==1) %>%
-  # filter for national aggregate results
+  #use helper function to aggregate across impact types
+    aggregate_impacts(aggLevels = 'impactType') %>%
+  # filter for national aggregate results averaged across all GCMs
     filter(model %in% c('Average','Interpolation'),
            region == "National Total",
            year %in% c_years) %>%
-  #convert dollars to trillions of dollars
-    mutate(annual_impacts = annual_impacts /1e12) %>% 
-    mutate(year = as.factor(year)) %>%
-  #assign sectors to categories
-    mutate(category = case_when(
-    sector %in% labor_cat ~ "Labor (1)",
-    sector %in% agr_cat ~ "Agriculture (1)",
-    sector %in% elect_cat ~ "Electricity (2)",
-    sector %in% health_cat ~ "Health (6)",
-    sector %in% infra_cat ~ "Infrastructure (7)",
-    sector %in% eco_cat ~ "Ecosystems+ Recreation (3)",
-    TRUE ~ NA_character_)) %>% 
-    filter(category != "NA")
+  # convert to billions of dollars
+    mutate(annual_impacts = annual_impacts /1e9) %>% 
+    mutate(across(annual_impacts, round, 0)) %>%
+    select('sector','region','year','annual_impacts')
 
+# NOTE: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.
 
-#reorder from largest to smallest category
-cat_i <- df_filter %>% 
-  group_by_at(.vars=c("category")) %>% 
-  summarize_at(.vars=c("annual_impacts"),sum,na.rm=T) %>%
-  ungroup %>% 
-  arrange_at(.vars=c("annual_impacts", "category"))
+kable(df_filter[2:6,], caption = 'Subset of results') %>%
+  kable_styling(font_size = 12, full_width = F)
 
-df_filter <- df_filter %>% 
-  mutate(category = category %>% 
-           factor(levels = (cat_i$category))) %>% 
-  arrange_at(.vars=c("category"))
-
-
-# plot bar chart
-p_national_damages <- df_filter %>%
-  ggplot() +
-  geom_bar(aes(fill=category,
-               y=annual_impacts,
-               x=year),
-           position="stack", 
-           stat="identity", 
-           alpha = 0.7) +
-  scale_y_continuous("Annual Damages (Trillions)")+
-  scale_fill_manual(values=(colors_6))+     
-  theme_minimal() +
-  theme(axis.text = element_text(size=11),
-        axis.title = element_text(size =14),
-        axis.title.y = element_text(margin = 
-                            margin(t = 0,r = 10,b = 0,l = 0)),
-        axis.title.x = element_text(margin = 
-                            margin(t = 5,r = 0,b = 0,l = 0)),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=10, 
-                                  face="bold"),
-        plot.title = element_text(size = 16, 
-                                  face = "bold"),
-        plot.title.position = "plot",
-        axis.text.x = element_text(vjust = 1,
-                                   hjust=1,
-                                   angle = 0, 
-                                   size=12),
-        legend.position = 'right')+
-  labs(subtitle=paste0("Absolute Annual U.S. Climate-Driven Damages\n
-       Scenario: ",temp_file),
-       fill = "Sector Categories \n(number of sectors in
-               category)")+
-  #add value to plot
-  geom_text(data=df_filter %>%
-            group_by_at(.vars=c("year")) %>% 
-            summarize_at(.vars = c("annual_impacts"),sum,na.rm=T), 
-            aes(x=year, 
-                y=annual_impacts, 
-                label=paste0('$', round(annual_impacts, 2),'T'), 
-                vjust=-0.25),
-            color    = 'grey20',
-            size     = 4)
-
-#plot figure
-p_national_damages
 
 ```
 
 
-### Table of National Sectoral Results (billions $2015USD)
-Print table of total annual national damages, by sector, for a specific year
-```{r, print_tables, echo = TRUE, results = 'asis'}
 
+### Example 2
+Extract national average of physical damages for all relevant `FrEDI` sectors for a specified year
 
-#choose year to plot
-c_year = 2090
+Output of this chunk includes a snapshot of a subset of the resulting dataframe
+```{r, example2, echo=TRUE, warning=FALSE, message=FALSE}
 
-#Table 1
+#specify year
+c_years = c(2090)
+
+#filter and aggregate data, assign to aggregate categories
 df_filter <- output_df %>%
   # filter for primary sectors and variants (included to avoid double counting)
     filter(sectorprimary ==1) %>%
-  # filter for national aggregate results
+  # filter for national aggregate results averaged across all GCMs and only include sectors that include physical impacts
     filter(model %in% c('Average','Interpolation'),
            region == "National Total",
-           year == c_year) %>%
-  #convert $ to billions $
-    mutate(annual_impacts = annual_impacts /1e9) %>%
-  #assign sectors to category
-    mutate(category = case_when(
-    sector %in% labor_cat ~ "Labor (1)",
-    sector %in% agr_cat ~ "Agriculture (1)",
-    sector %in% elect_cat ~ "Electricity (2)",
-    sector %in% health_cat ~ "Health (6)",
-    sector %in% infra_cat ~ "Infrastructure (7)",
-    sector %in% eco_cat ~ "Ecosystems+ Recreation (3)",
-    TRUE ~ NA_character_)) %>% 
-    filter(category != "NA") %>%
-  #select relevant columns and re-order
-    select('sector','category','annual_impacts','region','year') %>%
-    arrange(desc(annual_impacts)) %>%
-    mutate(across(c('annual_impacts'), ~ signif(.,2)))
+           year %in% c_years,
+           !(is.na(physicalmeasure))) %>%
+   mutate(across(c('physical_impacts'), round, 0)) %>%
+    select('sector','region','year','physicalmeasure', 'impactType','physical_impacts')
 
+# NOTE: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.
 
-# print National Total Damages by Sector (in billions of $ in $2015USD)
-#print(table1)
-colnames(df_filter) <- c('Sector','Category','Billons (2015 $ USD)','Region','Year')
-kable(df_filter, caption = paste0('National Total Damages by Sector, Scenario: ',temp_file)) %>%
+kable(df_filter[2:6,], caption = 'Subset of results') %>%
   kable_styling(font_size = 12, full_width = F)
 
 ```
 
+
+### Example 3
+Extract regional economic damages for `FrEDI` sectors for a specified year
+
+Output of this chunk includes a snapshot of a subset of the resulting dataframe
+```{r, example3, echo=TRUE, warning=FALSE, message=FALSE}
+
+#specify year
+c_years = c(2090)
+
+#filter and aggregate data, assign to aggregate categories
+df_filter <- output_df %>%
+  # filter for primary sectors and variants (included to avoid double counting)
+    filter(sectorprimary ==1) %>%
+  #use helper function to aggregate across impact types
+    aggregate_impacts(aggLevels = 'impactType') %>%
+  # filter for national aggregate results averaged across all GCMs and only include sectors that include physical impacts
+    filter(model %in% c('Average','Interpolation'),
+           !(region == "National Total"),
+           year %in% c_years) %>%
+    mutate(annual_impacts = annual_impacts /1e9) %>%
+    mutate(across(c('annual_impacts'), round, 0)) %>%
+    select('sector','region','year','annual_impacts')
+
+# NOTE: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.
+
+kable(df_filter[8:14,], caption = 'Subset of results') %>%
+  kable_styling(font_size = 12, full_width = F)
+
+```
+
+***
+
 # `FrEDI` SV Module {#SVFrEDI}
 
-This chunk provides an example of running the FrEDI_SV() module to quantify differential impacts of climate change across different populations. 
+This chunk provides an example of running the `FrEDI_SV` module to quantify differential impacts of climate change across different populations. 
 
 NOTE: 'main' run_fredi_sv does not currently run. ('sv_template_update' branch has the latest version)
 ```{r fredi_sv, include = FALSE, eval = FALSE}
@@ -601,12 +455,12 @@ df_output_AirQualityMort <-  run_fredi_sv(
 
 # Additional Information {#info}
 
-### Function Documentation {#functionDocs}
+### `FrEDI` Function Documentation {#functionDocs}
 
 After successfully [installing `FrEDI`](#installFrEDI), documentation for `FrEDI` functions can be accessed in the same way as for other `R` packages. 
 
 For an overview of `FrEDI`'s user-defined functions, type `library(help="FrEDI")` into an `R` console (this command will show documentation for `FrEDI` even if the package is not installed).
 
-For documentation for a specific function, type `help("`*functionName*`", package="FrEDI")` into an `R` console, where *functionName* is the name of one of the functions in `ciraTempBin` (e.g., `help("aggregate_impacts", package="FrEDI")`). 
+For documentation for a specific function, type `help("`*functionName*`", package="FrEDI")` into an `R` console, where *functionName* is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). 
 
 If `FrEDI` has been installed, users can also search for function-specific documentation in RStudio through the [**Help** window](https://www.r-project.org/help.html). Move the focus to the **Help** window using the keyboard shortcut `Ctrl+3` or toggle the search field in **Help** using `Ctrl+Alt+F1`. For more information on using the **Help** window, see https://www.r-project.org/help.html. Documentation for each function includes examples. 

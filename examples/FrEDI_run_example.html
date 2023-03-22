@@ -382,15 +382,16 @@ a.sourceLine {
 <li><a href="#installFrEDI">Step 1. Install <code>FrEDI</code> R package</a></li>
 <li><a href="#setFrEDI">Step 2. Set <code>FrEDI</code> Runtime parameters</a></li>
 <li><a href="#runFrEDI">Step 3. Run FrEDI</a></li>
-<li><a href="#plotFrEDI">Step 4. Plot</a><ul>
-<li><a href="#define-plotting-parameters">Define plotting parameters</a></li>
-<li><a href="#plot-temperature-trajectory">Plot Temperature Trajectory</a></li>
-<li><a href="#plot-national-results-by-category">Plot National Results by Category</a></li>
-<li><a href="#table-of-national-sectoral-results-billions-2015usd">Table of National Sectoral Results (billions $2015USD)</a></li>
+<li><a href="#analyzeFrEDI">Step 4. Analyze <code>FrEDI</code></a><ul>
+<li><a href="#example-1">Example 1</a></li>
+<li><a href="#example-2">Example 2</a></li>
+<li><a href="#example-3">Example 3</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#SVFrEDI"><code>FrEDI</code> SV Module</a></li>
-<li><a href="#info">Additional Information</a></li>
+<li><a href="#info">Additional Information</a><ul>
+<li><a href="#functionDocs"><code>FrEDI</code> Function Documentation</a></li>
+</ul></li>
 </ul>
 </div>
 </div>
@@ -409,7 +410,7 @@ a.sourceLine {
 <li><p><a href="#installFrEDI">Installs</a> the <code>FrEDI</code> R package from GitHub</p></li>
 <li><p><a href="#setFrEDI">Sets</a> <code>FrEDI</code> input and run parameters.</p></li>
 <li><p><a href="#runFrEDI">Runs</a> <code>FrEDI</code> with inputs specified in Step 2</p></li>
-<li><p><a href="#plotsFrEDI">Displays example plots</a> of temperature trajectory and barchart of total annual U.S. climate-driven damages across impact categories.</p></li>
+<li><p><a href="#analyzeFrEDI">Shows</a> example types of analyses using <code>FrEDI</code> output data.</p></li>
 </ol>
 <p>For more information about <code>FrEDI</code>, visit: <a href="https://www.epa.gov/cira/fredi" class="uri">https://www.epa.gov/cira/fredi</a></p>
 <p>Code available at: <a href="https://github.com/USEPA/FrEDI" class="uri">https://github.com/USEPA/FrEDI</a></p>
@@ -495,7 +496,7 @@ To run an individual chunk, hit the green 'play' button at the top right of each
 <h1>Analysis Steps (Main <code>FrEDI</code>):</h1>
 <div id="installpkgs" class="section level2">
 <h2>Step 0. Install required R packages</h2>
-<p>Use this chunk to specify the required R libraries and set working directory (if needed)</p>
+<p>Use this chunk to specify the required R libraries and set working directory</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(<span class="st">&quot;devtools&quot;</span>)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(<span class="st">&#39;knitr&#39;</span>)</span>
 <span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(<span class="st">&#39;kableExtra&#39;</span>)</span></code></pre></div>
@@ -535,145 +536,127 @@ To run an individual chunk, hit the green 'play' button at the top right of each
 <p>Use this chunk to specify the input trajectories (temperature, population, GDP) and runtime parameters for <code>FrEDI</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># Set FrEDI inputs and parameters</span></span>
 <span id="cb3-2"><a href="#cb3-2"></a></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co"># 1. Select input trajectories</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co"># 1a. Select from one of the pre-processed global temperature trajectories</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co"># To run more than one scenario, the code below must be</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co"># adapted into a loop to format the inputs for each scenario. </span></span>
 <span id="cb3-5"><a href="#cb3-5"></a></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: these were processed using the FaIR model v1.6.4 (https://github.com/OMS-NetZero/FAIR)</span></span>
-<span id="cb3-7"><a href="#cb3-7"></a></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co"># Pre-processed SSPs (select one by un-commenting)</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a>  <span class="co">#temp_file = &#39;SSP119_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-10"><a href="#cb3-10"></a>  <span class="co">#temp_file = &#39;SSP126_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-11"><a href="#cb3-11"></a>  temp_file =<span class="st"> &#39;SSP245_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-12"><a href="#cb3-12"></a>  <span class="co">#temp_file = &#39;SSP370_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a>  <span class="co">#temp_file = &#39;SSP370_lowNTCF_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-14"><a href="#cb3-14"></a>  <span class="co">#temp_file = &#39;SSP434_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-15"><a href="#cb3-15"></a>  <span class="co">#temp_file = &#39;SSP460_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a>  <span class="co">#temp_file = &#39;SSP534_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a>  <span class="co">#temp_file = &#39;SSP585_globaltemp_4FrEDI.csv&#39;</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a>  <span class="co">#specify path</span></span>
-<span id="cb3-19"><a href="#cb3-19"></a>  temp_file_loc =<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">getwd</span>(),<span class="st">&quot;/SSPs_for_FrEDI/&quot;</span>,temp_file)</span>
-<span id="cb3-20"><a href="#cb3-20"></a></span>
-<span id="cb3-21"><a href="#cb3-21"></a><span class="co"># To run more than one scenario, the code below must be</span></span>
-<span id="cb3-22"><a href="#cb3-22"></a><span class="co"># adapted into a loop to format the inputs for each scenario. </span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#***********************************************</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#1. Specify &amp; Format Input Trajectories (temperature, population, U.S. GDP)</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="co">## Input Files</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a>tempInputFile &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">getwd</span>(),<span class="st">&quot;/example_temperature_for_FrEDI/example_globaltemp_4FrEDI.csv&quot;</span>)</span>
+<span id="cb3-11"><a href="#cb3-11"></a>  <span class="co"># Description: csv file with time series of temperature relative to 1986-2005 average </span></span>
+<span id="cb3-12"><a href="#cb3-12"></a>  <span class="co"># (units: degC, values: &gt;=0)</span></span>
+<span id="cb3-13"><a href="#cb3-13"></a>  <span class="co"># data must start in 2000 or earlier and can be global or CONUS</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a>  <span class="co"># If global --&gt; must convert to CONUS temperature using the import_inputs() helper function</span></span>
+<span id="cb3-15"><a href="#cb3-15"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;temp_C&#39;</span></span>
+<span id="cb3-16"><a href="#cb3-16"></a></span>
+<span id="cb3-17"><a href="#cb3-17"></a>slrInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span> </span>
+<span id="cb3-18"><a href="#cb3-18"></a>  <span class="co"># Description: csv file with time series of global mean sea level rise relative to 2000</span></span>
+<span id="cb3-19"><a href="#cb3-19"></a>  <span class="co"># (units: cm, values: &gt;= 0 and &lt;= 250)</span></span>
+<span id="cb3-20"><a href="#cb3-20"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
+<span id="cb3-21"><a href="#cb3-21"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;slr_cm&#39;</span></span>
+<span id="cb3-22"><a href="#cb3-22"></a>  <span class="co"># If NULL - slr is calculated from the input temperature trajectory</span></span>
 <span id="cb3-23"><a href="#cb3-23"></a></span>
-<span id="cb3-24"><a href="#cb3-24"></a><span class="co">#***********************************************</span></span>
-<span id="cb3-25"><a href="#cb3-25"></a><span class="co">#1b. Specify &amp; Format Other Input Files</span></span>
-<span id="cb3-26"><a href="#cb3-26"></a></span>
-<span id="cb3-27"><a href="#cb3-27"></a><span class="co">## Input Files</span></span>
-<span id="cb3-28"><a href="#cb3-28"></a>tempInputFile &lt;-<span class="st"> </span>temp_file_loc</span>
-<span id="cb3-29"><a href="#cb3-29"></a>  <span class="co"># Description: csv file with time series of temperature relative to 1986-2005 average </span></span>
-<span id="cb3-30"><a href="#cb3-30"></a>  <span class="co"># (units: degC, values: &gt;=0)</span></span>
-<span id="cb3-31"><a href="#cb3-31"></a>  <span class="co"># data must start in 2000 or earlier and can be global or CONUS</span></span>
-<span id="cb3-32"><a href="#cb3-32"></a>  <span class="co"># If global --&gt; must convert to CONUS temperature using the import_inputs() helper function</span></span>
-<span id="cb3-33"><a href="#cb3-33"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;temp_C&#39;</span></span>
-<span id="cb3-34"><a href="#cb3-34"></a></span>
-<span id="cb3-35"><a href="#cb3-35"></a>slrInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span> </span>
-<span id="cb3-36"><a href="#cb3-36"></a>  <span class="co"># Description: csv file with time series of global mean sea level rise relative to 2000</span></span>
-<span id="cb3-37"><a href="#cb3-37"></a>  <span class="co"># (units: cm, values: &gt;= 0 and &lt;= 250)</span></span>
-<span id="cb3-38"><a href="#cb3-38"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
-<span id="cb3-39"><a href="#cb3-39"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;slr_cm&#39;</span></span>
-<span id="cb3-40"><a href="#cb3-40"></a>  <span class="co"># If NULL - slr is calculated from the input temperature trajectory</span></span>
-<span id="cb3-41"><a href="#cb3-41"></a></span>
-<span id="cb3-42"><a href="#cb3-42"></a>gdpInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb3-43"><a href="#cb3-43"></a>  <span class="co"># Description: csv file with time series of Gross Domestic Product (units: 2015$, values: &gt;= 0) </span></span>
-<span id="cb3-44"><a href="#cb3-44"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
-<span id="cb3-45"><a href="#cb3-45"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;gdp_usd&#39; </span></span>
-<span id="cb3-46"><a href="#cb3-46"></a>  <span class="co"># If NULL - use default GDP trajectory</span></span>
-<span id="cb3-47"><a href="#cb3-47"></a></span>
-<span id="cb3-48"><a href="#cb3-48"></a>popInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb3-49"><a href="#cb3-49"></a>  <span class="co"># Description: csv file with time series of annual NCA regional population (values &gt;= 0) </span></span>
-<span id="cb3-50"><a href="#cb3-50"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
-<span id="cb3-51"><a href="#cb3-51"></a>  <span class="co"># column 1 = &#39;year&#39;, columns 2:x = depends on data format (popform)</span></span>
-<span id="cb3-52"><a href="#cb3-52"></a>  <span class="co"># If NULL - use default population trajectory (from ICLUS)</span></span>
-<span id="cb3-53"><a href="#cb3-53"></a></span>
-<span id="cb3-54"><a href="#cb3-54"></a></span>
-<span id="cb3-55"><a href="#cb3-55"></a><span class="co">## Input Trajectory parameters</span></span>
-<span id="cb3-56"><a href="#cb3-56"></a>popformFlag =<span class="st"> &#39;wide&#39;</span>   </span>
-<span id="cb3-57"><a href="#cb3-57"></a>  <span class="co"># Description: Use this to specify the format of the regional population data</span></span>
-<span id="cb3-58"><a href="#cb3-58"></a>  <span class="co"># Options: wide/long. </span></span>
-<span id="cb3-59"><a href="#cb3-59"></a>  <span class="co"># Wide = columns 2-8 correspond to population in each NCA region. </span></span>
-<span id="cb3-60"><a href="#cb3-60"></a>  <span class="co"># Long = column 2 = NCA region name (&#39;region&#39;), </span></span>
-<span id="cb3-61"><a href="#cb3-61"></a>  <span class="co"># column 3 = population for that region (&#39;reg_pop&#39;). </span></span>
-<span id="cb3-62"><a href="#cb3-62"></a>  <span class="co"># NCA region names: &#39;Midwest&#39;, &#39;Northeast&#39;, &#39;Northern.Plains&#39;, &#39;Northwest&#39;,</span></span>
-<span id="cb3-63"><a href="#cb3-63"></a>  <span class="co">#   &#39;Southeast&#39;, &#39;Southern.Plains&#39;, &#39;Southwest&#39;</span></span>
-<span id="cb3-64"><a href="#cb3-64"></a></span>
-<span id="cb3-65"><a href="#cb3-65"></a>temptypeflag &lt;-<span class="st"> &#39;global&#39;</span> </span>
-<span id="cb3-66"><a href="#cb3-66"></a>  <span class="co"># Description: Use this to specify whether the input temperature is global or CONUS</span></span>
-<span id="cb3-67"><a href="#cb3-67"></a>  <span class="co"># import_inputs() will convert to global to CONUS temperature</span></span>
-<span id="cb3-68"><a href="#cb3-68"></a>  <span class="co"># Options: global (input is global T), conus (input is CONUS T)</span></span>
-<span id="cb3-69"><a href="#cb3-69"></a></span>
-<span id="cb3-70"><a href="#cb3-70"></a><span class="co">## Use the import_inputs() helper function to format the input trajectories for use in FrEDI</span></span>
-<span id="cb3-71"><a href="#cb3-71"></a>inputs_list &lt;-<span class="st"> </span><span class="kw">import_inputs</span>(<span class="dt">tempfile =</span> tempInputFile,</span>
-<span id="cb3-72"><a href="#cb3-72"></a>                        <span class="dt">slrfile =</span> slrInputFile,</span>
-<span id="cb3-73"><a href="#cb3-73"></a>                        <span class="dt">popfile =</span> popInputFile,</span>
-<span id="cb3-74"><a href="#cb3-74"></a>                        <span class="dt">gdpfile =</span> gdpInputFile,</span>
-<span id="cb3-75"><a href="#cb3-75"></a>                        <span class="dt">temptype =</span> temptypeflag,</span>
-<span id="cb3-76"><a href="#cb3-76"></a>                        <span class="dt">popform =</span> popformFlag)</span>
-<span id="cb3-77"><a href="#cb3-77"></a></span>
-<span id="cb3-78"><a href="#cb3-78"></a><span class="co"># print out how many custom input files were loaded </span></span>
-<span id="cb3-79"><a href="#cb3-79"></a><span class="co"># should be = 1 if using custom temperature only</span></span>
-<span id="cb3-80"><a href="#cb3-80"></a><span class="cf">if</span> ( <span class="kw">length</span>(inputs_list) <span class="op">==</span><span class="dv">0</span> ){</span>
-<span id="cb3-81"><a href="#cb3-81"></a>  <span class="kw">print</span>(<span class="st">&#39;CHECK FILE LOCATIONS: No input Data Loaded&#39;</span>)</span>
-<span id="cb3-82"><a href="#cb3-82"></a>} <span class="cf">else</span> {</span>
-<span id="cb3-83"><a href="#cb3-83"></a>  <span class="kw">print</span>( <span class="kw">paste</span>(<span class="st">&#39;Number of input files loaded:&#39;</span>,<span class="kw">length</span>(inputs_list)))</span>
-<span id="cb3-84"><a href="#cb3-84"></a>}</span>
-<span id="cb3-85"><a href="#cb3-85"></a></span>
-<span id="cb3-86"><a href="#cb3-86"></a><span class="co">#*******************************</span></span>
-<span id="cb3-87"><a href="#cb3-87"></a><span class="co"># 2. Set FrEDI Run Parameters (NULL = default)</span></span>
-<span id="cb3-88"><a href="#cb3-88"></a></span>
-<span id="cb3-89"><a href="#cb3-89"></a>thru2300Flag =<span class="st"> </span><span class="ot">FALSE</span></span>
-<span id="cb3-90"><a href="#cb3-90"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-91"><a href="#cb3-91"></a>  <span class="co">#   Specify whether to run FrEDI through 2100 (default) or extend to 2300</span></span>
-<span id="cb3-92"><a href="#cb3-92"></a>  <span class="co"># Default: FALSE (will run to 2100)</span></span>
-<span id="cb3-93"><a href="#cb3-93"></a></span>
-<span id="cb3-94"><a href="#cb3-94"></a>baseYearFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>     </span>
-<span id="cb3-95"><a href="#cb3-95"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-96"><a href="#cb3-96"></a>  <span class="co">#   Specify base year for calculating present values of annual impacts</span></span>
-<span id="cb3-97"><a href="#cb3-97"></a>  <span class="co"># Default: 2010</span></span>
-<span id="cb3-98"><a href="#cb3-98"></a></span>
-<span id="cb3-99"><a href="#cb3-99"></a>SectorListFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>  </span>
-<span id="cb3-100"><a href="#cb3-100"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-101"><a href="#cb3-101"></a>  <span class="co">#   Specify the vector of sectors to calculate results for</span></span>
-<span id="cb3-102"><a href="#cb3-102"></a>  <span class="co"># Default: report output for all sectors</span></span>
-<span id="cb3-103"><a href="#cb3-103"></a>  <span class="co"># See FrEDI:get_sectorInfo() for list of all sectors</span></span>
-<span id="cb3-104"><a href="#cb3-104"></a></span>
-<span id="cb3-105"><a href="#cb3-105"></a>aggLevelFlag &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb3-106"><a href="#cb3-106"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-107"><a href="#cb3-107"></a>  <span class="co">#   Specify the desired level of results aggregation. For example,</span></span>
-<span id="cb3-108"><a href="#cb3-108"></a>  <span class="co">#   to report national total results across all underlying climate-model </span></span>
-<span id="cb3-109"><a href="#cb3-109"></a>  <span class="co">#   damage functions, set the flag to c(&#39;national&#39;,&#39;modelaverage&#39;)</span></span>
-<span id="cb3-110"><a href="#cb3-110"></a>  <span class="co"># Options: at least one from c(&#39;national&#39;, &#39;modelaverage&#39;, &#39;impactyear&#39;,</span></span>
-<span id="cb3-111"><a href="#cb3-111"></a>  <span class="co">#   &#39;impacttype&#39;, &#39;all&#39;), or &quot;none&quot;. </span></span>
-<span id="cb3-112"><a href="#cb3-112"></a>  <span class="co"># Default: c(&#39;national&#39;, &#39;modelaverage&#39;, &#39;impactyear&#39;,&#39;impacttype&#39;)</span></span>
-<span id="cb3-113"><a href="#cb3-113"></a></span>
-<span id="cb3-114"><a href="#cb3-114"></a>pvFlag &lt;-<span class="st"> </span><span class="ot">NULL</span> </span>
-<span id="cb3-115"><a href="#cb3-115"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-116"><a href="#cb3-116"></a>  <span class="co">#   Calculate the present value of annual monetized impacts</span></span>
-<span id="cb3-117"><a href="#cb3-117"></a>  <span class="co"># Options: TRUE/FALSE.</span></span>
-<span id="cb3-118"><a href="#cb3-118"></a>  <span class="co"># Default: FALSE</span></span>
-<span id="cb3-119"><a href="#cb3-119"></a></span>
-<span id="cb3-120"><a href="#cb3-120"></a>rateFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>         </span>
-<span id="cb3-121"><a href="#cb3-121"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-122"><a href="#cb3-122"></a>  <span class="co">#   If pvFlag = TRUE, specify the annual constant discount rate used </span></span>
-<span id="cb3-123"><a href="#cb3-123"></a>  <span class="co">#   to calculate present values</span></span>
-<span id="cb3-124"><a href="#cb3-124"></a>  <span class="co"># Default: 0.03</span></span>
-<span id="cb3-125"><a href="#cb3-125"></a></span>
-<span id="cb3-126"><a href="#cb3-126"></a>elasticityFlag &lt;-<span class="st"> </span><span class="dv">1</span>   </span>
-<span id="cb3-127"><a href="#cb3-127"></a>  <span class="co"># Purpose: </span></span>
-<span id="cb3-128"><a href="#cb3-128"></a>  <span class="co">#   Specify the income elasticity used to adjust the Value of a</span></span>
-<span id="cb3-129"><a href="#cb3-129"></a>  <span class="co">#   Statistical Life (VSL)</span></span>
-<span id="cb3-130"><a href="#cb3-130"></a>  <span class="co"># Options: any numeric value</span></span>
-<span id="cb3-131"><a href="#cb3-131"></a>  <span class="co"># Default: </span></span>
-<span id="cb3-132"><a href="#cb3-132"></a></span>
-<span id="cb3-133"><a href="#cb3-133"></a></span>
-<span id="cb3-134"><a href="#cb3-134"></a>silentFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>       </span>
-<span id="cb3-135"><a href="#cb3-135"></a>  <span class="co"># Purpose:</span></span>
-<span id="cb3-136"><a href="#cb3-136"></a>  <span class="co">#   Specify the level of messaging to the user</span></span>
-<span id="cb3-137"><a href="#cb3-137"></a>  <span class="co"># Options: TRUE/FALSE. </span></span>
-<span id="cb3-138"><a href="#cb3-138"></a>  <span class="co"># Default: TRUE</span></span>
-<span id="cb3-139"><a href="#cb3-139"></a></span>
-<span id="cb3-140"><a href="#cb3-140"></a></span>
-<span id="cb3-141"><a href="#cb3-141"></a><span class="co">#**********************************************</span></span></code></pre></div>
+<span id="cb3-24"><a href="#cb3-24"></a>gdpInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb3-25"><a href="#cb3-25"></a>  <span class="co"># Description: csv file with time series of Gross Domestic Product (units: 2015$, values: &gt;= 0) </span></span>
+<span id="cb3-26"><a href="#cb3-26"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
+<span id="cb3-27"><a href="#cb3-27"></a>  <span class="co"># column 1 = &#39;year&#39;, column 2 = &#39;gdp_usd&#39; </span></span>
+<span id="cb3-28"><a href="#cb3-28"></a>  <span class="co"># If NULL - use default GDP trajectory</span></span>
+<span id="cb3-29"><a href="#cb3-29"></a></span>
+<span id="cb3-30"><a href="#cb3-30"></a>popInputFile &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb3-31"><a href="#cb3-31"></a>  <span class="co"># Description: csv file with time series of annual NCA regional population (values &gt;= 0) </span></span>
+<span id="cb3-32"><a href="#cb3-32"></a>  <span class="co"># data must start in 2000 or earlier</span></span>
+<span id="cb3-33"><a href="#cb3-33"></a>  <span class="co"># column 1 = &#39;year&#39;, columns 2:x = depends on data format (popform)</span></span>
+<span id="cb3-34"><a href="#cb3-34"></a>  <span class="co"># If NULL - use default population trajectory (from ICLUS)</span></span>
+<span id="cb3-35"><a href="#cb3-35"></a></span>
+<span id="cb3-36"><a href="#cb3-36"></a></span>
+<span id="cb3-37"><a href="#cb3-37"></a><span class="co">## Input Trajectory parameters</span></span>
+<span id="cb3-38"><a href="#cb3-38"></a>popformFlag =<span class="st"> &#39;wide&#39;</span>   </span>
+<span id="cb3-39"><a href="#cb3-39"></a>  <span class="co"># Description: Use this to specify the format of the regional population data</span></span>
+<span id="cb3-40"><a href="#cb3-40"></a>  <span class="co"># Options: wide/long. </span></span>
+<span id="cb3-41"><a href="#cb3-41"></a>  <span class="co"># Wide = columns 2-8 correspond to population in each NCA region. </span></span>
+<span id="cb3-42"><a href="#cb3-42"></a>  <span class="co"># Long = column 2 = NCA region name (&#39;region&#39;), </span></span>
+<span id="cb3-43"><a href="#cb3-43"></a>  <span class="co"># column 3 = population for that region (&#39;reg_pop&#39;). </span></span>
+<span id="cb3-44"><a href="#cb3-44"></a>  <span class="co"># NCA region names: &#39;Midwest&#39;, &#39;Northeast&#39;, &#39;Northern.Plains&#39;, &#39;Northwest&#39;,</span></span>
+<span id="cb3-45"><a href="#cb3-45"></a>  <span class="co">#   &#39;Southeast&#39;, &#39;Southern.Plains&#39;, &#39;Southwest&#39;</span></span>
+<span id="cb3-46"><a href="#cb3-46"></a></span>
+<span id="cb3-47"><a href="#cb3-47"></a>temptypeflag &lt;-<span class="st"> &#39;global&#39;</span> </span>
+<span id="cb3-48"><a href="#cb3-48"></a>  <span class="co"># Description: Use this to specify whether the input temperature is global or CONUS</span></span>
+<span id="cb3-49"><a href="#cb3-49"></a>  <span class="co"># import_inputs() will convert to global to CONUS temperature</span></span>
+<span id="cb3-50"><a href="#cb3-50"></a>  <span class="co"># Options: global (input is global T), conus (input is CONUS T)</span></span>
+<span id="cb3-51"><a href="#cb3-51"></a></span>
+<span id="cb3-52"><a href="#cb3-52"></a><span class="co">## Use the import_inputs() helper function to format the input trajectories for use in FrEDI</span></span>
+<span id="cb3-53"><a href="#cb3-53"></a>inputs_list &lt;-<span class="st"> </span><span class="kw">import_inputs</span>(<span class="dt">tempfile =</span> tempInputFile,</span>
+<span id="cb3-54"><a href="#cb3-54"></a>                        <span class="dt">slrfile =</span> slrInputFile,</span>
+<span id="cb3-55"><a href="#cb3-55"></a>                        <span class="dt">popfile =</span> popInputFile,</span>
+<span id="cb3-56"><a href="#cb3-56"></a>                        <span class="dt">gdpfile =</span> gdpInputFile,</span>
+<span id="cb3-57"><a href="#cb3-57"></a>                        <span class="dt">temptype =</span> temptypeflag,</span>
+<span id="cb3-58"><a href="#cb3-58"></a>                        <span class="dt">popform =</span> popformFlag)</span>
+<span id="cb3-59"><a href="#cb3-59"></a></span>
+<span id="cb3-60"><a href="#cb3-60"></a><span class="co"># print out how many custom input files were loaded </span></span>
+<span id="cb3-61"><a href="#cb3-61"></a><span class="co"># should be = 1 if using custom temperature only</span></span>
+<span id="cb3-62"><a href="#cb3-62"></a><span class="cf">if</span> ( <span class="kw">length</span>(inputs_list) <span class="op">==</span><span class="dv">0</span> ){</span>
+<span id="cb3-63"><a href="#cb3-63"></a>  <span class="kw">print</span>(<span class="st">&#39;CHECK FILE LOCATIONS: No input Data Loaded&#39;</span>)</span>
+<span id="cb3-64"><a href="#cb3-64"></a>} <span class="cf">else</span> {</span>
+<span id="cb3-65"><a href="#cb3-65"></a>  <span class="kw">print</span>( <span class="kw">paste</span>(<span class="st">&#39;Number of input files loaded:&#39;</span>,<span class="kw">length</span>(inputs_list)))</span>
+<span id="cb3-66"><a href="#cb3-66"></a>}</span>
+<span id="cb3-67"><a href="#cb3-67"></a></span>
+<span id="cb3-68"><a href="#cb3-68"></a><span class="co">#*******************************</span></span>
+<span id="cb3-69"><a href="#cb3-69"></a><span class="co"># 2. Set FrEDI Run Parameters (NULL = default)</span></span>
+<span id="cb3-70"><a href="#cb3-70"></a></span>
+<span id="cb3-71"><a href="#cb3-71"></a>thru2300Flag =<span class="st"> </span><span class="ot">FALSE</span></span>
+<span id="cb3-72"><a href="#cb3-72"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-73"><a href="#cb3-73"></a>  <span class="co">#   Specify whether to run FrEDI through 2100 (default) or extend to 2300</span></span>
+<span id="cb3-74"><a href="#cb3-74"></a>  <span class="co"># Default: FALSE (will run to 2100)</span></span>
+<span id="cb3-75"><a href="#cb3-75"></a></span>
+<span id="cb3-76"><a href="#cb3-76"></a>baseYearFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>     </span>
+<span id="cb3-77"><a href="#cb3-77"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-78"><a href="#cb3-78"></a>  <span class="co">#   Specify base year for calculating present values of annual impacts</span></span>
+<span id="cb3-79"><a href="#cb3-79"></a>  <span class="co"># Default: 2010</span></span>
+<span id="cb3-80"><a href="#cb3-80"></a></span>
+<span id="cb3-81"><a href="#cb3-81"></a>SectorListFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>  </span>
+<span id="cb3-82"><a href="#cb3-82"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-83"><a href="#cb3-83"></a>  <span class="co">#   Specify the vector of sectors to calculate results for</span></span>
+<span id="cb3-84"><a href="#cb3-84"></a>  <span class="co"># Default: report output for all sectors</span></span>
+<span id="cb3-85"><a href="#cb3-85"></a>  <span class="co"># See FrEDI:get_sectorInfo() for list of all sectors</span></span>
+<span id="cb3-86"><a href="#cb3-86"></a></span>
+<span id="cb3-87"><a href="#cb3-87"></a>aggLevelFlag &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;national&#39;</span>,<span class="st">&#39;modelaverage&#39;</span>,<span class="st">&#39;impactyear&#39;</span>)</span>
+<span id="cb3-88"><a href="#cb3-88"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-89"><a href="#cb3-89"></a>  <span class="co">#   Specify the desired level of results aggregation. For example,</span></span>
+<span id="cb3-90"><a href="#cb3-90"></a>  <span class="co">#   to report national total results across all underlying climate-model </span></span>
+<span id="cb3-91"><a href="#cb3-91"></a>  <span class="co">#   damage functions, set the flag to c(&#39;national&#39;,&#39;modelaverage&#39;)</span></span>
+<span id="cb3-92"><a href="#cb3-92"></a>  <span class="co"># Options: at least one from c(&#39;national&#39;, &#39;modelaverage&#39;, &#39;impactyear&#39;,</span></span>
+<span id="cb3-93"><a href="#cb3-93"></a>  <span class="co">#   &#39;impacttype&#39;, &#39;all&#39;), or &quot;none&quot;. </span></span>
+<span id="cb3-94"><a href="#cb3-94"></a>  <span class="co"># Default: c(&#39;national&#39;, &#39;modelaverage&#39;, &#39;impactyear&#39;,&#39;impacttype&#39;)</span></span>
+<span id="cb3-95"><a href="#cb3-95"></a></span>
+<span id="cb3-96"><a href="#cb3-96"></a>pvFlag &lt;-<span class="st"> </span><span class="ot">NULL</span> </span>
+<span id="cb3-97"><a href="#cb3-97"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-98"><a href="#cb3-98"></a>  <span class="co">#   Calculate the present value of annual monetized impacts</span></span>
+<span id="cb3-99"><a href="#cb3-99"></a>  <span class="co"># Options: TRUE/FALSE.</span></span>
+<span id="cb3-100"><a href="#cb3-100"></a>  <span class="co"># Default: FALSE</span></span>
+<span id="cb3-101"><a href="#cb3-101"></a></span>
+<span id="cb3-102"><a href="#cb3-102"></a>rateFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>         </span>
+<span id="cb3-103"><a href="#cb3-103"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-104"><a href="#cb3-104"></a>  <span class="co">#   If pvFlag = TRUE, specify the annual constant discount rate used </span></span>
+<span id="cb3-105"><a href="#cb3-105"></a>  <span class="co">#   to calculate present values</span></span>
+<span id="cb3-106"><a href="#cb3-106"></a>  <span class="co"># Default: 0.03</span></span>
+<span id="cb3-107"><a href="#cb3-107"></a></span>
+<span id="cb3-108"><a href="#cb3-108"></a>elasticityFlag &lt;-<span class="st"> </span><span class="dv">1</span>   </span>
+<span id="cb3-109"><a href="#cb3-109"></a>  <span class="co"># Purpose: </span></span>
+<span id="cb3-110"><a href="#cb3-110"></a>  <span class="co">#   Specify the income elasticity used to adjust the Value of a</span></span>
+<span id="cb3-111"><a href="#cb3-111"></a>  <span class="co">#   Statistical Life (VSL)</span></span>
+<span id="cb3-112"><a href="#cb3-112"></a>  <span class="co"># Options: any numeric value</span></span>
+<span id="cb3-113"><a href="#cb3-113"></a>  <span class="co"># Default: </span></span>
+<span id="cb3-114"><a href="#cb3-114"></a></span>
+<span id="cb3-115"><a href="#cb3-115"></a></span>
+<span id="cb3-116"><a href="#cb3-116"></a>silentFlag &lt;-<span class="st"> </span><span class="ot">NULL</span>       </span>
+<span id="cb3-117"><a href="#cb3-117"></a>  <span class="co"># Purpose:</span></span>
+<span id="cb3-118"><a href="#cb3-118"></a>  <span class="co">#   Specify the level of messaging to the user</span></span>
+<span id="cb3-119"><a href="#cb3-119"></a>  <span class="co"># Options: TRUE/FALSE. </span></span>
+<span id="cb3-120"><a href="#cb3-120"></a>  <span class="co"># Default: TRUE</span></span>
+<span id="cb3-121"><a href="#cb3-121"></a></span>
+<span id="cb3-122"><a href="#cb3-122"></a></span>
+<span id="cb3-123"><a href="#cb3-123"></a><span class="co">#**********************************************</span></span></code></pre></div>
 <pre><code>## [1] &quot;Number of input files loaded: 1&quot;</code></pre>
 </div>
 <div id="runFrEDI" class="section level2">
@@ -696,239 +679,81 @@ To run an individual chunk, hit the green 'play' button at the top right of each
 <span id="cb5-15"><a href="#cb5-15"></a><span class="co">## Write Full Dataframe to CSV (or feather)</span></span>
 <span id="cb5-16"><a href="#cb5-16"></a><span class="co"># write.csv(output_df, &#39;./output/example_output.csv&#39;)</span></span></code></pre></div>
 </div>
-<div id="plotFrEDI" class="section level2">
-<h2>Step 4. Plot</h2>
-<p>The following chunks provide examples of figures generated from <code>FrEDI</code> data</p>
-<div id="define-plotting-parameters" class="section level3">
-<h3>Define plotting parameters</h3>
-<p>Use this chunk to define sector categories and global plotting parameters</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">#Define plotting parameters</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co"># Define aggregate categories</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co"># Sample sector aggregations similar to Hartin et al., 2023</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: the health category can include 1 of the following:</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#  &#39;Extreme Temperature&#39;</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#  &#39;ATS Extreme Temperature&#39;</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#  &#39;CIL Extreme Temperature&#39;</span></span>
-<span id="cb6-9"><a href="#cb6-9"></a>health_cat &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;ATS Extreme Temperature&quot;</span>,<span class="st">&quot;Air Quality&quot;</span>,</span>
-<span id="cb6-10"><a href="#cb6-10"></a>                <span class="st">&quot;Valley Fever&quot;</span>,<span class="st">&quot;Wildfire&quot;</span>,<span class="st">&quot;Southwest Dust&quot;</span>,</span>
-<span id="cb6-11"><a href="#cb6-11"></a>                <span class="st">&quot;CIL Crime&quot;</span>)</span>
-<span id="cb6-12"><a href="#cb6-12"></a>labor_cat  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Labor&quot;</span>)</span>
-<span id="cb6-13"><a href="#cb6-13"></a>agr_cat    &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;CIL Agriculture&quot;</span>)</span>
-<span id="cb6-14"><a href="#cb6-14"></a>elect_cat  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Electricity Demand and Supply&quot;</span>, </span>
-<span id="cb6-15"><a href="#cb6-15"></a>                <span class="st">&quot;Electricity Transmission and Distribution&quot;</span>)</span>
-<span id="cb6-16"><a href="#cb6-16"></a>infra_cat  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Rail&quot;</span>,<span class="st">&quot;Roads&quot;</span>,<span class="st">&quot;Urban Drainage&quot;</span>,</span>
-<span id="cb6-17"><a href="#cb6-17"></a>                <span class="st">&quot;Coastal Properties&quot;</span>,</span>
-<span id="cb6-18"><a href="#cb6-18"></a>                <span class="st">&quot;High Tide Flooding and Traffic&quot;</span>, <span class="st">&quot;Inland Flooding&quot;</span>,</span>
-<span id="cb6-19"><a href="#cb6-19"></a>                <span class="st">&quot;Wind Damage&quot;</span>)</span>
-<span id="cb6-20"><a href="#cb6-20"></a>eco_cat    &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Marine Fisheries&quot;</span>, <span class="st">&quot;Winter Recreation&quot;</span>, </span>
-<span id="cb6-21"><a href="#cb6-21"></a>                <span class="st">&quot;Water Quality&quot;</span>)</span>
-<span id="cb6-22"><a href="#cb6-22"></a></span>
-<span id="cb6-23"><a href="#cb6-23"></a></span>
-<span id="cb6-24"><a href="#cb6-24"></a><span class="co">#Example color palette</span></span>
-<span id="cb6-25"><a href="#cb6-25"></a>colors_<span class="dv">6</span> =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;#f2938c&quot;</span>, <span class="st">&quot;#d54309&quot;</span>, <span class="st">&quot;#ffbc78&quot;</span>, <span class="st">&quot;#4d8055&quot;</span>, <span class="st">&quot;#97d4ea&quot;</span>, <span class="st">&quot;#1a4480&quot;</span>)</span></code></pre></div>
-</div>
-<div id="plot-temperature-trajectory" class="section level3">
-<h3>Plot Temperature Trajectory</h3>
-<p>Plot a time series of the input U.S. temperature trajectory in units of degrees C, relative to 1986-2005 average baseline</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># take formatted temperature vector from the output of the import_inputs() helper function</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a>temp_C &lt;-<span class="st"> </span>inputs_list<span class="op">$</span>tempInput</span>
-<span id="cb7-3"><a href="#cb7-3"></a></span>
-<span id="cb7-4"><a href="#cb7-4"></a><span class="co"># plot line graph</span></span>
-<span id="cb7-5"><a href="#cb7-5"></a>p_temp &lt;-<span class="st"> </span>temp_C <span class="op">%&gt;%</span></span>
-<span id="cb7-6"><a href="#cb7-6"></a><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x=</span>year,</span>
-<span id="cb7-7"><a href="#cb7-7"></a>             <span class="dt">y=</span>temp_C)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb7-8"><a href="#cb7-8"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">linewidth=</span><span class="fl">1.5</span>, </span>
-<span id="cb7-9"><a href="#cb7-9"></a>            <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="op">+</span></span>
-<span id="cb7-10"><a href="#cb7-10"></a><span class="st">  </span><span class="kw">xlim</span>(<span class="dv">2020</span>,<span class="dv">2100</span>)<span class="op">+</span></span>
-<span id="cb7-11"><a href="#cb7-11"></a><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&#39;Annual U.S. Temperature Change </span><span class="ch">\n</span><span class="st">(degrees C)&#39;</span>) <span class="op">+</span></span>
-<span id="cb7-12"><a href="#cb7-12"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&#39;none&#39;</span>)<span class="op">+</span></span>
-<span id="cb7-13"><a href="#cb7-13"></a><span class="st">  </span><span class="kw">theme_minimal</span>()<span class="op">+</span></span>
-<span id="cb7-14"><a href="#cb7-14"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title=</span><span class="st">&quot;Annual US Temeprature Change Relative to Baseline&quot;</span>,</span>
-<span id="cb7-15"><a href="#cb7-15"></a>       <span class="dt">subtitle=</span> <span class="kw">paste0</span>(<span class="st">&quot;Scenario: &quot;</span>,temp_file), </span>
-<span id="cb7-16"><a href="#cb7-16"></a>       <span class="dt">caption=</span><span class="st">&#39;baseline = 1986-2005 average&#39;</span>)</span>
-<span id="cb7-17"><a href="#cb7-17"></a></span>
-<span id="cb7-18"><a href="#cb7-18"></a></span>
-<span id="cb7-19"><a href="#cb7-19"></a>p_temp</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
-</div>
-<div id="plot-national-results-by-category" class="section level3">
-<h3>Plot National Results by Category</h3>
-<p>Plot a bar chart of annual national total damages for select years, colored by aggregate sector categories</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">#specify years to plot</span></span>
-<span id="cb8-2"><a href="#cb8-2"></a>c_years =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2050</span>, <span class="dv">2070</span>, <span class="dv">2090</span>)</span>
-<span id="cb8-3"><a href="#cb8-3"></a></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a>df_filter &lt;-<span class="st"> </span>output_df <span class="op">%&gt;%</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="st">  </span><span class="co"># filter for primary sectors and variants (included to avoid double counting)</span></span>
-<span id="cb8-7"><a href="#cb8-7"></a><span class="st">    </span><span class="kw">filter</span>(sectorprimary <span class="op">==</span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a><span class="st">  </span><span class="co"># filter for national aggregate results</span></span>
-<span id="cb8-9"><a href="#cb8-9"></a><span class="st">    </span><span class="kw">filter</span>(model <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Average&#39;</span>,<span class="st">&#39;Interpolation&#39;</span>),</span>
-<span id="cb8-10"><a href="#cb8-10"></a>           region <span class="op">==</span><span class="st"> &quot;National Total&quot;</span>,</span>
-<span id="cb8-11"><a href="#cb8-11"></a>           year <span class="op">%in%</span><span class="st"> </span>c_years) <span class="op">%&gt;%</span></span>
-<span id="cb8-12"><a href="#cb8-12"></a><span class="st">  </span><span class="co">#convert dollars to trillions of dollars</span></span>
-<span id="cb8-13"><a href="#cb8-13"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">annual_impacts =</span> annual_impacts <span class="op">/</span><span class="fl">1e12</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-14"><a href="#cb8-14"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">year =</span> <span class="kw">as.factor</span>(year)) <span class="op">%&gt;%</span></span>
-<span id="cb8-15"><a href="#cb8-15"></a><span class="st">  </span><span class="co">#assign sectors to categories</span></span>
-<span id="cb8-16"><a href="#cb8-16"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">category =</span> <span class="kw">case_when</span>(</span>
-<span id="cb8-17"><a href="#cb8-17"></a>    sector <span class="op">%in%</span><span class="st"> </span>labor_cat <span class="op">~</span><span class="st"> &quot;Labor (1)&quot;</span>,</span>
-<span id="cb8-18"><a href="#cb8-18"></a>    sector <span class="op">%in%</span><span class="st"> </span>agr_cat <span class="op">~</span><span class="st"> &quot;Agriculture (1)&quot;</span>,</span>
-<span id="cb8-19"><a href="#cb8-19"></a>    sector <span class="op">%in%</span><span class="st"> </span>elect_cat <span class="op">~</span><span class="st"> &quot;Electricity (2)&quot;</span>,</span>
-<span id="cb8-20"><a href="#cb8-20"></a>    sector <span class="op">%in%</span><span class="st"> </span>health_cat <span class="op">~</span><span class="st"> &quot;Health (6)&quot;</span>,</span>
-<span id="cb8-21"><a href="#cb8-21"></a>    sector <span class="op">%in%</span><span class="st"> </span>infra_cat <span class="op">~</span><span class="st"> &quot;Infrastructure (7)&quot;</span>,</span>
-<span id="cb8-22"><a href="#cb8-22"></a>    sector <span class="op">%in%</span><span class="st"> </span>eco_cat <span class="op">~</span><span class="st"> &quot;Ecosystems+ Recreation (3)&quot;</span>,</span>
-<span id="cb8-23"><a href="#cb8-23"></a>    <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span><span class="ot">NA_character_</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-24"><a href="#cb8-24"></a><span class="st">    </span><span class="kw">filter</span>(category <span class="op">!=</span><span class="st"> &quot;NA&quot;</span>)</span>
-<span id="cb8-25"><a href="#cb8-25"></a></span>
-<span id="cb8-26"><a href="#cb8-26"></a></span>
-<span id="cb8-27"><a href="#cb8-27"></a><span class="co">#reorder from largest to smallest category</span></span>
-<span id="cb8-28"><a href="#cb8-28"></a>cat_i &lt;-<span class="st"> </span>df_filter <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-29"><a href="#cb8-29"></a><span class="st">  </span><span class="kw">group_by_at</span>(<span class="dt">.vars=</span><span class="kw">c</span>(<span class="st">&quot;category&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-30"><a href="#cb8-30"></a><span class="st">  </span><span class="kw">summarize_at</span>(<span class="dt">.vars=</span><span class="kw">c</span>(<span class="st">&quot;annual_impacts&quot;</span>),sum,<span class="dt">na.rm=</span>T) <span class="op">%&gt;%</span></span>
-<span id="cb8-31"><a href="#cb8-31"></a><span class="st">  </span>ungroup <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-32"><a href="#cb8-32"></a><span class="st">  </span><span class="kw">arrange_at</span>(<span class="dt">.vars=</span><span class="kw">c</span>(<span class="st">&quot;annual_impacts&quot;</span>, <span class="st">&quot;category&quot;</span>))</span>
-<span id="cb8-33"><a href="#cb8-33"></a></span>
-<span id="cb8-34"><a href="#cb8-34"></a>df_filter &lt;-<span class="st"> </span>df_filter <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-35"><a href="#cb8-35"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">category =</span> category <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-36"><a href="#cb8-36"></a><span class="st">           </span><span class="kw">factor</span>(<span class="dt">levels =</span> (cat_i<span class="op">$</span>category))) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-37"><a href="#cb8-37"></a><span class="st">  </span><span class="kw">arrange_at</span>(<span class="dt">.vars=</span><span class="kw">c</span>(<span class="st">&quot;category&quot;</span>))</span>
-<span id="cb8-38"><a href="#cb8-38"></a></span>
-<span id="cb8-39"><a href="#cb8-39"></a></span>
-<span id="cb8-40"><a href="#cb8-40"></a><span class="co"># plot bar chart</span></span>
-<span id="cb8-41"><a href="#cb8-41"></a>p_national_damages &lt;-<span class="st"> </span>df_filter <span class="op">%&gt;%</span></span>
-<span id="cb8-42"><a href="#cb8-42"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb8-43"><a href="#cb8-43"></a><span class="st">  </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">fill=</span>category,</span>
-<span id="cb8-44"><a href="#cb8-44"></a>               <span class="dt">y=</span>annual_impacts,</span>
-<span id="cb8-45"><a href="#cb8-45"></a>               <span class="dt">x=</span>year),</span>
-<span id="cb8-46"><a href="#cb8-46"></a>           <span class="dt">position=</span><span class="st">&quot;stack&quot;</span>, </span>
-<span id="cb8-47"><a href="#cb8-47"></a>           <span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>, </span>
-<span id="cb8-48"><a href="#cb8-48"></a>           <span class="dt">alpha =</span> <span class="fl">0.7</span>) <span class="op">+</span></span>
-<span id="cb8-49"><a href="#cb8-49"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="st">&quot;Annual Damages (Trillions)&quot;</span>)<span class="op">+</span></span>
-<span id="cb8-50"><a href="#cb8-50"></a><span class="st">  </span><span class="kw">scale_fill_manual</span>(<span class="dt">values=</span>(colors_<span class="dv">6</span>))<span class="op">+</span><span class="st">     </span></span>
-<span id="cb8-51"><a href="#cb8-51"></a><span class="st">  </span><span class="kw">theme_minimal</span>() <span class="op">+</span></span>
-<span id="cb8-52"><a href="#cb8-52"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size=</span><span class="dv">11</span>),</span>
-<span id="cb8-53"><a href="#cb8-53"></a>        <span class="dt">axis.title =</span> <span class="kw">element_text</span>(<span class="dt">size =</span><span class="dv">14</span>),</span>
-<span id="cb8-54"><a href="#cb8-54"></a>        <span class="dt">axis.title.y =</span> <span class="kw">element_text</span>(<span class="dt">margin =</span> </span>
-<span id="cb8-55"><a href="#cb8-55"></a>                            <span class="kw">margin</span>(<span class="dt">t =</span> <span class="dv">0</span>,<span class="dt">r =</span> <span class="dv">10</span>,<span class="dt">b =</span> <span class="dv">0</span>,<span class="dt">l =</span> <span class="dv">0</span>)),</span>
-<span id="cb8-56"><a href="#cb8-56"></a>        <span class="dt">axis.title.x =</span> <span class="kw">element_text</span>(<span class="dt">margin =</span> </span>
-<span id="cb8-57"><a href="#cb8-57"></a>                            <span class="kw">margin</span>(<span class="dt">t =</span> <span class="dv">5</span>,<span class="dt">r =</span> <span class="dv">0</span>,<span class="dt">b =</span> <span class="dv">0</span>,<span class="dt">l =</span> <span class="dv">0</span>)),</span>
-<span id="cb8-58"><a href="#cb8-58"></a>        <span class="dt">legend.text=</span><span class="kw">element_text</span>(<span class="dt">size=</span><span class="dv">10</span>),</span>
-<span id="cb8-59"><a href="#cb8-59"></a>        <span class="dt">legend.title=</span><span class="kw">element_text</span>(<span class="dt">size=</span><span class="dv">10</span>, </span>
-<span id="cb8-60"><a href="#cb8-60"></a>                                  <span class="dt">face=</span><span class="st">&quot;bold&quot;</span>),</span>
-<span id="cb8-61"><a href="#cb8-61"></a>        <span class="dt">plot.title =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">16</span>, </span>
-<span id="cb8-62"><a href="#cb8-62"></a>                                  <span class="dt">face =</span> <span class="st">&quot;bold&quot;</span>),</span>
-<span id="cb8-63"><a href="#cb8-63"></a>        <span class="dt">plot.title.position =</span> <span class="st">&quot;plot&quot;</span>,</span>
-<span id="cb8-64"><a href="#cb8-64"></a>        <span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">vjust =</span> <span class="dv">1</span>,</span>
-<span id="cb8-65"><a href="#cb8-65"></a>                                   <span class="dt">hjust=</span><span class="dv">1</span>,</span>
-<span id="cb8-66"><a href="#cb8-66"></a>                                   <span class="dt">angle =</span> <span class="dv">0</span>, </span>
-<span id="cb8-67"><a href="#cb8-67"></a>                                   <span class="dt">size=</span><span class="dv">12</span>),</span>
-<span id="cb8-68"><a href="#cb8-68"></a>        <span class="dt">legend.position =</span> <span class="st">&#39;right&#39;</span>)<span class="op">+</span></span>
-<span id="cb8-69"><a href="#cb8-69"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle=</span><span class="kw">paste0</span>(<span class="st">&quot;Absolute Annual U.S. Climate-Driven Damages</span><span class="ch">\n</span></span>
-<span id="cb8-70"><a href="#cb8-70"></a><span class="st">       Scenario: &quot;</span>,temp_file),</span>
-<span id="cb8-71"><a href="#cb8-71"></a>       <span class="dt">fill =</span> <span class="st">&quot;Sector Categories </span><span class="ch">\n</span><span class="st">(number of sectors in</span></span>
-<span id="cb8-72"><a href="#cb8-72"></a><span class="st">               category)&quot;</span>)<span class="op">+</span></span>
-<span id="cb8-73"><a href="#cb8-73"></a><span class="st">  </span><span class="co">#add value to plot</span></span>
-<span id="cb8-74"><a href="#cb8-74"></a><span class="st">  </span><span class="kw">geom_text</span>(<span class="dt">data=</span>df_filter <span class="op">%&gt;%</span></span>
-<span id="cb8-75"><a href="#cb8-75"></a><span class="st">            </span><span class="kw">group_by_at</span>(<span class="dt">.vars=</span><span class="kw">c</span>(<span class="st">&quot;year&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb8-76"><a href="#cb8-76"></a><span class="st">            </span><span class="kw">summarize_at</span>(<span class="dt">.vars =</span> <span class="kw">c</span>(<span class="st">&quot;annual_impacts&quot;</span>),sum,<span class="dt">na.rm=</span>T), </span>
-<span id="cb8-77"><a href="#cb8-77"></a>            <span class="kw">aes</span>(<span class="dt">x=</span>year, </span>
-<span id="cb8-78"><a href="#cb8-78"></a>                <span class="dt">y=</span>annual_impacts, </span>
-<span id="cb8-79"><a href="#cb8-79"></a>                <span class="dt">label=</span><span class="kw">paste0</span>(<span class="st">&#39;$&#39;</span>, <span class="kw">round</span>(annual_impacts, <span class="dv">2</span>),<span class="st">&#39;T&#39;</span>), </span>
-<span id="cb8-80"><a href="#cb8-80"></a>                <span class="dt">vjust=</span><span class="op">-</span><span class="fl">0.25</span>),</span>
-<span id="cb8-81"><a href="#cb8-81"></a>            <span class="dt">color    =</span> <span class="st">&#39;grey20&#39;</span>,</span>
-<span id="cb8-82"><a href="#cb8-82"></a>            <span class="dt">size     =</span> <span class="dv">4</span>)</span>
-<span id="cb8-83"><a href="#cb8-83"></a></span>
-<span id="cb8-84"><a href="#cb8-84"></a><span class="co">#plot figure</span></span>
-<span id="cb8-85"><a href="#cb8-85"></a>p_national_damages</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
-</div>
-<div id="table-of-national-sectoral-results-billions-2015usd" class="section level3">
-<h3>Table of National Sectoral Results (billions $2015USD)</h3>
-<p>Print table of total annual national damages, by sector, for a specific year</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co">#choose year to plot</span></span>
-<span id="cb9-2"><a href="#cb9-2"></a>c_year =<span class="st"> </span><span class="dv">2090</span></span>
-<span id="cb9-3"><a href="#cb9-3"></a></span>
-<span id="cb9-4"><a href="#cb9-4"></a><span class="co">#Table 1</span></span>
-<span id="cb9-5"><a href="#cb9-5"></a>df_filter &lt;-<span class="st"> </span>output_df <span class="op">%&gt;%</span></span>
-<span id="cb9-6"><a href="#cb9-6"></a><span class="st">  </span><span class="co"># filter for primary sectors and variants (included to avoid double counting)</span></span>
-<span id="cb9-7"><a href="#cb9-7"></a><span class="st">    </span><span class="kw">filter</span>(sectorprimary <span class="op">==</span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-8"><a href="#cb9-8"></a><span class="st">  </span><span class="co"># filter for national aggregate results</span></span>
-<span id="cb9-9"><a href="#cb9-9"></a><span class="st">    </span><span class="kw">filter</span>(model <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Average&#39;</span>,<span class="st">&#39;Interpolation&#39;</span>),</span>
-<span id="cb9-10"><a href="#cb9-10"></a>           region <span class="op">==</span><span class="st"> &quot;National Total&quot;</span>,</span>
-<span id="cb9-11"><a href="#cb9-11"></a>           year <span class="op">==</span><span class="st"> </span>c_year) <span class="op">%&gt;%</span></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="st">  </span><span class="co">#convert $ to billions $</span></span>
-<span id="cb9-13"><a href="#cb9-13"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">annual_impacts =</span> annual_impacts <span class="op">/</span><span class="fl">1e9</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-14"><a href="#cb9-14"></a><span class="st">  </span><span class="co">#assign sectors to category</span></span>
-<span id="cb9-15"><a href="#cb9-15"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">category =</span> <span class="kw">case_when</span>(</span>
-<span id="cb9-16"><a href="#cb9-16"></a>    sector <span class="op">%in%</span><span class="st"> </span>labor_cat <span class="op">~</span><span class="st"> &quot;Labor (1)&quot;</span>,</span>
-<span id="cb9-17"><a href="#cb9-17"></a>    sector <span class="op">%in%</span><span class="st"> </span>agr_cat <span class="op">~</span><span class="st"> &quot;Agriculture (1)&quot;</span>,</span>
-<span id="cb9-18"><a href="#cb9-18"></a>    sector <span class="op">%in%</span><span class="st"> </span>elect_cat <span class="op">~</span><span class="st"> &quot;Electricity (2)&quot;</span>,</span>
-<span id="cb9-19"><a href="#cb9-19"></a>    sector <span class="op">%in%</span><span class="st"> </span>health_cat <span class="op">~</span><span class="st"> &quot;Health (6)&quot;</span>,</span>
-<span id="cb9-20"><a href="#cb9-20"></a>    sector <span class="op">%in%</span><span class="st"> </span>infra_cat <span class="op">~</span><span class="st"> &quot;Infrastructure (7)&quot;</span>,</span>
-<span id="cb9-21"><a href="#cb9-21"></a>    sector <span class="op">%in%</span><span class="st"> </span>eco_cat <span class="op">~</span><span class="st"> &quot;Ecosystems+ Recreation (3)&quot;</span>,</span>
-<span id="cb9-22"><a href="#cb9-22"></a>    <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span><span class="ot">NA_character_</span>)) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb9-23"><a href="#cb9-23"></a><span class="st">    </span><span class="kw">filter</span>(category <span class="op">!=</span><span class="st"> &quot;NA&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-24"><a href="#cb9-24"></a><span class="st">  </span><span class="co">#select relevant columns and re-order</span></span>
-<span id="cb9-25"><a href="#cb9-25"></a><span class="st">    </span><span class="kw">select</span>(<span class="st">&#39;sector&#39;</span>,<span class="st">&#39;category&#39;</span>,<span class="st">&#39;annual_impacts&#39;</span>,<span class="st">&#39;region&#39;</span>,<span class="st">&#39;year&#39;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-26"><a href="#cb9-26"></a><span class="st">    </span><span class="kw">arrange</span>(<span class="kw">desc</span>(annual_impacts)) <span class="op">%&gt;%</span></span>
-<span id="cb9-27"><a href="#cb9-27"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(<span class="kw">c</span>(<span class="st">&#39;annual_impacts&#39;</span>), <span class="op">~</span><span class="st"> </span><span class="kw">signif</span>(.,<span class="dv">2</span>)))</span>
-<span id="cb9-28"><a href="#cb9-28"></a></span>
-<span id="cb9-29"><a href="#cb9-29"></a></span>
-<span id="cb9-30"><a href="#cb9-30"></a><span class="co"># print National Total Damages by Sector (in billions of $ in $2015USD)</span></span>
-<span id="cb9-31"><a href="#cb9-31"></a><span class="co">#print(table1)</span></span>
-<span id="cb9-32"><a href="#cb9-32"></a><span class="kw">colnames</span>(df_filter) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Sector&#39;</span>,<span class="st">&#39;Category&#39;</span>,<span class="st">&#39;Billons (2015 $ USD)&#39;</span>,<span class="st">&#39;Region&#39;</span>,<span class="st">&#39;Year&#39;</span>)</span>
-<span id="cb9-33"><a href="#cb9-33"></a><span class="kw">kable</span>(df_filter, <span class="dt">caption =</span> <span class="kw">paste0</span>(<span class="st">&#39;National Total Damages by Sector, Scenario: &#39;</span>,temp_file)) <span class="op">%&gt;%</span></span>
-<span id="cb9-34"><a href="#cb9-34"></a><span class="st">  </span><span class="kw">kable_styling</span>(<span class="dt">font_size =</span> <span class="dv">12</span>, <span class="dt">full_width =</span> F)</span></code></pre></div>
+<div id="analyzeFrEDI" class="section level2">
+<h2>Step 4. Analyze <code>FrEDI</code></h2>
+<p>The following chunks provide examples of types of ways to analyze the raw output from <code>FrEDI</code></p>
+<div id="example-1" class="section level3">
+<h3>Example 1</h3>
+<p>Extract national average of economic damages (in billions of dollars in 2015$) for all <code>FrEDI</code> sectors for a specified year</p>
+<p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">#specify year</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>c_years =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2090</span>)</span>
+<span id="cb6-3"><a href="#cb6-3"></a></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>df_filter &lt;-<span class="st"> </span>output_df <span class="op">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="st">  </span><span class="co"># filter for primary sectors and variants (included to avoid double counting)</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="st">    </span><span class="kw">filter</span>(sectorprimary <span class="op">==</span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="st">  </span><span class="co">#use helper function to aggregate across impact types</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="st">    </span><span class="kw">aggregate_impacts</span>(<span class="dt">aggLevels =</span> <span class="st">&#39;impactType&#39;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="st">  </span><span class="co"># filter for national aggregate results averaged across all GCMs</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="st">    </span><span class="kw">filter</span>(model <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Average&#39;</span>,<span class="st">&#39;Interpolation&#39;</span>),</span>
+<span id="cb6-12"><a href="#cb6-12"></a>           region <span class="op">==</span><span class="st"> &quot;National Total&quot;</span>,</span>
+<span id="cb6-13"><a href="#cb6-13"></a>           year <span class="op">%in%</span><span class="st"> </span>c_years) <span class="op">%&gt;%</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="st">  </span><span class="co"># convert to billions of dollars</span></span>
+<span id="cb6-15"><a href="#cb6-15"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">annual_impacts =</span> annual_impacts <span class="op">/</span><span class="fl">1e9</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb6-16"><a href="#cb6-16"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(annual_impacts, round, <span class="dv">0</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb6-17"><a href="#cb6-17"></a><span class="st">    </span><span class="kw">select</span>(<span class="st">&#39;sector&#39;</span>,<span class="st">&#39;region&#39;</span>,<span class="st">&#39;year&#39;</span>,<span class="st">&#39;annual_impacts&#39;</span>)</span>
+<span id="cb6-18"><a href="#cb6-18"></a></span>
+<span id="cb6-19"><a href="#cb6-19"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.</span></span>
+<span id="cb6-20"><a href="#cb6-20"></a></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="kw">kable</span>(df_filter[<span class="dv">2</span><span class="op">:</span><span class="dv">6</span>,], <span class="dt">caption =</span> <span class="st">&#39;Subset of results&#39;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="st">  </span><span class="kw">kable_styling</span>(<span class="dt">font_size =</span> <span class="dv">12</span>, <span class="dt">full_width =</span> F)</span></code></pre></div>
 <table class="table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-National Total Damages by Sector, Scenario: SSP245_globaltemp_4FrEDI.csv
+Subset of results
 </caption>
 <thead>
 <tr>
 <th style="text-align:left;">
-Sector
 </th>
 <th style="text-align:left;">
-Category
-</th>
-<th style="text-align:right;">
-Billons (2015 $ USD)
+sector
 </th>
 <th style="text-align:left;">
-Region
+region
 </th>
 <th style="text-align:right;">
-Year
+year
+</th>
+<th style="text-align:right;">
+annual_impacts
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:left;">
-ATS Extreme Temperature
+2
 </td>
-<td style="text-align:left;">
-Health (6)
-</td>
-<td style="text-align:right;">
-1700.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
 <td style="text-align:left;">
 Air Quality
 </td>
 <td style="text-align:left;">
-Health (6)
+National Total
 </td>
 <td style="text-align:right;">
-160.000
+2090
+</td>
+<td style="text-align:right;">
+158
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Asphalt Roads
 </td>
 <td style="text-align:left;">
 National Total
@@ -936,288 +761,50 @@ National Total
 <td style="text-align:right;">
 2090
 </td>
-</tr>
-<tr>
-<td style="text-align:left;">
-High Tide Flooding and Traffic
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
 <td style="text-align:right;">
-130.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
+1
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-Wildfire
+4
 </td>
-<td style="text-align:left;">
-Health (6)
-</td>
-<td style="text-align:right;">
-37.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Labor
-</td>
-<td style="text-align:left;">
-Labor (1)
-</td>
-<td style="text-align:right;">
-31.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Wind Damage
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
-<td style="text-align:right;">
-26.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Rail
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
-<td style="text-align:right;">
-17.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Roads
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
-<td style="text-align:right;">
-15.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Southwest Dust
-</td>
-<td style="text-align:left;">
-Health (6)
-</td>
-<td style="text-align:right;">
-13.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Electricity Demand and Supply
-</td>
-<td style="text-align:left;">
-Electricity (2)
-</td>
-<td style="text-align:right;">
-11.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Electricity Transmission and Distribution
-</td>
-<td style="text-align:left;">
-Electricity (2)
-</td>
-<td style="text-align:right;">
-10.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Valley Fever
-</td>
-<td style="text-align:left;">
-Health (6)
-</td>
-<td style="text-align:right;">
-10.000
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Coastal Properties
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
-<td style="text-align:right;">
-7.300
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
 <td style="text-align:left;">
 CIL Agriculture
 </td>
 <td style="text-align:left;">
-Agriculture (1)
-</td>
-<td style="text-align:right;">
-4.400
-</td>
-<td style="text-align:left;">
 National Total
 </td>
 <td style="text-align:right;">
 2090
 </td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Urban Drainage
-</td>
-<td style="text-align:left;">
-Infrastructure (7)
-</td>
 <td style="text-align:right;">
-4.100
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
+4
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-Water Quality
+5
 </td>
-<td style="text-align:left;">
-Ecosystems+ Recreation (3)
-</td>
-<td style="text-align:right;">
-2.200
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Winter Recreation
-</td>
-<td style="text-align:left;">
-Ecosystems+ Recreation (3)
-</td>
-<td style="text-align:right;">
-2.100
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-</tr>
-<tr>
 <td style="text-align:left;">
 CIL Crime
 </td>
 <td style="text-align:left;">
-Health (6)
-</td>
-<td style="text-align:right;">
-0.890
-</td>
-<td style="text-align:left;">
 National Total
 </td>
 <td style="text-align:right;">
 2090
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-Inland Flooding
+6
 </td>
 <td style="text-align:left;">
-Infrastructure (7)
-</td>
-<td style="text-align:right;">
-0.710
+CIL Extreme Temperature
 </td>
 <td style="text-align:left;">
 National Total
@@ -1225,37 +812,371 @@ National Total
 <td style="text-align:right;">
 2090
 </td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Marine Fisheries
-</td>
-<td style="text-align:left;">
-Ecosystems+ Recreation (3)
-</td>
 <td style="text-align:right;">
--0.057
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
+522
 </td>
 </tr>
 </tbody>
 </table>
 </div>
+<div id="example-2" class="section level3">
+<h3>Example 2</h3>
+<p>Extract national average of physical damages for all relevant <code>FrEDI</code> sectors for a specified year</p>
+<p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">#specify year</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>c_years =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2090</span>)</span>
+<span id="cb7-3"><a href="#cb7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a>df_filter &lt;-<span class="st"> </span>output_df <span class="op">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="st">  </span><span class="co"># filter for primary sectors and variants (included to avoid double counting)</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="st">    </span><span class="kw">filter</span>(sectorprimary <span class="op">==</span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="st">  </span><span class="co"># filter for national aggregate results averaged across all GCMs and only include sectors that include physical impacts</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="st">    </span><span class="kw">filter</span>(model <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Average&#39;</span>,<span class="st">&#39;Interpolation&#39;</span>),</span>
+<span id="cb7-10"><a href="#cb7-10"></a>           region <span class="op">==</span><span class="st"> &quot;National Total&quot;</span>,</span>
+<span id="cb7-11"><a href="#cb7-11"></a>           year <span class="op">%in%</span><span class="st"> </span>c_years,</span>
+<span id="cb7-12"><a href="#cb7-12"></a>           <span class="op">!</span>(<span class="kw">is.na</span>(physicalmeasure))) <span class="op">%&gt;%</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a><span class="st">   </span><span class="kw">mutate</span>(<span class="kw">across</span>(<span class="kw">c</span>(<span class="st">&#39;physical_impacts&#39;</span>), round, <span class="dv">0</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="st">    </span><span class="kw">select</span>(<span class="st">&#39;sector&#39;</span>,<span class="st">&#39;region&#39;</span>,<span class="st">&#39;year&#39;</span>,<span class="st">&#39;physicalmeasure&#39;</span>, <span class="st">&#39;impactType&#39;</span>,<span class="st">&#39;physical_impacts&#39;</span>)</span>
+<span id="cb7-15"><a href="#cb7-15"></a></span>
+<span id="cb7-16"><a href="#cb7-16"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.</span></span>
+<span id="cb7-17"><a href="#cb7-17"></a></span>
+<span id="cb7-18"><a href="#cb7-18"></a><span class="kw">kable</span>(df_filter[<span class="dv">2</span><span class="op">:</span><span class="dv">6</span>,], <span class="dt">caption =</span> <span class="st">&#39;Subset of results&#39;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb7-19"><a href="#cb7-19"></a><span class="st">  </span><span class="kw">kable_styling</span>(<span class="dt">font_size =</span> <span class="dv">12</span>, <span class="dt">full_width =</span> F)</span></code></pre></div>
+<table class="table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+Subset of results
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+sector
+</th>
+<th style="text-align:left;">
+region
+</th>
+<th style="text-align:right;">
+year
+</th>
+<th style="text-align:left;">
+physicalmeasure
+</th>
+<th style="text-align:left;">
+impactType
+</th>
+<th style="text-align:right;">
+physical_impacts
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Premature Mortality
+</td>
+<td style="text-align:left;">
+Ozone
+</td>
+<td style="text-align:right;">
+1318
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Premature Mortality
+</td>
+<td style="text-align:left;">
+PM2.5
+</td>
+<td style="text-align:right;">
+4016
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+CIL Crime
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Crimes
+</td>
+<td style="text-align:left;">
+Property
+</td>
+<td style="text-align:right;">
+1649
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+CIL Crime
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Crimes
+</td>
+<td style="text-align:left;">
+Violent
+</td>
+<td style="text-align:right;">
+3095
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+6
+</td>
+<td style="text-align:left;">
+CIL Extreme Temperature
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Premature Mortality
+</td>
+<td style="text-align:left;">
+N/A
+</td>
+<td style="text-align:right;">
+17668
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="example-3" class="section level3">
+<h3>Example 3</h3>
+<p>Extract regional economic damages for <code>FrEDI</code> sectors for a specified year</p>
+<p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">#specify year</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>c_years =<span class="st"> </span><span class="kw">c</span>(<span class="dv">2090</span>)</span>
+<span id="cb8-3"><a href="#cb8-3"></a></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a>df_filter &lt;-<span class="st"> </span>output_df <span class="op">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="st">  </span><span class="co"># filter for primary sectors and variants (included to avoid double counting)</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="st">    </span><span class="kw">filter</span>(sectorprimary <span class="op">==</span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="st">  </span><span class="co">#use helper function to aggregate across impact types</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="st">    </span><span class="kw">aggregate_impacts</span>(<span class="dt">aggLevels =</span> <span class="st">&#39;impactType&#39;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="st">  </span><span class="co"># filter for national aggregate results averaged across all GCMs and only include sectors that include physical impacts</span></span>
+<span id="cb8-11"><a href="#cb8-11"></a><span class="st">    </span><span class="kw">filter</span>(model <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Average&#39;</span>,<span class="st">&#39;Interpolation&#39;</span>),</span>
+<span id="cb8-12"><a href="#cb8-12"></a>           <span class="op">!</span>(region <span class="op">==</span><span class="st"> &quot;National Total&quot;</span>),</span>
+<span id="cb8-13"><a href="#cb8-13"></a>           year <span class="op">%in%</span><span class="st"> </span>c_years) <span class="op">%&gt;%</span></span>
+<span id="cb8-14"><a href="#cb8-14"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">annual_impacts =</span> annual_impacts <span class="op">/</span><span class="fl">1e9</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-15"><a href="#cb8-15"></a><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(<span class="kw">c</span>(<span class="st">&#39;annual_impacts&#39;</span>), round, <span class="dv">0</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb8-16"><a href="#cb8-16"></a><span class="st">    </span><span class="kw">select</span>(<span class="st">&#39;sector&#39;</span>,<span class="st">&#39;region&#39;</span>,<span class="st">&#39;year&#39;</span>,<span class="st">&#39;annual_impacts&#39;</span>)</span>
+<span id="cb8-17"><a href="#cb8-17"></a></span>
+<span id="cb8-18"><a href="#cb8-18"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: this dataframe includes damages resulting from multiple studies of extreme temperature impacts. See the FrEDI Technical Documentation for details.</span></span>
+<span id="cb8-19"><a href="#cb8-19"></a></span>
+<span id="cb8-20"><a href="#cb8-20"></a><span class="kw">kable</span>(df_filter[<span class="dv">8</span><span class="op">:</span><span class="dv">14</span>,], <span class="dt">caption =</span> <span class="st">&#39;Subset of results&#39;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-21"><a href="#cb8-21"></a><span class="st">  </span><span class="kw">kable_styling</span>(<span class="dt">font_size =</span> <span class="dv">12</span>, <span class="dt">full_width =</span> F)</span></code></pre></div>
+<table class="table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+Subset of results
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+sector
+</th>
+<th style="text-align:left;">
+region
+</th>
+<th style="text-align:right;">
+year
+</th>
+<th style="text-align:right;">
+annual_impacts
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+8
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Midwest
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+-26
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+9
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Northeast
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+34
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+10
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Northern Plains
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+-2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+11
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Northwest
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+12
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Southeast
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+100
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+13
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Southern Plains
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+14
+</td>
+<td style="text-align:left;">
+Air Quality
+</td>
+<td style="text-align:left;">
+Southwest
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:right;">
+44
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
 </div>
 </div>
 <div id="SVFrEDI" class="section level1">
 <h1><code>FrEDI</code> SV Module</h1>
-<p>This chunk provides an example of running the FrEDI_SV() module to quantify differential impacts of climate change across different populations.</p>
+<p>This chunk provides an example of running the <code>FrEDI_SV</code> module to quantify differential impacts of climate change across different populations.</p>
 <p>NOTE: ‘main’ run_fredi_sv does not currently run. (‘sv_template_update’ branch has the latest version)</p>
 <hr />
 </div>
 <div id="info" class="section level1">
 <h1>Additional Information</h1>
+<div id="functionDocs" class="section level3">
+<h3><code>FrEDI</code> Function Documentation</h3>
+<p>After successfully <a href="#installFrEDI">installing <code>FrEDI</code></a>, documentation for <code>FrEDI</code> functions can be accessed in the same way as for other <code>R</code> packages.</p>
+<p>For an overview of <code>FrEDI</code>’s user-defined functions, type <code>library(help=&quot;FrEDI&quot;)</code> into an <code>R</code> console (this command will show documentation for <code>FrEDI</code> even if the package is not installed).</p>
+<p>For documentation for a specific function, type <code>help(&quot;</code><em>functionName</em><code>&quot;, package=&quot;FrEDI&quot;)</code> into an <code>R</code> console, where <em>functionName</em> is the name of one of the functions in <code>ciraTempBin</code> (e.g., <code>help(&quot;aggregate_impacts&quot;, package=&quot;FrEDI&quot;)</code>).</p>
+<p>If <code>FrEDI</code> has been installed, users can also search for function-specific documentation in RStudio through the <a href="https://www.r-project.org/help.html"><strong>Help</strong> window</a>. Move the focus to the <strong>Help</strong> window using the keyboard shortcut <code>Ctrl+3</code> or toggle the search field in <strong>Help</strong> using <code>Ctrl+Alt+F1</code>. For more information on using the <strong>Help</strong> window, see <a href="https://www.r-project.org/help.html" class="uri">https://www.r-project.org/help.html</a>. Documentation for each function includes examples.</p>
+</div>
 </div>
 </section>
 
