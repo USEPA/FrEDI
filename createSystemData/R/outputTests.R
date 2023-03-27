@@ -1,62 +1,73 @@
 
 ###### General Output Tests ######
-
-general_output_test <- function(
-    new_output,
+### Output test for Main FrEDI
+general_fredi_test <- function(
+    newOutputs,
     outPath   = ".",
-    xlsxName  = "testResults_general_output.xlsx",
+    xlsxName  = "testResults_fredi_general.xlsx",
     save      = TRUE,
     return    = TRUE,
     overwrite = TRUE
 ){
-  
-  ##### Prepare the Data ######
-  # load Default Data
-  data("defaultResults")
-  
-  #new_output <- defaultResults %>%
-  #              filter(sector != "Air Quality")
-  save_list <- list()
+  ###### Initialize Lists ######
+  save_list   <- list()
+  data_list   <- list()
   
   #### Data Table Names ######
+  ### Data names
+  c_ref0      <- "refData"
+  c_new0      <- "newData"
   ### Names of objects to save
-  c_out0 <- "general_tests"
-  c_diff0   <- "tests_diffs"
+  c_genTest0  <- "dataInfo_test"
+  c_diff0     <- "outputs_diffs"
+  
+  ###### Load Reference Data ######
+  ### Load previous Default Data to compare to new outputs
+  ### 0. Names for reference data
+  ### 1. Create new environment
+  ### 2. Load data into new environment
+  ### 3. Remove intermediate objects
+  dName0      <- "defaultResults" ### Name of data to load
+  dPkg0       <- "FrEDI"          ### Name of package to load data from (i.e., FrEDI)
+  newEnv      <- new.env()
+  dName0 %>% data(package=dPkg0, envir=newEnv)
+  refOutputs  <- defaultResults
+  rm("newEnv", "defaultResults")
   
   
-  #### General Dimension Checks ####
-  data_list <- list(defaultResults,new_output)
-    names(data_list) <- c("old_dat", "new_dat")
+  ###### Add Data to List ######
+  ### Create a list of new data and reference data
+  data_list[[c_ref0]] <- refOutputs
+  data_list[[c_new0]] <- newOutputs
        
-  general_test <- data_list %>% dataInfo_test(
-                  csvName = "output_testResults",
-                  save    = FALSE,
-                  return  = return_test
-                  )
+  ###### General Dimension Checks ######
+  ### Get general dimension test and add to save list
+  df_dataInfo <- data_list %>% dataInfo_test(save=F, return=T)
+  save_list[[c_genTest0]] <- df_dataInfo
   
-  save_list[["general_test"]] <- general_test
-  
-  ### Write dimension checks to workbook
-  if(save){
+  ###### Compare Tables #######
+  ### Get anti-join between the two tables
+  ### Add table to save_list
+  df_diffs  <- newOutputs %>% anti_join(refOutputs)
+  save_list[[c_diff0]] <- df_diffs
+
+  ###### Create Excel Workbook ######
+  ### Create workbook if save=T
+  ### Iterate over names in save_list, adding worksheets and saving tables
+  if(save) {
+    ### Create workbook
     wbook0  <- createWorkbook()
-    wbook0 %>% addWorksheet(sheetName = c_out0)
-    wbook0 %>% writeDataTable(sheet = c_out0, x = general_test)
-  }
-  
-  
-  #####  Find Differences between table  #######
-  
-  table_anti_join <- anti_join(defaultResults,new_output)
-  
-  save_list[["table_difference"]] <- table_anti_join
-  
-  if(save){
-    wbook0 %>% addWorksheet(sheetName = c_diff0)
-    wbook0 %>% writeDataTable(sheet = c_diff0, table_anti_join)
-  }
+    ### Names
+    c_save0 <- save_list %>% names
+    ### Iterate over items in save_list: add worksheets and save tables
+    for(name_i in c_save0) {
+      wbook0 %>% addWorksheet(sheetName = name_i)  
+      wbook0 %>% writeDataTable(sheet = name_i, x = save_list[[name_i]], tableName = name_i)
+    } ### End for(name_i in c_save0) 
+  } ### End if(save)
 
     
-  #### Save Write Workbook Option ####
+  ###### Save Workbook ####
   if(save){
     "Saving output test results" %>% paste0("...") %>% message
     outDir    <- outPath %>% file.path("data_tests")
@@ -77,6 +88,4 @@ general_output_test <- function(
     return(save_list)
   } ### End return
   
-  
-  
-}
+} ### End function
