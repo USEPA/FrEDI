@@ -36,7 +36,7 @@ frediConfig <- function(outPath){
   ### Add items to a list and return the list
   fredi_config     <- list(
     messages_data    = messages_data,
-    messages_fredi = messages_fredi,
+    messages_fredi   = messages_fredi,
     ### Types of aggregation for temperature binning
     aggList0         = c("national", "model", "impactYear", "impactType"),
     ### Minimum and Maximum Years
@@ -46,8 +46,8 @@ frediConfig <- function(outPath){
     ### Values to use in reports
     list_years_by5   = seq(minYear, maxYear, 5),  ### Sequence from 2010 to 2090 with 5 year intervals
     ### Years for plotting
-    list_years_by10   = seq(minYear, maxYear, 10), ### Sequence for tick marks
-    list_years_by20   = seq(minYear, maxYear, 20), ### Years by 20
+    list_years_by10  = seq(minYear, maxYear, 10), ### Sequence for tick marks
+    list_years_by20  = seq(minYear, maxYear, 20), ### Years by 20
     ### Groups for plotting
     groupLevels0     = c("sector", "adaptation", "impactYear", "impactType", "modelType", "model", "region"),
     ### Values to use in discounting
