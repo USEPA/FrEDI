@@ -13,6 +13,7 @@ Description: This R package models damages and impacts from climate change in th
 License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 3.5.0),
+    tidyverse,
     dplyr,
     ggplot2,
     tidyr,
