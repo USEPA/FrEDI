@@ -884,11 +884,6 @@ time_create     <- time2 - time1; time_create
 ```
 
 
-
-
-
-
-
 **Manually update the sysdata.rda file in the Rtool.**
 
 After copying and pasting the system data to the Rtool, try detaching the package and then loading the package functions. 
@@ -973,6 +968,17 @@ test1 %>% glimpse
 test1$driverUnit %>% unique
 ```
 
+## Test Run against defualt run
+```{r test FrEDI Output Against default data}
+
+test1 %>% general_output_test(
+    outPath   = ".",
+    xlsxName  = "testResults_general_output.xlsx",
+    save      = TRUE,
+    return    = TRUE,
+    overwrite = TRUE)
+
+```
 
 
 First checks: There are more NA values than non NA values
