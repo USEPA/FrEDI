@@ -500,7 +500,7 @@ newSectors_config_test <- function(
   ### Iterate over names of tables with differences:
   ### - Add tables with differences to list
   ### - Write tables with differences to xlsx workbook
-  names0  <- df_diff$Table.Name
+  names0  <- df_diff[["Table.Name"]]
   names0 %>% walk(function(
     name_i, 
     new0=newData[[name_i]], 
@@ -510,7 +510,9 @@ newSectors_config_test <- function(
     sheet0 <- name_i %>% paste("diff", sep="_")
     
     ### Get difference
-    diff0  <- new0   %>% anti_join(ref0)
+    join0  <- new0   %>% names %>% (function(y, z=ref0){y[(y %in% names(z))]})
+    diff0  <- new0   %>% anti_join(ref0, by=c(all_of(join0)))
+    rm("join0")
     
     ### Add table to list
     saveList[[sheet0]] <- diff0

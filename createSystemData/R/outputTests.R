@@ -30,9 +30,11 @@ general_fredi_test <- function(
   dName0      <- "defaultResults" ### Name of data to load
   dPkg0       <- "FrEDI"          ### Name of package to load data from (i.e., FrEDI)
   newEnv      <- new.env()
-  dName0 %>% data(package=dPkg0, envir=newEnv)
-  refOutputs  <- defaultResults
-  rm("newEnv", "defaultResults")
+  expr0       <- substitute(data(d, package=dPkg0, envir=newEnv), list(d=dName0))
+  expr0 %>% eval
+  refOutputs  <- dName0 %>% get(envir=newEnv, inherits = F)
+  rm("newEnv")
+  # refOutputs %>% glimpse
   
   
   ###### Add Data to List ######
@@ -46,9 +48,11 @@ general_fredi_test <- function(
   save_list[[c_genTest0]] <- df_dataInfo
   
   ###### Compare Tables #######
-  ### Get anti-join between the two tables
+  ### Get anti-join between the two tables: Join using all names
   ### Add table to save_list
-  df_diffs  <- newOutputs %>% anti_join(refOutputs)
+  # join0     <- newOutputs %>% names
+  join0     <- newOutputs   %>% names %>% (function(y, z=refOutputs){y[(y %in% names(z))]})
+  df_diffs  <- newOutputs %>% anti_join(refOutputs, by=c(all_of(join0)))
   save_list[[c_diff0]] <- df_diffs
 
   ###### Create Excel Workbook ######
