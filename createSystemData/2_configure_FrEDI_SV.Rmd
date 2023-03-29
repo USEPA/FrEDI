@@ -102,7 +102,8 @@ Select a specific sector if not all sectors have been updated.
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 
-c_sv_sectors     <- get_sv_sectorInfo()
+c_sv_sectors     <- try(get_sv_sectorInfo())
+if("try-error" %in% class(c_sv_sectors)){c_sv_sectors <- NULL}
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
 #c_sv_sectors     <- c("Labor","Roads","Extreme Temperature")
