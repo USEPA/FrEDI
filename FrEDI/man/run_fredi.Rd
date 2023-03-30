@@ -5,8 +5,7 @@
 \title{Project annual average climate change impacts throughout the 21st century for available sectors}
 \usage{
 run_fredi(
-  inputsList = list(tempInput = NULL, slrInput = NULL, gdpInput = NULL, popInput =
-    NULL),
+  inputsList = list(tempInput = NULL, slrInput = NULL, gdpInput = NULL, popInput = NULL),
   sectorList = NULL,
   aggLevels = c("national", "modelaverage", "impactyear", "impacttype"),
   elasticity = NULL,
@@ -15,6 +14,7 @@ run_fredi(
   pv = FALSE,
   baseYear = 2010,
   rate = 0.03,
+  outputList = FALSE,
   silent = TRUE
 )
 }
@@ -33,6 +33,8 @@ run_fredi(
 
 \item{rate}{Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to \code{rate=0.03} (i.e., 3\% per year).}
 
+\item{outputList}{A \code{ TRUE/FALSE} indicating whether to results as a data frame object (\code{outputList=FALSE}, default) or to return a list that includes results as well as input arguments (\code{outputList=TRUE}).}
+
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 
 \item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If \code{elasticity=NULL} (default), \code{\link[=run_fredi]{run_fredi()}} uses default elasticities.}
@@ -43,7 +45,7 @@ run_fredi(
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
 }
 \description{
-This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, adaptation (or variant), impact type, model (GCM or SLR scenario), and region.
+This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, model (GCM or SLR scenario), and region.
 }
 \details{
 This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. \code{\link[=run_fredi]{run_fredi()}} is the main function in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information).
@@ -71,14 +73,14 @@ Annual impacts for each sector, variant, impact type, and impact year combinatio
 
 \code{\link[=run_fredi]{run_fredi()}} aggregates or summarizes results to level(s) of aggregation specified by the user (passed to \code{aggLevels}) using the post-processing helper function \code{\link[=aggregate_impacts]{aggregate_impacts()}}. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels="national"}), averaging across model types and models (\code{aggLevels="modelaverage"}), summing over all impact types (\code{aggLevels="impacttype"}), and interpolating between impact year estimates (\code{aggLevels="impactYear"}). Users can specify all aggregation levels at once by specifying \code{aggLevels="all"} (default) or no aggregation levels (\code{aggLevels="none"}).
 
-For each of the \code{aggLevels}, \code{\link[=run_fredi]{run_fredi()}} performs the following summarization using \code{\link[=aggregate_impacts]{aggregate_impacts()}} (note that the \code{"variant"} column referred to below contains information about the adaptation or variant name or \verb{“N/A”}, as applicable):
+For each of the \code{aggLevels}, \code{\link[=run_fredi]{run_fredi()}} performs the following calculations using \code{\link[=aggregate_impacts]{aggregate_impacts()}} (note that the \code{"variant"} column referred to below contains information about the variant (or adaptation) name or \verb{“N/A”}, as applicable):
 
 \tabular{ll}{
 \strong{Aggregation Level} \tab \strong{Description} \cr
 \code{national} \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"},  \code{"impactYear"}, \code{"model_type"}, \code{"model"}, and \code{"year"}) and summed across regions. Years which have missing column data for all regions return as \code{NA}. The rows of the data frame of national values (with column \code{region="National Total"}) are then added as rows to the results. \cr
 \code{modelaverage} \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"}, \code{"model_type"}, \code{"region"}, and \code{"year"} and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as \code{NA}. The rows of model averages (with column \code{model="Average"} are then added as rows to the results data frame. \cr
-\code{impactType} \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"},\code{"model_type"}, \code{"model"}, \code{"region"}, and \code{"year"} and summed across impact types. Mutates column \code{impactType="all"} for all values. Years which have missing column data for all impact types return as \code{NA}. If results are aggregated across impact types, information about physical impacts (columns \code{"physicalmeasure"} and \code{"physical_impacts"}) are dropped.\cr
-\code{impactYear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear = "N/A"}) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns \verb{"sector", "variant", "impactType, "model_type", "model", "region", "year"} and interpolated across years with the 2010 run assigned to year 2010 and the max year run assigned to the max year. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
+\code{impacttype} \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"},\code{"model_type"}, \code{"model"}, \code{"region"}, and \code{"year"} and summed across impact types. Mutates column \code{impactType="all"} for all values. Years which have missing column data for all impact types return as \code{NA}. If results are aggregated across impact types, information about physical impacts (columns \code{"physicalmeasure"} and \code{"physical_impacts"}) are dropped.\cr
+\code{impactyear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear = "N/A"}) are separated from those with multiple impact year estimates. Sectors with multiple impact years have separate results for impact years 2010 and 2090. For these sectors, annual results are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
 }
 
 Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting \code{pv=TRUE} (defauts to \code{pv=FALSE}). If \code{pv=TRUE}, discounted impacts are calculated using a base year and annual discount rate as \code{discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)}. Set base year and annual discount rate using \code{baseYear} (defaults to \code{baseYear=2010}) and \code{rate} (defaults to 3\% i.e., \code{rate=0.03}), respectively.
@@ -105,7 +107,7 @@ example_inputsList <- import_inputs(
 )
 
 ### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
-df_tempExOut <- run_fredi(inputsList= tempBin_inputs, aggLevels="none", pv=TRUE, silent=TRUE)
+df_tempExOut <- run_fredi(inputsList=example_inputsList, aggLevels="none", pv=TRUE, silent=TRUE)
 
 }
 \references{

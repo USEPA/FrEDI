@@ -11,9 +11,9 @@ convertTemps(temps, from)
 
 \item{from}{A character string (one of  \code{c("conus", "global")}), indicating whether users are converting from CONUS to global temperatures (\code{from="conus"}) or from global to CONUS (\code{from="global"}).
 
-Temperatures for the contiguous U.S. (CONUS) in degrees Celsius are converted to global temperatures (\code{convertTemps(temps, from="conus")}) in degrees Celsius by multiplying CONUS temperatures by a constant \emph{k} (where \emph{k=1.421}).
+Temperatures for the contiguous U.S. (CONUS) in degrees Celsius are converted to global temperatures (\code{convertTemps(temps, from="conus")}) in degrees Celsius by multiplying CONUS temperatures by a constant \emph{1/k} (where \emph{k=1.421}).
 
-Global temperatures in degrees Celsius are converted to CONUS temperatures (\code{convertTemps(temps, from="global")}) in degrees Celsius by multiplying global temperatures by a constant \emph{1/k} (where \emph{k=1.421}).}
+Global temperatures in degrees Celsius are converted to CONUS temperatures (\code{convertTemps(temps, from="global")}) in degrees Celsius by multiplying global temperatures by a constant \emph{k} (where \emph{k=1.421}).}
 }
 \value{
 Outputs a numeric vector of temperatures in degrees Celsius.

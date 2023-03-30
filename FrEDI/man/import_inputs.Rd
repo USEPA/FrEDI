@@ -14,13 +14,13 @@ import_inputs(
 )
 }
 \arguments{
-\item{tempfile}{A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years in the interval 2000 to 2300 (values must start in 2000 or earlier); second column contains temperatures, in degrees Celsius, above the 1995 baseline).}
+\item{tempfile}{A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years; second column contains temperatures, in degrees Celsius, above the 1995 baseline year). The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{slrfile}{A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years in the interval 2000 to 2300 (values must start in 2000 or earlier); second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline).}
+\item{slrfile}{A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years; second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline). The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{popfile}{A character string indicating the location of a CSV file containing a custom population scenario for NCA regions. The first column contains years in the interval 2010 to 2300. The number of additional columns, column names, and column contents depend on the population format set by \code{popform}. For more details, see \code{popform}.}
+\item{popfile}{A character string indicating the location of a CSV file containing a custom population scenario for NCA regions. The first column contains years in the interval 2010 to 2300. The number of additional columns, column names, and column contents depend on the population format set by \code{popform}. For more details, see \code{popform}. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{gdpfile}{A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years in the interval 2010 to 2300; second column contains values for GDP, in total 2015$).}
+\item{gdpfile}{A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years; second column contains values for GDP, in total 2015$). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
 \item{temptype}{A character string indicating whether the temperature values in the temperature input file (specified by \code{tempfile} represent global temperature change (\code{temptype="global"}) or temperature change for the contiguous U.S. (\code{temptype="conus"}) in degrees Celsius. By default, the model assumes temperatures are CONUS temperatures (i.e., \code{temptype="conus"}).}
 
