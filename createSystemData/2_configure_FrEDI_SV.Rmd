@@ -532,6 +532,14 @@ check_sv$svGroupType %>% unique
 ```
 
 
+Or, test defaults:
+
+```{r}
+frediPath %>% load_all
+test_sv <- "Labor" %>% run_fredi_sv(save=T, outpath = resultsPath, overwrite=T, addDate=T)
+```
+
+
 ## Build Package
 
 If tests are passed, run `3_build_FrEDI.Rmd` to build the package.
