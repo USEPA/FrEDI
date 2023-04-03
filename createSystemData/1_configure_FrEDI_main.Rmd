@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20221130"
+mostRecentDate <- "20230403"
 # mostRecentDate <- "20230303_vibrio"
 ```
 
@@ -342,7 +342,7 @@ If above passed tests, overwrite previous config
 ### Uncomment following two lines to create and save data and check the outputs
 time1           <- Sys.time()
 list_systemData <- list_reshapeData %>% createSystemData(save=T, silent=T)
-list_systemData <- list_reshapeData %>% createSystemData(save=T, silent=T)
+#list_systemData <- list_reshapeData %>% createSystemData(save=T, silent=T)
 time2           <- Sys.time()
 time_create     <- time2 - time1; time_create
 ```
@@ -368,7 +368,7 @@ Change the following code if there are new sectors
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
 #c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties","Vibrio")
-c_sectorsList <- c("Vibrio")
+c_sectorsList <- c("Mental Health")
 
 ```
 
@@ -410,6 +410,7 @@ test1$driverUnit %>% unique
 ### Examine Default Results
 
 ```{r examine FrEDI defaults}
+# this is not a defined function currently
 test1 %>% general_output_test(
   outPath   = ".",
   save      = TRUE,
