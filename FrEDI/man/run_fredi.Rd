@@ -25,7 +25,7 @@ run_fredi(
 
 \item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \verb{c("national"}, \code{"modelaverage"}, \code{"impactyear"}, \code{"impacttype"}, \code{"all"}, \verb{"none")}. Defaults to all levels (i.e., \code{aggLevels="all"}). Uses the same aggregation levels as \code{\link[=aggregate_impacts]{aggregate_impacts()}}.}
 
-\item{thru2300}{A \code{ TRUE/FALSE} shortcut that overrides the maxYear argument to run the model to 2300}
+\item{thru2300}{A \code{ TRUE/FALSE} shortcut that overrides the maxYear argument to run the model to 2300.}
 
 \item{pv}{A \code{TRUE/FALSE} value indicating whether to calculate present values for the annual impacts. Defaults to \code{pv=FALSE}. Present values (i.e., discounted impacts) are calculated as \code{discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)}. Set an annual discounting rate and a base year using \code{baseYear} and \code{rate}.}
 
@@ -33,13 +33,13 @@ run_fredi(
 
 \item{rate}{Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to \code{rate=0.03} (i.e., 3\% per year).}
 
-\item{outputList}{A \code{ TRUE/FALSE} indicating whether to results as a data frame object (\code{outputList=FALSE}, default) or to return a list that includes results as well as input arguments (\code{outputList=TRUE}).}
+\item{outputList}{A \code{ TRUE/FALSE} value indicating whether to results as a data frame object (\code{outputList=FALSE}, default) or to return a list of objects (\code{outputList=TRUE}) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.}
 
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 
 \item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If \code{elasticity=NULL} (default), \code{\link[=run_fredi]{run_fredi()}} uses default elasticities.}
 
-\item{maxYear=2090}{A numeric value indicating the maximum year for the analysis}
+\item{maxYear=2090}{A numeric value indicating the maximum year for the analysis.}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
@@ -108,6 +108,8 @@ example_inputsList <- import_inputs(
 
 ### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
 df_tempExOut <- run_fredi(inputsList=example_inputsList, aggLevels="none", pv=TRUE, silent=TRUE)
+
+
 
 }
 \references{
