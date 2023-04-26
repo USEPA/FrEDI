@@ -1,20 +1,26 @@
 ###### Documentation ######
 #' Project annual average climate change impacts throughout the 21st century for available sectors
 #'
+#'
+#'
 #' @description
 #' This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors (see [FrEDI::get_sectorInfo()]). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, model (GCM or SLR scenario), and region.
+#'
+#'
 #'
 #' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier.
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
+#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
+#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis.
+#' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300.
 #' @param pv A `TRUE/FALSE` value indicating whether to calculate present values for the annual impacts. Defaults to `pv=FALSE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
 #' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
-#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
-#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis
-#' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300
-#' @param outputList A ` TRUE/FALSE` indicating whether to results as a data frame object (`outputList=FALSE`, default) or to return a list that includes results as well as input arguments (`outputList=TRUE`).
+#' @param outputList A ` TRUE/FALSE` value indicating whether to results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
+#'
+#'
 #'
 #' @details This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
 #'
@@ -52,8 +58,12 @@
 #'
 #' Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting `pv=TRUE` (defauts to `pv=FALSE`). If `pv=TRUE`, discounted impacts are calculated using a base year and annual discount rate as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set base year and annual discount rate using `baseYear` (defaults to `baseYear=2010`) and `rate` (defaults to 3% i.e., `rate=0.03`), respectively.
 #'
+#'
+#'
 #' @return
 #' The output of [FrEDI::run_fredi()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
+#'
+#'
 #'
 #' @examples
 #' ### Run function with defaults (same as `defaultResults` dataset)
@@ -79,11 +89,16 @@
 #' ### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
 #' df_tempExOut <- run_fredi(inputsList=example_inputsList, aggLevels="none", pv=TRUE, silent=TRUE)
 #'
+#'
+#'
 #' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
 #'
 #'
 #' @export
 #' @md
+#'
+#'
+#'
 #'
 ###### run_fredi ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
