@@ -52,8 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20230403"
-# mostRecentDate <- "20230303_vibrio"
+mostRecentDate <- "20230425"
 ```
 
 
@@ -368,7 +367,7 @@ Change the following code if there are new sectors
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
 #c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties","Vibrio")
-c_sectorsList <- c("Mental Health")
+c_sectorsList <- c("Vibrio")
 
 ```
 
@@ -407,18 +406,32 @@ test1 %>% glimpse
 test1$driverUnit %>% unique
 ```
 
-### Examine Default Results
 
-```{r examine FrEDI defaults}
-# this is not a defined function currently
-test1 %>% general_output_test(
-  outPath   = ".",
-  save      = TRUE,
-  return    = TRUE,
-  overwrite = TRUE
-)
 
-```
+<!-- ```{r} -->
+<!-- c_sectorsList <- c("Vibrio") -->
+<!-- gcm_temps <- openxlsx::read.xlsx("../CONUS Temperature Change.xlsx") |> -->
+<!--  filter(Year >= 2000) -->
+<!-- gcm_names <- names(gcm_temps)[2:7] -->
+
+
+<!-- gcm_outputs <-map_df( -->
+<!--  gcm_names, -->
+<!--  function(x){ -->
+<!--  print(x) -->
+<!--  testInputs <- list( -->
+<!--  ramp = list( -->
+<!--  tempInput = data.frame(year = gcm_temps$Year, temp_C = gcm_temps[x] |> unname()), -->
+<!--  slrInput = data.frame(year = gcm_temps$Year, slr_cm = seq(0, 270, length.out=length(gcm_temps$Year))) -->
+<!--  )) -->
+<!--  testInputs$ramp %>% run_fredi(sectorList = c_sectorsList, aggLevels=c("national", "modelaverage"), maxYear=2099) |> mutate(gcm_run_name = x) -->
+<!--  } -->
+<!-- ) -->
+
+<!-- write_csv(gcm_outputs,"vibrio_gcm_runs.csv") -->
+
+<!-- ``` -->
+
 
 
 
