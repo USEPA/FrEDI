@@ -1,6 +1,6 @@
 table,itemClass,num_cols,num_rows,unique_rows,cols_wAllNA,na_flag,has_dups,passed
 co_sectors,data.frame,3,25,25,0,0,0,1
-scalarDataframe,data.frame,6,1475,1475,0,0,0,1
+scalarDataframe,data.frame,6,1489,1489,0,0,0,1
 data_scaledImpacts,data.frame,10,18984,18984,0,0,0,1
 co_defaultScenario,data.frame,4,119,119,0,0,0,1
 co_defaultTemps,data.frame,3,91,91,0,0,0,1
