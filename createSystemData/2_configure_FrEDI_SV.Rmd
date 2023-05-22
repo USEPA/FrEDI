@@ -127,7 +127,7 @@ list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
   pop      = FALSE,  ### Update SV population data
-  format   = FALSE,  ### Update formats
+  format   = TRUE,  ### Update formats
   impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
 )
@@ -455,11 +455,11 @@ test_sv <-
   (function(
     sectors,
     all     = TRUE,
-    inputs  = testInputs[4],
-    #inputs  = NULL,
+    # inputs  = testInputs[4],
+    inputs  = NULL,
     outpath = resultsPath, 
     # .testing = TRUE,
-    save = T, addDate = T, overwrite=TRUE
+    save = F, addDate = T, overwrite=TRUE
   ){
     ### SLR sectors
     c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
@@ -520,6 +520,7 @@ test_sv$aveRate_sv %>% (function(x, na=F){(!(x %>% is.na)) %>% which %>% length}
 test_sv$driverValue %>% range
 test_sv$aveRate_sv %>% (function(x, na=T){   x %>% is.na   %>% which %>% length})
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x == 0)) %>% which %>% length})
+test_sv %>% filter(is.na(impPop_ref)) %>% select(svGroupType) %>% as.vector %>% unlist %>% unique
 ```
 
 Check high risk populations (should be zero)
@@ -537,6 +538,7 @@ Or, test defaults:
 ```{r}
 frediPath %>% load_all
 test_sv <- "Labor" %>% run_fredi_sv(save=T, outpath = resultsPath, overwrite=T, addDate=T)
+test_sv %>% write.csv(file = resultsPath %>% file.path("Labor.csv"), na = "")
 ```
 
 
