@@ -477,7 +477,7 @@ get_validGroups <- function(
   old0 <- c("colName"    , "valid_popWeightCols")
   new0 <- c("svGroupType", "validGroups")
   ### Reshape svDemoInfo
-  df0  <- df0 %>% filter(colType %in% c("minority")) %>% select(c(old0[1]))
+  df0  <- df0 %>% filter(colType %in% c("bipoc")) %>% select(c(old0[1]))
   df0  <- df0 %>% rename_at(.vars=c(old0[1]), ~c(new0[1]))
   # df0  <- df0 %>% mutate(validGroups = "none")
   # children, highRiskLabor, sv_plus65, none
