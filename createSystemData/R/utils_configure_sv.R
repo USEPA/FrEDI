@@ -120,7 +120,7 @@ get_svDataList <- function(
   
   ###### SV Group Types ######
   ### Group types, weight columns, sector-adaptation info
-  c_svGroupTypes <- (svDataList[["svDemoInfo"]] %>% filter(colType %in% c("sv", "minority")))$colName
+  c_svGroupTypes <- (svDataList[["svDemoInfo"]] %>% filter(colType %in% c("sv", "bipoc")))$colName
   c_svWeightCols <- (svDataList[["svDemoInfo"]] %>% filter(colType == "weight"))$colName
   svSectorInfo   <-  svDataList[["sectorInfo"]] %>% left_join(svDataList[["coAdapt"]], by = "sector_abbr")
   
@@ -215,7 +215,7 @@ get_svDataList <- function(
     
     
     ### Replace NA, NaN values with 0
-    # cols_i  <- (info_i %>% filter(colType=="minority"))$colName #; cols_i %>% print
+    # cols_i  <- (info_i %>% filter(colType=="bipoc"))$colName #; cols_i %>% print
     cols_i  <- c(c_svGroupTypes, c_svWeightCols)
     cols_i  <- cols_i[cols_i %in% names(table_i)]
     table_i <- table_i    %>%
