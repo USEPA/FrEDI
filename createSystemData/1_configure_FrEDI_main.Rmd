@@ -52,7 +52,7 @@ require(devtools)
 Date of most recent version of the Excel configuration file:
 
 ```{r mostRecentDate}
-mostRecentDate <- "20230425"
+mostRecentDate <- "20230503"
 ```
 
 
@@ -367,7 +367,7 @@ Change the following code if there are new sectors
 ```{r new_sectors}
 # c_sectorsList <- FrEDI::get_sectorInfo()
 #c_sectorsList <- c("ATS Extreme Temperature", "Rail", "Coastal Properties","Vibrio")
-c_sectorsList <- c("Vibrio")
+c_sectorsList <- c("Vibrio", "Mental Health")
 
 ```
 
