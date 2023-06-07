@@ -92,6 +92,11 @@ Use the following code to update documentation
 ```
 
 
+Issues with building the package:
+
+* https://community.rstudio.com/t/r-version-4-2-2-devtools-build-manual-fails/154217/6
+* Probably need LaTeX to build manual
+
 ```{r updateDocs}
 ###### Update Documentation ######
 ###### - Build Manual
