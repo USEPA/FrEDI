@@ -21,7 +21,7 @@ Authors@R: c(person("Corinne", "Hartin",
                       role = "ctb",
                       comment = c(github = "tonygard-indecon"))
               )
-URL: https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/, https://usepa.github.io/FrEDI/
+URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
 Description: This R package models damages and impacts from climate change in the contiguous United States (CONUS) 
     using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the Climate Change Impacts and 
     Risk Analysis (CIRA) project at the U.S. Environmental Protection Agency. The package contains functions that 

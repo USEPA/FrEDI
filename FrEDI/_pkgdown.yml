@@ -1,0 +1,51 @@
+url: https://usepa.github.io/FrEDI
+template:
+  bootstrap: 5
+  bootswatch: simplex
+  bslib:
+    pkgdown-nav-height: 80px
+    primary: '#0e6cb6' #"#005ea2"
+    secondary: '#62c342'
+development:
+  mode: auto
+
+navbar:
+  #bg: light
+  structure:
+    left:  [reference, articles]
+    right: [search, github]
+
+  left:
+    - icon: fa-home fa-lg
+      href: "index.html"
+#    - text: About
+#      href: "articles/About.html"
+    - text: Getting Started
+      menu:
+       - text: "About FrEDI"
+         href: articles/About.html
+       - text: "Installing & Running FrEDI"
+         href: articles/manual.html
+    - text: Documentation
+      href: "articles/References.html"
+    - text: Examples
+      menu:
+        - text: "Example: Run with default parameters"
+          href: articles/Example1.html
+    - text: Functions
+      href: "reference/index.html"
+    - text: News
+      href: "news/index.html"
+
+home:
+  sidebar:
+    strucure: [links, license, citation, authors]
+
+footer:
+  structure:
+    left: developed_by
+    right: [built_with, date]
+  components:
+    date: "| June 2023"
+
+#destination: ../docs/
