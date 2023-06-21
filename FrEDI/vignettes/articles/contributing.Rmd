@@ -1,0 +1,21 @@
+---
+title: "Contributing to FrEDI"
+date: "June, 2023"
+description: >
+  How to Contribute to FrEDI.
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Contributing to FrEDI}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+More information coming soon.

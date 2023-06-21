@@ -18,24 +18,30 @@ navbar:
   left:
     - icon: fa-home fa-lg
       href: "index.html"
-#    - text: About
-#      href: "articles/About.html"
     - text: Getting Started
       menu:
        - text: "About FrEDI"
          href: articles/About.html
        - text: "Installing & Running FrEDI"
          href: articles/manual.html
+       - text: "Contributing to FrEDI"
+         href: articles/contributing.html
     - text: Documentation
       href: "articles/References.html"
     - text: Examples
       menu:
-        - text: "Example: Run with default parameters"
+        - text: "Example: Run FrEDI with default parameters"
           href: articles/Example1.html
+        - text: "Example: Run FrEDI_SV with default parameters"
+          href: articles/Example2.html
     - text: Functions
       href: "reference/index.html"
     - text: News
       href: "news/index.html"
+  right:
+    - icon: fa-github fa-lg
+      href: "https://github.com/USEPA/FrEDI"
+
 
 home:
   sidebar:

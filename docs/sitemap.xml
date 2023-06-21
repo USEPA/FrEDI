@@ -10,7 +10,13 @@
     <loc>https://usepa.github.io/FrEDI/articles/articles/About.html</loc>
   </url>
   <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/contributing.html</loc>
+  </url>
+  <url>
     <loc>https://usepa.github.io/FrEDI/articles/articles/Example1.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/Example2.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/articles/articles/manual.html</loc>
@@ -19,7 +25,13 @@
     <loc>https://usepa.github.io/FrEDI/articles/articles/References.html</loc>
   </url>
   <url>
+    <loc>https://usepa.github.io/FrEDI/articles/contributing.html</loc>
+  </url>
+  <url>
     <loc>https://usepa.github.io/FrEDI/articles/Example1.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/Example2.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/articles/index.html</loc>
@@ -32,6 +44,9 @@
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/authors.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/CODE_OF_CONDUCT.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/index.html</loc>

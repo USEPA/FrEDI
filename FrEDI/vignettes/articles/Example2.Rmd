@@ -1,0 +1,22 @@
+---
+title: "Example #2"
+date: "June, 2023"
+description: >
+  Running & Analyzing results from FrEDI SV.
+#output: rmarkdown::html_vignette
+output: html_document
+#source: repo_source('FrEDI/', path_rel(input, paste0('FrEDI/',pkg$src_path))
+vignette: >
+  %\VignetteIndexEntry{Example #2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Running FrEDI's Social Vulnerability Module
+
+Example coming soon 
+
