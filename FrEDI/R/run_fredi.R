@@ -11,7 +11,7 @@
 #' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier.
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
-#' @param elasticity=NULL A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If `elasticity=NULL` (default), [FrEDI::run_fredi()] uses default elasticities.
+#' @param elasticity=0.4 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=0.4`. Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality).
 #' @param maxYear=2090 A numeric value indicating the maximum year for the analysis.
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300.
 #' @param pv A `TRUE/FALSE` value indicating whether to calculate present values for the annual impacts. Defaults to `pv=FALSE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
@@ -402,7 +402,7 @@ run_fredi <- function(
     rm("pop_default", "national_pop_default")
   } ### End else(has_popUpdate)
   ### Message user
-  if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_tempBin[["updatePopGDP"]]}}
+  if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_data[["updatePopGDP"]]}}
   ### Filter to correct years
   gdp_df            <- gdp_df            %>% filter(year >= minYear) %>% filter(year <= maxYear)
   pop_df            <- pop_df            %>% filter(year >= minYear) %>% filter(year <= maxYear)
@@ -423,7 +423,7 @@ run_fredi <- function(
   # updatedScenario %>% group_by_at(.vars=c("region", "year")) %>% summarize(n=n(), .groups="keep") %>% ungroup %>% filter(n>1) %>% nrow %>% print
 
   ###### Update Scalars ######
-  if(msgUser) message("", messages_tempBin[["updateScalars"]]$try, "")
+  if(msgUser) message("", list_messages[["updateScalars"]]$try, "")
   # mutateCols0     <- c("scalarName", "scalarType", "national_or_regional")
   # mutateVals0     <- c("reg_pop", "physScalar", "regional")
   ### Filter main scalars to correct years and filter out regional population
@@ -540,7 +540,7 @@ run_fredi <- function(
     rm("initialResults_npd", "co_npdScalars", "npdScalars")
   }
   ### Message the user
-  if(msgUser) message("\t", messages_tempBin[["updateScalars"]]$success)
+  if(msgUser) message("\t", list_messages[["updateScalars"]]$success)
 
 
   ###### Scenario ID  ######
@@ -554,7 +554,7 @@ run_fredi <- function(
 
   ###### Scaled Impacts  ######
   ### Initialize and empty data frame df_scenarioResults
-  if(msgUser) message(messages_tempBin[["scaledImpacts"]]$try)
+  if(msgUser) message(list_messages[["scaledImpacts"]]$try)
   if(msgUser) message("Calculating scaled impacts...")
   df_scenarioResults  <- data.frame()
   impactSelectCols    <- c("year", "scaled_impacts", "scenario_id")
@@ -754,7 +754,7 @@ run_fredi <- function(
   # initialResults %>% names %>% print; df_scenarioResults %>% names %>% print
   df_impacts <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
   rm("initialResults")
-  if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
+  if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
 
   # df_impacts %>% names %>% print
   # initialResults$modelUnit_label %>% unique %>% print
