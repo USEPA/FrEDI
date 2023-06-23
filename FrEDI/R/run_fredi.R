@@ -402,7 +402,7 @@ run_fredi <- function(
     rm("pop_default", "national_pop_default")
   } ### End else(has_popUpdate)
   ### Message user
-  if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_tempBin[["updatePopGDP"]]}}
+  if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_data[["updatePopGDP"]]}}
   ### Filter to correct years
   gdp_df            <- gdp_df            %>% filter(year >= minYear) %>% filter(year <= maxYear)
   pop_df            <- pop_df            %>% filter(year >= minYear) %>% filter(year <= maxYear)
@@ -423,7 +423,7 @@ run_fredi <- function(
   # updatedScenario %>% group_by_at(.vars=c("region", "year")) %>% summarize(n=n(), .groups="keep") %>% ungroup %>% filter(n>1) %>% nrow %>% print
 
   ###### Update Scalars ######
-  if(msgUser) message("", messages_tempBin[["updateScalars"]]$try, "")
+  if(msgUser) message("", list_messages[["updateScalars"]]$try, "")
   # mutateCols0     <- c("scalarName", "scalarType", "national_or_regional")
   # mutateVals0     <- c("reg_pop", "physScalar", "regional")
   ### Filter main scalars to correct years and filter out regional population
@@ -540,7 +540,7 @@ run_fredi <- function(
     rm("initialResults_npd", "co_npdScalars", "npdScalars")
   }
   ### Message the user
-  if(msgUser) message("\t", messages_tempBin[["updateScalars"]]$success)
+  if(msgUser) message("\t", list_messages[["updateScalars"]]$success)
 
 
   ###### Scenario ID  ######
@@ -554,7 +554,7 @@ run_fredi <- function(
 
   ###### Scaled Impacts  ######
   ### Initialize and empty data frame df_scenarioResults
-  if(msgUser) message(messages_tempBin[["scaledImpacts"]]$try)
+  if(msgUser) message(list_messages[["scaledImpacts"]]$try)
   if(msgUser) message("Calculating scaled impacts...")
   df_scenarioResults  <- data.frame()
   impactSelectCols    <- c("year", "scaled_impacts", "scenario_id")
@@ -754,7 +754,7 @@ run_fredi <- function(
   # initialResults %>% names %>% print; df_scenarioResults %>% names %>% print
   df_impacts <- initialResults %>% left_join(df_scenarioResults, by=c("scenario_id", "year"));
   rm("initialResults")
-  if(msgUser) message("\t", messages_tempBin[["scaledImpacts"]]$success)
+  if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
 
   # df_impacts %>% names %>% print
   # initialResults$modelUnit_label %>% unique %>% print
