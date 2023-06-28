@@ -51,7 +51,7 @@ jobs:
         git push origin
     - name: Push changes
       # uses: ad-m/github-push-action@master
-      uses: ad-m/github-push-action@master
+      uses: r-lib/github-push-action@master
       with:
         branch: joss
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
