@@ -17,14 +17,32 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     name: Paper Draft
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Build draft PDF
-      uses: openjournals/openjournals-draft-action@master
-      # "paper-path:" i should be the path to the paper within your repo.
-      with:
-        journal: joss
+    - name: Open Journals PDF Generator
+      description: Create a draft PDF for an Open Journals paper
+      inputs:
+       journal: joss
+         description: Target journal, must be either "joss" or "jose"
+         required: false
+         default: joss
         paper-path: ./paper/paper.md
+          description: >-
+              Path to the main paper Markdown file, relative to the
+              project's root directory.
+          required: false
+          default: 'paper.md'
+      runs:
+        using: docker
+        image: 'docker://openjournals/inara:latest'
+        env:
+          # GIT_SHA: $GITHUB_SHA
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          JOURNAL: ${{ inputs.journal }}
+        args:
+          - -o pdf
+          - ${{ inputs.paper-path }}
+      branding:
+        icon: file-text
+        color: blue
     - name: Upload
       uses: actions/upload-artifact@v1
       # "path:" is the output path where Pandoc will write the compiled
@@ -35,9 +53,6 @@ jobs:
         # github_token: ${{ secrets.GITHUB_TOKEN }}
         name: paper
         path: ./paper/paper.pdf
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      # uses: r-lib/github-push-action@master
-      with:
-        branch: joss
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
+
