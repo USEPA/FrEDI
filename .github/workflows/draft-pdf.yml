@@ -48,7 +48,7 @@ jobs:
   paper:
     runs-on: ubuntu-latest
     env:
-      GITHUB_PAT: ${{ .secrets.GITHUB_TOKEN }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     name: Paper Draft
     steps:
     - name: Checkout
@@ -66,6 +66,6 @@ jobs:
       # paper.md
       with:
         branch: joss
-        github_token: ${{ .secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         name: paper
         path: paper/paper.pdf
