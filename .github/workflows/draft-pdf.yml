@@ -17,6 +17,11 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     name: Paper Draft
     steps:
+    # checkout source code
+    - uses: actions/checkout@master
+      with:
+        branch: joss
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Open Journals PDF Generator
       # description: Create a draft PDF for an Open Journals paper
       # inputs:
