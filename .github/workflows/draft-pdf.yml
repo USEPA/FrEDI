@@ -8,7 +8,7 @@
 on:
   push:
     branches:
-      - joss_test
+      - joss
 
 jobs:
   paper:
@@ -39,5 +39,5 @@ jobs:
       uses: ad-m/github-push-action@master
       # uses: r-lib/github-push-action@master
       with:
-        branch: joss_test
+        branch: joss
         github_token: ${{ secrets.GITHUB_TOKEN }}
