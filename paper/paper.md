@@ -30,9 +30,9 @@ authors:
     orcid: 0000-0003-4380-3412
     equal-contrib: true
 affiliations:
- - name: "Industrial Economics, Incorporated, Cambridge, MA", USA
+ - name: Industrial Economics, Incorporated, Cambridge, MA, USA
    index: 1
- - name: "Climate Change Division, Office of Atmospheric Programs, U.S. Environmental Protection Agency, Washington, DC", USA
+ - name: Climate Change Division, Office of Atmospheric Programs, U.S. Environmental Protection Agency, Washington, DC, USA
    index: 2
 date: 30 June 2023
 bibliography: paper.bib
@@ -63,11 +63,11 @@ This flexible approach allows new sectors to be added to the `FrEDI` tool in a m
 `FrEDI` is available on the EPA GitHub repository at https://usepa.github.io/FrEDI/index.html. Source code can be downloaded and installed from https://github.com/USEPA/FrEDI using R GitHub tools. Alternatively, a user can download the compiled package and install the package manually using the `install.packages` function. Additional `FrEDI` Technical Documentation is available at: https://www.epa.gov/cira/fredi.
 
 Figures can be included like this:
-![Schematic of FrEDI components, from user inputs to model outputs.\label{fig:schematic}](fredi_schematic.png)
+![Schematic of FrEDI components, from user inputs to model outputs.\label{fig:schematic}](./images/fredi_schematic.png)
 and referenced from text using \autoref{fig:schematic}.
 
 Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](fredi_schematic.png){ width=20% }
+![Caption for example figure.](./images/fredi_schematic.png){ width=20% }
 
 # Acknowledgements
 
