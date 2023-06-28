@@ -15,26 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    # name: Open Journals PDF Generator
     name: Paper Draft
     steps:
-    # checkout source code
-    - uses: actions/checkout@master
-      with:
-        branch: joss
-        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Open Journals PDF Generator
-      # description: Create a draft PDF for an Open Journals paper
-      # inputs:
-      #  journal: joss
-      #    # description: Target journal, must be either "joss" or "jose"
-      #    # required: false
-      #    # default: joss
-      #   paper-path: "./paper/paper.md"
-      #     # description: >-
-      #     #     Path to the main paper Markdown file, relative to the
-      #     #     project's root directory.
-      #     # required: false
-      #     # default: 'paper.md'
       runs:
         using: docker
         image: 'docker://openjournals/inara:latest'
