@@ -37,7 +37,7 @@ jobs:
     # copy files
     - name: Render Markdown
       run: |
-        Rscript -e 'rmarkdown::render("./paper/paper.Rmd")'
+        Rscript -e 'rmarkdown::render("./paper/paper.md")'
     # upload new documentation
     - name: publish to github
       run: |
