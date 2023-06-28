@@ -13,8 +13,8 @@ on:
 jobs:
   render:
     runs-on: ubuntu-latest
-    # env:
-    #   GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
     # checkout source code
     - uses: actions/checkout@v3
