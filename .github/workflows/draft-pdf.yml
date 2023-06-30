@@ -15,33 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    # name: Open Journals PDF Generator
     name: Paper Draft
     steps:
-    - name: Open Journals PDF Generator
-      runs:
-        using: docker
-        image: 'docker://openjournals/inara:latest'
-        env:
-          # GIT_SHA: $GITHUB_SHA
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-          JOURNAL: ${{ "joss" }}
-        args:
-          - -o pdf
-          - ${{ "./paper/paper.md" }}
-      branding:
-        icon: file-text
-        color: blue
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Build draft PDF
+      uses: openjournals/openjournals-draft-action@master
+      # "paper-path:" i should be the path to the paper within your repo.
+      with:
+        journal: joss
+        paper-path: ./paper/paper.md
     - name: Upload
       uses: actions/upload-artifact@v1
       # "path:" is the output path where Pandoc will write the compiled
       # PDF. Note, this should be the same directory as the input
       # paper.md
       with:
-        # branch: joss_test
         # github_token: ${{ secrets.GITHUB_TOKEN }}
         name: paper
         path: ./paper/paper.pdf
-
 
 
