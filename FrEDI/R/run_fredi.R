@@ -122,7 +122,13 @@
 #' run4 <- run_fredi(sectorList="ATS Extreme Temperature", aggLevels="none", elasticity=1)
 #'
 #' ### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
-#' run3 <- run_fredi(maxYear=2100)
+#' run5 <- run_fredi(maxYear=2100)
+#'
+#' ### Set end year for analysis to 2300 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+#' run6 <- run_fredi(thru2300=TRUE)
+#'
+#' ### Run FrEDI, calculate discounted impacts, and return output list
+#' run7 <- run_fredi(pv=TRUE, baseYear=2020, rate=0.3, outputList=TRUE)
 #'
 #'
 #'
