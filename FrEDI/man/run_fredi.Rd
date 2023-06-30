@@ -8,8 +8,8 @@ run_fredi(
   inputsList = list(tempInput = NULL, slrInput = NULL, gdpInput = NULL, popInput = NULL),
   sectorList = NULL,
   aggLevels = c("national", "modelaverage", "impactyear", "impacttype"),
-  elasticity = NULL,
-  maxYear = NULL,
+  elasticity = 0.4,
+  maxYear = 2090,
   thru2300 = FALSE,
   pv = FALSE,
   baseYear = 2010,
@@ -19,7 +19,7 @@ run_fredi(
 )
 }
 \arguments{
-\item{inputsList}{A list of named elements named elements (\code{names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")}), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier.}
+\item{inputsList}{A list of named elements named elements (\code{names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")}), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see \code{\link[=import_inputs]{import_inputs()}}.}
 
 \item{sectorList}{A character vector indicating a selection of sectors for which to calculate results (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). If \code{NULL}, all sectors are included.}
 
@@ -33,16 +33,21 @@ run_fredi(
 
 \item{rate}{Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to \code{rate=0.03} (i.e., 3\% per year).}
 
-\item{outputList}{A \code{ TRUE/FALSE} value indicating whether to results as a data frame object (\code{outputList=FALSE}, default) or to return a list of objects (\code{outputList=TRUE}) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.}
+\item{outputList}{A \code{ TRUE/FALSE} value indicating whether to output results as a data frame object (\code{outputList=FALSE}, default) or to return a list of objects (\code{outputList=TRUE}) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.}
 
 \item{silent}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 
-\item{elasticity=NULL}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), CIL Extreme Temperature (all impact types), Extreme Temperature (all impact types), Southwest Dust (All Mortality), Valley Fever (Mortality), and Wildfire (Mortality). If \code{elasticity=NULL} (default), \code{\link[=run_fredi]{run_fredi()}} uses default elasticities. Note: default elasticities are sector-specific. Apply the same elasticity value to all sectors using the \code{elasticity} argument (e.g., \code{elasticity=1}).}
+\item{elasticity=0.4}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to \code{elasticity=0.4}). Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality).}
 
 \item{maxYear=2090}{A numeric value indicating the maximum year for the analysis.}
 }
 \value{
-The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
+If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a data frame object containing annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (\code{outputList=FALSE}). If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing the following:
+\itemize{
+\item \code{arguments}, containing a list with values for the arguments passed to \code{\link[=run_fredi]{run_fredi()}} (with the exception of scenarios passed to the \code{inputsList} argument, which are provided in the \code{driverScenarios} list element)
+\item \code{driverScenarios}, a list object containing elements with the driver scenarios for temperature, SLR, population, and GDP used in the model
+\item \code{results}, containing a data frame of annual average impacts
+}
 }
 \description{
 This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors (see \code{\link[=get_sectorInfo]{get_sectorInfo()}}). Users may specify an optional list of custom scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, model (GCM or SLR scenario), and region.
@@ -50,13 +55,9 @@ This function allows users to project annual average climate change impacts thro
 \details{
 This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. \code{\link[=run_fredi]{run_fredi()}} is the main function in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information).
 
-Users can run \code{\link[=run_fredi]{run_fredi()}} for all the sectors (default) or run FrEDI for specific sectors specified as a character vector to the \code{sectorList} argument (run \code{\link[=get_sectorInfo]{get_sectorInfo()}} to see a list of available sectors).
-
-#' Users can run FrEDI with the default scenario or have the option to specify custom inputs as a list of scenarios. The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, model (GCM or SLR scenario), and region.
-
 Users can specify an optional list of custom scenarios with \code{inputsList} (for more information on the format of inputs, see \code{\link[=import_inputs]{import_inputs()}}). \code{\link[=run_fredi]{run_fredi()}} uses default scenarios for temperature, population, and GDP when no inputs are specified (i.e., \code{inputsList=NULL}) or for empty elements of the inputs list. If the user does not specify an input scenario for GMSL (i.e., \code{inputsList=list(slrInput=NULL)}, \code{\link[=run_fredi]{run_fredi()}} first converts the CONUS temperature scenario to global temperatures and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters. For more information on the conversion of CONUS temperatures to global temperatures, see \code{\link[=convertTemps]{convertTemps()}}. For more information on the conversion of global temperatures to GMSL, see \code{\link[=temps2slr]{temps2slr()}}.
 
-Values for input scenarios must be within reasonable ranges. If a user inputs a custom scenario with values outside the allowable ranges, \code{\link[=run_fredi]{run_fredi()}} will not run the scenarios and will instead stop and return an error message. For more information, see \code{\link[=import_inputs]{import_inputs()}}. Temperature and GMSL inputs must begin in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier.
+Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier. Values for input scenarios must be within reasonable ranges (for instance, negative values for population and GDP are non-sensical). If a user inputs a custom scenario with values outside the allowable ranges, \code{\link[=run_fredi]{run_fredi()}} will not run the scenarios and will instead stop and return an error message. For more information, see \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
 \item The input temperature scenario (passed to \code{\link[=run_fredi]{run_fredi()}} via the \code{inputsList} argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using \code{FrEDI::convertTemps(from="global")} or by specifying \code{FrEDI::import_inputs(temptype="global")} when importing a temperature scenario from a CSV file.
 \item Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
@@ -67,9 +68,9 @@ If \code{inputsList=NULL}, \code{\link[=run_fredi]{run_fredi()}} uses defaults f
 
 \code{\link[=run_fredi]{run_fredi()}} linearly interpolates missing annual values for all input scenarios using non-missing values (requires at least two non-missing values). Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline). In other words, the temperature (in degrees Celsius) is set to zero for the year 1995 and GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called \code{driverValue}, along with additional columns for year, the driver unit (column \code{"driverUnit"}, with \code{driverUnit="degrees Celsius"} and \code{driverUnit="cm"} for temperature- and SLR-driven sectors, respectively), and the associated model type (column \code{"model_type"}, with \code{model_type="GCM"} and \code{model_type="SLR"} for temperature- and SLR-driven sectors, respectively).
 
-The population scenario must provide annual regional values for population, with national totals calculated from regional values. FrEDI uses the national population scenario and the GDP scenario to calculate GDP per capita. Values for regional population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns \code{"reg_pop"}, \code{"national_pop"}, \code{"gdp_usd"}, and \code{"gdp_percap"}, respectively.
+The population scenario must provide annual regional values for population, with national totals calculated from regional values. \link{FrEDI} uses the national population scenario and the GDP scenario to calculate GDP per capita. Values for regional population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns \code{"reg_pop"}, \code{"national_pop"}, \code{"gdp_usd"}, and \code{"gdp_percap"}, respectively.
 
-Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers.
+By default, \code{\link[=run_fredi]{run_fredi()}} will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the \code{sectorList} argument. To see a list of sectors included within \link{FrEDI}, run \code{\link[=get_sectorInfo]{get_sectorInfo()}}. If \code{sectorList=NULL} (default), all sectors are included.
 
 \code{\link[=run_fredi]{run_fredi()}} aggregates or summarizes results to level(s) of aggregation specified by the user (passed to \code{aggLevels}) using the post-processing helper function \code{\link[=aggregate_impacts]{aggregate_impacts()}}. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels="national"}), averaging across model types and models (\code{aggLevels="modelaverage"}), summing over all impact types (\code{aggLevels="impacttype"}), and interpolating between impact year estimates (\code{aggLevels="impactYear"}). Users can specify all aggregation levels at once by specifying \code{aggLevels="all"} (default) or no aggregation levels (\code{aggLevels="none"}).
 
@@ -83,31 +84,66 @@ For each of the \code{aggLevels}, \code{\link[=run_fredi]{run_fredi()}} performs
 \code{impactyear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear = "N/A"}) are separated from those with multiple impact year estimates. Sectors with multiple impact years have separate results for impact years 2010 and 2090. For these sectors, annual results are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
 }
 
+Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. \code{\link[=run_fredi]{run_fredi()}} uses a default value of \code{elasticity=0.4}to adjust VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality). A custom elasticity can be passed to the \code{elasticity} argument; to keep VSL constant over time, specify \code{elasticity=1}.
+
+By default, \code{\link[=run_fredi]{run_fredi()}} calculates impacts starting in the year 2010 and ending in 2090. Specify an alternative end year for the analysis using the \code{maxYear} argument (defaults to \code{maxYear=2090}). The minimum and maximum valid values for \code{maxYear} are \code{maxYear=2011} and \code{maxYear=2300}, respectively. Alternatively, run the model through the year 2300 by specifying \code{thru2300=TRUE} (this will override the \code{maxYear} argument and set \code{maxYear=2300}). Note that the default scenarios included within \link{FrEDI} stop in the year 2090; to get non-zero/non-missing values for years after 2090, users must specify a \code{maxYear} after 2090 and also provide custom input scenarios out to the desired end year.
+
 Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting \code{pv=TRUE} (defauts to \code{pv=FALSE}). If \code{pv=TRUE}, discounted impacts are calculated using a base year and annual discount rate as \code{discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)}. Set base year and annual discount rate using \code{baseYear} (defaults to \code{baseYear=2010}) and \code{rate} (defaults to 3\% i.e., \code{rate=0.03}), respectively.
+
+\code{\link[=run_fredi]{run_fredi()}} defaults to returning a data frame of annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (\code{outputList=FALSE}). If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing information about values for function arguments and driver scenarios in addition to the data frame of impacts
 }
 \examples{
-### Run function with defaults (same as `defaultResults` dataset)
-df_defaults <- run_fredi()
+### Load FrEDI
+require(FrEDI)
 
-### Path to example scenarios
+### Run function with defaults (same as `defaultResults` dataset)
+run1 <- run_fredi()
+
+### Load climate scenarios and glimpse data
+data("gcamScenarios")
+gcamScenarios \%>\% glimpse
+
+### Load population scenario and glimpse data
+data(popScenario)
+popScenario \%>\% glimpse
+
+### Subset climate scenario
+temps1 <- gcamScenarios \%>\% filter(scenario=="ECS_3.0_ref_0") \%>\% select(year, temp_C)
+
+### Run custom scenario
+run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
+
+### Load scenarios from file:
 scenariosPath <- system.file(package="FrEDI") \%>\% file.path("extdata","scenarios")
-### View example scenario names
 scenariosPath \%>\% list.files
+
 ### Temperature Scenario File Name
 tempInputFile <- scenariosPath \%>\% file.path("GCAM_scenario.csv")
+
 ### SLR Scenario File Name
 slrInputFile  <- scenariosPath \%>\% file.path("slr_from_GCAM.csv")
+
 ### Population Scenario File Name
 popInputFile  <- scenariosPath \%>\% file.path("pop_scenario.csv")
+
 ### Import inputs
-example_inputsList <- import_inputs(
+x_inputs <- import_inputs(
   tempfile = tempInputFile,
   slrfile  = slrInputFile,
   popfile  = popInputFile
 )
 
-### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
-df_tempExOut <- run_fredi(inputsList=example_inputsList, aggLevels="none", pv=TRUE, silent=TRUE)
+### Run custom scenarios
+run3 <- run_fredi(inputsList=x_inputs)
+
+### Get information on sectors:
+get_sectorInfo()
+
+### Run for a single sector, with default inputs, no aggregation, and elasticity=1:
+run4 <- run_fredi(sectorList="ATS Extreme Temperature", aggLevels="none", elasticity=1)
+
+### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+run3 <- run_fredi(maxYear=2100)
 
 
 

@@ -8,29 +8,25 @@
 #'
 #'
 #'
-#' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier.
+#' @param inputsList A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Note: temperature and sea level rise inputs should start in 2000 or earlier. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #' @param sectorList A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included.
 #' @param aggLevels Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()].
-#' @param elasticity=0.4 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=0.4`. Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality).
+#' @param elasticity=0.4 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=0.4`). Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality).
 #' @param maxYear=2090 A numeric value indicating the maximum year for the analysis.
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300.
 #' @param pv A `TRUE/FALSE` value indicating whether to calculate present values for the annual impacts. Defaults to `pv=FALSE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
 #' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
 #' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
-#' @param outputList A ` TRUE/FALSE` value indicating whether to results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
+#' @param outputList A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #'
 #'
 #' @details This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
 #'
-#' Users can run [FrEDI::run_fredi()] for all the sectors (default) or run FrEDI for specific sectors specified as a character vector to the `sectorList` argument (run [FrEDI::get_sectorInfo()] to see a list of available sectors).
-#'
-#' #' Users can run FrEDI with the default scenario or have the option to specify custom inputs as a list of scenarios. The output of [FrEDI::run_fredi()] is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, model (GCM or SLR scenario), and region.
-#'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). [FrEDI::run_fredi()] uses default scenarios for temperature, population, and GDP when no inputs are specified (i.e., `inputsList=NULL`) or for empty elements of the inputs list. If the user does not specify an input scenario for GMSL (i.e., `inputsList=list(slrInput=NULL)`, [FrEDI::run_fredi()] first converts the CONUS temperature scenario to global temperatures and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters. For more information on the conversion of CONUS temperatures to global temperatures, see [FrEDI::convertTemps()]. For more information on the conversion of global temperatures to GMSL, see [FrEDI::temps2slr()].
 #'
-#' Values for input scenarios must be within reasonable ranges. If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()]. Temperature and GMSL inputs must begin in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier.
+#' Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier. Values for input scenarios must be within reasonable ranges (for instance, negative values for population and GDP are non-sensical). If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()].
 #'
 #' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using `FrEDI::convertTemps(from="global")` or by specifying `FrEDI::import_inputs(temptype="global")` when importing a temperature scenario from a CSV file.
 #' * Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
@@ -40,9 +36,9 @@
 #'
 #' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (requires at least two non-missing values). Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline). In other words, the temperature (in degrees Celsius) is set to zero for the year 1995 and GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit="degrees Celsius"` and `driverUnit="cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type="GCM"` and `model_type="SLR"` for temperature- and SLR-driven sectors, respectively).
 #'
-#' The population scenario must provide annual regional values for population, with national totals calculated from regional values. FrEDI uses the national population scenario and the GDP scenario to calculate GDP per capita. Values for regional population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"reg_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
+#' The population scenario must provide annual regional values for population, with national totals calculated from regional values. [FrEDI] uses the national population scenario and the GDP scenario to calculate GDP per capita. Values for regional population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"reg_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
 #'
-#' Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers.
+#' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList=NULL` (default), all sectors are included.
 #'
 #' [FrEDI::run_fredi()] aggregates or summarizes results to level(s) of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels="national"`), averaging across model types and models (`aggLevels="modelaverage"`), summing over all impact types (`aggLevels="impacttype"`), and interpolating between impact year estimates (`aggLevels="impactYear"`). Users can specify all aggregation levels at once by specifying `aggLevels="all"` (default) or no aggregation levels (`aggLevels="none"`).
 #'
@@ -56,38 +52,77 @@
 #' `impactyear` \tab Annual results for sectors with only one impact year estimate (i.e., `impactYear = "N/A"`) are separated from those with multiple impact year estimates. Sectors with multiple impact years have separate results for impact years 2010 and 2090. For these sectors, annual results are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear="Interpolation"` for all values. \cr
 #' }
 #'
+#' Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. [FrEDI::run_fredi()] uses a default value of `elasticity=0.4`to adjust VSL for applicable sectors and impacts. Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality). A custom elasticity can be passed to the `elasticity` argument; to keep VSL constant over time, specify `elasticity=1`.
+#'
+#' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2090. Specify an alternative end year for the analysis using the `maxYear` argument (defaults to `maxYear=2090`). The minimum and maximum valid values for `maxYear` are `maxYear=2011` and `maxYear=2300`, respectively. Alternatively, run the model through the year 2300 by specifying `thru2300=TRUE` (this will override the `maxYear` argument and set `maxYear=2300`). Note that the default scenarios included within [FrEDI] stop in the year 2090; to get non-zero/non-missing values for years after 2090, users must specify a `maxYear` after 2090 and also provide custom input scenarios out to the desired end year.
+#'
 #' Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting `pv=TRUE` (defauts to `pv=FALSE`). If `pv=TRUE`, discounted impacts are calculated using a base year and annual discount rate as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set base year and annual discount rate using `baseYear` (defaults to `baseYear=2010`) and `rate` (defaults to 3% i.e., `rate=0.03`), respectively.
+#'
+#' [FrEDI::run_fredi()] defaults to returning a data frame of annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (`outputList=FALSE`). If `outputList=TRUE`, [FrEDI::run_fredi()] returns a list object containing information about values for function arguments and driver scenarios in addition to the data frame of impacts
 #'
 #'
 #'
 #' @return
-#' The output of [FrEDI::run_fredi()] is an R data frame object containing annual average impacts, by year (2010-2090), for each sector, variant, model (GCM or SLR scenario), and region.
+#' If `outputList=FALSE`, the output of [FrEDI::run_fredi()] is a data frame object containing annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (`outputList=FALSE`). If `outputList=TRUE`, [FrEDI::run_fredi()] returns a list object containing the following:
+#'
+#' * `arguments`, containing a list with values for the arguments passed to [FrEDI::run_fredi()] (with the exception of scenarios passed to the `inputsList` argument, which are provided in the `driverScenarios` list element)
+#' * `driverScenarios`, a list object containing elements with the driver scenarios for temperature, SLR, population, and GDP used in the model
+#' * `results`, containing a data frame of annual average impacts
 #'
 #'
 #'
 #' @examples
-#' ### Run function with defaults (same as `defaultResults` dataset)
-#' df_defaults <- run_fredi()
+#' ### Load FrEDI
+#' require(FrEDI)
 #'
-#' ### Path to example scenarios
+#' ### Run function with defaults (same as `defaultResults` dataset)
+#' run1 <- run_fredi()
+#'
+#' ### Load climate scenarios and glimpse data
+#' data("gcamScenarios")
+#' gcamScenarios %>% glimpse
+#'
+#' ### Load population scenario and glimpse data
+#' data(popScenario)
+#' popScenario %>% glimpse
+#'
+#' ### Subset climate scenario
+#' temps1 <- gcamScenarios %>% filter(scenario=="ECS_3.0_ref_0") %>% select(year, temp_C)
+#'
+#' ### Run custom scenario
+#' run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
+#'
+#' ### Load scenarios from file:
 #' scenariosPath <- system.file(package="FrEDI") %>% file.path("extdata","scenarios")
-#' ### View example scenario names
 #' scenariosPath %>% list.files
+#'
 #' ### Temperature Scenario File Name
 #' tempInputFile <- scenariosPath %>% file.path("GCAM_scenario.csv")
+#'
 #' ### SLR Scenario File Name
 #' slrInputFile  <- scenariosPath %>% file.path("slr_from_GCAM.csv")
+#'
 #' ### Population Scenario File Name
 #' popInputFile  <- scenariosPath %>% file.path("pop_scenario.csv")
+#'
 #' ### Import inputs
-#' example_inputsList <- import_inputs(
+#' x_inputs <- import_inputs(
 #'   tempfile = tempInputFile,
 #'   slrfile  = slrInputFile,
 #'   popfile  = popInputFile
 #' )
 #'
-#' ### Run custom temperature scenario and output impacts without aggregation and with present values (default base year and discount rate)
-#' df_tempExOut <- run_fredi(inputsList=example_inputsList, aggLevels="none", pv=TRUE, silent=TRUE)
+#' ### Run custom scenarios
+#' run3 <- run_fredi(inputsList=x_inputs)
+#'
+#' ### Get information on sectors:
+#' get_sectorInfo()
+#'
+#' ### Run for a single sector, with default inputs, no aggregation, and elasticity=1:
+#' run4 <- run_fredi(sectorList="ATS Extreme Temperature", aggLevels="none", elasticity=1)
+#'
+#' ### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+#' run3 <- run_fredi(maxYear=2100)
 #'
 #'
 #'
@@ -107,13 +142,13 @@ run_fredi <- function(
     inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
-    elasticity = NULL, ### Override value for elasticity for economic values
-    maxYear    = NULL,
+    elasticity = 0.4, ### Override value for elasticity for economic values
+    maxYear    = 2090,
     thru2300   = FALSE,
     pv         = FALSE, ### T/F value indicating Whether to calculate net present value
     baseYear   = 2010,  ### Default = 2010
     rate       = 0.03,  ### Ratio, defaults to 0.03
-    outputList = FALSE, ### Whether to return input arguments as well as results. Returns a list instead of a data frame
+    outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     silent     = TRUE   ### Whether to message the user
 ){
 
