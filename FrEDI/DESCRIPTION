@@ -1,6 +1,6 @@
 Package: FrEDI
-Title: The Framework for Evaluating Damages and Impacts (FrEDI) with Net Present Damages (NPD)
-Version: 3.3.7
+Title: The Framework for Evaluating Damages and Impacts (FrEDI)
+Version: 3.4
 Authors@R: c(person("Corinne", "Hartin",
                     email = "hartin.corinne@epa.gov",
                     role = c("aut","cre"),
@@ -32,12 +32,13 @@ Description: This R package models damages and impacts from climate change in th
 License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 3.5.0),
+    tidyverse,
     dplyr,
     ggplot2,
     tidyr,
     openxlsx
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 LazyData: TRUE
 Suggests: knitr, rmarkdown, prettydoc
 VignetteBuilder: knitr

@@ -8,19 +8,19 @@ aggregate_impacts(
   data,
   aggLevels = c("national", "modelaverage", "impactyear", "impacttype"),
   columns = c("annual_impacts"),
-  groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type",
-    "model", "region"),
+  groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model",
+    "region"),
   mode = "all"
 )
 }
 \arguments{
 \item{data}{Data frame of results FrEDI (outputs from \code{\link[=run_fredi]{run_fredi()}})}
 
-\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \verb{c("national"}, \code{"modelAverage"}, \code{"impactYear"}, \code{"impactType"}, \verb{"all")}. Defaults to all levels (i.e., \code{aggLevels="all"}).}
+\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \code{c("national", "modelAverage", "impactYear", "impactType", "all")}. Defaults to all levels (i.e., \code{aggLevels="all"}).}
 
 \item{columns}{Character vector of columns for which to aggregate results (defaults to \verb{columns=c("annual_impacts"})).}
 
-\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \verb{groupByCols=}c("sector"\verb{, }"variant"\verb{, }"impactYear"\verb{, }"impactType"\verb{, }"model_type"\verb{, }"model"\verb{, }"region")\verb{. Note that the }"variant"\verb{column referred to below contains information about the adaptation or variant name or}“N/A”`, as applicable.}
+\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \code{groupByCols=c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region")}. Note that the \code{"variant"} column referred to below contains information about the variant (or adaptation) name or \verb{“N/A”}, as applicable.}
 }
 \value{
 The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), summarized at the specified aggregation and grouping levels.
@@ -34,13 +34,14 @@ This post-processing helper function aggregates and summarizes temperature binni
 
 Before aggregating impacts for national totals and/or model averages, \code{\link[=aggregate_impacts]{aggregate_impacts()}} will drop any pre-summarized results  (i.e., values for which \code{region="National Total"} and/or for which \code{model="average"}, respectively) that are already present in the data `and then reaggregate at those levels.
 
-For each of the \code{aggLevels}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} performs the following summarization (note that the \code{"variant"} column referred to below contains information about the adaptation or variant name or \verb{“N/A”}, as applicable):
+For each of the \code{aggLevels}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} performs the following calculations (note that the \code{"variant"} column referred to below contains information about the variant (or adaptation) name or \verb{“N/A”}, as applicable):
+
 \tabular{ll}{
 \strong{Aggregation Level} \tab \strong{Description} \cr
 \code{national} \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"},  \code{"impactYear"}, \code{"model_type"}, \code{"model"}, and \code{"year"}) and summed across regions. Years which have missing column data for all regions return as \code{NA}. The rows of the data frame of national values (with column \code{region="National Total"}) are then added as rows to the results. \cr
 \code{modelaverage} \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"}, \code{"model_type"}, \code{"region"}, and \code{"year"} and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as \code{NA}. The rows of model averages (with column \code{model="Average"} are then added as rows to the results data frame. \cr
-\code{impactType} \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"},\code{"model_type"}, \code{"model"}, \code{"region"}, and \code{"year"} and summed across impact types. Mutates column \code{impactType="all"} for all values. Years which have missing column data for all impact types return as \code{NA}. If results are aggregated across impact types, information about physical impacts (columns \code{"physicalmeasure"} and \code{"physical_impacts"}) are dropped.\cr
-\code{impactYear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear == "N/A"}) are separated from those with multiple impact year estimates. For sectors with multiple impact years (i.e. 2010 and 2090 socioeconomic runs), annual results are interpolated between impact year estimates for applicable sectors  i.e., data is grouped by columns \verb{"sector", "variant", "impactType, "model_type", "model", "region", "year"} and interpolated across years with the 2010 run assigned to year 2010 and the 2090 run assigned to year 2090. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
+\code{impacttype} \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"},\code{"model_type"}, \code{"model"}, \code{"region"}, and \code{"year"} and summed across impact types. Mutates column \code{impactType="all"} for all values. Years which have missing column data for all impact types return as \code{NA}. If results are aggregated across impact types, information about physical impacts (columns \code{"physicalmeasure"} and \code{"physical_impacts"}) are dropped.\cr
+\code{impactyear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear = "N/A"}) are separated from those with multiple impact year estimates. Sectors with multiple impact years have separate results for impact years 2010 and 2090. For these sectors, annual results are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
 }
 
 Note that \code{\link[=aggregate_impacts]{aggregate_impacts()}} drops columns not used in grouping or aggregation.

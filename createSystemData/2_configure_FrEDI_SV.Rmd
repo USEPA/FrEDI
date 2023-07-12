@@ -93,7 +93,7 @@ sysUseName       <- dataOutPath %>% file.path(sysFileName) %>% paste0(".rds")
 
 ### SV Sectors
 
-List of SV sectors ("Air Quality", "Coastal Properties", "Extreme Temperature", "High Tide Flooding and Traffic", "Labor", "Roads")
+List of SV sectors ("Air Quality - Premature Mortality", "Air Quality - Childhood Asthma", "Coastal Properties", "Extreme Temperature", "High Tide Flooding and Traffic", "Labor", "Roads")
 
 Select a specific sector if not all sectors have been updated.
 
@@ -102,7 +102,8 @@ Select a specific sector if not all sectors have been updated.
 codeNames; for(i in codeNames){ source(paste(codePath, i, sep="/")) }
 frediPath %>% load_all
 
-c_sv_sectors     <- get_sv_sectorInfo()
+c_sv_sectors     <- try(get_sv_sectorInfo())
+if("try-error" %in% class(c_sv_sectors)){c_sv_sectors <- NULL}
 
 ### Uncomment the following line and select specific sectors to update select sectors rather than all sectors
 #c_sv_sectors     <- c("Labor","Roads","Extreme Temperature")
@@ -125,7 +126,7 @@ Create a list with arguments on which aspects of the SV data to update (takes aw
 list_screening <- list(
   save     = TRUE,  ### Save SV
   sv       = TRUE,  ### Update SV demographic data
-  pop      = TRUE, ### Update SV population data
+  pop      = TRUE,  ### Update SV population data
   format   = TRUE,  ### Update formats
   impacts  = FALSE, ### Update impact lists
   sectors  = c_sv_sectors
@@ -343,7 +344,7 @@ test_svData$svDataList[["svDemoInfo"]] %>% filter(colType %in% c("minority")) %>
 
 
 
-### Update FrEDI Data
+## Update FrEDI Data
 
 Use the following code to update the FrEDI system data with the SV configuration data.
 
@@ -430,10 +431,9 @@ testInputs <- inputSpecs %>% (function(list_x){
 
 ```{r resultsPath}
 # today <- "20221101"
-frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
-resultsPath <- frediPath %>% file.path("..", "analysis", "qc", today)
+# frediPath %>% file.path("..", "analysis", "qc") %>% list.files()
+resultsPath <- projectParentDir %>% file.path("analysis", "qc", today)
 if(!dir.exists(resultsPath)){resultsPath %>% dir.create}
-# resultsPath <- "C:/Users/wmaddock/Documents/GitHub/FrEDI/createSystemData"
 ```
 
 Test SV tool:
@@ -459,7 +459,7 @@ test_sv <-
     inputs  = NULL,
     outpath = resultsPath, 
     # .testing = TRUE,
-    save = FALSE, addDate = T, overwrite=TRUE
+    save = F, addDate = T, overwrite=TRUE
   ){
     ### SLR sectors
     c_slr <- c()#c_slr <- FrEDI::get_sv_sectorInfo(slrOnly = TRUE)
@@ -520,6 +520,7 @@ test_sv$aveRate_sv %>% (function(x, na=F){(!(x %>% is.na)) %>% which %>% length}
 test_sv$driverValue %>% range
 test_sv$aveRate_sv %>% (function(x, na=T){   x %>% is.na   %>% which %>% length})
 test_sv$aveRate_sv %>% (function(x, na=F){(!(x == 0)) %>% which %>% length})
+test_sv %>% filter(is.na(impPop_ref)) %>% select(svGroupType) %>% as.vector %>% unlist %>% unique
 ```
 
 Check high risk populations (should be zero)
@@ -529,6 +530,15 @@ Check high risk populations (should be zero)
 check_sv <- test_sv %>% filter(regional_highRiskPop_sv > impPop_sv)
 check_sv %>% glimpse
 check_sv$svGroupType %>% unique
+```
+
+
+Or, test defaults:
+
+```{r}
+frediPath %>% load_all
+test_sv <- "Labor" %>% run_fredi_sv(save=T, outpath = resultsPath, overwrite=T, addDate=T)
+test_sv %>% write.csv(file = resultsPath %>% file.path("Labor.csv"), na = "")
 ```
 
 

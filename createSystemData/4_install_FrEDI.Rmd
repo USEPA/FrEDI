@@ -99,6 +99,7 @@ install_fredi <- function(
   installFrom = NULL, ### Select a number, one or two
   package     = "FrEDI",
   version     = packageVersion,
+  verbose     = FALSE, 
   libPath     = .libPaths()[1] ### Location of library path
 ){
   ###### Load Packages ######
@@ -172,7 +173,7 @@ install_fredi <- function(
         }
       } else{
         ###### Install the Package
-        install.packages(package_filePath, repos=NULL, type="source", lib=package_location)
+        install.packages(package_filePath, repos=NULL, type="source", lib=package_location, verbose=verbose)
       }
     }
   }
