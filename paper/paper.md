@@ -40,7 +40,7 @@ bibliography: paper.bib
 
 # Summary
 
-The Framework for Evaluating Damages and Impacts (`FrEDI`) is an open-source R package that quantifies economic and physical impacts from climate change in the contiguous United States (CONUS) resulting from future temperature change trajectories [@EPA:abbr:2021a]. `FrEDI` quantifies the magnitude of impacts; when, where, and to whom these impacts may occur; the types of impacts that will be most damaging; and the capacity of adaptation to reduce potential risks. `FrEDI` uses a temperature binning approach and flexible framework and is designed for continuous updating and scope expansion and to facilitate scenario analysis, comparison between studies, and communication of results – thereby serving as an alternative or complement to traditional scenario-based approaches to estimating climate change impacts.
+The Framework for Evaluating Damages and Impacts (`FrEDI`) is an open-source R package that quantifies economic and physical impacts from climate change in the contiguous United States (CONUS) resulting from future temperature change trajectories [@EPA:2021a]. `FrEDI` quantifies the magnitude of impacts; when, where, and to whom these impacts may occur; the types of impacts that will be most damaging; and the capacity of adaptation to reduce potential risks. `FrEDI` uses a temperature binning approach and flexible framework and is designed for continuous updating and scope expansion and to facilitate scenario analysis, comparison between studies, and communication of results – thereby serving as an alternative or complement to traditional scenario-based approaches to estimating climate change impacts.
 
 # Statement of need
 
