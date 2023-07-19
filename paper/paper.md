@@ -56,7 +56,8 @@ Users can also set other parameters, such as an income elasticity to capture cha
 
 A schematic of the FrEDI workflow for calculating climate impacts from temperature, SLR, population, and GDP trajectories is shown in \autoref{fig:schematic}.
 
-![Schematic of FrEDI, from user inputs to model outputs. \label{fig:schematic}](images/fredi_schematic.png){ width=70% }.
+![Schematic of FrEDI, from user inputs to model outputs.\label{fig:schematic}](images/fredi_schematic.png){width=70%}
+
 
 `FrEDI` also includes a Social Vulnerability (SV) module that can be used to quantify physical climate impacts for six sectors and four socially vulnerable populations – specifically, individuals identifying as Black, Indigenous, People of Color (or BIPOC), those from low-income households, elderly (ages 65 and above), and adults without high school diplomas. The SV module calculates impacts using U.S. Census tract- or block-level damage functions before aggregating impacts to the CONUS-region level. The SV module provides an option to save outputs as an Excel workbook containing features to facilitate interpretation of the results. Damage functions for the SV module were developed using data from the 2021 EPA report on Climate Change and Social Vulnerability [@EPA:2021b].
 
