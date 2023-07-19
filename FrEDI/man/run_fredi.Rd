@@ -42,7 +42,7 @@ run_fredi(
 \item{maxYear=2090}{A numeric value indicating the maximum year for the analysis.}
 }
 \value{
-If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a data frame object containing annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (\code{outputList=FALSE}). If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing the following:
+If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a data frame object containing annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region. If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing the following:
 \itemize{
 \item \code{arguments}, containing a list with values for the arguments passed to \code{\link[=run_fredi]{run_fredi()}} (with the exception of scenarios passed to the \code{inputsList} argument, which are provided in the \code{driverScenarios} list element)
 \item \code{driverScenarios}, a list object containing elements with the driver scenarios for temperature, SLR, population, and GDP used in the model
@@ -59,7 +59,7 @@ Users can specify an optional list of custom scenarios with \code{inputsList} (f
 
 Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier. Values for input scenarios must be within reasonable ranges (for instance, negative values for population and GDP are non-sensical). If a user inputs a custom scenario with values outside the allowable ranges, \code{\link[=run_fredi]{run_fredi()}} will not run the scenarios and will instead stop and return an error message. For more information, see \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
-\item The input temperature scenario (passed to \code{\link[=run_fredi]{run_fredi()}} via the \code{inputsList} argument) requires temperatures for the contiguous U.S. (CONUS) in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero and less than or equal to 10 degrees Celsius. Users can convert global temperatures to CONUS temperatures using \code{FrEDI::convertTemps(from="global")} or by specifying \code{FrEDI::import_inputs(temptype="global")} when importing a temperature scenario from a CSV file.
+\item The input temperature scenario (passed to \code{\link[=run_fredi]{run_fredi()}} via the \code{inputsList} argument) requires temperatures for CONUS in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero degrees Celsius (CONUS temperatures). Users can convert global temperatures to CONUS temperatures using \code{FrEDI::convertTemps(from="global")} or by specifying \code{FrEDI::import_inputs(temptype="global")} when importing a temperature scenario from a CSV file.
 \item Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
 \item Population and gross domestic product (GDP) values must be greater than or equal to zero.
 }
@@ -143,7 +143,13 @@ get_sectorInfo()
 run4 <- run_fredi(sectorList="ATS Extreme Temperature", aggLevels="none", elasticity=1)
 
 ### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
-run3 <- run_fredi(maxYear=2100)
+run5 <- run_fredi(maxYear=2100)
+
+### Set end year for analysis to 2300 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+run6 <- run_fredi(thru2300=TRUE)
+
+### Run FrEDI, calculate discounted impacts, and return output list
+run7 <- run_fredi(pv=TRUE, baseYear=2020, rate=0.3, outputList=TRUE)
 
 
 
