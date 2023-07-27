@@ -30,9 +30,9 @@ navbar:
       href: "articles/References.html"
     - text: Examples
       menu:
-        - text: "Example: Run FrEDI with default parameters"
+        - text: "Example #1: Run FrEDI with default parameters"
           href: articles/Example1.html
-        - text: "Example: Run FrEDI_SV with default parameters"
+        - text: "Example #2: Run FrEDI_SV with default parameters"
           href: articles/Example2.html
     - text: Functions
       href: "reference/index.html"
@@ -52,6 +52,6 @@ footer:
     left: developed_by
     right: [built_with, date]
   components:
-    date: "| June 2023"
+    date: "| July 2023"
 
 #destination: ../docs/

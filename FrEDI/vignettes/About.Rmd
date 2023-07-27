@@ -97,7 +97,7 @@ A CSV containing mean temperatures in degrees Celsius relative to the 1986-2005 
 FrEDI can also be used to project the impacts associated with temperature trajectories that are associated with specific emission scenarios. Users are encouraged to use a simple climate model to first relate emissions to global mean temperature change, for into FrEDI.
 
 ### Sea Level Rise (SLR)
-A CSV file containing a custom sea level rise scenario, in centimeters. The first column contains years in the interval 2000 to 2100 and the second column contains values for global mean sea level rise (GMSL), in centimeters, above the 1995 baseline. If a SLR scenario is not specified, FrEDI will project SLR based on the input temperature trajectory.
+A CSV file containing a custom sea level rise scenario, in centimeters. The first column contains years in the interval 2000 to 2100 and the second column contains values for global mean sea level rise (GMSL), in centimeters, above a 2000 baseline. If a SLR scenario is not specified, FrEDI will project SLR based on the input temperature trajectory.
 
 ### Population 
 
@@ -152,13 +152,29 @@ For details about each sector and the underlying damage functions, see the [FrED
 
 To assess some aspects of uncertainty in the underlying impact studies, FrEDI also includes multiple variant options for select sectors. These are listed in the `variant` column of the FrEDI sector output dataframe. For example, Extreme Temperature Related Mortality (`ATS Extreme Temperature`), includes multiple impact estimates that correspond to the mean, as well as the high and low confidence intervals. Other sectors, such as Agriculture (`CIL Agriculture`), include impact estimates derived from multiple damage functions that are associated with different conditions (e.g., estimates with and without CO~2~ fertilization). 
 
-FrEDI also calculates climate-driven impacts under different adaptation assumptions, in select sectors. Adaptation options available for each sector (e.g., Coastal Property, Roads, Rail) are also included as `variants`. The select available adaptation options reflect the extent of treatment paid to adaptation in the underlying sectoral impact studies. FrEDI includes adaptation options as the realized magnitude, type, location, and timing of long-term climate-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.
+FrEDI also calculates climate-driven impacts under different adaptation assumptions, in select sectors. Adaptation options available for each sector (e.g., Coastal Property, Roads, Rail) are also included as `variants`. The select available adaptation options reflect the extent of treatment paid to adaptation in the underlying sectoral impact studies. 
+The adaptation options are labeled in FrEDI as: 
+
+- `No Adaptation`: no additional adaptation reflect a “business as usual” scenario, but incorporates adaptive measures and strategies reflected in historical actions to respond to climate hazards
+- `Reactive Adaptation`, or `Reasonably Anticipated Adaptation`: reflect options taken without advanced warning or foresight (e.g., no action is taken to prevent or mitigate future climate change impacts)
+- `Proactive Adaptation` or `Direct Adaptation`: reflect damages where cost-effective adaptations are implemented with perfect foresight. 
+
+FrEDI includes adaptation options because the realized magnitude, type, location, and timing of long-term climate-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.
 
 ### FrEDI Impact Types
 
-FrEDI also calculates the impacts within each sector as a function of multiple `impactTypes`. The impact types that are considered depend on the level of detail avialble in the underlying impact studies. For example, impacts from climate-driven changes in air quality (`Air Quality`) are calculated separately for the mortality-related impacts of both ozone and fine particulate matter (PM~2.5~), which can be combined to calcualte total impacts for that sector.
+FrEDI also calculates the impacts within each sector as a function of multiple `impactTypes`. The impact types that are considered depend on the level of detail available in the underlying impact studies. For example, impacts from climate-driven changes in air quality (`Air Quality`) are calculated separately for the mortality-related impacts of both ozone and fine particulate matter (PM~2.5~), which can be combined to calculate total impacts for that sector.
 
 <br>
+<br>
+
+---
+
+## FrEDI SV Module
+
+The `FrEDI_SV` module can also assess the social vulnerability implications of the impacts of climate change from select sectors on specific demographic groups. The basic structure, specific methodology, and data for underlying `FrEDI_SV` are derived from EPA’s independently peer-reviewed September 2021 report,[Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts.](https://www.epa.gov/cira/social-vulnerability-report), which based its assessment on the spatial intersection of where climate impacts are projected to occur and the current location of different demographic groups, as characterized by the Census American Community Survey. See [Example #2 ](Example2.html) for more information on running `FrEDI_SV`.
+
+<br> 
 <br>
 
 ---
@@ -173,5 +189,5 @@ There are also important caveats to consider when interpreting FrEDI results, in
 
 -	FrEDI is not a comprehensive accounting of all climate-driven impacts expected to occur within contiguous U.S. borders and does not currently include impacts occurring in AK, HI, or U.S. territories. 
 -	FrEDI does not consider impacts to U.S. citizens residing outside of the U.S. or feedbacks of climate impacts elsewhere back to the U.S. through trade, etc. 
--	There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by avaialble variant options
+-	There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by available variant options
 -	There are uncertainties in the climate drivers and the human responses to adapt to changes in those drivers
