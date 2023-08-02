@@ -9,32 +9,32 @@ tags:
 authors:
   - name: Karen Noiva
     orcid: 0000-0002-4412-5302
-    equal-contrib: true
+    # equal-contrib: true
     affiliation: 1 
   - name: Corinne Hartin
     orcid: 0000-0003-1834-6539
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    # equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: 2
   - name: Erin McDuffie
     orcid: 0000-0002-6845-6077
-    equal-contrib: true
+    # equal-contrib: true
     affiliation: 2
-  - name: Marcus Sarofim
-    orcid: 0000-0001-7753-1676
-    equal-contrib: true
-    affiliation: 2
-  - name: Jacqueline Willwerth
-    orcid: 0000-0002-6107-0315
-    equal-contrib: true
-    affiliation: 1
   - name: Will Maddock
     orcid: 0000-0002-6107-0315
-    equal-contrib: true
+    # equal-contrib: true
     affiliation: 1
   - name: Anthony Gardella
     orcid: 0000-0003-4380-3412
-    equal-contrib: true
+    # equal-contrib: true
     affiliation: 1
+  - name: Jacqueline Willwerth
+    orcid: 0000-0002-6107-0315
+    # equal-contrib: true
+    affiliation: 1
+  - name: Marcus Sarofim
+    orcid: 0000-0001-7753-1676
+    # equal-contrib: true
+    affiliation: 2
 affiliations:
  - name: Industrial Economics, Incorporated, USA
    index: 1
