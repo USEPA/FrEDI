@@ -9,8 +9,8 @@
 ">
 <title>About FrEDI • FrEDI</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="About FrEDI">
 <meta property="og:description" content="Background information about FrEDI.
@@ -28,7 +28,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.4</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-getting-started">
     <a class="dropdown-item" href="../articles/About.html">About FrEDI</a>
     <a class="dropdown-item" href="../articles/manual.html">Installing &amp; Running FrEDI</a>
+    <a class="dropdown-item" href="../articles/contributing.html">Contributing to FrEDI</a>
   </div>
 </li>
 <li class="nav-item">
@@ -56,7 +57,8 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-examples">Examples</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-examples">
-    <a class="dropdown-item" href="../articles/Example1.html">Example: Run with default parameters</a>
+    <a class="dropdown-item" href="../articles/Example1.html">Example #1: Run FrEDI with default parameters</a>
+    <a class="dropdown-item" href="../articles/Example2.html">Example #2: Run FrEDI_SV with default parameters</a>
   </div>
 </li>
 <li class="nav-item">
@@ -153,7 +155,7 @@
 <div class="section level4">
 <h4 id="sea-level-rise-slr">Sea Level Rise (SLR)<a class="anchor" aria-label="anchor" href="#sea-level-rise-slr"></a>
 </h4>
-<p>A CSV file containing a custom sea level rise scenario, in centimeters. The first column contains years in the interval 2000 to 2100 and the second column contains values for global mean sea level rise (GMSL), in centimeters, above the 1995 baseline. If a SLR scenario is not specified, FrEDI will project SLR based on the input temperature trajectory.</p>
+<p>A CSV file containing a custom sea level rise scenario, in centimeters. The first column contains years in the interval 2000 to 2100 and the second column contains values for global mean sea level rise (GMSL), in centimeters, above a 2000 baseline. If a SLR scenario is not specified, FrEDI will project SLR based on the input temperature trajectory.</p>
 </div>
 <div class="section level4">
 <h4 id="population">Population<a class="anchor" aria-label="anchor" href="#population"></a>
@@ -208,15 +210,31 @@
 <h4 id="fredi-variants-adaptation-options">FrEDI Variants &amp; Adaptation Options<a class="anchor" aria-label="anchor" href="#fredi-variants-adaptation-options"></a>
 </h4>
 <p>To assess some aspects of uncertainty in the underlying impact studies, FrEDI also includes multiple variant options for select sectors. These are listed in the <code>variant</code> column of the FrEDI sector output dataframe. For example, Extreme Temperature Related Mortality (<code>ATS Extreme Temperature</code>), includes multiple impact estimates that correspond to the mean, as well as the high and low confidence intervals. Other sectors, such as Agriculture (<code>CIL Agriculture</code>), include impact estimates derived from multiple damage functions that are associated with different conditions (e.g., estimates with and without CO<sub>2</sub> fertilization).</p>
-<p>FrEDI also calculates climate-driven impacts under different adaptation assumptions, in select sectors. Adaptation options available for each sector (e.g., Coastal Property, Roads, Rail) are also included as <code>variants</code>. The select available adaptation options reflect the extent of treatment paid to adaptation in the underlying sectoral impact studies. FrEDI includes adaptation options as the realized magnitude, type, location, and timing of long-term climate-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.</p>
+<p>FrEDI also calculates climate-driven impacts under different adaptation assumptions, in select sectors. Adaptation options available for each sector (e.g., Coastal Property, Roads, Rail) are also included as <code>variants</code>. The select available adaptation options reflect the extent of treatment paid to adaptation in the underlying sectoral impact studies. The adaptation options are labeled in FrEDI as:</p>
+<ul>
+<li>
+<code>No Adaptation</code>: no additional adaptation reflect a “business as usual” scenario, but incorporates adaptive measures and strategies reflected in historical actions to respond to climate hazards</li>
+<li>
+<code>Reactive Adaptation</code>, or <code>Reasonably Anticipated Adaptation</code>: reflect options taken without advanced warning or foresight (e.g., no action is taken to prevent or mitigate future climate change impacts)</li>
+<li>
+<code>Proactive Adaptation</code> or <code>Direct Adaptation</code>: reflect damages where cost-effective adaptations are implemented with perfect foresight.</li>
+</ul>
+<p>FrEDI includes adaptation options because the realized magnitude, type, location, and timing of long-term climate-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.</p>
 </div>
 <div class="section level4">
 <h4 id="fredi-impact-types">FrEDI Impact Types<a class="anchor" aria-label="anchor" href="#fredi-impact-types"></a>
 </h4>
-<p>FrEDI also calculates the impacts within each sector as a function of multiple <code>impactTypes</code>. The impact types that are considered depend on the level of detail avialble in the underlying impact studies. For example, impacts from climate-driven changes in air quality (<code>Air Quality</code>) are calculated separately for the mortality-related impacts of both ozone and fine particulate matter (PM<sub>2.5</sub>), which can be combined to calcualte total impacts for that sector.</p>
+<p>FrEDI also calculates the impacts within each sector as a function of multiple <code>impactTypes</code>. The impact types that are considered depend on the level of detail available in the underlying impact studies. For example, impacts from climate-driven changes in air quality (<code>Air Quality</code>) are calculated separately for the mortality-related impacts of both ozone and fine particulate matter (PM<sub>2.5</sub>), which can be combined to calculate total impacts for that sector.</p>
 <p><br><br></p>
 <hr>
 </div>
+</div>
+<div class="section level3">
+<h3 id="fredi-sv-module">FrEDI SV Module<a class="anchor" aria-label="anchor" href="#fredi-sv-module"></a>
+</h3>
+<p>The <code>FrEDI_SV</code> module can also assess the social vulnerability implications of the impacts of climate change from select sectors on specific demographic groups. The basic structure, specific methodology, and data for underlying <code>FrEDI_SV</code> are derived from EPA’s independently peer-reviewed September 2021 report,<a href="https://www.epa.gov/cira/social-vulnerability-report" class="external-link">Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts.</a>, which based its assessment on the spatial intersection of where climate impacts are projected to occur and the current location of different demographic groups, as characterized by the Census American Community Survey. See <a href="Example2.html">Example #2</a> for more information on running <code>FrEDI_SV</code>.</p>
+<p><br><br></p>
+<hr>
 </div>
 </div>
 <div class="section level2">
@@ -228,7 +246,7 @@
 <ul>
 <li>FrEDI is not a comprehensive accounting of all climate-driven impacts expected to occur within contiguous U.S. borders and does not currently include impacts occurring in AK, HI, or U.S. territories.</li>
 <li>FrEDI does not consider impacts to U.S. citizens residing outside of the U.S. or feedbacks of climate impacts elsewhere back to the U.S. through trade, etc.</li>
-<li>There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by avaialble variant options</li>
+<li>There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by available variant options</li>
 <li>There are uncertainties in the climate drivers and the human responses to adapt to changes in those drivers</li>
 </ul>
 </div>
@@ -245,7 +263,7 @@
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7. | June 2023</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7. | July 2023</p>
 </div>
 
     </footer>

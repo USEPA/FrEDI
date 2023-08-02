@@ -9,8 +9,8 @@
 ">
 <title>Example #1 • FrEDI</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Example #1">
 <meta property="og:description" content="Running &amp; Analyzing results from FrEDI's default scenario.
@@ -28,7 +28,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.4</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-getting-started">
     <a class="dropdown-item" href="../articles/About.html">About FrEDI</a>
     <a class="dropdown-item" href="../articles/manual.html">Installing &amp; Running FrEDI</a>
+    <a class="dropdown-item" href="../articles/contributing.html">Contributing to FrEDI</a>
   </div>
 </li>
 <li class="nav-item">
@@ -56,7 +57,8 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-examples">Examples</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-examples">
-    <a class="dropdown-item" href="../articles/Example1.html">Example: Run with default parameters</a>
+    <a class="dropdown-item" href="../articles/Example1.html">Example #1: Run FrEDI with default parameters</a>
+    <a class="dropdown-item" href="../articles/Example2.html">Example #2: Run FrEDI_SV with default parameters</a>
   </div>
 </li>
 <li class="nav-item">
@@ -91,7 +93,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Example #1</h1>
             
-            <h4 data-toc-skip class="date">June, 2023</h4>
+            <h4 data-toc-skip class="date">July, 2023</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USEPA/FrEDI/blob/HEAD/vignettes/articles/Example1.Rmd" class="external-link"><code>vignettes/articles/Example1.Rmd</code></a></small>
       <div class="d-none name"><code>Example1.Rmd</code></div>
@@ -124,7 +126,11 @@
 <p>When installing for the first time, see <a href="manual.html">Installing &amp; Running FrEDI</a> page.</p>
 <p>Load package</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://epa.gov/cira/FrEDI/" class="external-link">FrEDI</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/FrEDI">FrEDI</a></span><span class="op">)</span></span></code></pre></div>
+<p>After successfully <a href="manual.html">installing <code>FrEDI</code></a>, documentation for <code>FrEDI</code> functions can be accessed in the same way as for other <code>R</code> packages.</p>
+<p>For an overview of <code>FrEDI</code>’s user-defined functions, type <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(help="FrEDI")</a></code> into an <code>R</code> console (this command will show documentation for <code>FrEDI</code> even if the package is not installed).</p>
+<p>For documentation for a specific function, type <code>help("*functionName*", package="FrEDI")</code> into an <code>R</code> console, where <em>functionName</em> is the name of one of the functions in <code>FrEDI</code> (e.g., <code><a href="../reference/aggregate_impacts.html">help("aggregate_impacts", package="FrEDI")</a></code>).</p>
+<p>If <code>FrEDI</code> has been installed, users can also search for function-specific documentation in RStudio through the <a href="https://www.r-project.org/help.html" class="external-link"><strong>Help</strong> window</a>. Move the focus to the <strong>Help</strong> window using the keyboard shortcut <code>Ctrl+3</code> or toggle the search field in <strong>Help</strong> using <code>Ctrl+Alt+F1</code>. Documentation for each function includes examples.</p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -199,10 +205,10 @@
 <span>               <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">inputs_list</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] "CONFIRM: No user-specific input data loaded"</span></span></code></pre>
-<p>If no input files are specified, <code><a href="../reference/run_fredi.html">run_fredi()</a></code> will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi() will calculate annual projected sea level rise based on the default temperature change.</p>
+<p>If no input files are specified, <code><a href="../reference/run_fredi.html">run_fredi()</a></code> will use default temperature, U.S. population, and GDP projections. In this case, <code><a href="../reference/run_fredi.html">run_fredi()</a></code> will calculate annual projected sea level rise based on the default temperature change.</p>
 <p>Default population scenarios are based on UN Median Population projection (<a href="https://www.un.org/en/development/desa/publications/world-population-prospects-2015-revision.html" class="external-link">United Nations, 2015</a>) and EPA’s ICLUSv2 model (<a href="https://www.pnas.org/doi/abs/10.1073/pnas.1002096107" class="external-link">Bierwagen et al., 2010</a>; <a href="https://cfpub.epa.gov/ncea/risk/recordisplay.cfm?deid=322479" class="external-link">EPA 2017</a>), and GDP from the EPPA version 6 model (<a href="https://globalchange.mit.edu/publication/16262" class="external-link">Chen et al., 2015</a>). Default temperature projections are from the GCAM reference scenario. Current default projections of U.S. GDP, national population, and U.S. temperature in the year 2090 are 70 trillion (2015USD), 438 million, and 3.4°C respectively.</p>
 <p><br></p>
-<p>Next, set FrEDI runtime parameters</p>
+<p>Next, set <code>FrEDI</code> runtime parameters</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">thru2300Flag</span> <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="co"># Purpose: </span></span>
@@ -241,6 +247,11 @@
 <span>  <span class="co">#   to calculate present values</span></span>
 <span>  <span class="co"># Default: 0.03</span></span>
 <span></span>
+<span><span class="va">maxYearFlag</span> <span class="op">&lt;-</span> <span class="fl">2090</span></span>
+<span>  <span class="co"># Purpose: </span></span>
+<span>  <span class="co">#   Specify the last year of the analysis </span></span>
+<span>  <span class="co"># Default: 2090</span></span>
+<span></span>
 <span><span class="va">elasticityFlag</span> <span class="op">&lt;-</span> <span class="fl">1</span>   </span>
 <span>  <span class="co"># Purpose: </span></span>
 <span>  <span class="co">#   Specify the income elasticity used to adjust the Value of a</span></span>
@@ -248,15 +259,21 @@
 <span>  <span class="co"># Options: any numeric value</span></span>
 <span>  <span class="co"># Default: 0.4</span></span>
 <span></span>
-<span><span class="va">silentFlag</span> <span class="op">&lt;-</span> <span class="cn">NULL</span>       </span>
+<span><span class="va">silentFlag</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span>       </span>
 <span>  <span class="co"># Purpose:</span></span>
 <span>  <span class="co">#   Specify the level of messaging to the user</span></span>
 <span>  <span class="co"># Options: TRUE/FALSE. </span></span>
-<span>  <span class="co"># Default: TRUE</span></span></code></pre></div>
+<span>  <span class="co"># Default: TRUE</span></span>
+<span></span>
+<span><span class="va">outputListFlag</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span>
+<span>  <span class="co"># Purpose:</span></span>
+<span>  <span class="co">#   Specify whether to return input arguments in addition to results data frame</span></span>
+<span>  <span class="co"># Options: TRUE/FALSE. </span></span>
+<span>  <span class="co"># Default: FALSE</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
-<h2 id="runFrEDI">Step 3. Run FrEDI<a class="anchor" aria-label="anchor" href="#runFrEDI"></a>
+<h2 id="runFrEDI">Step 3. Run <code>FrEDI</code><a class="anchor" aria-label="anchor" href="#runFrEDI"></a>
 </h2>
 <p>Run <code>FrEDI</code> using the main <code><a href="../reference/run_fredi.html">run_fredi()</a></code> function</p>
 <p>Default parameter options are used for any parameters that are not specified in <code><a href="../reference/run_fredi.html">run_fredi()</a></code>.</p>
@@ -270,11 +287,24 @@
 <span>                       pv <span class="op">=</span> <span class="va">pvFlag</span>,</span>
 <span>                       baseYear <span class="op">=</span> <span class="va">baseYearFlag</span>,</span>
 <span>                       rate <span class="op">=</span> <span class="va">rateFlag</span>,</span>
+<span>                       maxYear <span class="op">=</span> <span class="va">maxYearFlag</span>,</span>
 <span>                       elasticity <span class="op">=</span> <span class="va">elasticityFlag</span>,</span>
-<span>                       silent <span class="op">=</span> <span class="va">silentFlag</span></span>
-<span>                       <span class="op">)</span> </span>
-<span></span>
-<span><span class="co"># Option: write output</span></span>
+<span>                       silent <span class="op">=</span> <span class="va">silentFlag</span>,</span>
+<span>                       outputList <span class="op">=</span> <span class="va">outputListFlag</span></span>
+<span>                       <span class="op">)</span> </span></code></pre></div>
+<pre><code><span><span class="co">## Checking input values...</span></span></code></pre>
+<pre><code><span><span class="co">## No temperature scenario provided...using default temperature scenario...</span></span></code></pre>
+<pre><code><span><span class="co">## Creating SLR scenario from temperature scenario...</span></span></code></pre>
+<pre><code><span><span class="co">## No GDP scenario provided...Using default GDP scenario...</span></span></code></pre>
+<pre><code><span><span class="co">## Creating Population scenario from defaults...</span></span></code></pre>
+<pre><code><span><span class="co">## Formatting results...</span></span></code></pre>
+<pre><code><span><span class="co">##  Interpolating between impact year estimates...</span></span></code></pre>
+<pre><code><span><span class="co">##  Calculating model averages...</span></span></code></pre>
+<pre><code><span><span class="co">##  Calculating national totals...</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Finished.</span></span></code></pre>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Option: write output</span></span>
 <span><span class="co">## Write Full Dataframe to CSV (or feather)</span></span>
 <span><span class="co"># write.csv(output_df, './output/example_output.csv')</span></span>
 <span></span>
@@ -292,13 +322,13 @@
 </h3>
 <p>Extract national average of economic damages (in billions of dollars in 2015$) for all <code>FrEDI</code> sectors for a specified year</p>
 <p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
-<p>*Note: Use the <code>sectorprimary ==1</code> and <code>includeaggregate ==1</code> flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>*Note: Use the <code>sectorprimary ==1</code> and <code>includeaggregate ==1</code> flags to filter the <code>FrEDI</code> dataframe for impacts from only the default impact sectors and variants.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#specify year</span></span>
 <span><span class="va">c_years</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2090</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
-<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span><span class="op">$</span><span class="va">results</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="co"># filter for primary sectors and variants (included to avoid </span></span>
 <span>  <span class="co">#  double counting final impacts)</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sectorprimary</span> <span class="op">==</span><span class="fl">1</span>,</span>
@@ -317,7 +347,8 @@
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="va">annual_impacts</span>, <span class="va">round</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="co"># select (and rename) relevant columns</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="st">'sector'</span>,<span class="st">'region'</span>,<span class="st">'year'</span>,<span class="st">'annual_impacts'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span><span class="st">'billions_2015$'</span> <span class="op">=</span> <span class="va">annual_impacts</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span><span class="st">'billions_2015$'</span> <span class="op">=</span> <span class="va">annual_impacts</span><span class="op">)</span> </span>
+<span>    </span>
 <span></span>
 <span><span class="co">#Display first 10 sectors</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="http://haozhu233.github.io/kableExtra/" class="external-link">'kableExtra'</a></span><span class="op">)</span></span>
@@ -491,13 +522,13 @@ National Total
 </h3>
 <p>Extract national average of physical damages for all <code>FrEDI</code> sectors that include physical impacts, for a specified year</p>
 <p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
-<p>*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p>*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the <code>FrEDI</code> dataframe for impacts from only the default impact sectors and variants.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#specify year</span></span>
 <span><span class="va">c_years</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2090</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
-<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span><span class="op">$</span><span class="va">results</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="co"># filter for primary sectors and variants (included to avoid </span></span>
 <span>  <span class="co">#  double counting final impacts)</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sectorprimary</span> <span class="op">==</span><span class="fl">1</span>,</span>
@@ -665,6 +696,26 @@ N/A
 </tr>
 <tr>
 <td style="text-align:left;">
+Mental Health
+</td>
+<td style="text-align:left;">
+National Total
+</td>
+<td style="text-align:right;">
+2090
+</td>
+<td style="text-align:left;">
+Premature Mortality
+</td>
+<td style="text-align:left;">
+N/A
+</td>
+<td style="text-align:right;">
+1345
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 Southwest Dust
 </td>
 <td style="text-align:left;">
@@ -723,26 +774,6 @@ Mortality
 1548
 </td>
 </tr>
-<tr>
-<td style="text-align:left;">
-Wildfire
-</td>
-<td style="text-align:left;">
-National Total
-</td>
-<td style="text-align:right;">
-2090
-</td>
-<td style="text-align:left;">
-Acres Burned
-</td>
-<td style="text-align:left;">
-Response Costs
-</td>
-<td style="text-align:right;">
-3200682
-</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -751,13 +782,13 @@ Response Costs
 </h3>
 <p>Extract regional economic impacts for <code>FrEDI</code> sectors for a specified year</p>
 <p>Output of this chunk includes a snapshot of a subset of the resulting dataframe</p>
-<p>*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the <code>FrEDI</code> dataframe for impacts from only the default impact sectors and variants.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#specify year</span></span>
 <span><span class="va">c_years</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2090</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">#filter and aggregate data, assign to aggregate categories</span></span>
-<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">df_filter</span> <span class="op">&lt;-</span> <span class="va">output_df</span><span class="op">$</span><span class="va">results</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="co"># filter for primary sectors and variants (included to avoid </span></span>
 <span>  <span class="co">#  double counting final impacts)</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sectorprimary</span> <span class="op">==</span><span class="fl">1</span>,</span>
@@ -810,7 +841,7 @@ Midwest
 2090
 </td>
 <td style="text-align:right;">
-418
+426
 </td>
 </tr>
 <tr>
@@ -821,7 +852,7 @@ Northeast
 2090
 </td>
 <td style="text-align:right;">
-546
+553
 </td>
 </tr>
 <tr>
@@ -832,7 +863,7 @@ Northern Plains
 2090
 </td>
 <td style="text-align:right;">
-44
+45
 </td>
 </tr>
 <tr>
@@ -843,7 +874,7 @@ Northwest
 2090
 </td>
 <td style="text-align:right;">
-89
+90
 </td>
 </tr>
 <tr>
@@ -854,7 +885,7 @@ Southeast
 2090
 </td>
 <td style="text-align:right;">
-831
+844
 </td>
 </tr>
 <tr>
@@ -865,7 +896,7 @@ Southern Plains
 2090
 </td>
 <td style="text-align:right;">
-369
+374
 </td>
 </tr>
 <tr>
@@ -876,12 +907,12 @@ Southwest
 2090
 </td>
 <td style="text-align:right;">
-520
+528
 </td>
 </tr>
 </tbody>
 </table>
-<p>Please contact the FrEDI developers with additional questions.</p>
+<p>Please contact the <code>FrEDI</code> developers with additional questions.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -897,7 +928,7 @@ Southwest
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7. | June 2023</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7. | July 2023</p>
 </div>
 
     </footer>

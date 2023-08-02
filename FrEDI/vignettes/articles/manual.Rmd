@@ -43,15 +43,25 @@ withr::with_libpaths(
         repo = "USEPA/FrEDI",  
         subdir = "FrEDI",  
         type = "source",  
-        force = TRUE  
-        #ref = "branch" # this will install a particular branch of interest
+        force = TRUE,  
+        ref = "main" # edit this to install a different branch of interest
         )
     )
 
 library(FrEDI)
 ```  
 
-The user can specify a particular github branch, by including a `ref`. If not included, the default branch is `main`
+The user can specify a particular github branch, by including a `ref`. If not included, the default branch is `main`.
+<br>
+If the installation exists with the following error: 
+`
+Downloading GitHub repo USEPA/FrEDI@ref
+Error in utils::download.file(url, path, method = method, quiet = quiet,  : 
+  cannot open URL 'https://api.github.com/repos/USEPA/FrEDI/tarball/ref'
+`
+Make sure that both `withr` and `devtools` are up to date. 
+
+If prompted during installation, update all listed R packages (e.g., Enter 1). 
 <br>
 
 ---

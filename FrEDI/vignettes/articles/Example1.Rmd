@@ -1,6 +1,6 @@
 ---
 title: "Example #1"
-date: "June, 2023"
+date: "July, 2023"
 description: >
   Running & Analyzing results from FrEDI's default scenario.
 #output: rmarkdown::html_vignette
@@ -40,6 +40,14 @@ Load package
 ```{r load_FrEDI, message = FALSE,results = 'hide'}
 library(FrEDI)
 ```
+
+After successfully [installing `FrEDI`](manual.html), documentation for `FrEDI` functions can be accessed in the same way as for other `R` packages. 
+
+For an overview of `FrEDI`'s user-defined functions, type `library(help="FrEDI")` into an `R` console (this command will show documentation for `FrEDI` even if the package is not installed).
+
+For documentation for a specific function, type `help("*functionName*", package="FrEDI")` into an `R` console, where *functionName* is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). 
+
+If `FrEDI` has been installed, users can also search for function-specific documentation in RStudio through the [**Help** window](https://www.r-project.org/help.html). Move the focus to the **Help** window using the keyboard shortcut `Ctrl+3` or toggle the search field in **Help** using `Ctrl+Alt+F1`. Documentation for each function includes examples. 
 
 <br>
 
@@ -117,13 +125,13 @@ if ( length(inputs_list) ==0 ){
 }
 ```
 
-If no input files are specified, `run_fredi()` will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi() will calculate annual projected sea level rise based on the default temperature change. 
+If no input files are specified, `run_fredi()` will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi()` will calculate annual projected sea level rise based on the default temperature change. 
 
 Default population scenarios are based on UN Median Population projection ([United Nations, 2015](https://www.un.org/en/development/desa/publications/world-population-prospects-2015-revision.html)) and EPA’s ICLUSv2 model ([Bierwagen et al., 2010](https://www.pnas.org/doi/abs/10.1073/pnas.1002096107); [EPA 2017](https://cfpub.epa.gov/ncea/risk/recordisplay.cfm?deid=322479)), and GDP from the EPPA version 6 model ([Chen et al., 2015](https://globalchange.mit.edu/publication/16262)). Default temperature projections are from the GCAM reference scenario. Current default projections of U.S. GDP, national population, and U.S. temperature in the year 2090 are 70 trillion (2015USD), 438 million, and 3.4°C respectively. 
 
 <br>
 
-Next, set FrEDI runtime parameters
+Next, set `FrEDI` runtime parameters
 
 ```{r setup_fredi_parameters, echo=TRUE, results = 'hold', message=FALSE }
 thru2300Flag = FALSE
@@ -163,6 +171,11 @@ rateFlag <- NULL
   #   to calculate present values
   # Default: 0.03
 
+maxYearFlag <- 2090
+  # Purpose: 
+  #   Specify the last year of the analysis 
+  # Default: 2090
+
 elasticityFlag <- 1   
   # Purpose: 
   #   Specify the income elasticity used to adjust the Value of a
@@ -170,21 +183,27 @@ elasticityFlag <- 1
   # Options: any numeric value
   # Default: 0.4
 
-silentFlag <- NULL       
+silentFlag <- TRUE       
   # Purpose:
   #   Specify the level of messaging to the user
   # Options: TRUE/FALSE. 
   # Default: TRUE
+
+outputListFlag <- TRUE
+  # Purpose:
+  #   Specify whether to return input arguments in addition to results data frame
+  # Options: TRUE/FALSE. 
+  # Default: FALSE
 ```
 
 <br>
 
-# Step 3. Run FrEDI {#runFrEDI}
+# Step 3. Run `FrEDI` {#runFrEDI}
 Run `FrEDI` using the main `run_fredi()` function 
 
 Default parameter options are used for any parameters that are not specified in `run_fredi()`. 
 
-```{r run_fredi, echo=TRUE, results = 'hold',message=FALSE}
+```{r run_fredi, echo=TRUE, results = 'hold',message=TRUE}
 
 #Run FrEDI using inputs and parameters set in Step #2
 
@@ -195,8 +214,10 @@ output_df <- run_fredi(inputsList= inputs_list,
                        pv = pvFlag,
                        baseYear = baseYearFlag,
                        rate = rateFlag,
+                       maxYear = maxYearFlag,
                        elasticity = elasticityFlag,
-                       silent = silentFlag
+                       silent = silentFlag,
+                       outputList = outputListFlag
                        ) 
 
 # Option: write output
@@ -220,7 +241,7 @@ Extract national average of economic damages (in billions of dollars in 2015$) f
 
 Output of this chunk includes a snapshot of a subset of the resulting dataframe
 
-*Note: Use the `sectorprimary ==1` and `includeaggregate ==1` flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.
+*Note: Use the `sectorprimary ==1` and `includeaggregate ==1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants.
 
 ```{r, example1, echo=TRUE, warning=FALSE, message=FALSE}
 
@@ -228,7 +249,7 @@ Output of this chunk includes a snapshot of a subset of the resulting dataframe
 c_years = c(2090)
 
 #filter and aggregate data, assign to aggregate categories
-df_filter <- output_df %>%
+df_filter <- output_df$results %>%
   # filter for primary sectors and variants (included to avoid 
   #  double counting final impacts)
     filter(sectorprimary ==1,
@@ -247,7 +268,8 @@ df_filter <- output_df %>%
     mutate(across(annual_impacts, round, 0)) %>%
   # select (and rename) relevant columns
     select('sector','region','year','annual_impacts') %>%
-    rename('billions_2015$' = annual_impacts)
+    rename('billions_2015$' = annual_impacts) 
+    
 
 #Display first 10 sectors
 library('kableExtra')
@@ -263,7 +285,7 @@ Extract national average of physical damages for all `FrEDI` sectors that includ
 
 Output of this chunk includes a snapshot of a subset of the resulting dataframe
 
-*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.
+*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants.
 
 ```{r, example2, echo=TRUE, warning=FALSE, message=FALSE}
 
@@ -271,7 +293,7 @@ Output of this chunk includes a snapshot of a subset of the resulting dataframe
 c_years = c(2090)
 
 #filter and aggregate data, assign to aggregate categories
-df_filter <- output_df %>%
+df_filter <- output_df$results %>%
   # filter for primary sectors and variants (included to avoid 
   #  double counting final impacts)
     filter(sectorprimary ==1,
@@ -300,7 +322,7 @@ Extract regional economic impacts for `FrEDI` sectors for a specified year
 
 Output of this chunk includes a snapshot of a subset of the resulting dataframe
 
-*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the FrEDI dataframe for impacts from only the default impact sectors and variants.
+*Note: Use the sectorprimary ==1 and includeaggregate ==1 flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants.
 
 ```{r, example3, echo=TRUE, warning=FALSE, message=FALSE}
 
@@ -308,7 +330,7 @@ Output of this chunk includes a snapshot of a subset of the resulting dataframe
 c_years = c(2090)
 
 #filter and aggregate data, assign to aggregate categories
-df_filter <- output_df %>%
+df_filter <- output_df$results %>%
   # filter for primary sectors and variants (included to avoid 
   #  double counting final impacts)
     filter(sectorprimary ==1,
@@ -339,4 +361,7 @@ kable(df_filter[1:7,],
   kable_styling(font_size = 12, full_width = F)
 
 ```
-Please contact the FrEDI developers with additional questions.
+
+
+
+Please contact the `FrEDI` developers with additional questions.
