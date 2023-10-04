@@ -111,10 +111,10 @@ if(saveFile){
   df_int_byType |>
     save_data(fpath = dowResultsPath, fname = "integer_results_byType", ftype = "rda")
 
-  df_int_byType |>
-    filter_years(years=c_years) |>
-    format_values(cols0=c_numVars, digits=c_digits) |>
-    save_data(fpath = dowResultsPath, fname = "integer_results_byType", ftype = "csv", row.names = F)
+  # df_int_byType |>
+  #   filter_years(years=c_years) |>
+  #   format_values(cols0=c_numVars, digits=c_digits) |>
+  #   save_data(fpath = dowResultsPath, fname = "integer_results_byType", ftype = "csv", row.names = F)
 }
 
 ###### ** Result Totals ######
@@ -133,10 +133,10 @@ if(saveFile){
   df_int_totals |>
     save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "rda")
 
-  df_int_totals |>
-    filter_years(years=c_years) |>
-    format_values(cols0=c_numVars, digits=c_digits) |>
-    save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "csv", row.names = F)
+  # df_int_totals |>
+  #   filter_years(years=c_years) |>
+  #   format_values(cols0=c_numVars, digits=c_digits) |>
+  #   save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "csv", row.names = F)
 }
 
 ###### Figure 7: Degrees of Warming ######
