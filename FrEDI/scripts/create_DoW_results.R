@@ -15,14 +15,19 @@ create_DoW_results <- function(
     img_dev  = "pdf", ### Image device
     silent   = TRUE,  ### Degree of messaging
     testing  = FALSE, ### Whether to print out extra diagnostic values
+    loadCode = "source", ### Whether to load code as source or devtools
     saveFile = FALSE, ### Save file
     return   = TRUE   ### Whether to return list object
 ){
-  ###### Messaging ######
+  ###### Initial values ######
+  ### Messaging
   do_msg          <- !silent
-
-  ###### Initialize Return List ######
+  ### Initialize Return List
   resultsList     <- list()
+  ### How to load code
+  loadProject     <- "project" %in% (loadCode |> tolower())
+  loadPackage     <- "package" %in% (loadCode |> tolower())
+  loadSource      <- !loadProject & !loadPackage
 
   ###### Set Up Environment ######
   ###### ** Set Paths ######
@@ -57,7 +62,9 @@ create_DoW_results <- function(
   ### Load Custom functions if testing the package
   ### Otherwise, load functions from FrEDI
   # getFromNamespace("value", "FrEDI")
-  if(testing){ codePath  |> loadCustomFunctions()} else{require(FrEDI)}
+  if     (loadProject){projectPath |> devtools::load_all()}
+  else if(loadPackage){require(FrEDI)}
+  else                {codePath    |> loadCustomFunctions()}
 
   ###### ** Data options ######
   ### Adjust c_digits for number of digits after zero when saving to file
