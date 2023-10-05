@@ -100,7 +100,6 @@ plot_DOW_byModelType <- function(
   n_sectors     <- infoList0[["nSectors"  ]]
   nRow          <- infoList0[["nRow"      ]]
   # df_info |> print()
-
   ###### Get X Scale ######
   ###### X Scales
   x_info     <- df_x |> get_colScale(col0=xCol, nTicks = 5)
@@ -159,43 +158,32 @@ plot_DOW_byModelType <- function(
   plot_legend   <- refPlot_x |> ggpubr::get_legend()
   # return(list(plots=plotList_x, lgd=plot_legend))
   plotList0     <- list(plots=plotList_x, lgd=plot_legend)
-  rm(plotList_x, plot_legend)
+  # rm(plotList_x, plot_legend)
 
   ### Arrange plot grid and elements
-  nCol |> print(); nRow |> print()
+  # nCol |> print(); nRow |> print()
   ### Rel widths
-  widths0       <- rep(1, nCol)
-  heights0      <- rep(1, nRow)
+  # widths0       <- rep(1, nCol)
+  # heights0      <- rep(1, nRow)
   ### Set heights
-  plot_heights0  <- c(0.2, nRow + 1, 1)
+  plot_heights0 <- c(0.2, nRow + 1, 1)
   # nRow          <- nRow - 1
 
   ###### Arrange Main Grid ######
   ### Arrange main grid and add plot_xTitle
   ### Add spacer and add plot_yTitle
-  main_grid      <- ggarrange(plotlist=plotList0[["plots"]], ncol=nCol, nrow=nRow, legend="none", align="h", common.legend = T, widths=widths0, heights=heights0)
+  main_grid      <- ggarrange(plotlist=plotList_x, ncol=nCol, nrow=nRow, legend="none", align="h", common.legend=T)
   # main_grid      <- main_grid |> annotate_figure(left = plot_yTitle, bottom = plot_xTitle)
   main_grid      <- main_grid |> annotate_figure(bottom = plot_xTitle)
-  main_grid      <- ggarrange(plotlist=list(
-    x=plot_spacer,
-    y=main_grid,
-    z=plot_spacer
-    ), ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2), heights=rep(1, 3))
+  ### Add spacer
+  plotList0      <- list(x=plot_spacer, y=main_grid, z=plot_spacer)
+  main_grid      <- ggarrange(plotlist=plotList0, ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2))
   main_grid      <- main_grid |> annotate_figure(left = plot_yTitle)
   # main_list      <- list(spacer=plot_spacer, plots=main_grid, lgd = plotList0[["lgd"]])
-  ###### Arrange Plot ######
-  main_plot      <- ggarrange(
-    # plotlist=main_list,
-    plotlist=list(
-      # x=ggplot() + theme_void(),
-      x=plot_spacer,
-      y=main_grid,
-      z=plotList0[["lgd"]]
-    ),
-    ncol=1,
-    heights=plot_heights0
-  )
-  main_plot <- main_plot |> annotate_figure(top=plot_title)
+  ###### Add Legend ######
+  plotList0      <- list( x=plot_spacer, y=main_grid, z=plot_legend)
+  main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=plot_heights0)
+  main_plot      <- main_plot |> annotate_figure(top=plot_title)
   return(main_plot)
 
   ###### Return######
@@ -203,4 +191,4 @@ plot_DOW_byModelType <- function(
   if(print_msg){ message("Finished.")}
   return(main_plot)
 
-}
+} ### End function
