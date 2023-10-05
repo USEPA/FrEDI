@@ -33,13 +33,11 @@ License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 3.5.0),
     tidyverse,
-    dplyr,
-    ggplot2,
-    tidyr,
+    ggpubr,
     openxlsx
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 LazyData: TRUE
-Suggests: knitr, rmarkdown, prettydoc
+Suggests: knitr, rmarkdown, prettydoc, devtools
 VignetteBuilder: knitr
 Language: en-US
