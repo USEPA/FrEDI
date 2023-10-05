@@ -1,22 +1,56 @@
-### Add list names
+### Add names to list object
 addListNames <- function(
     list0, ### List object
     names0 ### Names to give to list or data frame
 ){
   names(list0) <- names0
   return(list0)
-}
+} ### End addListNames
 
 ### This function makes it easier to get data objects from the sysdata.rda file
-get_ciraDataObj <- function(x, listall=FALSE){
-  x_listName <- "rDataList"
-  if(exists(x_listName)){new_x <- parse(text=x_listName) |> eval()}
-  else                  {new_x <- utils::getFromNamespace(x_listName, "FrEDI")}
+get_ciraDataObj <- function(
+    x,       ### Object name
+    listall  = FALSE,
+    listName = "rDataList",
+    pkg      = "FrEDI",
+    lib.loc  = .libPaths()[1] ### Library path to look for packages
+    ){
+  ### Messaging
+  msg0    <- "\t"
+  ### Check if list name exists
+  exists0 <- listName |> exists()
+  ### If the listname exists in the name space, parse it
+  ### Otherwise, grab it from a package name space
+  if(exists0){new_x <- parse(text=listName) |> eval()}
+  else       {
+    ### Check if package & list name
+    pkgList0    <- lib.loc |> installed.packages()
+    pkgExists0  <- pkg %in% pkgList0
+    if(!pkgExists0){
+      msg0 |> paste0("Package doesn't exist...") |> message()
+      msg0 |> paste0("Exiting...") |> message()
+      return()
+    } ### End if(!pkgExists0)
+    else           {new_x <- getFromNamespace(listName, ns=pkg)}
+  } ### End else(exists0)
 
+  ### Whether to list all items in data object or not
   if(listall) {return_x <- new_x |> names()}
   else        {return_x <- new_x[[x]]}
+  ### Return
   return(return_x)
-}
+} ### End get_ciraDataObj
+
+### Get column values from a tibble
+get_column_values <- function(
+    df0,    ### Tibble
+    col0,   ### Column
+    unique0 = FALSE ### Unique values
+){
+  vals0 <- df0[[col0]]
+  if(unique0){vals0 <- vals0 |> unique()}
+  return(vals0)
+} ### End get_column_values
 
 #### Summarize missing values
 sum_with_na <- function(
@@ -52,18 +86,27 @@ sum_with_na <- function(
   if(drop0){df0 <- df0 |> select(-c("is_NA"))}
   ### Return
   return(df0)
-
-}
-
+} ### End sum_with_na
 
 ### Filter to five year values
 filter_years <- function(
     df0, ### data
-    years = seq(2010, 2090, by=5)
+    byYears = 5, ### Number of years
+    years   = NULL ### Override by years
 ){
+  ### Check whether user provided values to years argument
+  nullYears <- years |> is.null()
+  hasYears  <- !nullYears
+  ### If user did not provide values to years argument
+  if(!hasYears){
+    range0 <- df0[["year"]] |> range(na.rm=TRUE)
+    years  <- seq(range0[1], range0[2], by=byYears)
+  }
+  ### Filter to years
   df0 <- df0 |> filter(year %in% years)
+  ### Return
   return(df0)
-}
+} ### End filter_years
 
 ### Filter values
 ### Format values to specific number of decimal places
@@ -82,41 +125,45 @@ create_constant_temp_scenario <- function(
     type0   = "conus",
     prefix0 = "Other_Integer" ### Prefix for scenario
 ){
+  ### Temperature Type
+  isConus <- "conus" %in% (type0 |> tolower())
+  ### Format scenario label
   # pre0  <- (type0=="conus") |> ifelse("Other_Integer", "preI_global")
   pre0  <- prefix0
   lab0  <- temp0 |> round(1)
   scen0 <- pre0  |> paste(lab0, sep="_")
-
+  ### Get annual values 1995 - 2010: starting with zero in 1995
   xIn0  <- c(1995, 2010)
   yIn0  <- c(0, temp0)
   xOut0 <- seq(xIn0[1], xIn0[2])
   df0   <- approx(x = xIn0, y = yIn0, xout=xOut0) |>
     as_tibble() |>
     rename(year=x, temp_C=y)
-
+  ### Extend values
   df1   <- tibble(year = seq(2011, 2090, by=1))
   df1   <- df1 |> mutate(temp_C  = temp0)
   df0   <- df0 |> rbind(df1)
   rm("df1")
 
   ### Get other temp types and rename
-  if(type0=="conus"){
-    df0   <- df0 |> mutate(temp_C_global = temp_C |> convertTemps(from="conus"))
+  if(isConus){
+    df0   <- df0 |> mutate(temp_C_global = temp_C |> FrEDI::convertTemps(from="conus"))
     df0   <- df0 |> mutate(temp_C_conus  = temp_C)
-  }
-  else            {
-    df0   <- df0 |> mutate(temp_C_conus  = temp_C |> convertTemps(from="global"))
+  } ### End if(isConus)
+  else       {
+    df0   <- df0 |> mutate(temp_C_conus  = temp_C |> FrEDI::convertTemps(from="global"))
     df0   <- df0 |> mutate(temp_C_global = temp_C)
-  }
+  } ### End else(isConus)
   ### Drop temp_C
   df0   <- df0 |> select(-c("temp_C"))
   ### Get SLR
-  ySlr0 <- temps2slr(temps = df0[["temp_C_global"]], years = df0[["year"]])
+  ySlr0 <- FrEDI::temps2slr(temps = df0[["temp_C_global"]], years = df0[["year"]])
   df0   <- df0 |> left_join(ySlr0, by="year")
   df0   <- df0 |> mutate(temp_lab = lab0)
   df0   <- df0 |> mutate(scenario = scen0)
+  ### Return
   return(df0)
-}
+} ### End create_constant_temp_scenario
 
 #### Get scenario inputs
 #### Get inputs list for a single scenario
@@ -177,54 +224,52 @@ get_scenario_inputsList <- function(
 
   ### Return
   return(list0)
-}
+} ### End get_scenario_inputsList
 
 #### Run a single temp scenario
 run_fredi_scenario <- function(
-    df0,   ### Data
+    df0,     ### Data
+    sectors  = FrEDI::get_sectorInfo(), ### Which sectors
     scenCols = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols = c("year")
 ){
   ### Filter to scenario
-  df1     <- df0 |> select(c(all_of(scenCols)))
-  rm("df0")
+  df1     <- df0 |> select(c(all_of(scenCols))); rm("df0")
   list1   <- df1 |> get_scenario_inputsList()
   ### Run FrEDI
-  df2     <- run_fredi(inputsList = list1, aggLevels = "none")
+  df2     <- FrEDI::run_fredi(inputsList = list1, sectorList=sectors, aggLevels = "none")
   ### Join scenarios
   # df1 |> names() |> print();  df2 |> names() |> print();
   df2     <- df2 |> left_join(df1, by=c(joinCols))
   # df2 |> names() |> print();
   ### Return
   return(df2)
-}
+} ### End run_fredi_scenario
 
 ### Aggregate temp scenarios
 agg_fredi_scenario <- function(
-    df0,   ### Data: output of run_fredi_scenario
+    df0,      ### Data: output of run_fredi_scenario
+    sectors   = FrEDI::get_sectorInfo(), ### Which sectors
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
     aggLevels = c("modelaverage", "national")
 ){
-  ### Filter to scenario
-  # df1     <- df0 |> select(c(all_of(scenCols)))
   ### Filter to grouping columns
   drop0   <- scenCols[!(scenCols %in% joinCols)]
-  # rm("df0")
-  # df0 |> names() |> print();  drop0 |> print();
   ### Run FrEDI
   group0  <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region") |> c(drop0)
-  df0     <- df0 |> aggregate_impacts(aggLevels = aggLevels, groupByCols = group0)
+  df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels = aggLevels, groupByCols = group0)
   ### Return
   return(df0)
-}
+} ### End agg_fredi_scenario
 
 #### run_scenario
 ### Run a single scenario
 run_scenario <- function(
     scenario, ### Scenario
-    df0, ### Data frame with scenario info
+    df0,      ### Data frame with scenario info
     fredi     = TRUE,
+    sectors   = FrEDI::get_sectorInfo(), ### Which sectors
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
     aggLevels = c("modelaverage", "national")
@@ -236,6 +281,7 @@ run_scenario <- function(
   ### Run FrEDI
   if(fredi){
     df_x0     <- df_x0 |> run_fredi_scenario(
+      sectors   = sectors,
       scenCols  = scenCols,
       joinCols  = joinCols
     ) ### End run_fredi_scenario
@@ -256,11 +302,12 @@ run_scenario <- function(
 } ### End function run_scenario
 
 
-#### Create constante
+### Run list of scenarios
 run_scenarios <- function(
     df0, ### Output of create_constant_temp_scenario
     col0      = "scenario", ### Scenario column
     fredi     = TRUE,
+    sectors   = FrEDI::get_sectorInfo(), ### Which sectors
     aggLevels = c("modelaverage", "national"),
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year")
@@ -270,25 +317,25 @@ run_scenarios <- function(
   nScenarios <- scenarios0 |> length()
 
   ### Iterate over the scenarios
-  list0      <- scenarios0 %>% map(
-    function(.x){
-      paste0("Running scenario ", which(scenarios0 == .x), "/" , nScenarios, "...") |> message()
-      df_x <- run_scenario(
-        .x,
-        df0       = df0,
-        fredi     = fredi,
-        aggLevels = aggLevels,
-        scenCols  = scenCols,
-        joinCols  = joinCols
-      ) ### End run_scenario(.x)
-      return(df_x)
-    }
-  ) ## End walk
-  df0        <- list0 %>% (function(x){do.call(rbind, x)})
+  list0  <- scenarios0 |> map(function(.x){
+    paste0("Running scenario ", which(scenarios0 == .x), "/" , nScenarios, "...") |> message()
+    df_x <- run_scenario(
+      .x,
+      df0       = df0,
+      fredi     = fredi,
+      sectors   = sectors,
+      aggLevels = aggLevels,
+      scenCols  = scenCols,
+      joinCols  = joinCols
+    ) ### End run_scenario(.x)
+    return(df_x)
+  }) ### End function(.x), walk
+  ### Bind values into a list
+  df0    <- list0 %>% (function(x){do.call(rbind, x)})
 
   ### Return
   return(df0)
-}
+} ### End run_scenarios
 
 
 
@@ -715,7 +762,7 @@ plot_DoW_by_modelYear <- function(
     options  = list(
       title      = NULL,
       xTitle     = NULL,
-      yTitle     = "Impacts (Billions, $2015)",
+      yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
       heights    = NULL,
       margins    = c(0, 0, .15, 0),
@@ -781,7 +828,7 @@ plot_DoW <- function(
     options  = list(
       title      = NULL,
       xTitle     = NULL,
-      yTitle     = "Impacts (Billions, $2015)",
+      yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
       heights    = NULL,
       margins    = c(0, 0, .15, 0),
