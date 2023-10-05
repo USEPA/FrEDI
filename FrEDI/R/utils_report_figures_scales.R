@@ -286,15 +286,15 @@ fun_limitsByGroup <- function(
   # df_limBySector |> print()
 
   ###### Spread ######
-  ### Spread
-  ### Calculate the spread
+  ### Spread & calculate the spread
   lim_bySector <- lim_bySector |> spread(key="summary_type", value="summary_value")
   lim_bySector <- lim_bySector |> mutate(spread=max - min)
-  ###### Arrange & Get Order ######
+
+  ###### Arrange ######
   ### Arrange the sectors & get their order
-  arrange0     <- groupCols    |> c("max", "spread")
+  # arrange0     <- groupCols    |> c("max", "spread")
+  arrange0     <- c("max", "spread")
   lim_bySector <- lim_bySector |> arrange_at(.vars = c(arrange0), desc)
-  lim_bySector <- lim_bySector |> mutate(order  = row_number())
   # lim_bySector |> print()
 
   ###### Get Group Orders ######
@@ -306,7 +306,15 @@ fun_limitsByGroup <- function(
     fac_i <- group_i |> paste0("_", "factor")
     lim_bySector[[fac_i]] <- lim_bySector[[group_i]] |> factor(levels=val_i)
     lim_bySector[[ord_i]] <- lim_bySector[[fac_i  ]] |> as.numeric()
-  }
+  } ### End for(group_i in groupCols)
+
+  ###### Arrange Again ######
+  ### Arrange the sectors & get their order
+  # arrange0     <- groupCols    |> c("max", "spread")
+  arrange0     <- "order" |> paste0("_", groupCols)
+  lim_bySector <- lim_bySector |> arrange_at(.vars = c(arrange0))
+  lim_bySector <- lim_bySector |> mutate(order = row_number())
+  # lim_bySector |> print()
 
   ### Return value
   if(print_msg){ msg1 |> paste0("...Finished.") |> message()}
@@ -332,7 +340,7 @@ get_sector_plotInfo <- function(
     group0    <- c("impactYear", "variant", "impactType")
     groupCols <- groupCols[!(groupCols %in% group0)]
     groupCols <- groupCols |> c(group0)
-  }
+  } ### End if(byType)
 
   ###### Get Value Ranges ######
   # df0 |> glimpse()
@@ -379,11 +387,15 @@ get_sector_plotInfo <- function(
   }
 
   ###### Number of Rows & Columns ######
+  ### Initialize rows & columns
+  nCol      <- nCol
+  nRow      <- n_sectors %/% nCol
   ### Get Number of Rows & Columns
-  nCol      <- byType |> ifelse(n_variants, nCol) # + 1
-  nRow      <- byType |> ifelse(n_impTypes, n_sectors %/% nCol) # + 1
-  nRow      <- (nRow == 0) |> ifelse(1, nRow)
-
+  if(byType){ nCol <- n_variants}
+  if(byType){ nRow <- n_impTypes}
+  ### Add to list
+  list0[["nCol"]] <- nCol
+  list0[["nRow"]] <- nRow
 
   ###### Min/Max Info ######
   ### Also figure out sector positions in the list of plots
@@ -392,8 +404,8 @@ get_sector_plotInfo <- function(
     df_sectorInfo <- df_sectorInfo |> mutate(plotRow = order_impactType)
   } ### End if(byType)
   else{
-    df_sectorInfo <- df_sectorInfo |> mutate(plotRow = ((sector_order - 1) %/% nCol) + 1)
-    df_sectorInfo <- df_sectorInfo |> mutate(plotCol = ((sector_order - 1) %%  nCol) + 1)
+    df_sectorInfo <- df_sectorInfo |> mutate(plotRow = ((order - 1) %/% nCol) + 1)
+    df_sectorInfo <- df_sectorInfo |> mutate(plotCol = ((order - 1) %%  nCol) + 1)
   } ### End else
 
   # df_sectorInfo |> print()
