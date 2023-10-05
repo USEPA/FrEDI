@@ -13,9 +13,10 @@ create_DoW_results <- function(
     gcmYears = c(2010, 2050, 2090), ### Which years to report on for GCM sectors
     slrYears = c(2010, 2050, 2090), ### Which years to report on for SLR sectors
     img_dev  = "pdf", ### Image device
-    saveFile = FALSE, ### Save file
     silent   = TRUE,  ### Degree of messaging
-    testing  = FALSE  ### Whether to print out extra diagnostic values
+    testing  = FALSE, ### Whether to print out extra diagnostic values
+    saveFile = FALSE, ### Save file
+    return   = TRUE   ### Whether to return list object
 ){
   ###### Messaging ######
   do_msg          <- !silent
@@ -460,7 +461,7 @@ create_DoW_results <- function(
     yCol    = "annual_impacts"
   )
   ### Glimpse
-  if(testing) plots_slr_byType[["sum_slr_byType"]] <- plots_slr_byType
+  if(testing) resultsList[["plots_slr_byType"]] <- plots_slr_byType
   if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
   ### Save
   if(saveFile){
@@ -479,5 +480,7 @@ create_DoW_results <- function(
     ) ### End save_appendix_figures
   } ### End if(saveFile)
 
-  ###### End File ######
-}
+  ###### Return ######
+  return(resultsList)
+} ### End function
+###### End File ######
