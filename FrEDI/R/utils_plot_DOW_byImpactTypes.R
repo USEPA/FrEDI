@@ -234,14 +234,15 @@ plot_DOW_byImpactTypes <- function(
     plotGrid_i  <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.01, 1))
     plotGrid_i  <- plotGrid_i |> annotate_figure(top=grobYear_i)
 
-    ### Add Plot Title
+    ### Add Plot Title & Y Title
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=legend0)
     plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
     # plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.1, n_impTypes, 0.25))
     plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=3, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.2))
     title0_i   <- sector0
     grobTit_i  <- text_grob(title0_i, color="black", size=14, face="bold", hjust=0.5)
-    plotGrid_i <- plotGrid_i |> annotate_figure(top=grobTit_i)
+    plotYTit_i <- text_grob(yTitle, color = "black", rot  = 90)
+    plotGrid_i <- plotGrid_i |> annotate_figure(top=grobTit_i, left=plotYTit_i)
     # "got here4..." |> print()
     # return(plotGrid_i)
 
