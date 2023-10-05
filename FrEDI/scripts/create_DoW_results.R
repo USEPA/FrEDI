@@ -12,6 +12,7 @@ create_DoW_results <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
     gcmYears = c(2010, 2050, 2090), ### Which years to report on for GCM sectors
     slrYears = c(2010, 2050, 2090), ### Which years to report on for SLR sectors
+    outPath  = "." |> file.path("report_figures"),  ### Path to save results
     img_dev  = "pdf", ### Image device
     silent   = TRUE,  ### Degree of messaging
     testing  = FALSE, ### Whether to print out extra diagnostic values
@@ -37,14 +38,11 @@ create_DoW_results <- function(
   # projectPath |> list.files() |> print()
   # codePath |> list.files() |> print()
   ### Output Paths
-  mainResultsPath <- projectPath
-  if(testing){mainResultsPath <- mainResultsPath |> file.path("data_tests")}
-  mainResultsPath <- mainResultsPath |> file.path("report_figures")
-  dowResultsPath  <- mainResultsPath |> file.path("DoW")
-  fig7ResultsPath <- mainResultsPath |> file.path("fig7")
-  appxResultsPath <- mainResultsPath |> file.path("appendix_figures")
+  dowResultsPath  <- outPath |> file.path("DoW")
+  fig7ResultsPath <- outPath |> file.path("fig7")
+  appxResultsPath <- outPath |> file.path("appendix_figures")
   # ### Check and create paths
-  # mainResultsPath |> check_and_create_path()
+  # outPath |> check_and_create_path()
   # dowResultsPath  |> check_and_create_path()
   # fig7ResultsPath |> check_and_create_path()
   # appxResultsPath |> check_and_create_path()
@@ -371,7 +369,7 @@ create_DoW_results <- function(
   if(saveFile){
     if(do_msg) paste0("Saving plot of SLR scenarios...") |> message()
     p_slrScenarios |> save_image(
-      fpath     = mainResultsPath, ### File path
+      fpath     = outPath, ### File path
       fname     = "slrScenarios",
       device    = "pdf", ### CSV or RData
       options   = list(
