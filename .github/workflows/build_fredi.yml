@@ -1,0 +1,80 @@
+### https://github.com/actions/upload-artifact
+### https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows/
+### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
+### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### For uploading artifacts:
+###     "path:" is the output path where Pandoc will write the compiled PDF.
+###      Note, this should be the same directory as the input paper.md
+name: Build FrEDI Package
+
+on: [workflow_dispatch]
+
+jobs:
+  compile_data:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    name: Load Package Code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Setup R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          cache-version: 1
+          packages: |
+            any::tidyverse
+            any::ggpubr
+            any::openxlsx
+            any::devtools
+
+      - name: Remove existing build
+        run: |
+          rm *.tar.gz
+
+
+      - name: Run create_DoW_results
+        run: |
+          Rscript -e '
+          ### Main repo path, FrEDI project path, scripts path
+          rPath0   <- ".";
+          pPath0   <- rPath0 |> file.path("FrEDI")
+          oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
+
+          ###### Create Default Results ######
+          pPath0 |> devtools::load_all()
+          defaultResults <- run_fredi()
+          save(defaultResults, file=oPath0))
+
+          ###### Update Documentation ######
+          ###### - Build Manual
+          ###### - Add and build vignettes
+          ###### - Generate Documentation
+          roxygen2::roxygenise(pPath0)
+          devtools::document(pkg = pPath0)
+          # devtools::build_manual(pkg = pPath0)
+          # devtools::build_vignettes(pkg = pPath0)
+
+          ###### Build Package ######
+          ###### - Build Package but don't include vignettes
+          devtools::build(pkg=pPath0, path=rPath0)
+          '
+
+
+      - name: Commit results
+        run: |
+          git config --local core.autocrlf false
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name  "${{ github.actor }}"
+          git add *.tar.gz
+          git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
+          git commit -a -m "New package build"
+          git push
+
