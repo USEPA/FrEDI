@@ -4,7 +4,7 @@ format_sectorNames <- function(
     names0, ### Sector names
     thresh0 = 18
 ){
-  names1 <- names0 %>% map(fun_getLineBreaks, thresh=thresh0)
+  names1 <- names0 |> map(fun_getLineBreaks, thresh=thresh0)
   names1 <- names1 |> unlist() |> trimws()
   names2 <- names1 |> standardize_lines()
   return(names2)
@@ -45,7 +45,7 @@ check_str2_in_str1 <- function(
   else{match0 <- default}
   ### Return
   return(match0)
-}
+} ### End check_str2_in_str1
 
 ###### fun_compareStrings() ######
 ### This function compares strings and is used with the function fun_getLineBreaks
@@ -222,7 +222,7 @@ fun_compareStrings <- function(
   )
   # return_list |> print()
   return(return_list)
-}
+} ### End fun_compareStrings
 
 ###### fun_getLineBreaks ######
 ### Good for ED&S, not for ET & D or HTFT
@@ -302,6 +302,20 @@ fun_getLineBreaks <- function(
   return(x_new)
 } ### End fun_getLineBreaks
 
+###### paste_newLines ######
+### Function to paste a string a certain number of new lines
+repCollapse <- function(
+    num0     = 1,    ### Number of times to repeat it
+    str0     = "\n", ### String to repeat
+    collapse = ""    ### String to use to collapse
+){
+  ### Replicate string
+  str0 <- str0 |> rep(num0)
+  ### Paste/collapse string
+  str0 <- str0 |> paste(collapse=collapse)
+  ### Return
+  return(str0)
+} ### End paste_newLines
 
 ###### get_newSectorLine ######
 ###### Get new sector line
@@ -315,23 +329,39 @@ get_newSectorLine <- function(
   word_i    <- df0[["word"    ]][index0]
   # df0[index0, ] |> print()
   add_i     <- maxLines0 - lines_i
+  ### Whether there are lines to add
+  has_i     <- add_i > 0
   # word_i |> print(); lines_i |> print(); add_i |> print()
 
   ### New word
-  if(add_i == 0){new_i <- word_i}
-  else{
-    # add_i <- rep("\n", add_lines) |> paste(collapse="")
-    # new_word_i <- word_i |> paste0(add_line_i)
-    mod_i   <- add_i %% 2
-    div_i   <- (add_i / 2) |> floor()
-    add_i1  <- (mod_i==0) |> ifelse(rep("\n", div_i) |> paste(collapse=""), rep("\n", div_i + 1) |> paste(collapse=""))
-    add_i2  <- rep("\n", div_i) |> paste(collapse="")
-    new_i   <- add_i1 |> paste0(word_i, add_i2)
-  }
+  if(has_i){
+    ### Lines to add
+    str_i   <- add_i |> repCollapse()
+    ### New string
+    word_i  <- add_i |> paste0(word_i)
+  } ### End else
+  # ### New word
+  # if(has_i){new_i <- word_i}
+  # else     {
+  #   # add_i <- rep("\n", add_lines) |> paste(collapse="")
+  #   # new_word_i <- word_i |> paste0(add_line_i)
+  #   mod_i   <- add_i %% 2
+  #   ### Divisor
+  #   div_i0  <- (add_i / 2) |> floor()
+  #   ### Number of spacer lines to paste before & after
+  #   ### Add most new lines before
+  #   num_i1  <- (mod_i==0) |> ifelse(div_i, div_i + 1)
+  #   num_i2  <- div_i
+  #   ### Lines to add
+  #   str_i1  <- num_i1 |> repCollapse()
+  #   str_i2  <- num_i2 |> repCollapse()
+  #   ### New string
+  #   word_i  <- str_i1 |> paste0(word_i, str_i2)
+  # } ### End else
 
-  # new_word_i|> print()
-  return(new_i)
-}
+  # word_i|> print()
+  return(word_i)
+} ### End get_newSectorLine
 
 ###### standardize_lines ######
 ### This function standardizes lines breaks
@@ -346,25 +376,22 @@ standardize_lines <- function(
   num_words  <- x |> length()
 
   ###### Find info about the number of lines ######
-  c_numLines <- x %>% map(function(y){
+  c_numLines <- x |> map(function(y){
     ### Get number of new lines
     y_findLines  <- gregexpr(pattern = newline, y) #; x_findLines
     y_numLines   <- y_findLines[[1]] |> length() ### ; numSplit0
 
     y_numLines   <- ifelse(y_findLines[[1]][1] == -1, 0, y_numLines)
     return(y_numLines)
-  }) %>% unlist()
+  }) |> unlist()
 
   ### Maximum number of lines
   max_numLines <- c_numLines |> max(na.rm=T)
 
-  # c_numLines|> print()
-  # max_numLines|> print()
-
   # ###### Dataframes of words ######
   df_words <- tibble(word = x, newlines = c_numLines)
-
-  new_words <- 1:num_words %>% map(function(i){
+  # df_words |> print(); num_words |> print(); max_numLines |> print()
+  new_words <- 1:num_words |> map(function(i){
     x_i <- i |> get_newSectorLine(
       df0       = df_words,
       maxLines0 = max_numLines
@@ -374,6 +401,5 @@ standardize_lines <- function(
   }) |> unlist()
   ### Return
   return(new_words)
-
-}
+} ### End standardize_lines
 
