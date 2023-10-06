@@ -73,8 +73,8 @@ jobs:
         run: |
           Rscript -e '
           ### Which tests to do
-          do_tests <- "${{ inputs.run_tests    }}" == "yes"
-          do_figs  <- "${{ inputs.make_figures }}" == "yes"
+          do_tests <- "${{ inputs.run_tests    }}" == "true"
+          do_figs  <- "${{ inputs.make_figures }}" == "true"
 
           ### Main repo path, FrEDI project path, scripts path
           rPath0   <- ".";
