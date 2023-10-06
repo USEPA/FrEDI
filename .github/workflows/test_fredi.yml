@@ -127,7 +127,7 @@ jobs:
         with:
           name: Test Data
           path: |
-            ./data_tests/general/*
+            ./data_tests/general/
 
       - name: Upload Report Figures
         uses: actions/upload-artifact@v3
@@ -136,7 +136,7 @@ jobs:
         with:
           name: Report Data
           path: |
-            ./data_tests/general/*S
+            ./data_tests/general/
 # #
 #       - name: Commit results
 #         run: |
