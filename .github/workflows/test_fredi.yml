@@ -83,10 +83,12 @@ jobs:
           rPath0 |> list.files() |> print()
           pPath0 |> list.files() |> print()
           sPath0 |> list.files() |> print()
+          
+          ### Load FrEDI
+          pPath0 |> devtools::load_all()
 
           ### Load source
           sPath0 |> file.path("create_DoW_results.R") |> source()
-          pPath0 |> devtools::load_all()
           ### Run FrEDI
           results0 <- run_fredi()
 
@@ -115,7 +117,8 @@ jobs:
               loadCode = "project",
               silent   = FALSE,
               testing  = TRUE,
-              return   = TRUE
+              return   = TRUE,
+              fpath = pPath0
             )
           }
           '
