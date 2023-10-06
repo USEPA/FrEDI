@@ -73,8 +73,8 @@ jobs:
         run: |
           Rscript -e '
           ### Which tests to do
-          do_tests <- "${{ inputs.run_tests    }}" == "yes"
-          do_figs  <- "${{ inputs.make_figures }}" == "yes"
+          do_tests <- "${{ inputs.run_tests    }}" == "true"
+          do_figs  <- "${{ inputs.make_figures }}" == "true"
 
           ### Main repo path, FrEDI project path, scripts path
           rPath0   <- ".";
@@ -83,10 +83,12 @@ jobs:
           rPath0 |> list.files() |> print()
           pPath0 |> list.files() |> print()
           sPath0 |> list.files() |> print()
+          
+          ### Load FrEDI
+          pPath0 |> devtools::load_all()
 
           ### Load source
           sPath0 |> file.path("create_DoW_results.R") |> source()
-
           ### Run FrEDI
           results0 <- run_fredi()
 
@@ -110,33 +112,34 @@ jobs:
             reports0 <- create_DoW_results(
               outPath  = oPath2,
               gcmYears = c(2010),
-              slrYears = c(2010, 2050, 2090)
+              #slrYears = c(2010, 2050, 2090)
               saveFile = TRUE,
               loadCode = "project",
               silent   = FALSE,
               testing  = TRUE,
-              return   = TRUE
+              return   = TRUE,
+              fpath = pPath0
             )
           }
           '
 
       - name: Upload Tests
         uses: actions/upload-artifact@v3
-        if: |
-          inputs.run_tests == 'yes'
+#        if: |
+#          inputs.run_tests == 'yes'
         with:
           name: Test Data
           path: |
-            ./data_tests/general/
+            ./FrEDI/data_tests/general/
 
       - name: Upload Report Figures
         uses: actions/upload-artifact@v3
-        if: |
-          inputs.make_figures == 'yes'
+#        if: |
+#          inputs.make_figures == 'yes'
         with:
           name: Report Data
           path: |
-            ./data_tests/report_figures/
+            ./FrEDI/data_tests/report_figures/
 # #
 #       - name: Commit results
 #         run: |
