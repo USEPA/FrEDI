@@ -79,7 +79,7 @@ fun_compareStrings <- function(
   else          {
     wordInSub_x <- check_str2_in_str1(string=sub_x, pattern=word_x)
     if(!wordInSub_x){
-      sub_x       <- c(sub_x, word_x) %>% paste(collapse=" ")
+      sub_x       <- c(sub_x, word_x) |> paste(collapse=" ")
       wordInSub_x <- TRUE
     } ### End if(!wordInSub_x)
     else             {wordInSub_x <- FALSE}
@@ -133,7 +133,7 @@ fun_compareStrings <- function(
   no_new_x  <- !(new_x  |> fun_hasStringValue())
   no_sub_x  <- !(sub_x  |> fun_hasStringValue())
   no_word_x <- !(word_x |> fun_hasStringValue())
-  # c("new_x: ", new_x, ", sub_x: ", sub_x, ", word_x: ", word_x) %>% paste(collapse="") |> print()
+  # c("new_x: ", new_x, ", sub_x: ", sub_x, ", word_x: ", word_x) |> paste(collapse="") |> print()
 
   #### What to do if wordInNew_x versus not
   cond1     <- wordInNew_x
@@ -338,7 +338,7 @@ get_newSectorLine <- function(
     ### Lines to add
     str_i   <- add_i |> repCollapse()
     ### New string
-    word_i  <- add_i |> paste0(word_i)
+    word_i  <- str_i |> paste0(word_i)
   } ### End else
   # ### New word
   # if(has_i){new_i <- word_i}
