@@ -127,7 +127,7 @@ jobs:
         with:
           name: Test Data
           path: |
-            ./FrEDI/data_tests/general/
+            ./FrEDI/data_tests/general/*
 
       - name: Upload Report Figures
         uses: actions/upload-artifact@v3
@@ -136,7 +136,7 @@ jobs:
         with:
           name: Report Data
           path: |
-            ./FrEDI/data_tests/general/
+            ./FrEDI/data_tests/general/*
 # #
 #       - name: Commit results
 #         run: |
