@@ -52,6 +52,27 @@ get_column_values <- function(
   return(vals0)
 } ### End get_column_values
 
+### Function to create note for figures
+create_fig_scale_note <- function(
+    ntypes = 1, ### Number of types
+    nvars  = 1  ### Number of variants
+){
+  ### Conditions
+  hasTypes <- ntypes > 1
+  hasVars  <- nvars  > 1
+  either0  <- hasTypes | hasVars
+  both0    <- hasTypes & hasVars
+  ### Notes
+  note0    <- either0  |> ifelse("Note: Figure scale varies by ", "")
+  note1    <- hasTypes |> ifelse("impact type", "")
+  note2    <- hasVars  |> ifelse("variant", "")
+  and0     <- both0    |> ifelse(" and ", "")
+  ### Final note
+  note0    <- note0 |> paste0(note1, and0, note2)
+  ### Return
+  return(note0)
+} ### create_fig_scale_note
+
 #### Summarize missing values
 sum_with_na <- function(
     df0,    ### Dataframe
@@ -786,21 +807,11 @@ plot_DoW_by_modelYear <- function(
   ### Get sector labels
   refSectors <- df0[["sector"]] |> unique()
   newSectors <- refSectors |> format_sectorNames(thresh0 = 18)
-  # newSectors |> print()
+  refSectors |> print(); newSectors |> print()
 
   ### Mutate sector names
   df0        <- df0 |> mutate(sector = sector |> factor(levels = refSectors, labels = newSectors))
   # df0 |> glimpse()
-  ###### Plot Option Defaults ######
-  # title      <- options[["title"  ]]
-  # xTitle     <- options[["xTitle" ]]
-  # ### Plot options
-  # hasTitle   <- !(is.null(title  ))
-  # hasXTitle  <- !(is.null(xTitle ))
-  # ### Update Options
-  # if(!hasTitle ){options[["title" ]] <- do_gcm |> ifelse("Impacts by Degrees of Warming", "Impacts by GMSL (cm)")}
-  # if(!hasXTitle){options[["xTitle"]] <- do_gcm |> ifelse(expression("Degrees of Warming (°C)"), "GMSL (cm)")}
-  # modelType %>% print
 
   ### Plot by model type
   plot0      <- df0 |> plot_DOW_byModelType(
@@ -852,7 +863,7 @@ plot_DoW <- function(
     df_types <- df_types |> rbind(df_gcm)
     rm(df_gcm)
   }
-
+  ### SLR data
   if(do_slr){
     df_slr   <- tibble(type="SLR", year="all", label="SLR" |> paste0("_", "all"))
     df_types <- df_types |> rbind(df_slr)

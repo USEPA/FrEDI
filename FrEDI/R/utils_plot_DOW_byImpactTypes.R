@@ -247,9 +247,13 @@ plot_DOW_byImpactTypes <- function(
     # return(plotGrid_i)
 
     ### Add Note
-    note_i     <- "Note: Figure scale varies by impact type"
-    plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
-    plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
+    # note_i     <- "Note: Figure scale varies by impact type"
+    note_i     <- create_fig_scale_note(ntypes=n_impTypes, nvars=n_variants)
+    doNote_i   <- !(note_i == "")
+    if(doNote_i){
+      plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
+      plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
+    }
     ###### Return Impact Type Plot ######
     return(plotGrid_i)
   })

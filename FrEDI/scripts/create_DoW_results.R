@@ -16,7 +16,7 @@ create_DoW_results <- function(
     img_dev  = "pdf", ### Image device
     silent   = TRUE,  ### Degree of messaging
     testing  = FALSE, ### Whether to print out extra diagnostic values
-    loadCode = "source", ### Whether to load code as source or devtools
+    loadCode = "project", ### Whether to load code as source or devtools
     saveFile = FALSE, ### Save file
     return   = TRUE   ### Whether to return list object
 ){
@@ -24,6 +24,7 @@ create_DoW_results <- function(
   ### Messaging
   do_msg          <- !silent
   ### Initialize Return List
+  return0         <- return; rm(return)
   resultsList     <- list()
   ### How to load code
   loadProject     <- "project" %in% (loadCode |> tolower())
@@ -88,7 +89,7 @@ create_DoW_results <- function(
   newSectorNames <- c_sectorNames |> format_sectorNames(thresh0 = breakChars)
   ### Message and save to list
   if(testing|do_msg) "Formatting sector names for plotting..." |> message()
-  if(testing) resultsList[["sectorNames"]] <- c_sectorNames
+  if(return0) resultsList[["sectorNames"]] <- c_sectorNames
   if(testing) c_sectorNames |> print(); newSectorNames |> print()
 
   ###### ** Constants ######
@@ -114,7 +115,7 @@ create_DoW_results <- function(
     mutate(scenario  = prefix |> paste0("_", tempLabel))
   ### Glimpse & save to list
   if(testing) "Creating tibble of integer scenario information..." |> message()
-  if(testing) resultsList[["df_scenarios"]] <- df_scenarios
+  if(return0) resultsList[["df_scenarios"]] <- df_scenarios
   if(testing) df_scenarios |> glimpse()
   ### Vector of scenarios
   c_scen_con     <- df_scenarios |> filter(tempType == "conus" ) |> get_column_values(col0="scenario")
@@ -136,7 +137,7 @@ create_DoW_results <- function(
     )
   }) %>% (function(x){do.call(rbind, x)})
   ### Glimpse, message, & save
-  if(testing) resultsList[["inputs_df_int"]] <- inputs_df_int
+  if(return0) resultsList[["inputs_df_int"]] <- inputs_df_int
   if(testing) inputs_df_int |> glimpse()
 
   ###### Run Scenarios ######
@@ -154,7 +155,7 @@ create_DoW_results <- function(
     joinCols  = c("year")
   )
   ### Glimpse results
-  if(testing) resultsList[["df_int_byType"]] <- df_int_byType
+  if(return0) resultsList[["df_int_byType"]] <- df_int_byType
   if(testing) df_int_byType |> glimpse()
   ### Save results
   if(saveFile){
@@ -181,7 +182,7 @@ create_DoW_results <- function(
     joinCols  = c("year")
   )
   ### Glimpse results
-  if(testing) resultsList[["df_int_totals"]] <- df_int_totals
+  if(return0) resultsList[["df_int_totals"]] <- df_int_totals
   if(testing) df_int_totals |> glimpse()
   ### Save results
   if(saveFile){
@@ -214,7 +215,7 @@ create_DoW_results <- function(
     adjCol      = "impact_billions"
   )
   ### Glimpse
-  if(testing) resultsList[["sum_gcm_totals"]] <- sum_gcm_totals
+  if(return0) resultsList[["sum_gcm_totals"]] <- sum_gcm_totals
   if(testing) sum_gcm_totals |> glimpse()
   ### Save 2090 summary table
   if(saveFile){
@@ -236,7 +237,7 @@ create_DoW_results <- function(
       thresh0 = breakChars
     )
   ### Glimpse
-  if(testing) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
+  if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
   if(testing) plots_dow_gcm[["GCM_2010"]] |> print()
   ### Save
   # codePath  |> loadCustomFunctions()
@@ -270,7 +271,7 @@ create_DoW_results <- function(
     silent      = TRUE
   )
   ### Glimpse
-  if(testing) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
+  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   if(testing) sum_gcm_byType |> glimpse()
   ### Save summary table
   if(saveFile){
@@ -291,7 +292,7 @@ create_DoW_results <- function(
       yCol    = "annual_impacts"
     )
   ### Glimpse
-  if(testing) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
+  if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
   if(testing) plots_gcm_byType$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
   ### Save
   if(saveFile){
@@ -321,7 +322,7 @@ create_DoW_results <- function(
   if(testing|do_msg) "Formatting SLR scenario model data..." |> message()
   ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T)
   ### Glimpse
-  if(testing) resultsList[["ciraSLRData"]] <- ciraSLRData
+  if(return0) resultsList[["ciraSLRData"]] <- ciraSLRData
   if(testing) ciraSLRData[["slrImp"]] |> glimpse()
   if(testing) ciraSLRData[["slrCm" ]] |> glimpse()
 
@@ -364,7 +365,7 @@ create_DoW_results <- function(
   )
   ### Glimpse
   if(testing) p_slrScenarios |> print()
-  if(testing) resultsList[["p_slrScenarios"]] <- p_slrScenarios
+  if(return0) resultsList[["p_slrScenarios"]] <- p_slrScenarios
   ### Save file
   if(saveFile){
     if(do_msg) paste0("Saving plot of SLR scenarios...") |> message()
@@ -397,7 +398,7 @@ create_DoW_results <- function(
     adjCol     = "impact_billions"
   )
   ### Glimpse
-  if(testing) resultsList[["sum_slr_totals"]] <- sum_slr_totals
+  if(return0) resultsList[["sum_slr_totals"]] <- sum_slr_totals
   if(testing) sum_slr_totals |> glimpse()
   # sum_gcm_totals |> glimpse()
   ### Save
@@ -418,7 +419,7 @@ create_DoW_results <- function(
     thresh0    = breakChars
   )
   ### Glimpse
-  if(testing) resultsList[["plots_dow_slr"]] <- plots_dow_slr
+  if(return0) resultsList[["plots_dow_slr"]] <- plots_dow_slr
   if(testing) plots_dow_slr[["SLR_all"]] |> print()
   ### Save
   if(saveFile){
@@ -448,7 +449,7 @@ create_DoW_results <- function(
     adjCol      = "impact_billions"
   )
   ### Glimpse
-  if(testing) resultsList[["sum_slr_byType"]] <- sum_slr_byType
+  if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
   if(testing) sum_slr_byType |> glimpse()
   ### Save
   if(saveFile){
@@ -466,7 +467,7 @@ create_DoW_results <- function(
     yCol    = "annual_impacts"
   )
   ### Glimpse
-  if(testing) resultsList[["plots_slr_byType"]] <- plots_slr_byType
+  if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
   if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
   ### Save
   if(saveFile){
