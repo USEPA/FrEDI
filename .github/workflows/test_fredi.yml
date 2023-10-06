@@ -122,8 +122,8 @@ jobs:
 
       - name: Upload Tests
         uses: actions/upload-artifact@v3
-        if: |
-          inputs.run_tests == 'yes'
+#        if: |
+#          inputs.run_tests == 'yes'
         with:
           name: Test Data
           path: |
@@ -131,8 +131,8 @@ jobs:
 
       - name: Upload Report Figures
         uses: actions/upload-artifact@v3
-        if: |
-          inputs.make_figures == 'yes'
+#        if: |
+#          inputs.make_figures == 'yes'
         with:
           name: Report Data
           path: |
