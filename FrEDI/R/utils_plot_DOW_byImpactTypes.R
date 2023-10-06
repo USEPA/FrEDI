@@ -14,6 +14,7 @@ plot_DOW_byImpactTypes <- function(
       xTitle     = expression("Degrees of Warming (°C)"),
       yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
+      nameBreak  = 18, ### Sector name break
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
@@ -27,6 +28,7 @@ plot_DOW_byImpactTypes <- function(
   do_gcm    <- "gcm" %in% (modelType |> tolower())
   do_slr    <- "slr" %in% (modelType |> tolower())
   # modelType |> print(); do_gcm |> print(); do_slr |> print()
+
   ###### Format Data ######
   ### Filter to sector and convert to data frame
   # data |> glimpse()
@@ -43,6 +45,16 @@ plot_DOW_byImpactTypes <- function(
   def_xTitles <- list(GCM=expression("Degrees of Warming (°C)"), SLR="GMSL (cm)")
   def_lgdLbls <- list(GCM="Model", SLR="Scenario")
   def_margins <- list(GCM=c(0, 0, .15, 0), SLR=c(0, .2, .15, 0))
+  ### Defaults: Default Heights Below
+  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
+  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
+  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
+  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
+  def_lgdPos  <- "top"
+  def_yTitle  <- "Impacts ($2015)"
+  def_mUnit   <- "cm"
+  def_theme   <- NULL
+  def_nameBrk <- 18
   ### Values
   title0      <- options[["title"     ]]
   xTitle      <- options[["xTitle"    ]]
@@ -53,34 +65,28 @@ plot_DOW_byImpactTypes <- function(
   margins     <- options[["margins"   ]]
   mUnit       <- options[["marginUnit"]]
   theme0      <- options[["theme"     ]]
+  nameBrk     <- options[["nameBreak" ]]
   # xTitle |> print()
   ### Plot options
-  hasTitle    <- !(is.null(title0  ))
-  hasXTitle   <- !(is.null(xTitle  ))
-  hasYTitle   <- !(is.null(yTitle  ))
-  hasLgdLbl   <- !(is.null(lgdLbl  ))
-  hasLgdPos   <- !(is.null(lgdPos  ))
-  hasHeights  <- !(is.null(heights ))
-  hasMargins  <- !(is.null(margins ))
-  hasMUnits   <- !(is.null(mUnit   ))
-  hasTheme    <- !(is.null(theme0  ))
-  ### Defaults: Default Heights Below
-  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
-  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
-  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
-  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
-  def_lgdPos  <- "top"
-  def_yTitle  <- "Impacts ($2015)"
-  def_mUnit   <- "cm"
-  def_theme   <- NULL
+  hasTitle    <- !(is.null(title0 ))
+  hasXTitle   <- !(is.null(xTitle ))
+  hasYTitle   <- !(is.null(yTitle ))
+  hasLgdLbl   <- !(is.null(lgdLbl ))
+  hasLgdPos   <- !(is.null(lgdPos ))
+  hasHeights  <- !(is.null(heights))
+  hasMargins  <- !(is.null(margins))
+  hasMUnits   <- !(is.null(mUnit  ))
+  hasTheme    <- !(is.null(theme0 ))
+  hasNameBrk  <- !(is.null(nameBrk))
   ### Values: Height Values Below
-  if(!hasTitle  ){title0  <- def_title }
-  if(!hasXTitle ){xTitle  <- def_xTitle}
-  if(!hasYTitle ){yTitle  <- def_yTitle}
-  if(!hasLgdLbl ){lgdLbl  <- def_lgdLbl}
-  if(!hasMargins){margins <- def_margin}
-  if(!hasMUnits ){mUnit   <- def_mUnit }
-  if(!hasTheme  ){theme0  <- def_theme }
+  if(!hasTitle  ){title0  <- def_title  }
+  if(!hasXTitle ){xTitle  <- def_xTitle }
+  if(!hasYTitle ){yTitle  <- def_yTitle }
+  if(!hasLgdLbl ){lgdLbl  <- def_lgdLbl }
+  if(!hasMargins){margins <- def_margin }
+  if(!hasMUnits ){mUnit   <- def_mUnit  }
+  if(!hasTheme  ){theme0  <- def_theme  }
+  if(!hasNameBrk){nameBrk <- def_nameBrk}
   # title0 |> print(); def_xTitle |> print()
   # xTitle |> print()
   ### Update plot options
@@ -136,6 +142,11 @@ plot_DOW_byImpactTypes <- function(
     x_breaks   <- x_info[["breaks"]]
     x_limits   <- x_info[["limits"]]
   } ### End else(xCol == "year")
+
+  # ###### Format Sector Names ######
+  # refSectors <- df0[["sector"]] |> unique()
+  # newSectors <- refSectors |> format_sectorNames(thresh0 = nameBrk)
+  # df0        <- df0 |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
 
   ###### Reference Plot ######
   ### Reference plots

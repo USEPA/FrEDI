@@ -8,16 +8,17 @@ require(ggpubr)
 
 ###### create_DoW_results ######
 create_DoW_results <- function(
-    fpath    = "." ,  ### Path to main FrEDI directory
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
-    gcmYears = c(2010, 2050, 2090), ### Which years to report on for GCM sectors
-    slrYears = c(2010, 2050, 2090), ### Which years to report on for SLR sectors
-    outPath  = "." |> file.path("report_figures"),  ### Path to save results
-    img_dev  = "pdf", ### Image device
+    gcmYears = c(2090), ### Which years to report on for GCM sectors
+    slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     silent   = TRUE,  ### Degree of messaging
     testing  = FALSE, ### Whether to print out extra diagnostic values
+    aggOnly  = TRUE, ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     loadCode = "project", ### Whether to load code as source or devtools
+    fpath    = "." ,  ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
     saveFile = FALSE, ### Save file
+    outPath  = "." |> file.path("report_figures"),  ### Path to save results if saveFile == TRUE
+    img_dev  = "pdf", ### Image device if saveFile == TRUE
     return   = TRUE   ### Whether to return list object
 ){
   ###### Initial values ######
@@ -61,9 +62,13 @@ create_DoW_results <- function(
   ### Load Custom functions if testing the package
   ### Otherwise, load functions from FrEDI
   # getFromNamespace("value", "FrEDI")
-  if     (loadProject){projectPath |> devtools::load_all()}
-  else if(loadPackage){require(FrEDI)}
-  else                {codePath    |> loadCustomFunctions()}
+  if       (loadProject){
+    projectPath |> devtools::load_all()
+  } else if(loadPackage){
+    require(FrEDI)
+  } else{
+    codePath    |> loadCustomFunctions()
+  } ### End else
 
   ###### ** Data options ######
   ### Adjust c_digits for number of digits after zero when saving to file
@@ -120,6 +125,8 @@ create_DoW_results <- function(
   ### Vector of scenarios
   c_scen_con     <- df_scenarios |> filter(tempType == "conus" ) |> get_column_values(col0="scenario")
   c_scen_glo     <- df_scenarios |> filter(tempType == "global") |> get_column_values(col0="scenario")
+  # c_scen_con |> print(); c_scen_glo |> print(); df_scenarios[["scenario"]] |> print()
+  # return(list(x=c_scen_con, y=c_scen_glo, z=df_scenarios))
 
   ###### Load Scenario Inputs ######
   ### Message
@@ -137,8 +144,9 @@ create_DoW_results <- function(
     )
   }) %>% (function(x){do.call(rbind, x)})
   ### Glimpse, message, & save
-  if(return0) resultsList[["inputs_df_int"]] <- inputs_df_int
+  if(return0) resultsList[["df_inputs"]] <- inputs_df_int
   if(testing) inputs_df_int |> glimpse()
+  # return(list(x=c_scen_con, y=c_scen_glo, z=inputs_df_int))
 
   ###### Run Scenarios ######
   ###### Run scenarios
@@ -197,6 +205,7 @@ create_DoW_results <- function(
     #   format_values(cols0=c_numVars, digits=c_digits) |>
     #   save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "csv", row.names = F)
   } ### End if(saveFile)
+  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals))
 
   ###### GCM Results & Figures ######
   ###### ** Figure 7: DoW by Sector ######
@@ -210,6 +219,7 @@ create_DoW_results <- function(
     sumCol      = "annual_impacts",
     impactYears = c("Interpolation"),
     models      = c("GCM"),
+    aggOnly     = aggOnly,
     years       = gcmYears,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions"
@@ -223,6 +233,7 @@ create_DoW_results <- function(
     sum_gcm_totals |>
       save_data(fpath = fig7ResultsPath, fname = "gcm_results_byDoW_totals", ftype = "csv", row.names = F)
   } ### End if(saveFile)
+  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals, w=sum_gcm_totals))
 
   ###### ** -- Plots
   #### Create plots
@@ -264,8 +275,6 @@ create_DoW_results <- function(
     sumCol      = "annual_impacts",
     impactYears = c("NA", "2010", "2090"),
     models      = c("GCM"),
-    # years       = c(2010, 2050, 2090),
-    years       = gcmYears,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions",
     silent      = TRUE
@@ -287,8 +296,6 @@ create_DoW_results <- function(
     # filter(sector %in% c_sectorNames[c(10)]) |>
     plot_DoW_by_sector(
       models  = c("GCM"),
-      # years   = c(2010, 2050, 2090),
-      years   = gcmYears,
       yCol    = "annual_impacts"
     )
   ### Glimpse
@@ -393,6 +400,7 @@ create_DoW_results <- function(
     slrDrivers = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
     slrImpacts = ciraSLRData[["slrImp"]] |> filter(year >= 2010, year <= 2090),
     bySector   = FALSE,
+    aggOnly    = aggOnly,
     years      = slrYears,
     adjVal     = 1/10**9, ### Factor to multiply by
     adjCol     = "impact_billions"
@@ -444,7 +452,6 @@ create_DoW_results <- function(
     slrImpacts  = ciraSLRData[["slrImp"]] |> filter(year >= 2010, year <= 2090),
     bySector    = TRUE,
     sumCol      = "annual_impacts",
-    year        = slrYears,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions"
   )

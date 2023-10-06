@@ -117,7 +117,7 @@ save_appendix_figures <- function(
     ### Split name into sector and ref year
     sector_x  <- .x |> map(function(.y){str_split(string=.y, pattern="_")[[1]][1]}) |> unlist() |> unique()
     refYear_x <- .x |> map(function(.y){str_split(string=.y, pattern="_")[[1]][2]}) |> unlist() |> unique()
-    fname_x   <- sector_x |> paste0("_refYear_", refYear_x)
+    fname_x   <- sector_x
     ### Filter to data
     df_x      <- df0 |> filter(sector == .x)
     ### Unique sector values
@@ -152,7 +152,7 @@ save_appendix_figures <- function(
     saved_x <- c_years |> walk(function(.y){
       .y |> print()
       plot_y  <- list_x[[.y]]
-      fname_y <- fname_x |> paste0("_impYear_", .y, ".", dev_x)
+      fname_y <- fname_x |> paste0("_", .y, ".", dev_x)
       # "got here1" |> print()
       saved_y <- plot_y |> save_image(
         fpath     = fdir , ### File path
