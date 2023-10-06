@@ -86,7 +86,7 @@ jobs:
 
           ### Load source
           sPath0 |> file.path("create_DoW_results.R") |> source()
-
+          pPath0 |> devtools::load_all()
           ### Run FrEDI
           results0 <- run_fredi()
 
@@ -110,7 +110,7 @@ jobs:
             reports0 <- create_DoW_results(
               outPath  = oPath2,
               gcmYears = c(2010),
-              slrYears = c(2010, 2050, 2090)
+              #slrYears = c(2010, 2050, 2090)
               saveFile = TRUE,
               loadCode = "project",
               silent   = FALSE,
