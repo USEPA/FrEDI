@@ -139,7 +139,7 @@ jobs:
         with:
           name: Report Data
           path: |
-            ./FrEDI/data_tests/general/
+            ./FrEDI/data_tests/report_figures/
 # #
 #       - name: Commit results
 #         run: |
