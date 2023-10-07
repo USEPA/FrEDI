@@ -165,7 +165,7 @@ save_appendix_figures <- function(
     }
     w_x       <- n_vars  |> fun_plot_width ()
     h_x       <- n_types |> fun_plot_height(nrows = lgdRows)
-    w_x |> c(h_x) |> print()
+    # w_x |> c(h_x) |> print()
 
     ### Plot options
     units_x   <- units; #rm(units)
