@@ -1,0 +1,1281 @@
+"sector","model_type","model","driverValue","variant","impactType","impactYear","region","annual_impacts","impact_billions","summaryYear"
+"ATS Extreme Temperature","GCM","CCSM4",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","CCSM4",1,"Mean","all","Interpolation","National Total",112710368846.548,112.710368846548,2010
+"ATS Extreme Temperature","GCM","CCSM4",2,"Mean","all","Interpolation","National Total",273055566320.563,273.055566320563,2010
+"ATS Extreme Temperature","GCM","CCSM4",3,"Mean","all","Interpolation","National Total",432114290377.455,432.114290377455,2010
+"ATS Extreme Temperature","GCM","CCSM4",4,"Mean","all","Interpolation","National Total",566745760011.003,566.745760011003,2010
+"ATS Extreme Temperature","GCM","CCSM4",5,"Mean","all","Interpolation","National Total",715756271652.298,715.756271652298,2010
+"ATS Extreme Temperature","GCM","CCSM4",6,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","CCSM4",7,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","CanESM2",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","CanESM2",1,"Mean","all","Interpolation","National Total",130379174934.7,130.3791749347,2010
+"ATS Extreme Temperature","GCM","CanESM2",2,"Mean","all","Interpolation","National Total",292437480793.335,292.437480793335,2010
+"ATS Extreme Temperature","GCM","CanESM2",3,"Mean","all","Interpolation","National Total",454400653219.036,454.400653219036,2010
+"ATS Extreme Temperature","GCM","CanESM2",4,"Mean","all","Interpolation","National Total",573806432024.952,573.806432024952,2010
+"ATS Extreme Temperature","GCM","CanESM2",5,"Mean","all","Interpolation","National Total",707937253842.885,707.937253842885,2010
+"ATS Extreme Temperature","GCM","CanESM2",6,"Mean","all","Interpolation","National Total",858059859667.023,858.059859667023,2010
+"ATS Extreme Temperature","GCM","CanESM2",7,"Mean","all","Interpolation","National Total",1008182465491.16,1008.18246549116,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",0,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",1,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",2,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",3,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",4,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",5,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",6,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GCM Ensemble",7,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",1,"Mean","all","Interpolation","National Total",151803243438.549,151.803243438549,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",2,"Mean","all","Interpolation","National Total",300461470311.17,300.46147031117,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",3,"Mean","all","Interpolation","National Total",484421385199.76,484.42138519976,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",4,"Mean","all","Interpolation","National Total",612076713431.934,612.076713431935,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",5,"Mean","all","Interpolation","National Total",747955027654.201,747.955027654201,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",6,"Mean","all","Interpolation","National Total",890605077699.745,890.605077699745,2010
+"ATS Extreme Temperature","GCM","GFDL-CM3",7,"Mean","all","Interpolation","National Total",1033255127745.29,1033.25512774529,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",1,"Mean","all","Interpolation","National Total",145308128164.153,145.308128164153,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",2,"Mean","all","Interpolation","National Total",334942282958.126,334.942282958126,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",3,"Mean","all","Interpolation","National Total",467409400463.765,467.409400463765,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",4,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",5,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",6,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","GISS-E2-R",7,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",1,"Mean","all","Interpolation","National Total",150588846904.906,150.588846904906,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",2,"Mean","all","Interpolation","National Total",271013698526.718,271.013698526718,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",3,"Mean","all","Interpolation","National Total",473418755853.99,473.41875585399,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",4,"Mean","all","Interpolation","National Total",613509448922.714,613.509448922714,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",5,"Mean","all","Interpolation","National Total",719392942942.86,719.39294294286,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",6,"Mean","all","Interpolation","National Total",882901695146.671,882.901695146671,2010
+"ATS Extreme Temperature","GCM","HadGEM2-ES",7,"Mean","all","Interpolation","National Total",1046410447350.48,1046.41044735048,2010
+"ATS Extreme Temperature","GCM","MIROC5",0,"Mean","all","Interpolation","National Total",0,0,2010
+"ATS Extreme Temperature","GCM","MIROC5",1,"Mean","all","Interpolation","National Total",132744585205.178,132.744585205178,2010
+"ATS Extreme Temperature","GCM","MIROC5",2,"Mean","all","Interpolation","National Total",295372589140.066,295.372589140066,2010
+"ATS Extreme Temperature","GCM","MIROC5",3,"Mean","all","Interpolation","National Total",482005282204.753,482.005282204753,2010
+"ATS Extreme Temperature","GCM","MIROC5",4,"Mean","all","Interpolation","National Total",607447408450.215,607.447408450215,2010
+"ATS Extreme Temperature","GCM","MIROC5",5,"Mean","all","Interpolation","National Total",733619549264.971,733.619549264971,2010
+"ATS Extreme Temperature","GCM","MIROC5",6,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MIROC5",7,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",0,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",1,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",2,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",3,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",4,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",5,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",6,"Mean","all","Interpolation","National Total",NA,NA,2010
+"ATS Extreme Temperature","GCM","MRI-CGCM3",7,"Mean","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CCSM4",0,"2011 Emissions","all","Interpolation","National Total",0,0,2010
+"Air Quality","GCM","CCSM4",1,"2011 Emissions","all","Interpolation","National Total",12349485147.7639,12.3494851477639,2010
+"Air Quality","GCM","CCSM4",2,"2011 Emissions","all","Interpolation","National Total",27608136227.5467,27.6081362275467,2010
+"Air Quality","GCM","CCSM4",3,"2011 Emissions","all","Interpolation","National Total",31915418931.5991,31.9154189315991,2010
+"Air Quality","GCM","CCSM4",4,"2011 Emissions","all","Interpolation","National Total",39997621737.3117,39.9976217373117,2010
+"Air Quality","GCM","CCSM4",5,"2011 Emissions","all","Interpolation","National Total",53823648412.4861,53.8236484124861,2010
+"Air Quality","GCM","CCSM4",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CCSM4",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","CanESM2",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GCM Ensemble",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GFDL-CM3",0,"2011 Emissions","all","Interpolation","National Total",0,0,2010
+"Air Quality","GCM","GFDL-CM3",1,"2011 Emissions","all","Interpolation","National Total",16521381339.0309,16.5213813390309,2010
+"Air Quality","GCM","GFDL-CM3",2,"2011 Emissions","all","Interpolation","National Total",33261042578.3148,33.2610425783148,2010
+"Air Quality","GCM","GFDL-CM3",3,"2011 Emissions","all","Interpolation","National Total",47041417983.9483,47.0414179839483,2010
+"Air Quality","GCM","GFDL-CM3",4,"2011 Emissions","all","Interpolation","National Total",84717674241.9137,84.7176742419137,2010
+"Air Quality","GCM","GFDL-CM3",5,"2011 Emissions","all","Interpolation","National Total",120667033412.419,120.667033412419,2010
+"Air Quality","GCM","GFDL-CM3",6,"2011 Emissions","all","Interpolation","National Total",156065862030.31,156.06586203031,2010
+"Air Quality","GCM","GFDL-CM3",7,"2011 Emissions","all","Interpolation","National Total",191464690648.201,191.464690648201,2010
+"Air Quality","GCM","GISS-E2-R",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","GISS-E2-R",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","HadGEM2-ES",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MIROC5",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",0,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",1,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",2,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",3,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",4,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",5,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",6,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"Air Quality","GCM","MRI-CGCM3",7,"2011 Emissions","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","CCSM4",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","CCSM4",1,"With CO2 Fertilization","all","Interpolation","National Total",1723110320.82407,1.72311032082407,2010
+"CIL Agriculture","GCM","CCSM4",2,"With CO2 Fertilization","all","Interpolation","National Total",3894179140.46739,3.89417914046739,2010
+"CIL Agriculture","GCM","CCSM4",3,"With CO2 Fertilization","all","Interpolation","National Total",9020262338.06686,9.02026233806686,2010
+"CIL Agriculture","GCM","CCSM4",4,"With CO2 Fertilization","all","Interpolation","National Total",18571551039.2025,18.5715510392025,2010
+"CIL Agriculture","GCM","CCSM4",5,"With CO2 Fertilization","all","Interpolation","National Total",18242101254.4123,18.2421012544123,2010
+"CIL Agriculture","GCM","CCSM4",6,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","CCSM4",7,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","CanESM2",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","CanESM2",1,"With CO2 Fertilization","all","Interpolation","National Total",3926911310.5542,3.9269113105542,2010
+"CIL Agriculture","GCM","CanESM2",2,"With CO2 Fertilization","all","Interpolation","National Total",4366165456.11262,4.36616545611262,2010
+"CIL Agriculture","GCM","CanESM2",3,"With CO2 Fertilization","all","Interpolation","National Total",10265092871.4289,10.2650928714289,2010
+"CIL Agriculture","GCM","CanESM2",4,"With CO2 Fertilization","all","Interpolation","National Total",11552246256.9987,11.5522462569987,2010
+"CIL Agriculture","GCM","CanESM2",5,"With CO2 Fertilization","all","Interpolation","National Total",17226605079.5346,17.2266050795346,2010
+"CIL Agriculture","GCM","CanESM2",6,"With CO2 Fertilization","all","Interpolation","National Total",26668961340.6234,26.6689613406234,2010
+"CIL Agriculture","GCM","CanESM2",7,"With CO2 Fertilization","all","Interpolation","National Total",36111317601.7122,36.1113176017122,2010
+"CIL Agriculture","GCM","GCM Ensemble",0,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",1,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",2,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",3,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",4,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",5,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",6,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GCM Ensemble",7,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GFDL-CM3",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","GFDL-CM3",1,"With CO2 Fertilization","all","Interpolation","National Total",-187316650.470523,-0.187316650470523,2010
+"CIL Agriculture","GCM","GFDL-CM3",2,"With CO2 Fertilization","all","Interpolation","National Total",5343262986.68419,5.34326298668419,2010
+"CIL Agriculture","GCM","GFDL-CM3",3,"With CO2 Fertilization","all","Interpolation","National Total",5382650250.42578,5.38265025042578,2010
+"CIL Agriculture","GCM","GFDL-CM3",4,"With CO2 Fertilization","all","Interpolation","National Total",13454180282.0602,13.4541802820602,2010
+"CIL Agriculture","GCM","GFDL-CM3",5,"With CO2 Fertilization","all","Interpolation","National Total",27264475345.3944,27.2644753453944,2010
+"CIL Agriculture","GCM","GFDL-CM3",6,"With CO2 Fertilization","all","Interpolation","National Total",32275746640.4795,32.2757466404795,2010
+"CIL Agriculture","GCM","GFDL-CM3",7,"With CO2 Fertilization","all","Interpolation","National Total",37287017935.5647,37.2870179355647,2010
+"CIL Agriculture","GCM","GISS-E2-R",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","GISS-E2-R",1,"With CO2 Fertilization","all","Interpolation","National Total",-4530048072.42385,-4.53004807242385,2010
+"CIL Agriculture","GCM","GISS-E2-R",2,"With CO2 Fertilization","all","Interpolation","National Total",-8349662069.69996,-8.34966206969996,2010
+"CIL Agriculture","GCM","GISS-E2-R",3,"With CO2 Fertilization","all","Interpolation","National Total",-7085300523.84491,-7.08530052384491,2010
+"CIL Agriculture","GCM","GISS-E2-R",4,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GISS-E2-R",5,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GISS-E2-R",6,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","GISS-E2-R",7,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","HadGEM2-ES",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","HadGEM2-ES",1,"With CO2 Fertilization","all","Interpolation","National Total",-2077089828.61776,-2.07708982861776,2010
+"CIL Agriculture","GCM","HadGEM2-ES",2,"With CO2 Fertilization","all","Interpolation","National Total",2440089748.14668,2.44008974814668,2010
+"CIL Agriculture","GCM","HadGEM2-ES",3,"With CO2 Fertilization","all","Interpolation","National Total",15104063537.6577,15.1040635376577,2010
+"CIL Agriculture","GCM","HadGEM2-ES",4,"With CO2 Fertilization","all","Interpolation","National Total",17889178772.3953,17.8891787723953,2010
+"CIL Agriculture","GCM","HadGEM2-ES",5,"With CO2 Fertilization","all","Interpolation","National Total",25411723580.6878,25.4117235806878,2010
+"CIL Agriculture","GCM","HadGEM2-ES",6,"With CO2 Fertilization","all","Interpolation","National Total",32711285052.4074,32.7112850524074,2010
+"CIL Agriculture","GCM","HadGEM2-ES",7,"With CO2 Fertilization","all","Interpolation","National Total",40010846524.1269,40.0108465241269,2010
+"CIL Agriculture","GCM","MIROC5",0,"With CO2 Fertilization","all","Interpolation","National Total",0,0,2010
+"CIL Agriculture","GCM","MIROC5",1,"With CO2 Fertilization","all","Interpolation","National Total",1455615267.52228,1.45561526752228,2010
+"CIL Agriculture","GCM","MIROC5",2,"With CO2 Fertilization","all","Interpolation","National Total",5287170998.38842,5.28717099838842,2010
+"CIL Agriculture","GCM","MIROC5",3,"With CO2 Fertilization","all","Interpolation","National Total",4415707952.64275,4.41570795264275,2010
+"CIL Agriculture","GCM","MIROC5",4,"With CO2 Fertilization","all","Interpolation","National Total",11574339139.4404,11.5743391394404,2010
+"CIL Agriculture","GCM","MIROC5",5,"With CO2 Fertilization","all","Interpolation","National Total",20417246178.5081,20.4172461785081,2010
+"CIL Agriculture","GCM","MIROC5",6,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MIROC5",7,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",0,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",1,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",2,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",3,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",4,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",5,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",6,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Agriculture","GCM","MRI-CGCM3",7,"With CO2 Fertilization","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",-601519396.41914,-0.60151939641914,2010
+"CIL Crime","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",-20198253.6735896,-0.0201982536735896,2010
+"CIL Crime","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",570468550.925822,0.570468550925822,2010
+"CIL Crime","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",1236080752.52116,1.23608075252116,2010
+"CIL Crime","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",1507967595.71834,1.50796759571834,2010
+"CIL Crime","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",-437989159.503484,-0.437989159503484,2010
+"CIL Crime","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",109188728.963059,0.109188728963059,2010
+"CIL Crime","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",682716796.495412,0.682716796495412,2010
+"CIL Crime","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",1204820615.70314,1.20482061570314,2010
+"CIL Crime","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",1721079517.33142,1.72107951733142,2010
+"CIL Crime","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",2245076620.1425,2.2450766201425,2010
+"CIL Crime","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",2769073722.95359,2.76907372295359,2010
+"CIL Crime","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",-244956224.033002,-0.244956224033002,2010
+"CIL Crime","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",412025468.137267,0.412025468137267,2010
+"CIL Crime","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",913401736.983377,0.913401736983377,2010
+"CIL Crime","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",1466582033.63263,1.46658203363263,2010
+"CIL Crime","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",2066621765.77992,2.06662176577992,2010
+"CIL Crime","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",2523859326.54523,2.52385932654523,2010
+"CIL Crime","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",2981096887.31053,2.98109688731053,2010
+"CIL Crime","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",340895931.820656,0.340895931820656,2010
+"CIL Crime","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",814200306.660378,0.814200306660378,2010
+"CIL Crime","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",1467348651.57319,1.46734865157319,2010
+"CIL Crime","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",370707263.316638,0.370707263316638,2010
+"CIL Crime","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",918482288.932072,0.918482288932072,2010
+"CIL Crime","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",1642391666.39361,1.64239166639361,2010
+"CIL Crime","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",2124628778.81092,2.12462877881092,2010
+"CIL Crime","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",2618074864.05848,2.61807486405848,2010
+"CIL Crime","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",3175911716.98628,3.17591171698628,2010
+"CIL Crime","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",3733748569.91409,3.73374856991409,2010
+"CIL Crime","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"CIL Crime","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",342190890.933291,0.342190890933291,2010
+"CIL Crime","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",1016328629.32207,1.01632862932207,2010
+"CIL Crime","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",1733529942.46522,1.73352994246522,2010
+"CIL Crime","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",2340097553.25555,2.34009755325555,2010
+"CIL Crime","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",2840626582.58997,2.84062658258997,2010
+"CIL Crime","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"CIL Crime","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",328141534.378978,0.328141534378978,2010
+"Electricity Demand and Supply","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",5789650425.4664,5.78965042546641,2010
+"Electricity Demand and Supply","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",10102241487.0275,10.1022414870275,2010
+"Electricity Demand and Supply","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",13085166452.8597,13.0851664528597,2010
+"Electricity Demand and Supply","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",16844688876.2781,16.8446888762781,2010
+"Electricity Demand and Supply","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",519767635.393522,0.519767635393522,2010
+"Electricity Demand and Supply","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",6272541979.59683,6.27254197959683,2010
+"Electricity Demand and Supply","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",11367505162.0495,11.3675051620495,2010
+"Electricity Demand and Supply","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",15531847428.3094,15.5318474283094,2010
+"Electricity Demand and Supply","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",20465281471.5744,20.4652814715744,2010
+"Electricity Demand and Supply","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",25613880585.678,25.613880585678,2010
+"Electricity Demand and Supply","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",30762479699.7816,30.7624796997816,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",896154635.430922,0.896154635430922,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",5730562930.17477,5.73056293017477,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",11596076892.0653,11.5960768920653,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",15914171740.061,15.914171740061,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",20242433927.8909,20.2424339278909,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",26927433778.1874,26.9274337781874,2010
+"Electricity Demand and Supply","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",33612433628.4838,33.6124336284838,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",2377256992.41366,2.37725699241366,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",8246455977.31207,8.24645597731207,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",13661052180.1372,13.6610521801372,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",791480607.826893,0.791480607826893,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",5011039258.2638,5.0110392582638,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",10288251842.7283,10.2882518427283,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",14468360896.2245,14.4683608962245,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",17816207001.6934,17.8162070016934,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",23069545123.5009,23.0695451235009,2010
+"Electricity Demand and Supply","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",28322883245.3084,28.3228832453084,2010
+"Electricity Demand and Supply","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Electricity Demand and Supply","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",1181555962.5731,1.1815559625731,2010
+"Electricity Demand and Supply","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",3592080426.85775,3.59208042685775,2010
+"Electricity Demand and Supply","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",6989566829.52119,6.98956682952119,2010
+"Electricity Demand and Supply","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",11276587539.4376,11.2765875394376,2010
+"Electricity Demand and Supply","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",15764464444.4553,15.7644644444553,2010
+"Electricity Demand and Supply","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Demand and Supply","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",1,"Reactive Adaptation","all","Interpolation","National Total",3198004086.16898,3.19800408616898,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",2,"Reactive Adaptation","all","Interpolation","National Total",4525121963.74053,4.52512196374053,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",3,"Reactive Adaptation","all","Interpolation","National Total",6789369864.88675,6.78936986488675,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",4,"Reactive Adaptation","all","Interpolation","National Total",7594945015.65264,7.59494501565264,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",5,"Reactive Adaptation","all","Interpolation","National Total",9247336759.79408,9.24733675979408,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","CCSM4",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",1,"Reactive Adaptation","all","Interpolation","National Total",2454500310.87765,2.45450031087765,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",2,"Reactive Adaptation","all","Interpolation","National Total",3925253167.06293,3.92525316706293,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",3,"Reactive Adaptation","all","Interpolation","National Total",6139614849.86419,6.13961484986419,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",4,"Reactive Adaptation","all","Interpolation","National Total",5722218752.5858,5.7222187525858,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",5,"Reactive Adaptation","all","Interpolation","National Total",7422722317.82685,7.42272231782685,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",6,"Reactive Adaptation","all","Interpolation","National Total",8073229581.07205,8.07322958107206,2010
+"Electricity Transmission and Distribution","GCM","CanESM2",7,"Reactive Adaptation","all","Interpolation","National Total",8723736844.31726,8.72373684431725,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GCM Ensemble",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",1,"Reactive Adaptation","all","Interpolation","National Total",3706824493.71127,3.70682449371127,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",2,"Reactive Adaptation","all","Interpolation","National Total",5010175886.76912,5.01017588676912,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",3,"Reactive Adaptation","all","Interpolation","National Total",6196091171.29329,6.19609117129329,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",4,"Reactive Adaptation","all","Interpolation","National Total",10375664224.2455,10.3756642242455,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",5,"Reactive Adaptation","all","Interpolation","National Total",7101984658.15113,7.10198465815113,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",6,"Reactive Adaptation","all","Interpolation","National Total",9347864869.54559,9.34786486954559,2010
+"Electricity Transmission and Distribution","GCM","GFDL-CM3",7,"Reactive Adaptation","all","Interpolation","National Total",11593745080.94,11.59374508094,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",1,"Reactive Adaptation","all","Interpolation","National Total",3554355302.81304,3.55435530281304,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",2,"Reactive Adaptation","all","Interpolation","National Total",5806095965.64559,5.80609596564559,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",3,"Reactive Adaptation","all","Interpolation","National Total",7131722275.10457,7.13172227510457,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","GISS-E2-R",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",1,"Reactive Adaptation","all","Interpolation","National Total",4685421645.0764,4.6854216450764,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",2,"Reactive Adaptation","all","Interpolation","National Total",5215797340.64995,5.21579734064995,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",3,"Reactive Adaptation","all","Interpolation","National Total",7187776283.7364,7.1877762837364,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",4,"Reactive Adaptation","all","Interpolation","National Total",8286635370.09285,8.28663537009285,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",5,"Reactive Adaptation","all","Interpolation","National Total",9463211320.70142,9.46321132070142,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",6,"Reactive Adaptation","all","Interpolation","National Total",9827345251.94024,9.82734525194024,2010
+"Electricity Transmission and Distribution","GCM","HadGEM2-ES",7,"Reactive Adaptation","all","Interpolation","National Total",10191479183.1791,10.1914791831791,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",1,"Reactive Adaptation","all","Interpolation","National Total",3595701425.4127,3.5957014254127,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",2,"Reactive Adaptation","all","Interpolation","National Total",6221810985.87038,6.22181098587038,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",3,"Reactive Adaptation","all","Interpolation","National Total",6274968711.63983,6.27496871163983,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",4,"Reactive Adaptation","all","Interpolation","National Total",8198579224.72224,8.19857922472224,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",5,"Reactive Adaptation","all","Interpolation","National Total",7026889758.51612,7.02688975851612,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MIROC5",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Electricity Transmission and Distribution","GCM","MRI-CGCM3",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Inland Flooding","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",82640247.0006977,0.0826402470006977,2010
+"Inland Flooding","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",362377840.493594,0.362377840493594,2010
+"Inland Flooding","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",979920286.725918,0.979920286725918,2010
+"Inland Flooding","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",1355125355.26619,1.35512535526619,2010
+"Inland Flooding","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",1918163430.64876,1.91816343064876,2010
+"Inland Flooding","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Inland Flooding","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",3600294549.50727,3.60029454950727,2010
+"Labor","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",8653727861.8692,8.6537278618692,2010
+"Labor","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",12924107985.4509,12.9241079854509,2010
+"Labor","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",16796822178.3819,16.7968221783819,2010
+"Labor","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",22523144966.9401,22.5231449669401,2010
+"Labor","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",3116737337.15296,3.11673733715296,2010
+"Labor","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",7503084635.8369,7.5030846358369,2010
+"Labor","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",10740373831.0712,10.7403738310712,2010
+"Labor","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",15660118105.6863,15.6601181056863,2010
+"Labor","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",20547183788.2241,20.5471837882241,2010
+"Labor","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",28425456909.5422,28.4254569095422,2010
+"Labor","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",36303730030.8602,36.3037300308602,2010
+"Labor","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",5289060045.86234,5.28906004586234,2010
+"Labor","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",8475160888.09405,8.47516088809405,2010
+"Labor","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",13472630929.085,13.472630929085,2010
+"Labor","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",20128103570.8043,20.1281035708043,2010
+"Labor","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",29004812085.098,29.004812085098,2010
+"Labor","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",35936396162.3042,35.9363961623042,2010
+"Labor","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",42867980239.5105,42.8679802395105,2010
+"Labor","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",2108429873.83457,2.10842987383457,2010
+"Labor","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",5485186573.64832,5.48518657364832,2010
+"Labor","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",11195868686.1604,11.1958686861604,2010
+"Labor","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",4634670795.95312,4.63467079595312,2010
+"Labor","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",9506827204.91482,9.50682720491482,2010
+"Labor","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",16444702817.398,16.444702817398,2010
+"Labor","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",20794167973.6906,20.7941679736906,2010
+"Labor","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",25837312192.0284,25.8373121920284,2010
+"Labor","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",31948052565.9591,31.9480525659591,2010
+"Labor","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",38058792939.8898,38.0587929398898,2010
+"Labor","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Labor","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",3224046777.50516,3.22404677750516,2010
+"Labor","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",6306127890.42727,6.30612789042727,2010
+"Labor","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",9205411789.80083,9.20541178980084,2010
+"Labor","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",14176064365.8062,14.1760643658062,2010
+"Labor","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",20019678954.8527,20.0196789548527,2010
+"Labor","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Labor","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",-49024538.5865735,-0.0490245385865735,2010
+"Marine Fisheries","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",-98049077.1731471,-0.0980490771731471,2010
+"Marine Fisheries","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",-101831525.947109,-0.101831525947109,2010
+"Marine Fisheries","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",-82677391.796703,-0.082677391796703,2010
+"Marine Fisheries","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",-84086004.9497887,-0.0840860049497888,2010
+"Marine Fisheries","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",-39515390.7998088,-0.0395153907998088,2010
+"Marine Fisheries","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",-79030781.5996177,-0.0790307815996177,2010
+"Marine Fisheries","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",-88222796.4568861,-0.0882227964568861,2010
+"Marine Fisheries","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",-61076534.7057209,-0.0610765347057209,2010
+"Marine Fisheries","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",-16252047.5641506,-0.0162520475641506,2010
+"Marine Fisheries","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",45165073.1523439,0.0451650731523439,2010
+"Marine Fisheries","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",106582193.868838,0.106582193868838,2010
+"Marine Fisheries","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",-26509084.4263438,-0.0265090844263438,2010
+"Marine Fisheries","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",-53018168.8526876,-0.0530181688526877,2010
+"Marine Fisheries","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",-18935867.4006655,-0.0189358674006655,2010
+"Marine Fisheries","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",-4994194.97303393,-0.00499419497303394,2010
+"Marine Fisheries","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",2139483.08758153,0.00213948308758153,2010
+"Marine Fisheries","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",-3504045.01464476,-0.00350404501464476,2010
+"Marine Fisheries","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",-9147573.11687104,-0.00914757311687104,2010
+"Marine Fisheries","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",-38099667.4848971,-0.0380996674848971,2010
+"Marine Fisheries","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",7580833.39096921,0.00758083339096921,2010
+"Marine Fisheries","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",47860987.5169658,0.0478609875169658,2010
+"Marine Fisheries","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",-50839562.4677993,-0.0508395624677993,2010
+"Marine Fisheries","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",-101679124.935599,-0.101679124935599,2010
+"Marine Fisheries","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",-47253958.5594465,-0.0472539585594465,2010
+"Marine Fisheries","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",4961377.84908453,0.00496137784908453,2010
+"Marine Fisheries","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",47487719.8492646,0.0474877198492646,2010
+"Marine Fisheries","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",67195213.4005634,0.0671952134005634,2010
+"Marine Fisheries","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",86902706.9518622,0.0869027069518622,2010
+"Marine Fisheries","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Marine Fisheries","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",-44597206.5697764,-0.0445972065697764,2010
+"Marine Fisheries","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",-89194413.1395529,-0.0891944131395529,2010
+"Marine Fisheries","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",-73153007.5618919,-0.0731530075618919,2010
+"Marine Fisheries","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",-67288143.1428452,-0.0672881431428452,2010
+"Marine Fisheries","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",-41951603.0630801,-0.0419516030630801,2010
+"Marine Fisheries","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Marine Fisheries","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",2277459025.22215,2.27745902522215,2010
+"Mental Health","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",5039688185.59452,5.03968818559452,2010
+"Mental Health","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",7741487044.42934,7.74148704442934,2010
+"Mental Health","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",10143181940.0976,10.1431819400976,2010
+"Mental Health","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",12700265214.5637,12.7002652145637,2010
+"Mental Health","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",2690529056.82491,2.69052905682491,2010
+"Mental Health","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",5440920522.69738,5.44092052269738,2010
+"Mental Health","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",7728473718.53172,7.72847371853172,2010
+"Mental Health","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",10389442752.603,10.389442752603,2010
+"Mental Health","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",12921827355.3271,12.9218273553271,2010
+"Mental Health","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",15505585413.0966,15.5055854130966,2010
+"Mental Health","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",18089343470.8661,18.0893434708661,2010
+"Mental Health","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",3082478717.13666,3.08247871713666,2010
+"Mental Health","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",5530525870.59223,5.53052587059223,2010
+"Mental Health","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",8148058956.63323,8.14805895663323,2010
+"Mental Health","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",10918175644.9938,10.9181756449938,2010
+"Mental Health","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",13354501553.7271,13.3545015537272,2010
+"Mental Health","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",15682474740.51,15.68247474051,2010
+"Mental Health","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",18010447927.2929,18.0104479272929,2010
+"Mental Health","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",2361107376.633,2.361107376633,2010
+"Mental Health","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",5314839662.70026,5.31483966270026,2010
+"Mental Health","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",8294809570.43458,8.29480957043458,2010
+"Mental Health","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",2996056016.90999,2.99605601690999,2010
+"Mental Health","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",5252483842.08232,5.25248384208232,2010
+"Mental Health","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",8329160674.53666,8.32916067453666,2010
+"Mental Health","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",10704612491.7182,10.7046124917182,2010
+"Mental Health","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",12967666074.1046,12.9676660741046,2010
+"Mental Health","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",15584221544.2124,15.5842215442124,2010
+"Mental Health","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",18200777014.3202,18.2007770143202,2010
+"Mental Health","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Mental Health","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",2574552279.58771,2.57455227958771,2010
+"Mental Health","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",5152310706.28016,5.15231070628016,2010
+"Mental Health","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",7699552422.95,7.69955242295,2010
+"Mental Health","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",10450778379.4271,10.4507783794271,2010
+"Mental Health","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",12660076788.5151,12.6600767885151,2010
+"Mental Health","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Mental Health","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","CCSM4",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","CCSM4",1,"Reactive Adaptation","all","Interpolation","National Total",2221771060.54545,2.22177106054545,2010
+"Rail","GCM","CCSM4",2,"Reactive Adaptation","all","Interpolation","National Total",4430228359.39087,4.43022835939087,2010
+"Rail","GCM","CCSM4",3,"Reactive Adaptation","all","Interpolation","National Total",4677991332.17822,4.67799133217822,2010
+"Rail","GCM","CCSM4",4,"Reactive Adaptation","all","Interpolation","National Total",6160056139.77945,6.16005613977945,2010
+"Rail","GCM","CCSM4",5,"Reactive Adaptation","all","Interpolation","National Total",8833905995.33326,8.83390599533326,2010
+"Rail","GCM","CCSM4",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","CCSM4",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","CanESM2",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","CanESM2",1,"Reactive Adaptation","all","Interpolation","National Total",873413073.884104,0.873413073884104,2010
+"Rail","GCM","CanESM2",2,"Reactive Adaptation","all","Interpolation","National Total",1453003891.37946,1.45300389137946,2010
+"Rail","GCM","CanESM2",3,"Reactive Adaptation","all","Interpolation","National Total",3060395000.13646,3.06039500013646,2010
+"Rail","GCM","CanESM2",4,"Reactive Adaptation","all","Interpolation","National Total",2967648442.65223,2.96764844265223,2010
+"Rail","GCM","CanESM2",5,"Reactive Adaptation","all","Interpolation","National Total",5224106345.46807,5.22410634546808,2010
+"Rail","GCM","CanESM2",6,"Reactive Adaptation","all","Interpolation","National Total",6880648419.19653,6.88064841919653,2010
+"Rail","GCM","CanESM2",7,"Reactive Adaptation","all","Interpolation","National Total",8537190492.92498,8.53719049292498,2010
+"Rail","GCM","GCM Ensemble",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GCM Ensemble",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GFDL-CM3",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","GFDL-CM3",1,"Reactive Adaptation","all","Interpolation","National Total",2153058199.82256,2.15305819982256,2010
+"Rail","GCM","GFDL-CM3",2,"Reactive Adaptation","all","Interpolation","National Total",3515436823.10767,3.51543682310767,2010
+"Rail","GCM","GFDL-CM3",3,"Reactive Adaptation","all","Interpolation","National Total",4790632622.38453,4.79063262238453,2010
+"Rail","GCM","GFDL-CM3",4,"Reactive Adaptation","all","Interpolation","National Total",10660297947.4227,10.6602979474227,2010
+"Rail","GCM","GFDL-CM3",5,"Reactive Adaptation","all","Interpolation","National Total",36624217028.4454,36.6242170284455,2010
+"Rail","GCM","GFDL-CM3",6,"Reactive Adaptation","all","Interpolation","National Total",44900980876.0215,44.9009808760215,2010
+"Rail","GCM","GFDL-CM3",7,"Reactive Adaptation","all","Interpolation","National Total",53177744723.5976,53.1777447235976,2010
+"Rail","GCM","GISS-E2-R",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","GISS-E2-R",1,"Reactive Adaptation","all","Interpolation","National Total",439642945.898633,0.439642945898633,2010
+"Rail","GCM","GISS-E2-R",2,"Reactive Adaptation","all","Interpolation","National Total",1622201895.51047,1.62220189551047,2010
+"Rail","GCM","GISS-E2-R",3,"Reactive Adaptation","all","Interpolation","National Total",2508654522.84536,2.50865452284536,2010
+"Rail","GCM","GISS-E2-R",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GISS-E2-R",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GISS-E2-R",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","GISS-E2-R",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","HadGEM2-ES",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","HadGEM2-ES",1,"Reactive Adaptation","all","Interpolation","National Total",2478908189.63655,2.47890818963655,2010
+"Rail","GCM","HadGEM2-ES",2,"Reactive Adaptation","all","Interpolation","National Total",4051987505.04435,4.05198750504435,2010
+"Rail","GCM","HadGEM2-ES",3,"Reactive Adaptation","all","Interpolation","National Total",12948079881.4231,12.9480798814231,2010
+"Rail","GCM","HadGEM2-ES",4,"Reactive Adaptation","all","Interpolation","National Total",11612275607.6575,11.6122756076575,2010
+"Rail","GCM","HadGEM2-ES",5,"Reactive Adaptation","all","Interpolation","National Total",11357499587.6572,11.3574995876572,2010
+"Rail","GCM","HadGEM2-ES",6,"Reactive Adaptation","all","Interpolation","National Total",22717627005.1382,22.7176270051382,2010
+"Rail","GCM","HadGEM2-ES",7,"Reactive Adaptation","all","Interpolation","National Total",34077754422.6192,34.0777544226192,2010
+"Rail","GCM","MIROC5",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Rail","GCM","MIROC5",1,"Reactive Adaptation","all","Interpolation","National Total",974455865.588014,0.974455865588015,2010
+"Rail","GCM","MIROC5",2,"Reactive Adaptation","all","Interpolation","National Total",2215536992.05086,2.21553699205086,2010
+"Rail","GCM","MIROC5",3,"Reactive Adaptation","all","Interpolation","National Total",1694275662.01969,1.69427566201969,2010
+"Rail","GCM","MIROC5",4,"Reactive Adaptation","all","Interpolation","National Total",3906202321.52284,3.90620232152284,2010
+"Rail","GCM","MIROC5",5,"Reactive Adaptation","all","Interpolation","National Total",5741521441.22495,5.74152144122495,2010
+"Rail","GCM","MIROC5",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MIROC5",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Rail","GCM","MRI-CGCM3",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","CCSM4",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","CCSM4",1,"Reactive Adaptation","all","Interpolation","National Total",940771535.673021,0.940771535673021,2010
+"Roads","GCM","CCSM4",2,"Reactive Adaptation","all","Interpolation","National Total",11476374509.1681,11.4763745091681,2010
+"Roads","GCM","CCSM4",3,"Reactive Adaptation","all","Interpolation","National Total",14763837341.4008,14.7638373414008,2010
+"Roads","GCM","CCSM4",4,"Reactive Adaptation","all","Interpolation","National Total",29699107290.8506,29.6991072908506,2010
+"Roads","GCM","CCSM4",5,"Reactive Adaptation","all","Interpolation","National Total",38424491358.1901,38.4244913581901,2010
+"Roads","GCM","CCSM4",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","CCSM4",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","CanESM2",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","CanESM2",1,"Reactive Adaptation","all","Interpolation","National Total",5662826809.62016,5.66282680962016,2010
+"Roads","GCM","CanESM2",2,"Reactive Adaptation","all","Interpolation","National Total",6655288054.96684,6.65528805496684,2010
+"Roads","GCM","CanESM2",3,"Reactive Adaptation","all","Interpolation","National Total",15929991355.5206,15.9299913555206,2010
+"Roads","GCM","CanESM2",4,"Reactive Adaptation","all","Interpolation","National Total",20421723084.4389,20.4217230844389,2010
+"Roads","GCM","CanESM2",5,"Reactive Adaptation","all","Interpolation","National Total",27414863182.4074,27.4148631824074,2010
+"Roads","GCM","CanESM2",6,"Reactive Adaptation","all","Interpolation","National Total",36953912121.6325,36.9539121216325,2010
+"Roads","GCM","CanESM2",7,"Reactive Adaptation","all","Interpolation","National Total",46492961060.8575,46.4929610608575,2010
+"Roads","GCM","GCM Ensemble",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GCM Ensemble",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GFDL-CM3",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","GFDL-CM3",1,"Reactive Adaptation","all","Interpolation","National Total",2627100603.84633,2.62710060384633,2010
+"Roads","GCM","GFDL-CM3",2,"Reactive Adaptation","all","Interpolation","National Total",7637176224.43362,7.63717622443362,2010
+"Roads","GCM","GFDL-CM3",3,"Reactive Adaptation","all","Interpolation","National Total",14467130856.2565,14.4671308562565,2010
+"Roads","GCM","GFDL-CM3",4,"Reactive Adaptation","all","Interpolation","National Total",28801437328.8171,28.8014373288171,2010
+"Roads","GCM","GFDL-CM3",5,"Reactive Adaptation","all","Interpolation","National Total",30910078196.479,30.910078196479,2010
+"Roads","GCM","GFDL-CM3",6,"Reactive Adaptation","all","Interpolation","National Total",43827180352.1644,43.8271803521644,2010
+"Roads","GCM","GFDL-CM3",7,"Reactive Adaptation","all","Interpolation","National Total",56744282507.8498,56.7442825078498,2010
+"Roads","GCM","GISS-E2-R",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","GISS-E2-R",1,"Reactive Adaptation","all","Interpolation","National Total",3141312058.08483,3.14131205808483,2010
+"Roads","GCM","GISS-E2-R",2,"Reactive Adaptation","all","Interpolation","National Total",9420873440.79912,9.42087344079912,2010
+"Roads","GCM","GISS-E2-R",3,"Reactive Adaptation","all","Interpolation","National Total",16366951130.9541,16.3669511309541,2010
+"Roads","GCM","GISS-E2-R",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GISS-E2-R",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GISS-E2-R",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","GISS-E2-R",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","HadGEM2-ES",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","HadGEM2-ES",1,"Reactive Adaptation","all","Interpolation","National Total",13063473046.652,13.063473046652,2010
+"Roads","GCM","HadGEM2-ES",2,"Reactive Adaptation","all","Interpolation","National Total",15144474674.6544,15.1444746746544,2010
+"Roads","GCM","HadGEM2-ES",3,"Reactive Adaptation","all","Interpolation","National Total",28731724455.4656,28.7317244554656,2010
+"Roads","GCM","HadGEM2-ES",4,"Reactive Adaptation","all","Interpolation","National Total",38273693947.4893,38.2736939474893,2010
+"Roads","GCM","HadGEM2-ES",5,"Reactive Adaptation","all","Interpolation","National Total",39803912388.189,39.803912388189,2010
+"Roads","GCM","HadGEM2-ES",6,"Reactive Adaptation","all","Interpolation","National Total",59709621890.0229,59.7096218900229,2010
+"Roads","GCM","HadGEM2-ES",7,"Reactive Adaptation","all","Interpolation","National Total",79615331391.8568,79.6153313918568,2010
+"Roads","GCM","MIROC5",0,"Reactive Adaptation","all","Interpolation","National Total",0,0,2010
+"Roads","GCM","MIROC5",1,"Reactive Adaptation","all","Interpolation","National Total",3385537679.44991,3.38553767944991,2010
+"Roads","GCM","MIROC5",2,"Reactive Adaptation","all","Interpolation","National Total",7596930276.72384,7.59693027672384,2010
+"Roads","GCM","MIROC5",3,"Reactive Adaptation","all","Interpolation","National Total",11882943871.0548,11.8829438710548,2010
+"Roads","GCM","MIROC5",4,"Reactive Adaptation","all","Interpolation","National Total",24560506390.9369,24.5605063909369,2010
+"Roads","GCM","MIROC5",5,"Reactive Adaptation","all","Interpolation","National Total",22392082003.3835,22.3920820033835,2010
+"Roads","GCM","MIROC5",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MIROC5",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",0,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",1,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",2,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",3,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",4,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",5,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",6,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Roads","GCM","MRI-CGCM3",7,"Reactive Adaptation","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",1797810180.87178,1.79781018087178,2010
+"Southwest Dust","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",2416311751.46129,2.41631175146129,2010
+"Southwest Dust","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",2649148937.31441,2.64914893731441,2010
+"Southwest Dust","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",3554064874.29037,3.55406487429037,2010
+"Southwest Dust","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",5497617090.6397,5.4976170906397,2010
+"Southwest Dust","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",674529975.903677,0.674529975903677,2010
+"Southwest Dust","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",1648959259.57874,1.64895925957874,2010
+"Southwest Dust","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",2251706198.89925,2.25170619889925,2010
+"Southwest Dust","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",2170281469.94832,2.17028146994832,2010
+"Southwest Dust","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",2682691894.30165,2.68269189430165,2010
+"Southwest Dust","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",3402184631.83742,3.40218463183742,2010
+"Southwest Dust","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",4121677369.37318,4.12167736937318,2010
+"Southwest Dust","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",1821131055.49067,1.82113105549067,2010
+"Southwest Dust","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",2541073163.97043,2.54107316397043,2010
+"Southwest Dust","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",3716326882.35957,3.71632688235957,2010
+"Southwest Dust","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",5030722969.2023,5.0307229692023,2010
+"Southwest Dust","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",6234107663.44981,6.23410766344981,2010
+"Southwest Dust","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",7130040818.52359,7.13004081852359,2010
+"Southwest Dust","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",8025973973.59736,8.02597397359736,2010
+"Southwest Dust","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",327706026.207198,0.327706026207198,2010
+"Southwest Dust","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",1194885214.85851,1.19488521485851,2010
+"Southwest Dust","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",2923953568.84881,2.92395356884881,2010
+"Southwest Dust","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",204108738.296334,0.204108738296334,2010
+"Southwest Dust","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",2321700499.99575,2.32170049999575,2010
+"Southwest Dust","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",2823862127.71754,2.82386212771754,2010
+"Southwest Dust","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",2872157779.60531,2.87215777960531,2010
+"Southwest Dust","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",4649581631.11469,4.64958163111469,2010
+"Southwest Dust","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",4459244743.6418,4.4592447436418,2010
+"Southwest Dust","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",4268907856.16892,4.26890785616892,2010
+"Southwest Dust","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Southwest Dust","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",909430305.791749,0.909430305791749,2010
+"Southwest Dust","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",1718060711.39212,1.71806071139212,2010
+"Southwest Dust","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",3262645931.08625,3.26264593108625,2010
+"Southwest Dust","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",4003065983.09241,4.00306598309241,2010
+"Southwest Dust","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",5006628859.56784,5.00662885956784,2010
+"Southwest Dust","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Southwest Dust","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Urban Drainage","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",1704882850.33823,1.70488285033823,2010
+"Urban Drainage","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",3162397925.14307,3.16239792514307,2010
+"Urban Drainage","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",2722307964.92276,2.72230796492276,2010
+"Urban Drainage","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",3424391172.29628,3.42439117229628,2010
+"Urban Drainage","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",3330181828.66245,3.33018182866245,2010
+"Urban Drainage","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Urban Drainage","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",1426634845.16414,1.42663484516414,2010
+"Urban Drainage","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",3155839743.99986,3.15583974399986,2010
+"Urban Drainage","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",3439241893.3225,3.4392418933225,2010
+"Urban Drainage","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",3521388645.68627,3.52138864568627,2010
+"Urban Drainage","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",4035896597.93713,4.03589659793713,2010
+"Urban Drainage","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",5259393697.36357,5.25939369736357,2010
+"Urban Drainage","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",6482890796.79002,6.48289079679002,2010
+"Urban Drainage","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Urban Drainage","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",4691446873.96237,4.69144687396237,2010
+"Urban Drainage","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",4466674420.18314,4.46667442018314,2010
+"Urban Drainage","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",5629937076.67886,5.62993707667886,2010
+"Urban Drainage","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Urban Drainage","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",2053316496.26007,2.05331649626007,2010
+"Urban Drainage","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",3803035178.61249,3.80303517861249,2010
+"Urban Drainage","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",4427630132.57484,4.42763013257484,2010
+"Urban Drainage","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",5364723860.98455,5.36472386098455,2010
+"Urban Drainage","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",6715866928.52561,6.71586692852561,2010
+"Urban Drainage","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",7417129515.99274,7.41712951599274,2010
+"Urban Drainage","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",8118392103.45987,8.11839210345987,2010
+"Urban Drainage","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Urban Drainage","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",3911749081.18122,3.91174908118122,2010
+"Urban Drainage","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",5842808866.07674,5.84280886607674,2010
+"Urban Drainage","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",4466695678.7554,4.4666956787554,2010
+"Urban Drainage","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",5839934341.87424,5.83993434187424,2010
+"Urban Drainage","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",6388358980.27567,6.38835898027567,2010
+"Urban Drainage","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Urban Drainage","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",671027680.481309,0.671027680481309,2010
+"Valley Fever","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",1640177788.01098,1.64017778801098,2010
+"Valley Fever","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",2255540419.89837,2.25554041989837,2010
+"Valley Fever","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",2868281315.95897,2.86828131595897,2010
+"Valley Fever","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",3371752147.11771,3.37175214711771,2010
+"Valley Fever","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",719548330.657389,0.719548330657389,2010
+"Valley Fever","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",1664591018.23358,1.66459101823358,2010
+"Valley Fever","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",2093058184.80515,2.09305818480515,2010
+"Valley Fever","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",1554482253.10517,1.55448225310517,2010
+"Valley Fever","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",1290219167.64393,1.29021916764393,2010
+"Valley Fever","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",1709596919.26712,1.70959691926712,2010
+"Valley Fever","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",2128974670.89031,2.12897467089031,2010
+"Valley Fever","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",794824099.601567,0.794824099601567,2010
+"Valley Fever","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",1664255374.69468,1.66425537469468,2010
+"Valley Fever","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",2600221142.26951,2.60022114226951,2010
+"Valley Fever","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",3145552825.24751,3.14555282524751,2010
+"Valley Fever","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",3655188808.51193,3.65518880851193,2010
+"Valley Fever","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",4945917555.56293,4.94591755556293,2010
+"Valley Fever","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",6236646302.61393,6.23664630261393,2010
+"Valley Fever","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",825178872.18105,0.82517887218105,2010
+"Valley Fever","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",1651191187.16025,1.65119118716025,2010
+"Valley Fever","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",2358062976.36745,2.35806297636745,2010
+"Valley Fever","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",800212003.818018,0.800212003818018,2010
+"Valley Fever","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",1519093539.85642,1.51909353985642,2010
+"Valley Fever","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",2295117346.45379,2.29511734645379,2010
+"Valley Fever","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",2999375489.083,2.999375489083,2010
+"Valley Fever","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",3696839055.70682,3.69683905570683,2010
+"Valley Fever","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",4292224269.34851,4.29222426934851,2010
+"Valley Fever","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",4887609482.9902,4.8876094829902,2010
+"Valley Fever","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Valley Fever","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",907074525.730197,0.907074525730197,2010
+"Valley Fever","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",1585420295.23209,1.58542029523209,2010
+"Valley Fever","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",2364455084.63569,2.3644550846357,2010
+"Valley Fever","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",2970379311.38707,2.97037931138707,2010
+"Valley Fever","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",3675865584.83539,3.67586558483539,2010
+"Valley Fever","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Valley Fever","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",264286204.915559,0.264286204915559,2010
+"Vibrio","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",553203722.210362,0.553203722210362,2010
+"Vibrio","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",991481914.044753,0.991481914044753,2010
+"Vibrio","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",1355488686.83909,1.35548868683909,2010
+"Vibrio","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",1861062182.77195,1.86106218277195,2010
+"Vibrio","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",350299050.920425,0.350299050920425,2010
+"Vibrio","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",740863591.085377,0.740863591085377,2010
+"Vibrio","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",1119141506.33049,1.11914150633049,2010
+"Vibrio","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",1618117600.93235,1.61811760093235,2010
+"Vibrio","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",2074413827.6316,2.0744138276316,2010
+"Vibrio","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",2754856565.97329,2.75485656597329,2010
+"Vibrio","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",3435299304.31498,3.43529930431498,2010
+"Vibrio","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",421685501.082549,0.421685501082549,2010
+"Vibrio","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",799779274.489203,0.799779274489203,2010
+"Vibrio","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",1275024724.07987,1.27502472407987,2010
+"Vibrio","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",1801232596.02955,1.80123259602955,2010
+"Vibrio","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",2176030844.55885,2.17603084455885,2010
+"Vibrio","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",2909941830.62832,2.90994183062832,2010
+"Vibrio","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",3643852816.69779,3.64385281669779,2010
+"Vibrio","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",333914055.360713,0.333914055360713,2010
+"Vibrio","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",680409405.736895,0.680409405736895,2010
+"Vibrio","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",1131860018.81549,1.13186001881549,2010
+"Vibrio","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",406054895.045424,0.406054895045424,2010
+"Vibrio","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",714780782.524758,0.714780782524759,2010
+"Vibrio","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",1101389641.98707,1.10138964198707,2010
+"Vibrio","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",1510559702.25523,1.51055970225523,2010
+"Vibrio","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",1924695482.46751,1.92469548246751,2010
+"Vibrio","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",2566593007.0095,2.5665930070095,2010
+"Vibrio","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",3208490531.55149,3.20849053155149,2010
+"Vibrio","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Vibrio","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",254498712.968574,0.254498712968574,2010
+"Vibrio","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",575604503.699758,0.575604503699758,2010
+"Vibrio","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",898154881.296198,0.898154881296198,2010
+"Vibrio","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",1324245141.07048,1.32424514107048,2010
+"Vibrio","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",1750775236.21443,1.75077523621443,2010
+"Vibrio","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Vibrio","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Water Quality","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",376676481.385986,0.376676481385986,2010
+"Water Quality","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",988775763.638205,0.988775763638205,2010
+"Water Quality","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",1757652535.38547,1.75765253538547,2010
+"Water Quality","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",2683306796.62775,2.68330679662775,2010
+"Water Quality","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",3403260110.92729,3.40326011092729,2010
+"Water Quality","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Water Quality","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",470042907.279146,0.470042907279146,2010
+"Water Quality","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",1116351904.78797,1.11635190478797,2010
+"Water Quality","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",1570621009.97565,1.57062100997565,2010
+"Water Quality","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",2267590025.72806,2.26759002572806,2010
+"Water Quality","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",3028043813.01003,3.02804381301003,2010
+"Water Quality","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",3842815727.95499,3.84281572795499,2010
+"Water Quality","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",4657587642.89994,4.65758764289994,2010
+"Water Quality","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Water Quality","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",642210560.189698,0.642210560189698,2010
+"Water Quality","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",1220532461.98804,1.22053246198805,2010
+"Water Quality","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",2301339251.37036,2.30133925137036,2010
+"Water Quality","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Water Quality","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",734781135.753724,0.734781135753724,2010
+"Water Quality","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",1387919923.09037,1.38791992309037,2010
+"Water Quality","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",2000237536.21847,2.00023753621847,2010
+"Water Quality","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",2470966247.67403,2.47096624767403,2010
+"Water Quality","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",2877409246.84179,2.87740924684179,2010
+"Water Quality","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",3464493578.97297,3.46449357897297,2010
+"Water Quality","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",4051577911.10416,4.05157791110416,2010
+"Water Quality","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Water Quality","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",655790735.749755,0.655790735749755,2010
+"Water Quality","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",1132729452.65867,1.13272945265867,2010
+"Water Quality","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",1658656666.43968,1.65865666643968,2010
+"Water Quality","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",2385332736.83734,2.38533273683734,2010
+"Water Quality","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",2999567005.33623,2.99956700533623,2010
+"Water Quality","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Water Quality","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wildfire","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",4046696084.67013,4.04669608467013,2010
+"Wildfire","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",9556271938.89029,9.55627193889029,2010
+"Wildfire","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",12163962828.242,12.163962828242,2010
+"Wildfire","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",12017988656.4337,12.0179886564337,2010
+"Wildfire","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",11795364219.4605,11.7953642194605,2010
+"Wildfire","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wildfire","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",3495572609.83775,3.49557260983775,2010
+"Wildfire","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",7404097698.83455,7.40409769883455,2010
+"Wildfire","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",10075882239.1769,10.0758822391769,2010
+"Wildfire","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",11238261431.7503,11.2382614317503,2010
+"Wildfire","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",12136405387.9781,12.1364053879781,2010
+"Wildfire","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",13176032249.0959,13.1760322490959,2010
+"Wildfire","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",14215659110.2138,14.2156591102138,2010
+"Wildfire","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wildfire","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",3193587100.51041,3.19358710051041,2010
+"Wildfire","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",5389731869.91924,5.38973186991924,2010
+"Wildfire","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",7202384817.84558,7.20238481784558,2010
+"Wildfire","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wildfire","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",4546585739.30485,4.54658573930485,2010
+"Wildfire","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",8187556295.60808,8.18755629560808,2010
+"Wildfire","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",11593971608.0843,11.5939716080843,2010
+"Wildfire","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",13768284405.3276,13.7682844053276,2010
+"Wildfire","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",15223080392.7003,15.2230803927003,2010
+"Wildfire","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",17365319969.3865,17.3653199693865,2010
+"Wildfire","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",19507559546.0727,19.5075595460727,2010
+"Wildfire","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wildfire","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",3349748298.84135,3.34974829884135,2010
+"Wildfire","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",5426745723.95789,5.42674572395789,2010
+"Wildfire","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",7568918697.76031,7.56891869776031,2010
+"Wildfire","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",9156885509.66703,9.15688550966703,2010
+"Wildfire","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",10433767625.5748,10.4337676255748,2010
+"Wildfire","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wildfire","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wind Damage","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",1125749661.35062,1.12574966135062,2010
+"Wind Damage","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",2781263869.21917,2.78126386921917,2010
+"Wind Damage","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",4304336940.45824,4.30433694045824,2010
+"Wind Damage","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",5628748306.75308,5.62874830675308,2010
+"Wind Damage","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",6423395126.52998,6.42339512652998,2010
+"Wind Damage","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wind Damage","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",31047417789.1802,31.0474177891803,2010
+"Wind Damage","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",72443974841.4206,72.4439748414206,2010
+"Wind Damage","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",107631048335.825,107.631048335825,2010
+"Wind Damage","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",136608638272.393,136.608638272393,2010
+"Wind Damage","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",157306916798.513,157.306916798513,2010
+"Wind Damage","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",190424162440.306,190.424162440306,2010
+"Wind Damage","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",223541408082.098,223.541408082098,2010
+"Wind Damage","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wind Damage","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",3731682437.58052,3.73168243758052,2010
+"Wind Damage","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",7048733493.20765,7.04873349320765,2010
+"Wind Damage","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",10158468857.8581,10.1584688578581,2010
+"Wind Damage","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",12438941458.6017,12.4389414586017,2010
+"Wind Damage","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",14304782677.392,14.304782677392,2010
+"Wind Damage","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",16999886660.0891,16.9998866600891,2010
+"Wind Damage","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",19694990642.7861,19.6949906427861,2010
+"Wind Damage","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wind Damage","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",5836503668.36814,5.83650366836814,2010
+"Wind Damage","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",11058638529.5396,11.0586385295396,2010
+"Wind Damage","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",16280773390.7111,16.2807733907111,2010
+"Wind Damage","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",21195723848.2843,21.1957238482843,2010
+"Wind Damage","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",25803489902.2591,25.8034899022591,2010
+"Wind Damage","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",30872032561.6315,30.8720325616315,2010
+"Wind Damage","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",35940575221.0038,35.9405752210038,2010
+"Wind Damage","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Wind Damage","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",5046075989.74096,5.04607598974096,2010
+"Wind Damage","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",7999876569.10152,7.99987656910152,2010
+"Wind Damage","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",10830602124.3221,10.8306021243221,2010
+"Wind Damage","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Wind Damage","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","CCSM4",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","CCSM4",1,"N/A","all","Interpolation","National Total",384856409.840227,0.384856409840227,2010
+"Winter Recreation","GCM","CCSM4",2,"N/A","all","Interpolation","National Total",1140525664.70964,1.14052566470964,2010
+"Winter Recreation","GCM","CCSM4",3,"N/A","all","Interpolation","National Total",1860969257.34172,1.86096925734172,2010
+"Winter Recreation","GCM","CCSM4",4,"N/A","all","Interpolation","National Total",2739200949.03165,2.73920094903165,2010
+"Winter Recreation","GCM","CCSM4",5,"N/A","all","Interpolation","National Total",3306238760.49473,3.30623876049473,2010
+"Winter Recreation","GCM","CCSM4",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","CCSM4",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","CanESM2",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","CanESM2",1,"N/A","all","Interpolation","National Total",628089422.240462,0.628089422240462,2010
+"Winter Recreation","GCM","CanESM2",2,"N/A","all","Interpolation","National Total",1373931858.23097,1.37393185823097,2010
+"Winter Recreation","GCM","CanESM2",3,"N/A","all","Interpolation","National Total",1780187118.94495,1.78018711894495,2010
+"Winter Recreation","GCM","CanESM2",4,"N/A","all","Interpolation","National Total",2276208423.59975,2.27620842359975,2010
+"Winter Recreation","GCM","CanESM2",5,"N/A","all","Interpolation","National Total",3253981523.47287,3.25398152347287,2010
+"Winter Recreation","GCM","CanESM2",6,"N/A","all","Interpolation","National Total",3643060400.96784,3.64306040096784,2010
+"Winter Recreation","GCM","CanESM2",7,"N/A","all","Interpolation","National Total",4032139278.46281,4.03213927846281,2010
+"Winter Recreation","GCM","GCM Ensemble",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GCM Ensemble",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GFDL-CM3",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","GFDL-CM3",1,"N/A","all","Interpolation","National Total",509749629.07194,0.50974962907194,2010
+"Winter Recreation","GCM","GFDL-CM3",2,"N/A","all","Interpolation","National Total",1136558210.41413,1.13655821041413,2010
+"Winter Recreation","GCM","GFDL-CM3",3,"N/A","all","Interpolation","National Total",1849392571.44195,1.84939257144195,2010
+"Winter Recreation","GCM","GFDL-CM3",4,"N/A","all","Interpolation","National Total",2405207914.23767,2.40520791423767,2010
+"Winter Recreation","GCM","GFDL-CM3",5,"N/A","all","Interpolation","National Total",2943083890.05156,2.94308389005156,2010
+"Winter Recreation","GCM","GFDL-CM3",6,"N/A","all","Interpolation","National Total",3506172631.58452,3.50617263158452,2010
+"Winter Recreation","GCM","GFDL-CM3",7,"N/A","all","Interpolation","National Total",4069261373.11748,4.06926137311748,2010
+"Winter Recreation","GCM","GISS-E2-R",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","GISS-E2-R",1,"N/A","all","Interpolation","National Total",894618551.490367,0.894618551490367,2010
+"Winter Recreation","GCM","GISS-E2-R",2,"N/A","all","Interpolation","National Total",1411191502.11183,1.41119150211183,2010
+"Winter Recreation","GCM","GISS-E2-R",3,"N/A","all","Interpolation","National Total",1609338792.71531,1.60933879271531,2010
+"Winter Recreation","GCM","GISS-E2-R",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GISS-E2-R",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GISS-E2-R",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","GISS-E2-R",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","HadGEM2-ES",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","HadGEM2-ES",1,"N/A","all","Interpolation","National Total",616040794.077037,0.616040794077037,2010
+"Winter Recreation","GCM","HadGEM2-ES",2,"N/A","all","Interpolation","National Total",1076387068.96871,1.07638706896871,2010
+"Winter Recreation","GCM","HadGEM2-ES",3,"N/A","all","Interpolation","National Total",1868410027.7045,1.8684100277045,2010
+"Winter Recreation","GCM","HadGEM2-ES",4,"N/A","all","Interpolation","National Total",2669417855.35997,2.66941785535997,2010
+"Winter Recreation","GCM","HadGEM2-ES",5,"N/A","all","Interpolation","National Total",3289676393.46576,3.28967639346576,2010
+"Winter Recreation","GCM","HadGEM2-ES",6,"N/A","all","Interpolation","National Total",3399389303.87957,3.39938930387957,2010
+"Winter Recreation","GCM","HadGEM2-ES",7,"N/A","all","Interpolation","National Total",3509102214.29338,3.50910221429338,2010
+"Winter Recreation","GCM","MIROC5",0,"N/A","all","Interpolation","National Total",0,0,2010
+"Winter Recreation","GCM","MIROC5",1,"N/A","all","Interpolation","National Total",871654701.215447,0.871654701215447,2010
+"Winter Recreation","GCM","MIROC5",2,"N/A","all","Interpolation","National Total",1591799545.83967,1.59179954583967,2010
+"Winter Recreation","GCM","MIROC5",3,"N/A","all","Interpolation","National Total",2302451441.51778,2.30245144151778,2010
+"Winter Recreation","GCM","MIROC5",4,"N/A","all","Interpolation","National Total",2906169931.04615,2.90616993104615,2010
+"Winter Recreation","GCM","MIROC5",5,"N/A","all","Interpolation","National Total",3497999296.92875,3.49799929692875,2010
+"Winter Recreation","GCM","MIROC5",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MIROC5",7,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",0,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",1,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",2,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",3,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",4,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",5,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",6,"N/A","all","Interpolation","National Total",NA,NA,2010
+"Winter Recreation","GCM","MRI-CGCM3",7,"N/A","all","Interpolation","National Total",NA,NA,2010
