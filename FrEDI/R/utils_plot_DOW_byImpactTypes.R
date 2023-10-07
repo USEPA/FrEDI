@@ -111,13 +111,18 @@ plot_DOW_byImpactTypes <- function(
   c_impYears    <- infoList0[["cImpYears"]]
   c_variants    <- infoList0[["cVariants"]]
   c_impTypes    <- infoList0[["cImpTypes"]]
+  c_models      <- df0[["model"]] |> unique()
   ### Numbers
   n_sectors     <- c_sectors  |> length()
   n_impYears    <- c_impYears |> length()
   n_variants    <- c_variants |> length()
   n_impTypes    <- c_impTypes |> length()
+  n_models      <- c_models   |> length()
   # c_impYears |> print(); c_impTypes |> print(); c_variants |> print()
   # n_impYears |> print(); n_impTypes |> print(); n_variants |> print()
+
+  ###### Factor Model ######
+  df0 <- df0 |> mutate(model = model |> factor(levels=c_models))
 
   ###### Plot Title Info ######
   ### Default for now
@@ -165,6 +170,15 @@ plot_DOW_byImpactTypes <- function(
   )
   # refPlot0 |> print()
 
+  ### Add guide to legend
+  lgdCols   <- case_when(
+    n_variants <= 1 ~ 2 ,
+    n_variants == 2 ~ 3,
+    .default = 4
+  )
+  # lgdCols |> print()
+  refPlot0  <- refPlot0 + guides(color=guide_legend(ncol=lgdCols))
+
   ###### Common Plot Elements ######
   spacer0   <- ggplot() + theme_void()
   legend0   <- refPlot0 |> ggpubr::get_legend()
@@ -191,6 +205,7 @@ plot_DOW_byImpactTypes <- function(
           silent    = silent,
           options   = plotOpts0
         )
+
         ### White out impact type label
         plot_k <- plot_k + theme(plot.title = element_text(color="white"))
         ### Add spacer to the right

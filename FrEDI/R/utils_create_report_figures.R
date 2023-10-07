@@ -967,7 +967,6 @@ plot_DoW_by_sector <- function(
         options   = options
       )
       # plot_y |> names() |> print()
-
       ### Return
       return(plot_y)
     })
@@ -1025,5 +1024,59 @@ plot_slr_scenarios <- function(
   return(plot0)
 } ### End plot_slr_scenarios
 
+### Function to do some initial summarization
+create_default_tablePlot <- function(x=1){
+  ### Run FrEDI
+  results0 <- FrEDI::run_fredi()
+  # results0 |> glimpse()
+
+  ### Filter to values used to report
+  results0   <- results0 |>
+    filter(model %in% c("Interpolation", "Average")) |>
+    filter(includeaggregate == 1) |>
+    filter(sectorprimary == 1) |>
+    filter(region == "National Total")
+  results0 |> glimpse()
+
+  ### Summarize results for specific years
+  table0   <- results0 |>
+    filter(year %in% seq(2010, 2090, by=10)) |>
+    select(c("sector", "variant", "year", "annual_impacts")) |>
+    spread(key="year", value="annual_impacts")
+
+  ### Summarize results over all years
+  totals0  <- results0 |>
+    group_by_at(.vars=c("sector")) |>
+    summarize_at(.vars=c("annual_impacts"), sum, na.rm=T) |>
+    ungroup()
+  totals0  <- totals0|>
+    arrange_at(.vars=c("annual_impacts")) |>
+    mutate(order=row_number())
+
+  ### Factor results
+  results0        <- results0 |> mutate(sector_order  = sector |> factor(levels=totals0[["sector"]]))
+  results0        <- results0 |> mutate(sector_factor = sector |> factor(levels=totals0[["sector"]]))
+  ### Arrange
+  arrange0 <- c("sector_factor", "variant",  "year")
+  results0        <- results0 |> arrange_at(.vars=c(arrange0))
+
+  ### Create plot
+  plot0    <- results0 |>
+    ggplot(aes(x=year, y=annual_impacts/10**12)) +
+    geom_area(aes(fill=sector_factor), color="#212121", alpha = 0.75) +
+    scale_fill_discrete("Sector") +
+    scale_y_continuous("Impacts (Trillions, $2015)") +
+    scale_x_continuous("Year", breaks=seq(2010, 2090, by=20)) +
+    guides(color=guide_legend(ncol=2), fill=guide_legend(ncol=2)) +
+    theme(legend.position = "bottom")
+
+  ### Create list
+  returnList <- list()
+  returnList[["table" ]] <- table0
+  returnList[["totals"]] <- totals0
+  returnList[["plot"  ]] <- plot0
+  ### Return
+  return(x)
+} ### End create_default_tablePlot
 
 ###### End File ######

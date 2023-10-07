@@ -13,7 +13,7 @@ check_and_create_path <- function(
   if(create1) {
     "Directory does not exist. " |> message()
     "\t" |> paste0("Creating directory...") |> message()
-    fpath |> dir.create()
+    try0 <- fpath |> dir.create() |> try()
     "\t" |> paste0("...Directory created.") |> message()
   } ### End if(create1)
 } ### End check_and_create_path
@@ -67,7 +67,7 @@ save_image <- function(
   ### Plot options
   dev0      <- device |> tolower()
   h0        <- options[["height"]]
-  w0        <- options[["height"]]
+  w0        <- options[["width" ]]
   res0      <- options[["res"]]
   units0    <- options[["units"]]
   ### File name
@@ -78,7 +78,7 @@ save_image <- function(
   fpath     <- fdir  |> file.path(fname)
 
   ### Save Image
-  saved0    <- ggsave(fname, plot = obj0, device=dev0, path=fdir, width=w0, height=h0, units=units0)
+  saved0    <- ggsave(fname, plot = obj0, device=dev0, path=fdir, width=w0, height=h0, units=units0) |> try()
   ### Return
 } ### End save_image
 
@@ -97,51 +97,81 @@ save_appendix_figures <- function(
   ### Create directory if it doesn't exist
   fdir      <- fpath; rm("fpath")
   fdir      <- fdir |> file.path("images")
-  created0  <- fdir  |> check_and_create_path(createDir=createDir)
+  created0  <- fdir |> check_and_create_path(createDir=createDir)
   ### Prepare data
-  df0       <- df0 |> filter(model_type == modelType)
+  df0       <- df0  |> filter(model_type %in% modelType)
   list0     <- plotList[[modelType]]
   ### Unique values
   names0    <- list0  |> names()
   sectors0  <- names0 |> map(function(.x){str_split(string=.x, pattern="_")[[1]][1]}) |> unlist() |> unique()
   refYears0 <- names0 |> map(function(.x){str_split(string=.x, pattern="_")[[1]][2]}) |> unlist() |> unique()
-  # names0 |> print(); sectors0 |> print(); refYears0 |> print(); impYears0 |> print()
+  # names0 |> print(); #sectors0 |> print(); refYears0 |> print()
 
   ### Iterate over sectors
   names0 |> map(function(.x){
     ### Plot .x
     list_x    <- list0[[.x]]
-    .x |> print(); #list_x |> names() |> print()
-    # .x |> c(list_x |> names()) |> print()
-    # "got here" |> print()
+    .x |> print()
+
     ### Split name into sector and ref year
     sector_x  <- .x |> map(function(.y){str_split(string=.y, pattern="_")[[1]][1]}) |> unlist() |> unique()
-    refYear_x <- .x |> map(function(.y){str_split(string=.y, pattern="_")[[1]][2]}) |> unlist() |> unique()
+    year_x    <- .x |> map(function(.y){str_split(string=.y, pattern="_")[[1]][2]}) |> unlist() |> unique()
     fname_x   <- sector_x
-    ### Filter to data
-    df_x      <- df0 |> filter(sector == .x)
-    ### Unique sector values
-    # impYears0 <- list0[[1]] |> names()
-    c_years <- list_x |> names()
-    # c_years <- df_x[["impactYear"]] |> unique()
-    c_types <- df_x[["impactType"]] |> unique()
-    c_vars  <- df_x[["variant"   ]] |> unique()
+    # sector_x |> c(year_x) |> print()
 
-    # c_types |> print(); c_types |> print(); c_vars |> print();
+    ### Filter to data
+    df_x      <- df0 |> filter(sector == sector_x)
+    # df0 |> glimpse()
+
+    ### Unique sector values
+    c_types   <- df_x[["impactType"]] |> unique()
+    c_vars    <- df_x[["variant"   ]] |> unique()
+    c_models  <- df_x[["model"     ]] |> unique()
+    # c_years |> print(); c_types |> print(); c_vars |> print();
+
     ### Number of values
-    n_years <- c_years |> length()
-    n_types <- c_types |> length()
-    n_vars  <- c_vars  |> length()
+    # n_years   <- c_years |> length()
+    n_types   <- c_types  |> length()
+    n_vars    <- c_vars   |> length()
+    n_models  <- c_models |> length()
+    # n_types |> c(n_vars, n_models) |> print()
+
+    ### Get number of legend rows
+    lgdCols  <- case_when(
+      n_vars <= 1 ~ 2 ,
+      n_vars == 2 ~ 3,
+      .default = 4
+    )
+    lgdRows  <- (n_models - 1) %/% lgdCols + 1
+
     ### Plot heights
-    h_x     <- n_types * 2.5 + 2.5
-    w_x     <- n_vars  * 3.0 + 1.5
-    h_x     <- h_x * 4
-    w_x     <- w_x * 4
+    ### Functions for plot height & width
+    fun_plot_width  <- function(nvars =1){1.5 + 3.3 * nvars}
+    fun_plot_height <- function(ntypes=1, nrows=1){
+      ### Multiplier
+      factor0 <- case_when(
+        ntypes == 5 ~ 3.5,
+        .default = 3
+      )
+      ### Spacer for titles & legend
+      spacer0 <- case_when(
+        ntypes == 5 ~ 3,
+        nrows == 4 ~ 2,
+        nrows == 3 ~ 1.5,
+        .default = 1
+      )
+      1.5 + spacer0 + factor0 * ntypes
+      # 2 + nrows + 3.5 * ntypes
+    }
+    w_x       <- n_vars  |> fun_plot_width ()
+    h_x       <- n_types |> fun_plot_height(nrows = lgdRows)
+    w_x |> c(h_x) |> print()
+
     ### Plot options
-    units_x <- units; #rm(units)
-    res_x   <- res  ; #rm(res  )
-    dev_x   <- device |> tolower()
-    opts_x  <- list(
+    units_x   <- units; #rm(units)
+    res_x     <- res  ; #rm(res  )
+    dev_x     <- device |> tolower()
+    opts_x    <- list(
       height = h_x,
       width  = w_x,
       res    = res_x,
@@ -149,20 +179,17 @@ save_appendix_figures <- function(
     ) ### End options
     # "got here" |> print()
     ### Iterate over impact years
-    saved_x <- c_years |> walk(function(.y){
-      .y |> print()
-      plot_y  <- list_x[[.y]]
-      fname_y <- fname_x |> paste0("_", .y, ".", dev_x)
-      # "got here1" |> print()
-      saved_y <- plot_y |> save_image(
-        fpath     = fdir , ### File path
-        fname     = fname_y,
-        device    = dev_x,
-        createDir = createDir,
-        options   = opts_x
-      ) ### End save_image
-      # "got here2" |> print()
-    }) ### End map(function(.y))
+    plot_x    <- list_x[[1]]
+    fname_x   <- .x
+    # "got here1" |> print()
+    saved_x   <- plot_x  |> save_image(
+      fpath     = fdir , ### File path
+      fname     = fname_x,
+      device    = dev_x,
+      createDir = createDir,
+      options   = opts_x
+    ) ### End save_image
+    # "got here2" |> print()
   }) ### End map(function(.z))
   ### Return
 } ### End save_appendix_figures
