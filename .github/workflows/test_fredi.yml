@@ -83,14 +83,9 @@ jobs:
           rPath0 |> list.files() |> print()
           pPath0 |> list.files() |> print()
           sPath0 |> list.files() |> print()
-          
+
           ### Load FrEDI
           pPath0 |> devtools::load_all()
-
-          ### Load source
-          sPath0 |> file.path("create_DoW_results.R") |> source()
-          ### Run FrEDI
-          results0 <- run_fredi()
 
           ### Where to save results
           oPath0   <- pPath0 |> file.path("data_tests")
@@ -99,47 +94,66 @@ jobs:
 
           ### Test results
           if(do_tests){
+            ### Run FrEDI
+            results0 <- run_fredi()
+            ### Run tests
             tests0   <- results0 |> general_fredi_test(
               outPath   = oPath1,
               save      = TRUE,
               return    = TRUE,
               overwrite = TRUE
             )
+
+            ### Create plot totals
+            listResults <- create_default_tablePlot()
+            save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
+
+            ### Remove results
+            rm(results0, test0, listResults)
           }
 
           ### Create report results
           if(do_figs){
+            ### Load source
+            sPath0 |> file.path("create_DoW_results.R") |> source()
+
+            ### Create report figures
             reports0 <- create_DoW_results(
               outPath  = oPath2,
-              gcmYears = c(2010),
-              #slrYears = c(2010, 2050, 2090)
               saveFile = TRUE,
               loadCode = "project",
               silent   = FALSE,
               testing  = TRUE,
-              return   = TRUE,
-              fpath = pPath0
+              return   = FALSE,
+              fpath    = pPath0
             )
+
+            ### Figure H results
+            results0 <- run_fredi(aggLevels=c("modelaverage", "national"))
+            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
+            save0    <- write.csv(results0, file=oPath1 |> file.path("FigH_results.csv", row.names=F)) |> try()
           }
           '
 
       - name: Upload Tests
+        if: |
+          inputs.run_tests == 'yes'
         uses: actions/upload-artifact@v3
-#        if: |
-#          inputs.run_tests == 'yes'
         with:
           name: Test Data
           path: |
-            ./FrEDI/data_tests/general/
+            ./FrEDI/data_tests/general/defaultScenarioTotals.rda
+            ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
 
       - name: Upload Report Figures
+        if: |
+          inputs.make_figures == 'yes'
         uses: actions/upload-artifact@v3
-#        if: |
-#          inputs.make_figures == 'yes'
         with:
           name: Report Data
           path: |
             ./FrEDI/data_tests/report_figures/
+            ./FrEDI/data_tests/general/FigH_results.csv
 # #
 #       - name: Commit results
 #         run: |
