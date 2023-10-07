@@ -390,6 +390,7 @@ get_sector_plotInfo <- function(
   ### Initialize rows & columns
   nCol      <- nCol
   nRow      <- n_sectors %/% nCol
+  nRow      <- (nRow == 0) |> ifelse(1, nRow)
   ### Get Number of Rows & Columns
   if(byType){ nCol <- n_variants}
   if(byType){ nRow <- n_impTypes}

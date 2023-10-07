@@ -97,7 +97,7 @@ plot_DOW_byImpactType <- function(
   y_prelabel <- (y_label == "") |> ifelse("", ", ")
   # y_label    <- "" |> paste0("(", y_label, y_prelabel, ")")
   y_label    <- y_label |> paste0(y_prelabel, "$2015")
-  y_label    <- "Impacts " |> paste0(y_label)
+  y_label    <- "Impacts (" |> paste0(y_label, ")")
   # y_p10 |> print(); y_denom |> print(); y_breaks |> print()
 
   ###### Mutate Data ######
@@ -173,12 +173,12 @@ plot_DOW_byImpactType <- function(
   if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}
 
   ###### Add themes and title ######
-  plot0    <- plot0 + ggtitle(title0, subtitle0)
+  plot0  <- plot0 + ggtitle(title0, subtitle0)
 
   ###### Add scales ######
-  plot0    <- plot0 + scale_x_continuous(xTitle, breaks = x_breaks, limits = x_limits)
+  plot0  <- plot0 + scale_x_continuous(xTitle, breaks = x_breaks, limits = x_limits)
   # plot0    <- plot0 + scale_y_continuous(yTitle)
-  plot0    <- plot0 + scale_y_continuous(y_label)
+  plot0  <- plot0 + scale_y_continuous(y_label)
 
   ###### Adjust Appearance ######
   # plot0  <- plot0 + theme(panel.background = element_rect(fill="white"))

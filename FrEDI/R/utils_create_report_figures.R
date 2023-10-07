@@ -52,6 +52,27 @@ get_column_values <- function(
   return(vals0)
 } ### End get_column_values
 
+### Function to create note for figures
+create_fig_scale_note <- function(
+    ntypes = 1, ### Number of types
+    nvars  = 1  ### Number of variants
+){
+  ### Conditions
+  hasTypes <- ntypes > 1
+  hasVars  <- nvars  > 1
+  either0  <- hasTypes | hasVars
+  both0    <- hasTypes & hasVars
+  ### Notes
+  note0    <- either0  |> ifelse("Note: Figure scale varies by ", "")
+  note1    <- hasTypes |> ifelse("impact type", "")
+  note2    <- hasVars  |> ifelse("variant", "")
+  and0     <- both0    |> ifelse(" and ", "")
+  ### Final note
+  note0    <- note0 |> paste0(note1, and0, note2)
+  ### Return
+  return(note0)
+} ### create_fig_scale_note
+
 #### Summarize missing values
 sum_with_na <- function(
     df0,    ### Dataframe
@@ -338,7 +359,6 @@ run_scenarios <- function(
 } ### End run_scenarios
 
 
-
 ### Summarize results by degree of warming for a single specified year
 sum_impacts_byDoW <- function(
     df0,
@@ -349,21 +369,19 @@ sum_impacts_byDoW <- function(
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
     impactYears = c("Interpolation", "NA", "2010", "2090"),
-    primary     = FALSE,
+    aggOnly     = FALSE,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions",
     silent      = FALSE
 ){
   ### Filter to includeaggregate==1
-  # aggOnly         <- TRUE
-  aggOnly         <- !bySector
   if(aggOnly){df0 <- df0 |> filter(includeaggregate==1)}
   ### Filter to sector primary
+  primary         <- !bySector
   if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
-
   ### Filter to scenarios
   scenarios0 <- scenarios; rm("scenarios")
-  df0        <- df0 |> filter(scenario %in% scenarios0)
+  df0        <- df0 |> filter(scenario   %in% scenarios0)
   ### Filter to appropriate models
   df0        <- df0 |> filter(model_type %in% models)
   ### Filter to appropriate impact years
@@ -403,20 +421,19 @@ sum_impacts_byDoW <- function(
   # df0 %>% glimpse
   ### Return
   return(df0)
-}
+} ### End sum_impacts_byDoW
 
 ### Summarize results by degree of warming for multiple specified years
 sum_impacts_byDoW_years <- function(
     df0, ### Outputs of sum_impactsByDegree
     scenarios,
     bySector    = FALSE,
-    primary     = FALSE,
-    years       = c(2010, 2050, 2090),
+    years       = c(2010, 2090),
     models      = c("GCM", "SLR"),
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
     impactYears = c("Interpolation", "NA", "2010", "2090"),
-    # aggOnly     = TRUE,
+    aggOnly     = FALSE,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions",
     silent      = FALSE
@@ -424,15 +441,15 @@ sum_impacts_byDoW_years <- function(
   ### Filter to includeaggregate==1
   ### Filter to includeaggregate==1
   # aggOnly         <- TRUE
-  aggOnly    <- !bySector
   if(aggOnly){df0 <- df0 |> filter(includeaggregate==1)}
   ### Filter to sector primary
+  primary    <- !bySector
   if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
   ### Run scenarios
   nYears <- years |> length()
 
   ### Get list
-  list0   <- years %>% map(function(.x){
+  list0   <- years |> map(function(.x){
     paste0("Summarizing values for ", which(years == .x), "/" , nYears, " years...") |> message()
     df_x <- sum_impacts_byDoW(
       df0         = df0,
@@ -443,14 +460,13 @@ sum_impacts_byDoW_years <- function(
       impactYears = impactYears,
       year        = .x,
       models      = models,
-      # aggOnly     = aggOnly,
+      aggOnly     = aggOnly,
       adjVal      = adjVal,
       adjCol      = adjCol,
       silent      = silent
     ) ### End sum_impactsByDegree
     return(df_x)
-  }
-  ) ### End walk
+  }) ### End walk
   ### Bind values together
   df0 <- list0 %>% (function(x){do.call(rbind, x)})
   rm(list0)
@@ -458,7 +474,7 @@ sum_impacts_byDoW_years <- function(
   df0 <- df0 |> as_tibble()
   ### Return
   return(df0)
-}
+} ### End sum_impacts_byDoW_years
 
 ### Get SLR impacts from FrEDI data
 get_fig7_slrDataObj <- function(
@@ -478,8 +494,8 @@ get_fig7_slrDataObj <- function(
 
   ### SLR Driver values
   ### SLR Scaled impct values
-  if(drivers){slrCm  <- "slr_cm"      |> get_ciraDataObj()}
-  if(impacts){slrImp <- "slrImpacts"  |> get_ciraDataObj()}
+  if(drivers){slrCm  <- "slr_cm"     |> get_ciraDataObj()}
+  if(impacts){slrImp <- "slrImpacts" |> get_ciraDataObj()}
 
   ###### SLR Models ######
   ### Format SLR Models
@@ -611,7 +627,7 @@ get_fig7_slrDataObj <- function(
   ###### Return ######
   ### Add to list
   return(list0)
-}
+} ### get_fig7_slrDataObj
 
 ### Get values for figure 7 impacts for SLR sectors
 get_fig7_slrImpacts <- function(
@@ -621,8 +637,8 @@ get_fig7_slrImpacts <- function(
     sumCol      = "annual_impacts",
     # groupVars   = c("variant", "impactType", "impactYear"),
     impactYears = c("Interpolation", "NA", "2010", "2090"),
-    # aggOnly    = TRUE, ### Whether to filter to includeaggregate==1
-    years      = c(2010, 2050, 2090),
+    aggOnly    = TRUE, ### Whether to filter to includeaggregate==1
+    years      = c(2050, 2090),
     adjVal     = 1/10**9, ### Factor to multiply by
     adjCol     = "impact_billions"
 ){
@@ -638,10 +654,12 @@ get_fig7_slrImpacts <- function(
   ### Add variables for plotting with plot_DOW_byModelType
   # slrImpacts      <- slrImpacts |> mutate(impactYear = "Interpolation")
 
-  ### Filter to includeaggregate==1
-  # slrImpacts      <- slrImpacts |> filter(includeaggregate==1)
-  aggOnly         <- !bySector
+  ### Filter to includeaggregate==1,
   if(aggOnly){slrImpacts <- slrImpacts |> filter(includeaggregate==1)}
+
+  ### Filter to primary==1
+  primary <- !bySector
+  if(aggOnly){slrImpacts <- slrImpacts |> filter(sectorprimary==1)}
 
   ### Filter to appropriate categories and years
   if(!bySector){slrImpacts <- slrImpacts |> filter(year %in% years)}
@@ -748,7 +766,7 @@ get_fig7_slrImpacts <- function(
   slrTotals |> glimpse() #|> print()
   ### Return
   return(slrTotals)
-}
+} ### End get_fig7_slrImpacts
 
 ### Plot impacts by degree of warming
 plot_DoW_by_modelYear <- function(
@@ -756,9 +774,10 @@ plot_DoW_by_modelYear <- function(
     type0      ="GCM", ### Model type: GCM or SLR
     year0      = 2010,
     xCol       = "driverValue",
-    yCol       = "impact_billions",
+    yCol       = "annual_impacts",
     thresh0    = 18,
     nCol       = 4,
+    silent     = T,
     options  = list(
       title      = NULL,
       xTitle     = NULL,
@@ -768,8 +787,7 @@ plot_DoW_by_modelYear <- function(
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
-    ),
-    silent     = T
+    )
 ){
   ###### Model Types ######
   ### Model Type Checks
@@ -781,26 +799,6 @@ plot_DoW_by_modelYear <- function(
   # df0        <- df0 |> filter(summaryYear==year0)
   if(do_gcm){df0 <- df0 |> filter(summaryYear==year0)}
   df0        <- df0 |> filter(model_type ==type0)
-  # df0 |> glimpsey_info0()
-  ###### Sector Labels ######
-  ### Get sector labels
-  refSectors <- df0[["sector"]] |> unique()
-  newSectors <- refSectors |> format_sectorNames(thresh0 = 18)
-  # newSectors |> print()
-
-  ### Mutate sector names
-  df0        <- df0 |> mutate(sector = sector |> factor(levels = refSectors, labels = newSectors))
-  # df0 |> glimpse()
-  ###### Plot Option Defaults ######
-  # title      <- options[["title"  ]]
-  # xTitle     <- options[["xTitle" ]]
-  # ### Plot options
-  # hasTitle   <- !(is.null(title  ))
-  # hasXTitle  <- !(is.null(xTitle ))
-  # ### Update Options
-  # if(!hasTitle ){options[["title" ]] <- do_gcm |> ifelse("Impacts by Degrees of Warming", "Impacts by GMSL (cm)")}
-  # if(!hasXTitle){options[["xTitle"]] <- do_gcm |> ifelse(expression("Degrees of Warming (°C)"), "GMSL (cm)")}
-  # modelType %>% print
 
   ### Plot by model type
   plot0      <- df0 |> plot_DOW_byModelType(
@@ -814,7 +812,7 @@ plot_DoW_by_modelYear <- function(
 
   ### Return
   return(plot0)
-}
+} ### End plot_DoW_by_modelYear
 
 ### Plot DOW
 plot_DoW <- function(
@@ -822,9 +820,10 @@ plot_DoW <- function(
     types0   = c("GCM", "SLR"), ### Model type: GCM or SLR
     years0   = c(2010, 2090),
     xCol     = "driverValue",
-    yCol     = "impact_billions",
+    yCol     = "annual_impacts",
     thresh0  = 18,
     nCol     = 4,
+    silent   = T,
     options  = list(
       title      = NULL,
       xTitle     = NULL,
@@ -834,8 +833,7 @@ plot_DoW <- function(
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
-    ),
-    silent   = T
+    )
 ){
   ### Data frame to iterate over
   # df_types   <- types0   %>%
@@ -852,7 +850,7 @@ plot_DoW <- function(
     df_types <- df_types |> rbind(df_gcm)
     rm(df_gcm)
   }
-
+  ### SLR data
   if(do_slr){
     df_slr   <- tibble(type="SLR", year="all", label="SLR" |> paste0("_", "all"))
     df_types <- df_types |> rbind(df_slr)
@@ -890,13 +888,12 @@ plot_DoW <- function(
 
   ### Return
   return(list0)
-}
+} ### End plot_DoW
 
 #### Plot information by model type
 plot_DoW_by_sector <- function(
     df0,
     models  = c("GCM", "SLR"),
-    years   = c(2010, 2050, 2090),
     xCol    = "driverValue",
     yCol    = "impacts_billions",
     options = list(
@@ -911,15 +908,13 @@ plot_DoW_by_sector <- function(
       theme      = NULL
     )
 ){
-
   ### Data frame to iterate over
-  # df_types   <- types0   %>%
-  #   map(function(.x){tibble(type=.x, year=years0, label=.x |> paste0("_", years0))}) %>%
-  #   (function(y){do.call(rbind, y)})
   do_gcm     <- "gcm" %in% tolower(models)
   do_slr     <- "slr" %in% tolower(models)
   ### Initialize dataframes
   df_types   <- tibble()
+  ### Other values
+  years      <- c(2010, 2090)
   ### For GCMs
   if(do_gcm){
     df_gcm   <- "GCM" |> map(function(.x, years0=years){
@@ -955,7 +950,13 @@ plot_DoW_by_sector <- function(
     list_x    <- pList_x %>% pmap(function(x1, x2){
       x1 |> paste0("_", x2) |> print()
       df_y   <- df0  |> filter(sector == x1)
-      if(do_gcm){df_y <- df_y |> filter(summaryYear == x2)}
+      ### If do_gcm, filter to appropriate years
+      if(do_gcm){
+        c_yrs  <- c("NA", x2)
+        df_y   <- df_y |> filter(summaryYear == x2)
+        df_y   <- df_y |> filter(impactYear %in% c_yrs)
+        # df_y |> glimpse()
+      } ### End if(do_gcm)
 
       plot_y <- df_y |> plot_DOW_byImpactTypes(
         sector    = x1,
@@ -966,7 +967,6 @@ plot_DoW_by_sector <- function(
         options   = options
       )
       # plot_y |> names() |> print()
-
       ### Return
       return(plot_y)
     })
@@ -980,7 +980,7 @@ plot_DoW_by_sector <- function(
   list0   <- list0 |> addListNames(models)
   ### Return
   return(list0)
-}
+} ### End plot_DoW_by_sector
 
 
 ### Plot driver scenario
@@ -1022,7 +1022,61 @@ plot_slr_scenarios <- function(
 
   ### Return
   return(plot0)
-}
+} ### End plot_slr_scenarios
 
+### Function to do some initial summarization
+create_default_tablePlot <- function(x=1){
+  ### Run FrEDI
+  results0 <- FrEDI::run_fredi()
+  # results0 |> glimpse()
 
+  ### Filter to values used to report
+  results0   <- results0 |>
+    filter(model %in% c("Interpolation", "Average")) |>
+    filter(includeaggregate == 1) |>
+    filter(sectorprimary == 1) |>
+    filter(region == "National Total")
+  results0 |> glimpse()
 
+  ### Summarize results for specific years
+  table0   <- results0 |>
+    filter(year %in% seq(2010, 2090, by=10)) |>
+    select(c("sector", "variant", "year", "annual_impacts")) |>
+    spread(key="year", value="annual_impacts")
+
+  ### Summarize results over all years
+  totals0  <- results0 |>
+    group_by_at(.vars=c("sector")) |>
+    summarize_at(.vars=c("annual_impacts"), sum, na.rm=T) |>
+    ungroup()
+  totals0  <- totals0|>
+    arrange_at(.vars=c("annual_impacts")) |>
+    mutate(order=row_number())
+
+  ### Factor results
+  results0        <- results0 |> mutate(sector_order  = sector |> factor(levels=totals0[["sector"]]))
+  results0        <- results0 |> mutate(sector_factor = sector |> factor(levels=totals0[["sector"]]))
+  ### Arrange
+  arrange0 <- c("sector_factor", "variant",  "year")
+  results0        <- results0 |> arrange_at(.vars=c(arrange0))
+
+  ### Create plot
+  plot0    <- results0 |>
+    ggplot(aes(x=year, y=annual_impacts/10**12)) +
+    geom_area(aes(fill=sector_factor), color="#212121", alpha = 0.75) +
+    scale_fill_discrete("Sector") +
+    scale_y_continuous("Impacts (Trillions, $2015)") +
+    scale_x_continuous("Year", breaks=seq(2010, 2090, by=20)) +
+    guides(color=guide_legend(ncol=2), fill=guide_legend(ncol=2)) +
+    theme(legend.position = "bottom")
+
+  ### Create list
+  returnList <- list()
+  returnList[["table" ]] <- table0
+  returnList[["totals"]] <- totals0
+  returnList[["plot"  ]] <- plot0
+  ### Return
+  return(x)
+} ### End create_default_tablePlot
+
+###### End File ######
