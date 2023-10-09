@@ -7,6 +7,7 @@ plot_DOW_byModelType <- function(
     yCol      = "annual_impacts",
     nCol      = 4,
     nTicks    = 5,
+    silent    = F,
     options   = list(
       title      = NULL,
       xTitle     = NULL,
@@ -15,9 +16,9 @@ plot_DOW_byModelType <- function(
       heights    = NULL,
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
+      nameBreak  = 18, ### Sector name break
       theme      = NULL
-    ),
-    silent    = F
+    )
 ){
   ###### Defaults ######
   ### Whether to message
@@ -42,6 +43,15 @@ plot_DOW_byModelType <- function(
   def_xTitles <- list(GCM=expression("Degrees of Warming (°C)"), SLR="GMSL (cm)")
   def_lgdLbls <- list(GCM="Model", SLR="Year")
   def_margins <- list(GCM=c(0, 0, .15, 0), SLR=c(0, .2, .15, 0))
+  ### Defaults: Default Heights Below
+  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
+  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
+  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
+  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
+  def_yTitle  <- "Impacts ($2015)"
+  def_mUnit   <- "cm"
+  def_theme   <- NULL
+  def_nameBrk <- 18
   ### Values
   title       <- options[["title"     ]]
   xTitle      <- options[["xTitle"    ]]
@@ -51,6 +61,7 @@ plot_DOW_byModelType <- function(
   margins     <- options[["margins"   ]]
   mUnit       <- options[["marginUnit"]]
   theme0      <- options[["theme"     ]]
+  nameBrk     <- options[["nameBreak" ]]
   ### Plot options
   hasTitle    <- !(is.null(title   ))
   hasXTitle   <- !(is.null(xTitle  ))
@@ -60,14 +71,7 @@ plot_DOW_byModelType <- function(
   hasMargins  <- !(is.null(margins ))
   hasMUnits   <- !(is.null(mUnit   ))
   hasTheme    <- !(is.null(theme0  ))
-  ### Defaults: Default Heights Below
-  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
-  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
-  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
-  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
-  def_yTitle  <- "Impacts ($2015)"
-  def_mUnit   <- "cm"
-  def_theme   <- NULL
+  hasNameBrk  <- !(is.null(nameBrk))
   ### Values: Height Values Below
   if(!hasTitle  ){title   <- def_title }
   if(!hasXTitle ){xTitle  <- def_xTitle}
@@ -76,9 +80,10 @@ plot_DOW_byModelType <- function(
   if(!hasMargins){margins <- def_margin}
   if(!hasMUnits ){mUnit   <- def_mUnit }
   if(!hasTheme  ){theme0  <- def_theme }
+  if(!hasNameBrk){nameBrk <- def_nameBrk}
   # title |> print(); def_xTitle |> print()
   ### Update plot options
-  plotOpts0    <- list(
+  plotOpts0  <- list(
     title      = title,
     xTitle     = xTitle,
     yTitle     = yTitle,
@@ -88,17 +93,22 @@ plot_DOW_byModelType <- function(
     theme      = theme0
   )
 
+  ###### Format Sector Names ######
+  refSectors <- df_x[["sector"]] |> unique()
+  newSectors <- refSectors |> format_sectorNames(thresh0 = nameBrk)
+  df_x       <- df_x |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
+
   ###### Standardize column names ######
   # df_x[["xCol"]] <- df_x[[xCol]]
   # df_x[["yCol"]] <- df_x[[yCol]]
 
   ###### Get Sector Info ######
-  infoList0     <- df_x |> get_sector_plotInfo(yCol=yCol, nCol=nCol, silent=silent)
-  df_info       <- infoList0[["sectorInfo"]]
-  df_minMax     <- infoList0[["minMax"    ]]
-  c_sectors     <- infoList0[["cSectors"  ]]
-  n_sectors     <- infoList0[["nSectors"  ]]
-  nRow          <- infoList0[["nRow"      ]]
+  infoList0  <- df_x |> get_sector_plotInfo(yCol=yCol, nCol=nCol, silent=silent)
+  df_info    <- infoList0[["sectorInfo"]]
+  df_minMax  <- infoList0[["minMax"    ]]
+  c_sectors  <- infoList0[["cSectors"  ]]
+  n_sectors  <- infoList0[["nSectors"  ]]
+  nRow       <- infoList0[["nRow"      ]]
   # df_info |> print()
   ###### Get X Scale ######
   ###### X Scales
@@ -115,7 +125,7 @@ plot_DOW_byModelType <- function(
   ### Get maximum and minimum values by plot row
   ### scaleCol=summary_value
   # # lgdLbl |> print()
-  plotList_x <- c_sectors %>% map(function(.x){
+  plotList_x <- c_sectors |> map(function(.x){
     plot_x <- .x |> plot_DOW_bySector(
       df0       = df_x,      ### Sector data
       infoList0 = infoList0, ### Dataframe with sector info...output from get_sector_plotInfo
@@ -133,10 +143,10 @@ plot_DOW_byModelType <- function(
 
   ### Add list names
   # # x |> length() |> print()
-  plotList_x  <- plotList_x |> addListNames(c_sectors)
+  plotList_x <- plotList_x |> addListNames(c_sectors)
 
   ###### Get Reference Plot ######
-  refPlot_x   <- c_sectors[1] |> plot_DOW_bySector(
+  refPlot_x  <- c_sectors[1] |> plot_DOW_bySector(
     df0       = df_x,      ### Sector data
     infoList0 = infoList0, ### Dataframe with sector info...output from get_sector_plotInfo
     xCol      = xCol, ### X-Column,
@@ -167,7 +177,7 @@ plot_DOW_byModelType <- function(
   # heights0      <- rep(1, nRow)
   ### Set heights
   plot_heights0 <- c(0.2, nRow + 1, 1)
-  # nRow          <- nRow - 1
+  # nRow |> print(); nCol |> print()
 
   ###### Arrange Main Grid ######
   ### Arrange main grid and add plot_xTitle
@@ -184,7 +194,6 @@ plot_DOW_byModelType <- function(
   plotList0      <- list( x=plot_spacer, y=main_grid, z=plot_legend)
   main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=plot_heights0)
   main_plot      <- main_plot |> annotate_figure(top=plot_title)
-  return(main_plot)
 
   ###### Return######
   ### Return

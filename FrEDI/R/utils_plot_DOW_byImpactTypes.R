@@ -14,6 +14,7 @@ plot_DOW_byImpactTypes <- function(
       xTitle     = expression("Degrees of Warming (°C)"),
       yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
+      nameBreak  = 18, ### Sector name break
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
@@ -27,6 +28,7 @@ plot_DOW_byImpactTypes <- function(
   do_gcm    <- "gcm" %in% (modelType |> tolower())
   do_slr    <- "slr" %in% (modelType |> tolower())
   # modelType |> print(); do_gcm |> print(); do_slr |> print()
+
   ###### Format Data ######
   ### Filter to sector and convert to data frame
   # data |> glimpse()
@@ -43,6 +45,16 @@ plot_DOW_byImpactTypes <- function(
   def_xTitles <- list(GCM=expression("Degrees of Warming (°C)"), SLR="GMSL (cm)")
   def_lgdLbls <- list(GCM="Model", SLR="Scenario")
   def_margins <- list(GCM=c(0, 0, .15, 0), SLR=c(0, .2, .15, 0))
+  ### Defaults: Default Heights Below
+  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
+  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
+  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
+  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
+  def_lgdPos  <- "top"
+  def_yTitle  <- "Impacts ($2015)"
+  def_mUnit   <- "cm"
+  def_theme   <- NULL
+  def_nameBrk <- 18
   ### Values
   title0      <- options[["title"     ]]
   xTitle      <- options[["xTitle"    ]]
@@ -53,34 +65,28 @@ plot_DOW_byImpactTypes <- function(
   margins     <- options[["margins"   ]]
   mUnit       <- options[["marginUnit"]]
   theme0      <- options[["theme"     ]]
+  nameBrk     <- options[["nameBreak" ]]
   # xTitle |> print()
   ### Plot options
-  hasTitle    <- !(is.null(title0  ))
-  hasXTitle   <- !(is.null(xTitle  ))
-  hasYTitle   <- !(is.null(yTitle  ))
-  hasLgdLbl   <- !(is.null(lgdLbl  ))
-  hasLgdPos   <- !(is.null(lgdPos  ))
-  hasHeights  <- !(is.null(heights ))
-  hasMargins  <- !(is.null(margins ))
-  hasMUnits   <- !(is.null(mUnit   ))
-  hasTheme    <- !(is.null(theme0  ))
-  ### Defaults: Default Heights Below
-  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
-  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
-  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
-  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
-  def_lgdPos  <- "top"
-  def_yTitle  <- "Impacts ($2015)"
-  def_mUnit   <- "cm"
-  def_theme   <- NULL
+  hasTitle    <- !(is.null(title0 ))
+  hasXTitle   <- !(is.null(xTitle ))
+  hasYTitle   <- !(is.null(yTitle ))
+  hasLgdLbl   <- !(is.null(lgdLbl ))
+  hasLgdPos   <- !(is.null(lgdPos ))
+  hasHeights  <- !(is.null(heights))
+  hasMargins  <- !(is.null(margins))
+  hasMUnits   <- !(is.null(mUnit  ))
+  hasTheme    <- !(is.null(theme0 ))
+  hasNameBrk  <- !(is.null(nameBrk))
   ### Values: Height Values Below
-  if(!hasTitle  ){title0  <- def_title }
-  if(!hasXTitle ){xTitle  <- def_xTitle}
-  if(!hasYTitle ){yTitle  <- def_yTitle}
-  if(!hasLgdLbl ){lgdLbl  <- def_lgdLbl}
-  if(!hasMargins){margins <- def_margin}
-  if(!hasMUnits ){mUnit   <- def_mUnit }
-  if(!hasTheme  ){theme0  <- def_theme }
+  if(!hasTitle  ){title0  <- def_title  }
+  if(!hasXTitle ){xTitle  <- def_xTitle }
+  if(!hasYTitle ){yTitle  <- def_yTitle }
+  if(!hasLgdLbl ){lgdLbl  <- def_lgdLbl }
+  if(!hasMargins){margins <- def_margin }
+  if(!hasMUnits ){mUnit   <- def_mUnit  }
+  if(!hasTheme  ){theme0  <- def_theme  }
+  if(!hasNameBrk){nameBrk <- def_nameBrk}
   # title0 |> print(); def_xTitle |> print()
   # xTitle |> print()
   ### Update plot options
@@ -105,13 +111,18 @@ plot_DOW_byImpactTypes <- function(
   c_impYears    <- infoList0[["cImpYears"]]
   c_variants    <- infoList0[["cVariants"]]
   c_impTypes    <- infoList0[["cImpTypes"]]
+  c_models      <- df0[["model"]] |> unique()
   ### Numbers
   n_sectors     <- c_sectors  |> length()
   n_impYears    <- c_impYears |> length()
   n_variants    <- c_variants |> length()
   n_impTypes    <- c_impTypes |> length()
+  n_models      <- c_models   |> length()
   # c_impYears |> print(); c_impTypes |> print(); c_variants |> print()
   # n_impYears |> print(); n_impTypes |> print(); n_variants |> print()
+
+  ###### Factor Model ######
+  df0 <- df0 |> mutate(model = model |> factor(levels=c_models))
 
   ###### Plot Title Info ######
   ### Default for now
@@ -137,6 +148,11 @@ plot_DOW_byImpactTypes <- function(
     x_limits   <- x_info[["limits"]]
   } ### End else(xCol == "year")
 
+  # ###### Format Sector Names ######
+  # refSectors <- df0[["sector"]] |> unique()
+  # newSectors <- refSectors |> format_sectorNames(thresh0 = nameBrk)
+  # df0        <- df0 |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
+
   ###### Reference Plot ######
   ### Reference plots
   refPlot0   <- df0 |> plot_DOW_byImpactType(
@@ -153,6 +169,15 @@ plot_DOW_byImpactTypes <- function(
     options   = plotOpts0
   )
   # refPlot0 |> print()
+
+  ### Add guide to legend
+  lgdCols   <- case_when(
+    n_variants <= 1 ~ 2 ,
+    n_variants == 2 ~ 3,
+    .default = 4
+  )
+  # lgdCols |> print()
+  refPlot0  <- refPlot0 + guides(color=guide_legend(ncol=lgdCols))
 
   ###### Common Plot Elements ######
   spacer0   <- ggplot() + theme_void()
@@ -180,6 +205,7 @@ plot_DOW_byImpactTypes <- function(
           silent    = silent,
           options   = plotOpts0
         )
+
         ### White out impact type label
         plot_k <- plot_k + theme(plot.title = element_text(color="white"))
         ### Add spacer to the right
@@ -247,9 +273,13 @@ plot_DOW_byImpactTypes <- function(
     # return(plotGrid_i)
 
     ### Add Note
-    note_i     <- "Note: Figure scale varies by impact type"
-    plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
-    plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
+    # note_i     <- "Note: Figure scale varies by impact type"
+    note_i     <- create_fig_scale_note(ntypes=n_impTypes, nvars=n_variants)
+    doNote_i   <- !(note_i == "")
+    if(doNote_i){
+      plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
+      plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
+    }
     ###### Return Impact Type Plot ######
     return(plotGrid_i)
   })
