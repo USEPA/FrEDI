@@ -14,9 +14,6 @@
 #' @param elasticity=0.4 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=0.4`). Applicable sectors and impacts are Air Quality (all impact types), ATS Extreme Temperature, CIL Extreme Temperature, Extreme Temperature (all impact types), Mental Health, Southwest Dust (All Mortality), Valley Fever (Mortality), Vibrio, and Wildfire (Mortality).
 #' @param maxYear=2090 A numeric value indicating the maximum year for the analysis.
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300.
-#' @param pv A `TRUE/FALSE` value indicating whether to calculate present values for the annual impacts. Defaults to `pv=FALSE`. Present values (i.e., discounted impacts) are calculated as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set an annual discounting rate and a base year using `baseYear` and `rate`.
-#' @param baseYear Base year used for calculating present values of annual impacts (i.e., discounting). Defaults to `baseYear=2010`.
-#' @param rate Annual discount rate used in calculating present values of annual impacts (i.e., discounting). Defaults to `rate=0.03` (i.e., 3% per year).
 #' @param outputList A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
@@ -56,7 +53,6 @@
 #'
 #' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2090. Specify an alternative end year for the analysis using the `maxYear` argument (defaults to `maxYear=2090`). The minimum and maximum valid values for `maxYear` are `maxYear=2011` and `maxYear=2300`, respectively. Alternatively, run the model through the year 2300 by specifying `thru2300=TRUE` (this will override the `maxYear` argument and set `maxYear=2300`). Note that the default scenarios included within [FrEDI] stop in the year 2090; to get non-zero/non-missing values for years after 2090, users must specify a `maxYear` after 2090 and also provide custom input scenarios out to the desired end year.
 #'
-#' Users can choose to calculate present values of annual impacts (i.e., discounted impacts), by setting `pv=TRUE` (defauts to `pv=FALSE`). If `pv=TRUE`, discounted impacts are calculated using a base year and annual discount rate as `discounted_impacts=annual_impacts/(1+rate)^(year-baseYear)`. Set base year and annual discount rate using `baseYear` (defaults to `baseYear=2010`) and `rate` (defaults to 3% i.e., `rate=0.03`), respectively.
 #'
 #' [FrEDI::run_fredi()] defaults to returning a data frame of annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region (`outputList=FALSE`). If `outputList=TRUE`, [FrEDI::run_fredi()] returns a list object containing information about values for function arguments and driver scenarios in addition to the data frame of impacts
 #'
@@ -127,8 +123,6 @@
 #' ### Set end year for analysis to 2300 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
 #' run6 <- run_fredi(thru2300=TRUE)
 #'
-#' ### Run FrEDI, calculate discounted impacts, and return output list
-#' run7 <- run_fredi(pv=TRUE, baseYear=2020, rate=0.3, outputList=TRUE)
 #'
 #'
 #'
@@ -151,9 +145,6 @@ run_fredi <- function(
     elasticity = 0.4, ### Override value for elasticity for economic values
     maxYear    = 2090,
     thru2300   = FALSE,
-    pv         = FALSE, ### T/F value indicating Whether to calculate net present value
-    baseYear   = 2010,  ### Default = 2010
-    rate       = 0.03,  ### Ratio, defaults to 0.03
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     silent     = TRUE   ### Whether to message the user
 ){
@@ -188,12 +179,6 @@ run_fredi <- function(
   maxYear    <- maxYear0
   list_years <- minYear:maxYear
   # maxYear    %>% print; list_years %>% max %>% print
-
-  ###### Present values ######
-  ### Default base year and rate defined in config
-  pv         <- ifelse(is.null(pv), FALSE, pv)
-  baseYear   <- ifelse(is.null(baseYear), baseYear0, baseYear)
-  rate       <- ifelse(is.null(rate), rate0, rate)
 
   ###### Aggregation level  ######
   ### Types of summarization to do: default
@@ -293,9 +278,6 @@ run_fredi <- function(
   argsList[["elasticity"]] <- elasticity
   argsList[["maxYear"   ]] <- maxYear
   argsList[["thru2300"  ]] <- thru2300
-  argsList[["pv"        ]] <- pv
-  argsList[["baseYear"  ]] <- baseYear
-  argsList[["rate"      ]] <- rate
   ### Add to return list and remove intermediate arguments
   returnList[["arguments" ]] <- argsList
   rm("argsList")
@@ -923,16 +905,6 @@ run_fredi <- function(
 
   # c_aggColumns <- c("sectorprimary", "includeaggregate") %>% (function(y){y[which(y %in% names(df_results))]})
   # if(length(c_aggColumns)>0){df_results <- df_results %>% mutate_at(.vars=c(all_of(c_aggColumns)), as.numeric)}
-
-  ###### Present Values ######
-  if(pv){
-    ### Discount rate info
-    df_rates   <- data.frame(year = list_years, rate = rate, baseYear = baseYear)
-    df_rates   <- df_rates   %>% mutate(discountFactor = 1 / (1 + rate)^(year - baseYear))
-    ### Discounted impacts
-    df_results <- df_results %>% left_join(df_rates, by = c("year"))
-    df_results <- df_results %>% mutate(discounted_impacts = annual_impacts * discountFactor)
-  }
 
   ###### Format as Data Frame ######
   ### Format as data frame
