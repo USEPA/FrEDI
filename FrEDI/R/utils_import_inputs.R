@@ -9,9 +9,9 @@ fun_tryInput <- function(
   ###### Messaging ######
   msgUser <- ifelse(silent, FALSE, TRUE)
   msg0 <- ifelse(is.null(msg0), "", msg0)
-  msg1 <- msg0 %>% paste0("\t")
-  msg2 <- msg1 %>% paste0("\t")
-  msg3 <- msg2 %>% paste0("\t")
+  msg1 <- msg0 |> paste0("\t")
+  msg2 <- msg1 |> paste0("\t")
+  msg3 <- msg2 |> paste0("\t")
 
   ###### Initialize results ######
   return_list <- list()
@@ -20,11 +20,11 @@ fun_tryInput <- function(
   ### Check if the file exists and try to load the file
   ### Set input to null if it doesn't exist
   if(!is.null(filename)){
-    fileExists  <- filename %>% file.exists
+    fileExists  <- filename |> file.exists()
     ### If the file exists, try loading the file and then check the class of the result
     if(fileExists){
-      fileInput   <- try(filename %>% read.csv, silent=T)
-      classInput  <- fileInput %>% class
+      fileInput   <- try(filename |> read.csv(), silent=T)
+      classInput  <- fileInput |> class()
       inputExists <- ("data.frame" %in% classInput)
 
       ### If loading the inputs was successful
@@ -45,7 +45,7 @@ fun_tryInput <- function(
 
     ### Message the user
     # message("\t", return_list[["fileMsg"]])
-    if(msgUser){ msg0 %>% paste0(return_list[["fileMsg"]]) %>% message }
+    if(msgUser){ msg0 |> paste0(return_list[["fileMsg"]]) |> message() }
   }
 
   ###### Return ######
@@ -60,9 +60,9 @@ rename_inputs <- function(
   new_names
 ){
   ### Get the length of the new names
-  data_names   <- data %>% names
-  num_names    <- new_names %>% length
-  num_dataCols <- data %>% ncol
+  data_names   <- data |> names()
+  num_names    <- new_names |> length()
+  num_dataCols <- data |> ncol()
 
   if(num_dataCols>num_names){
     data <- data[,1:num_names]
