@@ -1,6 +1,6 @@
 ---
 title: "Documentation & Applications"
-date: "June, 2023"
+date: "October, 2023"
 description: >
   FrEDI publications and previous applications.
 output: rmarkdown::html_vignette
@@ -32,7 +32,7 @@ knitr::opts_chunk$set(echo = TRUE)
 **Publications**
 <br>
 
-Hartin C., E.E. McDuffie, K. Novia, M. Sarofim, B. Parthum, J. Martinich, S. Barr, J. Neumann, J. Willwerth, & A. Fawcett. Advancing the estimates of future climate impacts within the United States, 2023, Earth System Dynamics, in discussion, https://doi.org/10.5194/egusphere-2023-114 
+Hartin C., E.E. McDuffie, K. Novia, M. Sarofim, B. Parthum, J. Martinich, S. Barr, J. Neumann, J. Willwerth, & A. Fawcett. Advancing the estimates of future climate impacts within the United States, 2023, Earth System Dynamics, https://esd.copernicus.org/articles/14/1015/2023/ 
 
 Sarofim, M.C., Martinich, J., Neumann, J.E. et al. A temperature binning approach for multi-sector climate impact analysis. Climatic Change 165, 22 2021, https://doi.org/10.1007/s10584-021-03048-6
 <br>
@@ -41,9 +41,9 @@ Sarofim, M.C., Martinich, J., Neumann, J.E. et al. A temperature binning approac
 **Technical Documentation**
 <br>
 
-FrEDI Technical Documentation (last updated March 2023): https://www.epa.gov/system/files/documents/2021-10/technical-documentation-on-the-framework-for-evaluating-damages-and-impacts_maintext.pdf 
+FrEDI Technical Documentation (last updated July 2023): https://www.epa.gov/system/files/documents/2023-08/Technical%20Documentation%20on%20the%20Framework%20for%20Evaluating%20Damages%20and%20Impacts_MainText_2023.07.pdf 
 
-Technical Documentation Appendix (last updated March 2023): https://www.epa.gov/system/files/documents/2021-10/technical-documentation-on-the-framework-for-evaluating-damages-and-impacts_appendices.pdf 
+Technical Documentation Appendix (last updated July 2023): https://www.epa.gov/system/files/documents/2023-08/Technical%20Documentation%20on%20the%20Framework%20for%20Evaluating%20Damages%20and%20Impacts_Appendices_2023.07.pdf 
 
 <br>
 
