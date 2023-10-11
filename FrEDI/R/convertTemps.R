@@ -33,7 +33,7 @@ convertTemps <- function(
   c0 <- 0 ### Update
   c1 <- 1.421 ### Update
 
-  toType <- from %>% tolower
+  toType <- from |> tolower()
   if(from == "global"){
     temp_global <- temps
     new_temps   <- c1*temp_global + c0
