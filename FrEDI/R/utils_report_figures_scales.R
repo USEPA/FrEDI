@@ -212,7 +212,7 @@ fun_limitsByGroup <- function(
     data,
     groupCols = c("sector"),
     sumCols   = c("annual_impacts"),
-    type      = c("min", "max"),
+    functions = c("min", "max"),
     silent    = FALSE,
     msg       = ""
 ){
@@ -280,10 +280,15 @@ fun_limitsByGroup <- function(
   ### Summarize values by sector
   lim_bySector <- data |>
     group_by_at(c(groupCols)) |>
-    summarise_at(.vars = c(sumCols), .funs = c(type), na.rm=T) |>
-    gather(key = "summary_type", value = "summary_value", -c(all_of(groupCols))) |>
-    ungroup()
-  # df_limBySector |> print()
+    summarise_at(.vars = c(sumCols), .funs = c(functions), na.rm=T) |> ungroup() |>
+    gather(key = "summary_type", value = "summary_value", -c(all_of(groupCols)))
+  # lim_bySector |> glimpse()
+
+  ### Replace Infinite Values
+  lim_bySector <- lim_bySector |>
+    mutate_at(.vars = c("summary_value"), na_if,  Inf) |>
+    mutate_at(.vars = c("summary_value"), na_if, -Inf)
+  # lim_bySector |> print()
 
   ###### Spread ######
   ### Spread & calculate the spread
