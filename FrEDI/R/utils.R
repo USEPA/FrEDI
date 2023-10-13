@@ -48,12 +48,14 @@ interpolate_annual <- function(
     column    = NULL, ### Column to create results for
     rule      = NULL, ### for interpolation,
     method    = NULL, ### method for interpolation; default=linear
-    region    = "National.Total" ### Region if "addRegion"
+    region    = "National.Total", ### Region if "addRegion"
+    byState   = FALSE ### If breakdown by state
 ){
   ###### Data Info ######
   ##### Columns
   dataCols  <- data %>% names
   defCols   <- c("year", "region")
+  if (byState) {defCols <- defCols |> c("state", "postal")}
   defCol0   <- dataCols[!(dataCols %in% defCols)][1]
   column0   <- ifelse(is.null(column), defCol0, column)
   othCols   <- dataCols[!(dataCols %in% c(defCols, column0))]
@@ -71,9 +73,12 @@ interpolate_annual <- function(
   ##### Regions
   regions0  <- region
   addRegion <- !("region" %in% dataCols)
-  if(addRegion) {data      <- data %>% mutate(region = regions0[1])}
-  else          {regions0  <- data %>% get_uniqueValues("region")}
+  if(addRegion)   {data      <- data %>% mutate(region = regions0[1])}
+  else            {regions0  <- data %>% get_uniqueValues("region")}
   rm("addRegion")
+
+  #### States
+  if (byState) {states0 <- data |> get_uniqueValues("state"); postals0 <- data |> get_uniqueValues("postal")}
 
   ###### Interpolation Info ######
   ### - Return NA values outside of extremes
@@ -90,19 +95,39 @@ interpolate_annual <- function(
   ### Filter to the region and then interpolate missing values
   cols0     <- c("x", "y");
   cols1     <- c("year", column0)
-  df_interp <- regions0 %>% lapply(function(region_i){
-    ### Values
-    which_i <- (data$region==region_i) %>% which
-    x_i     <- years0[which_i]
-    y_i     <- values0[which_i]
-    ### Approximate
-    new_i   <- approx(x = x_i, y = y_i, xout = years, rule = rule, method = method)
-    new_i   <- new_i %>% as.data.frame
-    new_i   <- new_i %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
-    new_i   <- new_i %>% mutate(region = region_i)
-    ### Return
-    return(new_i)
-  }) %>% (function(i){do.call(rbind, i)})
+
+  if (!byState) {
+    df_interp <- regions0 %>% lapply(function(region_i){
+      ### Values
+      which_i  <- (data$region==region_i) %>% which
+      x_i      <- years0[which_i]
+      y_i      <- values0[which_i]
+      ### Approximate
+      new_i   <- approx(x = x_i, y = y_i, xout = years, rule = rule, method = method)
+      new_i   <- new_i %>% as.data.frame
+      new_i   <- new_i %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
+      new_i   <- new_i %>% mutate(region = region_i)
+      ### Return
+      return(new_i)
+    }) %>% (function(i){do.call(rbind, i)})
+
+  } else { ### By state
+    df_interp <- states0 %>% lapply(function(state_i){
+      ### Values
+      which_i <- (data$state==state_i) %>% which
+      postal_i <- data$postal[which_i]
+      region_i <- data$region[which_i]
+      x_i     <- years0[which_i]
+      y_i     <- values0[which_i]
+      ### Approximate
+      new_i   <- approx(x = x_i, y = y_i, xout = years, rule = rule, method = method)
+      new_i   <- new_i %>% as.data.frame
+      new_i   <- new_i %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
+      new_i   <- new_i %>% mutate(region = region_i, state=state_i, postal=postal_i)
+      ### Return
+      return(new_i)
+    }) %>% (function(i){do.call(rbind, i)})
+  }
   # df_interp %>% names %>% print
   # new_i   <- new_i %>% select(c(all_of(dataCols)))
   # new_i   <- new_i %>% select(c(all_of(defCols), all_of(column0)))
@@ -124,6 +149,9 @@ match_scalarValues <- function(
     scalars, ### Scalars dataframe
     scalarType
 ){
+  ### Check if scalars are state-level
+  byState <- "state" %in% colnames(data)
+
   ### Scalar columns to rename
   newColNames      <- scalarType %>% paste0(c("Name", "Value"))
   renameCols       <- "scalarName" %>% c("value")
@@ -138,28 +166,42 @@ match_scalarValues <- function(
   scalars          <- scalars %>% filter(scalarType==scalarType)
 
   ###### Separate scalar info into national and regional ######
-  scalars_regional <- scalars %>% filter(national_or_regional == "regional")
-  scalars_national <- scalars %>% filter(national_or_regional == "national")
+  if (!byState) {
+    scalars_regional            <- scalars %>% filter(national_or_regional == "regional")
+    scalars_national            <- scalars %>% filter(national_or_regional == "national")
+  }
 
   ###### ScalarName == "None" ######
   ### Filter the data to those for which the scalar identifier == "none"...value = 1
   df_none          <-  data %>% filter(data[,scalarColName] == "none") %>% mutate(value = 1)
 
-  ###### Regional values ######
-  scalars_regional <- scalars %>% filter(national_or_regional == "regional")
-  scalarNames_reg  <- scalars_regional[,scalarColName] %>% unique
-  df_regional      <- data %>%
-    filter(!(data[,scalarColName] == "none") & data[,scalarColName] %in% scalarNames_reg) %>%
-    left_join(scalars_regional, by=c("year", "region", scalarColName)) %>%
-    select(-c("scalarType", "national_or_regional"))
 
-  ###### National values ######
-  scalars_national <- scalars %>% filter(national_or_regional == "national") %>% select(-region)
-  scalarNames_nat  <- scalars_national[,scalarColName] %>% unique
-  df_national      <- data %>%
-    filter(!(data[,scalarColName] == "none") & data[,scalarColName] %in% scalarNames_nat) %>%
-    left_join(scalars_national, by=c("year", scalarColName)) %>%
-    select(-c("scalarType", "national_or_regional"))
+  if (!byState) {
+    ###### Regional values ######
+    scalars_regional <- scalars %>% filter(national_or_regional == "regional")
+    scalarNames_reg  <- scalars_regional[,scalarColName] %>% unique
+    df_regional      <- data %>%
+      filter(!(data[,scalarColName] == "none") & data[,scalarColName] %in% scalarNames_reg) %>%
+      left_join(scalars_regional, by=c("year", "region", scalarColName)) %>%
+      select(-c("scalarType", "national_or_regional"))
+
+    ###### National values ######
+    scalars_national <- scalars %>% filter(national_or_regional == "national") %>% select(-region)
+    scalarNames_nat  <- scalars_national[,scalarColName] %>% unique
+    df_national      <- data %>%
+      filter(!(data[,scalarColName] == "none") & data[,scalarColName] %in% scalarNames_nat) %>%
+      left_join(scalars_national, by=c("year", scalarColName)) %>%
+      select(-c("scalarType", "national_or_regional"))
+  } else {
+    ###### State Values ######
+    scalars_state   <- scalars
+    scalarNames_st  <- scalars[,scalarColName] |> unique()
+    df_state        <- data |>
+      filter(!(data[,sectorColName] == "none") & data[,scalarColname] %in% scalarNames_st) |>
+      left_join(scalars_state, by = c("year", "state", "postal", scalarColName)) |>
+      select(-c("scalarType"))
+  }
+
 
 
   ###### Rename value column ######
@@ -282,6 +324,7 @@ get_scenario_id <- function(
     data_x,
     include=c("model_dot", "region_dot") ### Character vector of column names to include
 ){
+
   ### Other vals
   mnl0   <- "\n" ### Message new line
   msg0   <- "\t" ### Message indent level 0
@@ -829,7 +872,7 @@ fun_slrConfigExtremes <- function(
       year        = year_i,
       driverValue = vals_i[1:2],
       valueType   = bounds0[2:1]
-      )
+    )
     # if(year_i %in% slrYears[1]){"got here2" %>% print; ref_i %>% head %>% glimpse}
     ### Filter dfx_i to driver values %in% first_i and add an order
     dfx_i     <- dfx_i %>% left_join(ref_i, by=c(all_of(cYear0), all_of(cDriver0)))
@@ -1000,8 +1043,10 @@ fun_getNeighbors <- function(
 fun_formatScalars <- function(
     data_x, ### rDataList$scalarDataframe
     info_x, ### rDataList$co_scalarInfo
-    years_x ### rDataList$list_years
+    years_x, ### rDataList$list_years
+    byState = FALSE ### If breakdown is by state
 ){
+  #data_x %>% glimpse()
   names_x <- data_x$scalarName %>% unique
   num_x   <- names_x %>% length
   new_x   <- 1:num_x %>% lapply(function(i){
@@ -1019,7 +1064,8 @@ fun_formatScalars <- function(
     scalar_i   <- scalar_i %>% interpolate_annual(
       years  = years_x,
       column = "value", rule   = 1:2,
-      method = method_i)
+      method = method_i,
+      byState = byState)
     ### Add in name and return
     scalar_i   <- scalar_i %>% mutate(scalarName=name_i)
     return(scalar_i)
@@ -1027,6 +1073,8 @@ fun_formatScalars <- function(
   ### Join info
   select0 <- c("scalarName", "scalarType", "national_or_regional")
   select1 <- c("scalarName", "region", "year", "value")
+  if (byState) {select1 <- select1 |> c("state", "postal")}
+
   info_x  <- info_x %>% select(c(all_of(select0)))
   new_x   <- new_x  %>% select(c(all_of(select1)))
   new_x   <- new_x  %>% left_join(info_x, by=c("scalarName"))
