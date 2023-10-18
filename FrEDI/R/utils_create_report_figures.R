@@ -1076,7 +1076,7 @@ create_default_tablePlot <- function(x=1){
   returnList[["totals"]] <- totals0
   returnList[["plot"  ]] <- plot0
   ### Return
-  return(x)
+  return(returnList)
 } ### End create_default_tablePlot
 
 ###### End File ######

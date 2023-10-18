@@ -301,7 +301,7 @@ run_fredi <- function(
     tempInput <- data.frame(year= refYear_temp, temp_C = 0) |> rbind(tempInput)
 
     ### Interpolate annual values and then drop region
-    temp_df   <- tempInput  (function(x){
+    temp_df   <- tempInput |> (function(x){
       minYear_x <- x$year |> min()
       interpYrs <- refYear_temp:maxYear
       ### Interpolate
