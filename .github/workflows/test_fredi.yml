@@ -109,7 +109,7 @@ jobs:
             save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
 
             ### Remove results
-            rm(results0, test0, listResults)
+            rm(results0, tests0, listResults)
           }
 
           ### Create report results
