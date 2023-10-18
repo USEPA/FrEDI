@@ -117,6 +117,10 @@ jobs:
             ### Load source
             sPath0 |> file.path("create_DoW_results.R") |> source()
 
+            ### Check if path exists and, if not, create it
+            exists0 <- oPath2 |> dir.exists()
+            if(!exists0){oPath2 |> dir.create()}
+
             ### Create report figures
             reports0 <- create_DoW_results(
               outPath  = oPath2,
