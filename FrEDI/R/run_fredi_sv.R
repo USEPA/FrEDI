@@ -90,7 +90,7 @@
 #' @md
 #'
 ###### run_fredi_sv ######
-### This function creates a data frame of sector impacts for default values or scenario inputs.
+### This function creates a data frame of annual average impacts over the years 2010-2090, from default values or scenario inputs, for a subset of FrEDI sectors as a function of SV group, sector, and region.
 ### run_fredi_sv relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi_sv <- function(
     sector      = NULL, ### Vector of sectors to get results for
