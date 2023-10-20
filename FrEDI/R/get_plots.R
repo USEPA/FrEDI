@@ -44,16 +44,16 @@
 #' df_tempExOut <- get_fredi(aggLevels="none", pv=TRUE, silent=TRUE)
 #'
 #' ### Aggregate temperature binning summary across multiple columns
-#' agg_tempExOut <- df_tempExOut %>% aggregate_impacts(columns=c("annual_impacts", "discounted_impacts"))
+#' agg_tempExOut <- df_tempExOut |> aggregate_impacts(columns=c("annual_impacts", "discounted_impacts"))
 #'
 #' ### Create list of plots for aggregated results
-#' agg_plotList <- agg_tempExOut %>% get_plots()
+#' agg_plotList <- agg_tempExOut |> get_plots()
 #'
 #' ### Create list of heatmaps for regional values only:
-#' reg_plotList <- agg_tempExOut %>% filter(region!="National Total") %>% get_plots(plotTypes="heatmaps")
+#' reg_plotList <- agg_tempExOut |> filter(region!="National Total") |> get_plots(plotTypes="heatmaps")
 #'
 #' ### Create list of annual plots for national values only:
-#' nation_plotList <- agg_tempExOut %>% filter(region=="National Total") %>% get_plots(plotTypes="annual")
+#' nation_plotList <- agg_tempExOut |> filter(region=="National Total") |> get_plots(plotTypes="annual")
 
 #'
 #' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
@@ -89,7 +89,7 @@ get_plots <- function(
   if(is.null(plotTypes)){
     plotTypesList <- def_plotTypes
   } else{
-    plotTypesList <- plotTypes %>% tolower
+    plotTypesList <- plotTypes |> tolower()
     if("all" %in% plotTypesList){
       plotTypesList <- def_plotTypes
     } else if("none" %in% plotTypesList){
@@ -117,11 +117,11 @@ get_plots <- function(
     column <- default_column
   }
   ### Keep track of the data names, filter to the standardized data names, then add a dummy column for the column to plot
-  data   <- data %>%
+  data   <- data |>
     (function(y){
       y$valueColumn <- y[,column]
       return(y)
-    })
+    })()
 
   ###### Parameter Type ######
   ### Whether results are discounted or not
@@ -136,7 +136,7 @@ get_plots <- function(
   ###### Subdirectory names ######
   ### Names of directory as uppercase/lowercase
   discount_uc   <- ifelse(undiscounted, "Undiscounted", "Discounted")
-  discount_lc   <- discount_uc %>% tolower
+  discount_lc   <- discount_uc |> tolower()
 
   message("In get_plots():")
   ###### Prepare directories #####
@@ -144,53 +144,53 @@ get_plots <- function(
   if(save & !is.null(directory)){
     ### Directory names for parent image directory, then heatmaps and annual
     ### Try to create directories for images
-    # results_dir       <- directory   %>% file.path(img_suffix, sep="/")
+    # results_dir       <- directory   |> file.path(img_suffix, sep="/")
     results_dir       <- directory
-    heat_dir          <- results_dir %>% file.path("heatmaps", sep="/")
-    ann_dir           <- results_dir %>% file.path("ribbon", sep="/")
+    heat_dir          <- results_dir |> file.path("heatmaps", sep="/")
+    ann_dir           <- results_dir |> file.path("ribbon", sep="/")
 
     ### Check if the directories exist:
-    dir_exists        <- directory   %>% dir.exists()
-    resultsDir_exists <- results_dir %>% dir.exists()
-    heatDir_exists    <- heat_dir    %>% dir.exists()
-    ribDir_exists     <- ann_dir     %>% dir.exists()
+    dir_exists        <- directory   |> dir.exists()
+    resultsDir_exists <- results_dir |> dir.exists()
+    heatDir_exists    <- heat_dir    |> dir.exists()
+    ribDir_exists     <- ann_dir     |> dir.exists()
 
     ### If the directory doesn't exist, try to create the directory and image directory and then check again to see if it exists
     if(!dir_exists){
       message("Creating specified directory to save results...")
       ### Try to create all directories
-      try_dir             <- try(directory   %>% dir.create(), silent=T)
-      try_resultsDir      <- try(results_dir %>% dir.create(), silent=T)
-      if(doHeat) try_heat <- try(heat_dir    %>% dir.create(), silent=T)
-      if(doAnn)  try_rib  <- try(ann_dir     %>% dir.create(), silent=T)
+      try_dir             <- try(directory   |> dir.create(), silent=T)
+      try_resultsDir      <- try(results_dir |> dir.create(), silent=T)
+      if(doHeat) try_heat <- try(heat_dir    |> dir.create(), silent=T)
+      if(doAnn)  try_rib  <- try(ann_dir     |> dir.create(), silent=T)
 
       ### then check if they exist
-      dir_exists          <- directory   %>% dir.exists()
-      resultsDir_exists   <- results_dir %>% dir.exists()
-      heatDir_exists      <- heat_dir    %>% dir.exists()
-      ribDir_exists       <- ann_dir     %>% dir.exists()
+      dir_exists          <- directory   |> dir.exists()
+      resultsDir_exists   <- results_dir |> dir.exists()
+      heatDir_exists      <- heat_dir    |> dir.exists()
+      ribDir_exists       <- ann_dir     |> dir.exists()
     } else{
       if(!resultsDir_exists){
         ### Try to create directories
-        try_resultsDir      <- try(results_dir %>% dir.create(), silent=T)
-        if(doHeat) try_heat <- try(heat_dir    %>% dir.create(), silent=T)
-        if(doAnn)  try_rib  <- try(ann_dir     %>% dir.create(), silent=T)
+        try_resultsDir      <- try(results_dir |> dir.create(), silent=T)
+        if(doHeat) try_heat <- try(heat_dir    |> dir.create(), silent=T)
+        if(doAnn)  try_rib  <- try(ann_dir     |> dir.create(), silent=T)
 
         ### then check if they exist
-        resultsDir_exists   <- results_dir %>% dir.exists()
-        heatDir_exists      <- heat_dir    %>% dir.exists()
-        ribDir_exists       <- ann_dir     %>% dir.exists()
+        resultsDir_exists   <- results_dir |> dir.exists()
+        heatDir_exists      <- heat_dir    |> dir.exists()
+        ribDir_exists       <- ann_dir     |> dir.exists()
       } else{
         ### Check for the heatmaps directory
         if(!heatDir_exists & doHeat){
-          try_heat       <- try(heat_dir %>% dir.create(), silent=T)
-          heatDir_exists <- heat_dir %>% dir.exists()
+          try_heat       <- try(heat_dir |> dir.create(), silent=T)
+          heatDir_exists <- heat_dir |> dir.exists()
         } ### End if heatmap directory doesn't exist
 
         ### Check for the ribbon directory
         if(!ribDir_exists & doAnn){
-          try_rib        <- try(ann_dir %>% dir.create(), silent=T)
-          ribDir_exists  <- ann_dir %>% dir.exists()
+          try_rib        <- try(ann_dir |> dir.create(), silent=T)
+          ribDir_exists  <- ann_dir |> dir.exists()
         } ### End if ribbon directory doesn't exist
       } ### End if results directory doesn't exist
     }  ### End if directory doesn't exist
@@ -198,19 +198,19 @@ get_plots <- function(
 
   ###### Data Information ######
   ### Sectors, models, regions, combinations
-  sectorsList    <- data$sector %>% unique()
-  numSectors     <- sectorsList %>% length()
+  sectorsList    <- data$sector |> unique()
+  numSectors     <- sectorsList |> length()
 
-  modelTypesList <- data$model_type %>% unique()
-  numModels      <- modelTypesList %>% length()
+  modelTypesList <- data$model_type |> unique()
+  numModels      <- modelTypesList |> length()
 
-  regionsList    <- data$region %>% unique()
-  numRegions     <- regionsList %>% length()
+  regionsList    <- data$region |> unique()
+  numRegions     <- regionsList |> length()
 
   ### Unique sectors, variants, impact types
   ### impact types
-  impactTypes    <- data$impactType %>% unique()
-  numImpactTypes <- impactTypes %>% length()
+  impactTypes    <- data$impactType |> unique()
+  numImpactTypes <- impactTypes |> length()
 
   ### Unique Groups
   if(is.null(groupVars)){groupVars <- c("sector", "variant")}
@@ -251,7 +251,7 @@ get_plots <- function(
 
   ###### Plot Labels ######
   ### Base label for impacts and unit
-  base_plot_label <- discount_uc %>% paste("Annual Impacts")
+  base_plot_label <- discount_uc |> paste("Annual Impacts")
   base_unitStart  <- "("
   base_unitEnd    <- "2015$)"
   ylab_unitEnd    <- base_unitEnd
@@ -261,24 +261,24 @@ get_plots <- function(
     message("\t", "Creating heat maps of impacts...")
     ### Adjust data: remove national total for heatmaps
     ### Non NA values
-    # dataHeat         <- data %>% filter(region!="National Total")
+    # dataHeat         <- data |> filter(region!="National Total")
     dataHeat         <- data
-    non_na_heat      <- which(!is.na(dataHeat[,column])) %>% length()
+    non_na_heat      <- which(!is.na(dataHeat[,column])) |> length()
 
     ###### Get Limits ######
     if(non_na_heat>0){
-      heat_scaleInfo <- dataHeat %>% fun_getScale(scaleCol = "valueColumn")
+      heat_scaleInfo <- dataHeat |> fun_getScale(scaleCol = "valueColumn")
       heat_power1000 <- heat_scaleInfo$power1000
 
       which_globUnit <- which(df_units$log10mod3<=heat_power1000)
 
       if(length(which_globUnit) > 0){
         ### Scale
-        globMax_unit   <- df_units %>% filter(log10mod3==max(df_units$log10mod3[which_globUnit]))
-        scale_global   <- globMax_unit$unitValue %>% max
+        globMax_unit   <- df_units |> filter(log10mod3==max(df_units$log10mod3[which_globUnit]))
+        scale_global   <- globMax_unit$unitValue |> max()
         unit_global    <- globMax_unit$unitLabel[which(globMax_unit$unitValue==scale_global)]
         ### Adjust data
-        dataHeat <- dataHeat %>% mutate(valueColumn = valueColumn/scale_global)
+        dataHeat <- dataHeat |> mutate(valueColumn = valueColumn/scale_global)
         ### Adjust unit scale label
         if(unit_global!=""){
           ylab_unitEnd <- paste0(unit_global, ", ", base_unitEnd)
@@ -289,56 +289,56 @@ get_plots <- function(
     c_heatMapYears     <- seq(minYear, maxYear, by = 5)
 
     ##### Y Label
-    impactLab_heat       <- base_plot_label %>% paste(base_unitStart) %>% paste0(ylab_unitEnd)
-    # yLab_heat            <- groupVarLabels %>% paste(base_unitStart, collapse=", ")
-    groupLab_heat        <- groupVarLabels %>% paste(collapse = ", " )
-    yLab_heat            <- impactLab_heat %>% paste0(", by ", groupLab_heat)
+    impactLab_heat       <- base_plot_label |> paste(base_unitStart) |> paste0(ylab_unitEnd)
+    # yLab_heat            <- groupVarLabels |> paste(base_unitStart, collapse=", ")
+    groupLab_heat        <- groupVarLabels |> paste(collapse = ", " )
+    yLab_heat            <- impactLab_heat |> paste0(", by ", groupLab_heat)
 
     ### Iterate over model types
     for(modelType_i in modelTypesList){
       ### Data for Model
-      # data_model_i       <- data %>% filter(model_type == modelType_i)
+      # data_model_i       <- data |> filter(model_type == modelType_i)
 
-      # data_model_i <- data %>% filter(model_type == modelType_i)
-      data_model_i <- dataHeat %>% filter(model_type == modelType_i)
+      # data_model_i <- data |> filter(model_type == modelType_i)
+      data_model_i <- dataHeat |> filter(model_type == modelType_i)
 
       ### Refactor model names
       if(tolower(modelType_i)=="slr"){
         # refModelList <- c(paste(c(0, 30, seq(50, 250, by=50)), "cm"), "Interpolation")
-        # data_model_i       <- data_model_i %>% mutate(model = model %>% factor(levels=refModelList))
+        # data_model_i       <- data_model_i |> mutate(model = model |> factor(levels=refModelList))
         refModelList   <- c("Interpolation")
-        data_model_i   <- data_model_i %>% mutate(model = model %>% as.character %>% factor(levels=refModelList))
-        # data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090) %>% nrow %>% print
-        # (data_model_i %>% filter(!is.na(valueColumn)) %>% filter(year > 2090))$valueColumn %>% range %>% print
+        data_model_i   <- data_model_i |> mutate(model = model |> as.character() |> factor(levels=refModelList))
+        # data_model_i |> filter(!is.na(valueColumn)) |> filter(year > 2090) |> nrow() |> print()
+        # (data_model_i |> filter(!is.na(valueColumn)) |> filter(year > 2090))$valueColumn |> range() |> print()
       } else{
-        data_model_i    <- data_model_i %>% mutate( model = model %>% as.character())
-        models_i        <- data_model_i$model %>% as.character %>% unique
+        data_model_i    <- data_model_i |> mutate( model = model |> as.character())
+        models_i        <- data_model_i$model |> as.character() |> unique()
         is_aveCol_i     <- (models_i == "Average" | models_i == "Model Average")
         ### Put average columns last
-        modelLevels_i   <- models_i[which(!is_aveCol_i)] %>% c(models_i[which(is_aveCol_i)])
-        # models_i %>% print; modelLevels_i %>% print
-        data_model_i    <- data_model_i %>% mutate(model = model %>% as.character %>% factor(levels=modelLevels_i))
+        modelLevels_i   <- models_i[which(!is_aveCol_i)] |> c(models_i[which(is_aveCol_i)])
+        # models_i |> print(); modelLevels_i |> print()
+        data_model_i    <- data_model_i |> mutate(model = model |> as.character() |> factor(levels=modelLevels_i))
 
-        # data_model_i %>% filter(!is.na(valueColumn)) %>% filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")) %>% nrow %>% print
-        # (data_model_i %>% filter(!is.na(valueColumn)) %>% filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")))$valueColumn %>% range(na.rm=T) %>% print
+        # data_model_i |> filter(!is.na(valueColumn)) |> filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")) |> nrow() |> print()
+        # (data_model_i |> filter(!is.na(valueColumn)) |> filter(model%in% c("GCM Ensemble",  "MRI-CGCM3")))$valueColumn |> range(na.rm=T) |> print()
       }
 
 
 
       ### Unique sectors, variants, impact types
-      unique_combos_heat  <- data_model_i %>% group_by_at(.vars = groupVars) %>% summarize(n=n())
-      numCombos_heat      <- unique_combos_heat %>% nrow()
-      data_model_i$group_name     <- (1:nrow(data_model_i)) %>% lapply(function(j){
-        # data_model_i[j, groupVars] %>% paste(collapse="\n\t")
-        data_model_i[j, groupVars] %>% paste(collapse=", ")
-      }) %>% unlist()
+      unique_combos_heat  <- data_model_i |> group_by_at(.vars = groupVars) |> summarize(n=n())
+      numCombos_heat      <- unique_combos_heat |> nrow()
+      data_model_i$group_name     <- (1:nrow(data_model_i)) |> lapply(function(j){
+        # data_model_i[j, groupVars] |> paste(collapse="\n\t")
+        data_model_i[j, groupVars] |> paste(collapse=", ")
+      }) |> unlist()
       rm("unique_combos_heat")
-      # numCombos_heat %>% print()
+      # numCombos_heat |> print()
 
       ### Height Info
       fig_heat_ht_model  <- base_heat_ht + base_heat_ht_per * numCombos_heat * numRegions
       assign(paste("fig_heat_ht", tolower(modelType_i), sep="_"), fig_heat_ht_model)
-      # fig_heat_ht_model %>% print
+      # fig_heat_ht_model |> print()
 
 
       ### Model Title
@@ -348,13 +348,13 @@ get_plots <- function(
       p_title       <- paste(p_title_i_obj, collapse = " ")
 
       ### Model Plot
-      p_model <- data_model_i %>%
-        # arrange(desc(group_name)) %>%
-        # mutate(valueColumn = valueColumn / (10^3)^heat_power1000 ) %>%
-        # filter(year %in% seq(2010, 2090, by=5)) %>%
-        filter(year %in% c_heatMapYears) %>%
-        mutate(group_name = group_name %>% factor) %>%
-        mutate(group_name = group_name %>% factor(levels=rev(levels(group_name)))) %>%
+      p_model <- data_model_i |>
+        # arrange(desc(group_name)) |>
+        # mutate(valueColumn = valueColumn / (10^3)^heat_power1000 ) |>
+        # filter(year %in% seq(2010, 2090, by=5)) |>
+        filter(year %in% c_heatMapYears) |>
+        mutate(group_name = group_name |> factor()) |>
+        mutate(group_name = group_name |> factor(levels=rev(levels(group_name)))) |>
         ggplot(., aes(x=year, y=group_name, fill=valueColumn)) +
         geom_tile(color = "white") +
         scale_fill_gradient2(impactLab_heat, low="darkblue", high="darkred") +
@@ -387,44 +387,44 @@ get_plots <- function(
 
     ###### Get Plots for Each Sector ######
     for(sector_i in sectorsList){
-      # sector_i %>% print
+      # sector_i |> print()
       ### Initialize plot list and titles
       plot0_list     <- list()
       base_rib_title <- sector_i
       ylab_unitEnd_i <- base_unitEnd ### Base unit
 
       ### Filter to data and get number of variants
-      data0_i        <- data %>% filter(sector==sector_i) %>%
-        filter(model!="Average") %>%
-        filter(model!="Model Average") %>%
+      data0_i        <- data |> filter(sector==sector_i) |>
+        filter(model!="Average") |>
+        filter(model!="Model Average") |>
         as.data.frame()
 
 
-      model_type_i <- (data0_i$model_type %>% unique)[1] ### Refactor model names
+      model_type_i <- (data0_i$model_type |> unique())[1] ### Refactor model names
       ### Number of models
-      models_i        <- data0_i$model %>% unique
-      n_models_i      <- models_i %>% length
+      models_i        <- data0_i$model |> unique()
+      n_models_i      <- models_i |> length()
 
       if(tolower(model_type_i)=="slr"){
         refModelList   <- c("Interpolation")
-        data0_i        <- data0_i %>% mutate(model = model %>% factor(levels=refModelList))
+        data0_i        <- data0_i |> mutate(model = model |> factor(levels=refModelList))
       } else{
-        # models_i        <- data0_i$model %>% unique
+        # models_i        <- data0_i$model |> unique()
         is_aveCol_i     <- (models_i == "Average" | models_i == "Model Average")
         ### Put average columns last
-        modelLevels_i   <- models_i[which(!is_aveCol_i)] %>% c(models_i[which(is_aveCol_i)])
-        data0_i         <- data0_i %>% mutate(model = model %>% factor(levels=modelLevels_i))
+        modelLevels_i   <- models_i[which(!is_aveCol_i)] |> c(models_i[which(is_aveCol_i)])
+        data0_i         <- data0_i |> mutate(model = model |> factor(levels=modelLevels_i))
       }
 
       ### Get model averages for undiscounted a
       ### Annual undiscounted: convert to millions and then get averages
       if(tolower(model_type_i)=="gcm"){
       # if(n_models_i>1){
-        data0_i    <- data0_i %>%
+        data0_i    <- data0_i |>
           get_annual_model_stats(yVar = "valueColumn", groupCol = c(groupVars, "region", "year"))
-        has_non_na_i       <- (data0_i %>% filter(!is.na(modelMax)) %>% nrow()) > 0
+        has_non_na_i       <- (data0_i |> filter(!is.na(modelMax)) |> nrow()) > 0
       } else{
-        has_non_na_i       <- (data0_i %>% filter(!is.na(valueColumn)) %>% nrow()) > 0
+        has_non_na_i       <- (data0_i |> filter(!is.na(valueColumn)) |> nrow()) > 0
       }
 
 
@@ -433,11 +433,11 @@ get_plots <- function(
       if(has_non_na_i){
         # if(n_models_i>1){
         if(tolower(model_type_i)=="gcm"){
-          ann_scaleInfo <- data0_i %>%
-            gather(key="valueType", value="valueColumn", c("modelMin", "modelAve", "modelMax")) %>%
+          ann_scaleInfo <- data0_i |>
+            gather(key="valueType", value="valueColumn", c("modelMin", "modelAve", "modelMax")) |>
             fun_getScale(scaleCol = "valueColumn")
         } else{
-          ann_scaleInfo <- data0_i %>% fun_getScale(scaleCol = "valueColumn")
+          ann_scaleInfo <- data0_i |> fun_getScale(scaleCol = "valueColumn")
         }
 
         ann_power1000 <- ann_scaleInfo$power1000
@@ -447,19 +447,19 @@ get_plots <- function(
 
         ### If there is a scalar that exists, scale the data
         if(length(which_i_unit) > 0){
-          max_i_unit     <- df_units %>% filter(log10mod3==max(df_units$log10mod3[which_i_unit]))
-          scale_i        <- max_i_unit$unitValue %>% max
+          max_i_unit     <- df_units |> filter(log10mod3==max(df_units$log10mod3[which_i_unit]))
+          scale_i        <- max_i_unit$unitValue |> max()
           unit_i         <- max_i_unit$unitLabel[which(max_i_unit$unitValue==scale_i)]
 
-          # ann_power1000 %>% print
-          # scale_i %>% print
+          # ann_power1000 |> print()
+          # scale_i |> print()
           ### Scale the data
           # if(n_models_i>1){
           if(tolower(model_type_i)=="gcm"){
-            data0_i        <- data0_i %>% mutate(modelAve = modelAve/scale_i, modelMin=modelMin/scale_i, modelMax=modelMax/scale_i)
-            # data0_i        <- data0_i %>% mutate_at(.vars=c("modelAve", "modelMin", "modelMax"), function(y){y/scale_i})
+            data0_i        <- data0_i |> mutate(modelAve = modelAve/scale_i, modelMin=modelMin/scale_i, modelMax=modelMax/scale_i)
+            # data0_i        <- data0_i |> mutate_at(.vars=c("modelAve", "modelMin", "modelMax"), function(y){y/scale_i})
           } else{
-            data0_i        <- data0_i %>% mutate(valueColumn = valueColumn/scale_i)
+            data0_i        <- data0_i |> mutate(valueColumn = valueColumn/scale_i)
           }
 
           ylab_unitEnd_i <- paste0(unit_i, ", ", base_unitEnd)
@@ -467,28 +467,28 @@ get_plots <- function(
 
         ### Plot label for y
         yLab_unit_i <- paste0(base_unitStart, ylab_unitEnd_i)
-        yLab0_reg_i <- base_plot_label %>% paste(yLab_unit_i)
-        yLab0_nat_i <- base_plot_label %>% paste(yLab_unit_i)
+        yLab0_reg_i <- base_plot_label |> paste(yLab_unit_i)
+        yLab0_nat_i <- base_plot_label |> paste(yLab_unit_i)
 
 
         ### Get regional plots)
         # if(n_models_i>1){
         if(tolower(model_type_i)=="gcm"){
-          plot0_reg_i <- data0_i %>%
-            filter(region!="National Total") %>%
+          plot0_reg_i <- data0_i |>
+            filter(region!="National Total") |>
             ggplot() +
             geom_ribbon( aes(x=year, ymin=modelMin, ymax = modelMax, fill=region), alpha=0.25) +
             geom_line(aes(x=year, y=modelAve, colour=region, linetype=model), size = 0.5, alpha=0.85)
         } else{
-          plot0_reg_i <- data0_i %>%
-            filter(region!="National Total") %>%
+          plot0_reg_i <- data0_i |>
+            filter(region!="National Total") |>
             ggplot() +
             geom_line(aes(x=year, y=valueColumn, colour=region, linetype=model), size = 0.5, alpha=0.85)
         }
 
         plot0_reg_i <- plot0_reg_i +
-          # data0_i %>%
-          # filter(region!="National Total") %>%
+          # data0_i |>
+          # filter(region!="National Total") |>
           #
           # ggplot() +
           # geom_ribbon( aes(x=year, ymin=modelMin, ymax = modelMax, fill=region), alpha=0.25) +
@@ -518,20 +518,20 @@ get_plots <- function(
         ### Facet the plot, and scales
         if("National Total" %in% regionsList){
           if(tolower(model_type_i)=="gcm"){
-            plot0_nat_i <- data0_i %>% filter(region=="National Total") %>%
+            plot0_nat_i <- data0_i |> filter(region=="National Total") |>
 
               ggplot() +
               geom_ribbon(aes(x=year, ymin=modelMin, ymax = modelMax), fill = "grey24", alpha=0.25) +
               geom_line(aes(x=year, y=modelAve, linetype=model), size = 0.5, colour = "grey24", alpha=0.85)
           } else{
-            plot0_nat_i <- data0_i %>% filter(region=="National Total") %>%
+            plot0_nat_i <- data0_i |> filter(region=="National Total") |>
 
               ggplot() +
               geom_line(aes(x=year, y=valueColumn, linetype=model), size = 0.5, colour = "grey24", alpha=0.85)
           }
 
           plot0_nat_i <- plot0_nat_i +
-            # data0_i %>% filter(region=="National Total") %>%
+            # data0_i |> filter(region=="National Total") |>
             #
             # ggplot() +
             # geom_ribbon(aes(x=year, ymin=modelMin, ymax = modelMax), fill = "grey24", alpha=0.25) +
@@ -566,21 +566,21 @@ get_plots <- function(
     ### Save images and plot list if the results directory exists
     if(resultsDir_exists){
       message("\t", "Saving results...")
-      fpath_data <- results_dir %>% file.path("outputPlots.RData")
-      list_plotOuts %>% save(file=fpath_data)
+      fpath_data <- results_dir |> file.path("outputPlots.RData")
+      list_plotOuts |> save(file=fpath_data)
 
       ###### Save heat maps ######
       ### Save heatmaps if the directory exists
       if(heatDir_exists & doHeat){
         message("\t\t", "Saving heatmaps...")
-        heatMaps <- list_plotOuts[["heatmaps"]] %>% names
+        heatMaps <- list_plotOuts[["heatmaps"]] |> names()
         ### Iterate Over Model Types
         for(modelType_i in heatMaps){
           ### File name and path
-          fName_i <- discount_lc %>%
-            paste("impacts_as_heatmap_by", modelType_i, sep="_") %>%
+          fName_i <- discount_lc |>
+            paste("impacts_as_heatmap_by", modelType_i, sep="_") |>
             paste(def_img_device, sep=".")
-          fPath_i <- heat_dir %>% file.path(fName_i)
+          fPath_i <- heat_dir |> file.path(fName_i)
           ### Plot i
           plot_i  <- list_plotOuts[["heatmaps"]][[modelType_i]]
           ### Plot height
@@ -592,7 +592,7 @@ get_plots <- function(
             if("ggplot" %in% class(plot_i) & !is.null(plot_i)){
               ### Try to save the file
               try_heat <- try(
-                fPath_i %>%
+                fPath_i |>
                   ggsave(
                     plot   = plot_i,
                     device = def_img_device,
@@ -616,29 +616,29 @@ get_plots <- function(
       ### Save ribbon plots if the directory exists
       if(ribDir_exists & doAnn){
         message("\t\t", "Saving ribbon plots...")
-        sectorPlots <- list_plotOuts[["ribbon"]] %>% names
+        sectorPlots <- list_plotOuts[["ribbon"]] |> names()
         for(sector_i in sectorPlots){
           plotList0_i <- list_plotOuts[["ribbon"]][[sector_i]]
           ### Number of variants
-          num_variant_i <- (data %>% filter(sector == sector_i))$variant %>% unique() %>% length()
+          num_variant_i <- (data |> filter(sector == sector_i))$variant |> unique() |> length()
           def_rib_width <- base_rib_width + base_rib_width_per * num_variant_i
 
           ### Regions for j
-          regions_i   <- plotList0_i %>% names
+          regions_i   <- plotList0_i |> names()
 
           for(region_j in regions_i){
             ### Plot k
             plot_j  <- plotList0_i[[region_j]]
             if(!is.null(plot_j)){
               ### File names and shorten
-              fPath_j <- sector_i %>%
-                paste(region_j, sep="_") %>%
-                paste(def_img_device, sep=".") %>%
-                (function(y){gsub("/", "", y)})
-              fPath_j <- ann_dir %>% file.path(fPath_j) %>%
-                (function(k){gsub(" and ", "", k)}) %>%
-                (function(k){gsub("Variant", "", k)}) %>%
-                (function(k){gsub(" ", "", k)})
+              fPath_j <- sector_i |>
+                paste(region_j, sep="_") |>
+                paste(def_img_device, sep=".") |>
+                (function(y){gsub("/", "", y)})()
+              fPath_j <- ann_dir |> file.path(fPath_j) |>
+                (function(k){gsub(" and ", "", k)})() |>
+                (function(k){gsub("Variant", "", k)})() |>
+                (function(k){gsub(" ", "", k)})()
 
               ### Plot height
               num_reg_i           <- ifelse(region_j=="national", 1, numRegions)
@@ -649,7 +649,7 @@ get_plots <- function(
               if("ggplot" %in% class(plot_j) & !is.null(plot_j)){
                 ### Save plot
                 try_j   <- try(
-                  fPath_j %>%
+                  fPath_j |>
                     ggsave(plot   = plot_j,
                            device = def_img_device,
                            width  = fig_rib_width,
