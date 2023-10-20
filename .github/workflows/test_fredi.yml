@@ -109,13 +109,17 @@ jobs:
             save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
 
             ### Remove results
-            rm(results0, test0, listResults)
+            rm(results0, tests0, listResults)
           }
 
           ### Create report results
           if(do_figs){
             ### Load source
             sPath0 |> file.path("create_DoW_results.R") |> source()
+
+            ### Check if path exists and, if not, create it
+            exists0 <- oPath2 |> dir.exists()
+            if(!exists0){oPath2 |> dir.create()}
 
             ### Create report figures
             reports0 <- create_DoW_results(

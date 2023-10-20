@@ -34,13 +34,13 @@
 #temps2slr(years = seq(2020, 2080, 10), temps =1:7)
 #'
 #' ### Path to example scenarios
-#' scenariosPath <- system.file(package="FrEDI") %>% file.path("extdata","scenarios")
+#' scenariosPath <- system.file(package="FrEDI") |> file.path("extdata","scenarios")
 #' ### View example scenario names
 #'
-#' scenariosPath %>% list.files
+#' scenariosPath |> list.files()
 #'
 #' ### Temperature Scenario File Name
-#' tempInputFile <- scenariosPath %>% file.path("GCAM_scenario.csv")
+#' tempInputFile <- scenariosPath |> file.path("GCAM_scenario.csv")
 #'
 #' ### Import example temperature scenario
 #' example_inputsList <- import_inputs(tempfile = tempInputFile)
@@ -91,7 +91,7 @@ temps2slr <- function(
     assign(names(temps2slr_constants)[i], temps2slr_constants[[i]])
   }
   #### Reference year is 2000
-  ref_year0     <- rDataList[["co_modelTypes"]] %>% filter(modelType_id == "slr") %>% (function(x){x$modelRefYear[1]})
+  ref_year0     <- rDataList[["co_modelTypes"]] |> filter(modelType_id == "slr") |> (function(x){x$modelRefYear[1]})()
   # year0         <- ref_year0
   eqtemp_offset <- 0.62
 
@@ -105,17 +105,17 @@ temps2slr <- function(
   # ### Filter to years of interest 2000-2090
   # # max_year     <- 2090
   # new_years    <- seq(year0, max_year)
-  # num_x        <- new_years %>% length()
+  # num_x        <- new_years |> length()
   # ind_x        <- 1:num_x
 
   # ### Initialize Data
-  # df_x0 <- data.frame(year = years, temp_C = temps) %>%
-  #   filter(year >= year0) %>%
+  # df_x0 <- data.frame(year = years, temp_C = temps) |>
+  #   filter(year >= year0) |>
   #   filter(year <= max_year)
   #
   #
   #   # pull out 2000 data
-  # temp_C0     <- (df_x0 %>% filter(year == 2000))$temp_C[1]
+  # temp_C0     <- (df_x0 |> filter(year == 2000))$temp_C[1]
   #
   # ###To-do exit gracefully within tempbin()
   # if(is.na(temp_C0)) {
@@ -127,23 +127,23 @@ temps2slr <- function(
 
   ###### Initialize Data ######
   ### Filter NA values and make sure values are numeric
-  df_x0 <- data.frame(year = years, temp_C = temps) %>%
-    mutate_at(c("year", "temp_C"), as.character) %>%
-    mutate_at(c("year", "temp_C"), as.numeric) %>%
-    filter(!is.na(year) & !is.na(temp_C)) %>%
+  df_x0 <- data.frame(year = years, temp_C = temps) |>
+    mutate_at(c("year", "temp_C"), as.character) |>
+    mutate_at(c("year", "temp_C"), as.numeric) |>
+    filter(!is.na(year) & !is.na(temp_C)) |>
     arrange_at(.vars=c("year"))
 
   ### Check that there are no duplicate rows
   ### Unique years in the data
-  years0 <- df_x0$year %>% unique
-  hasDuplicates <- (df_x0 %>% nrow) > (years0 %>% length)
+  years0 <- df_x0$year |> unique()
+  hasDuplicates <- (df_x0 |> nrow()) > (years0 |> length())
   if(hasDuplicates){
     message("\t", "Warning:")
     message("\t\t", "In 'temps2slr()': There are duplicate years in the inputs.")
     message("\t\t\t", "Averaging values for duplicate years...")
 
-    df_x0 <- df_x0 %>%
-      group_by_at(.vars = c("year")) %>%
+    df_x0 <- df_x0 |>
+      group_by_at(.vars = c("year")) |>
       summarize_at(c("temp_C"), mean, na.rm=T)
   }
 
@@ -153,8 +153,8 @@ temps2slr <- function(
   checkRefYear <- (ref_year0 %in% df_x0$year)
   ### If 2020 not found, check for values above and below 2000
   if(!checkRefYear){
-    minYearInput0 <- df_x0$year %>% min(na.rm=T)
-    maxYearInput0 <- df_x0$year %>% max(na.rm=T)
+    minYearInput0 <- df_x0$year |> min(na.rm=T)
+    maxYearInput0 <- df_x0$year |> max(na.rm=T)
     checkRefYear     <- (minYearInput0 < ref_year0) & (maxYearInput0 > ref_year0)
   }
 
@@ -171,7 +171,7 @@ temps2slr <- function(
   }
   ### If there is a valid temperature series
   else{
-    year0 <- df_x0$year %>% min(na.rm=T)
+    year0 <- df_x0$year |> min(na.rm=T)
 
     ###### Standardize data #####
     ### Filter to years of interest 2000-2090
@@ -180,36 +180,36 @@ temps2slr <- function(
 
 
     new_years    <- seq(ref_year0, max_year)
-    num_x        <- new_years %>% length()
+    num_x        <- new_years |> length()
     ind_x        <- 1:num_x
 
     ###### Interpolate the data #####
     ### Interpolated Data
     # function require annual data
     df_x1 <-
-      data.frame(year = new_years0, temp_C = NA) %>%
+      data.frame(year = new_years0, temp_C = NA) |>
       mutate(temp_C=approx(
         x    = df_x0$year,
         y    = df_x0$temp_C,
         xout = new_years0,
         rule = 2
-      )$y) %>%
-      filter(year>=ref_year0) %>%
-      mutate(equilTemp = NA, slr_mm = NA) %>%
-      select(year, temp_C, equilTemp, slr_mm) %>%
-      mutate(yearFrom0 = year - ref_year0) %>%
+      )$y) |>
+      filter(year>=ref_year0) |>
+      mutate(equilTemp = NA, slr_mm = NA) |>
+      select(year, temp_C, equilTemp, slr_mm) |>
+      mutate(yearFrom0 = year - ref_year0) |>
       mutate(phi = phi0 * exp(-yearFrom0 / tau2))
 
 
     ###### Series ######
     ### Calculate base values
-    df_x  <- df_x1 %>%
+    df_x  <- df_x1 |>
       ### Equilibrium temps
       (function(k){
         for(i in ind_x){
           if(i == 1){
             ### Initialize temperature
-            temp_C0        <- (df_x1 %>% filter(year==ref_year0))$temp_C[1]
+            temp_C0        <- (df_x1 |> filter(year==ref_year0))$temp_C[1]
             k$equilTemp[i] <- temp_C0 - eqtemp_offset
             k$slr_mm[i]    <- 0
           } else{
@@ -218,11 +218,11 @@ temps2slr <- function(
           }
         }
         return(k)
-      }) %>%
+      })() |>
 
       ### GMSL in cm
-      select(year, slr_mm) %>%
-      mutate(slr_cm = slr_mm * mm2cm) %>% # convert from mm to cm
+      select(year, slr_mm) |>
+      mutate(slr_cm = slr_mm * mm2cm) |> # convert from mm to cm
       select(-slr_mm)
 
     return(df_x)
