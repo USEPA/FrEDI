@@ -3,10 +3,11 @@ The Framework for Evaluating Damages and Impacts (FrEDI)
 
 Estimates economic damages and impacts from climate change to the US through the 21st century
 
+To install FrEDI for the first time:
 
 `library("devtools")`
 
-To install FrEDI for the first time:
+
 
  ```
  withr::with_libpaths(  
@@ -25,21 +26,20 @@ To install FrEDI for the first time:
 
 `library("FrEDI")`
 
- point FrEDI to a particular temperature file of interest
- formated year, temp_c
- 
-`tempInputFile <- file.path("your_file.csv")`  
- also can add in files for gdp and population
+ After loading FrEDI, point FrEDI to a particular temperature file of 
+ interest formatted year, temp_c:
+ `tempInputFile <- file.path("your_file.csv")`.  
+ You also can add in files for gdp and population.
 
- here we specify that the temperature inputs are global. This will
- allow FrEDI to convert those temperatures to CONUS level
+ Here we specify that the temperature inputs are global. This will
+ allow FrEDI to convert those temperatures to CONUS level:
  
-`inputs <- import_inputs(tempfile = tempInputFile,  
-                        temptype = "global")`
+`inputs <- import_inputs(tempfile = tempInputFile, temptype = "global")`
 
- simple command to run FrEDI using the imputs specified above  
-`df <- run_fredi(inputsList= inputs, 
-                aggLevels="all")`
+ A simple command to run FrEDI using the inputs specified above : 
+`df <- run_fredi(inputsList= inputs, aggLevels="all")`
                 
- there are different levels to aggregate the data. By selecting "none"
- FrEDI will print out all of the information and the user can then aggregate after
+ There are different levels to aggregate the data. By selecting "none",
+ FrEDI will print out all of the information and the user can then aggregate after.
+ 
+ For more information, refer to the documentation at https://usepa.github.io/FrEDI.
