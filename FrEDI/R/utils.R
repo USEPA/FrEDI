@@ -97,32 +97,32 @@ interpolate_annual <- function(
   cols1     <- c("year", column0)
 
   if (!byState) {
-    df_interp <- regions0 %>% map(function(region_i){
+    df_interp <- regions0 |> map(function(region_i){
       ### Values
-      which_i  <- (data$region==region_i) %>% which
+      which_i  <- (data$region==region_i) |> which()
       x_i      <- years0[which_i]
       y_i      <- values0[which_i]
       ### Approximate
       new_i   <- approx(x = x_i, y = y_i, xout = years, rule = rule, method = method)
-      new_i   <- new_i %>% as.data.frame
-      new_i   <- new_i %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
-      new_i   <- new_i %>% mutate(region = region_i)
+      new_i   <- new_i |> as.data.frame()
+      new_i   <- new_i |> rename_at(.vars=c(all_of(cols0)), ~cols1)
+      new_i   <- new_i |> mutate(region = region_i)
       ### Return
       return(new_i)
     }) %>% (function(i){do.call(rbind, i)})
 
   } else { ### By state
-    df_interp <- states0 %>% lapply(function(state_i){
+    df_interp <- states0 |> map(function(state_i){
       ### Values
-      which_i <- (data$state==state_i) %>% which
+      which_i <- (data$state==state_i) |> which()
       postal_i <- data$postal[which_i][1]
       x_i     <- years0[which_i]
       y_i     <- values0[which_i]
       ### Approximate
       new_i   <- approx(x = x_i, y = y_i, xout = years, rule = rule, method = method)
-      new_i   <- new_i %>% as.data.frame
-      new_i   <- new_i %>% rename_at(.vars=c(all_of(cols0)), ~cols1)
-      new_i   <- new_i %>% mutate(state=state_i, postal=postal_i)
+      new_i   <- new_i |> as.data.frame()
+      new_i   <- new_i |> rename_at(.vars=c(all_of(cols0)), ~cols1)
+      new_i   <- new_i |> mutate(state=state_i, postal=postal_i)
       ### Return
       return(new_i)
     }) %>% (function(i){do.call(rbind, i)})
@@ -135,9 +135,9 @@ interpolate_annual <- function(
   names1 <- df_interp |> names()
   join0  <- names0[names0 %in% names1]
   data   <- data |> left_join(df_interp, by=c(join0))
-  # df_interp %>% names %>% print
-  # new_i   <- new_i %>% select(c(all_of(dataCols)))
-  # new_i   <- new_i %>% select(c(all_of(defCols), all_of(column0)))
+  # df_interp |> names() |> print()
+  # new_i   <- new_i |> select(c(all_of(dataCols)))
+  # new_i   <- new_i |> select(c(all_of(defCols), all_of(column0)))
 
   ### Return
   # return(df_interp)
@@ -185,9 +185,11 @@ match_scalarValues <- function(
   ###### Regional values ######
   scalars_regional <- scalars |> filter(national_or_regional == "regional")
   scalarNames_reg  <- scalars_regional[,scalarColName] |> unique()
+  join0            <- c("year", "region", scalarColName)
+  if(byState){join0 <- join0 |> c("state", "postal")}
   df_regional      <- data |>
     filter(!(data[,scalarColName] == "none") & data[,scalarColName] %in% scalarNames_reg) |>
-    left_join(scalars_regional, by=c("year", "region", scalarColName)) |>
+    left_join(scalars_regional, by=c(join0)) |>
     select(-c("scalarType", "national_or_regional"))
 
   ###### National values ######
