@@ -3,11 +3,11 @@ The Framework for Evaluating Damages and Impacts (FrEDI)
 
 Estimates economic damages and impacts from climate change to the US through the 21st century
 
+## Installation
+
 To install FrEDI for the first time:
 
 `library("devtools")`
-
-
 
  ```
  withr::with_libpaths(  
@@ -26,6 +26,7 @@ To install FrEDI for the first time:
 
 `library("FrEDI")`
 
+## Using FrEDI
  After loading FrEDI, point FrEDI to a particular temperature file of 
  interest formatted year, temp_c:
  `tempInputFile <- file.path("your_file.csv")`.  
