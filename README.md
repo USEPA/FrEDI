@@ -42,5 +42,13 @@ To install FrEDI for the first time:
                 
  There are different levels to aggregate the data. By selecting "none",
  FrEDI will print out all of the information and the user can then aggregate after.
- 
+
+## Contributing to FrEDI
+
+The FrEDI team welcomes and values community contributions, but please
+see our [Contribution Guide](FrEDI/vignettes/articles/contributing.Rmd) and note
+by contributing to this project, you agree to abide to our [Contributor
+Code of Conduct](FrEDI/CODE_OF_CONDUCT.md)
+
+ ----------------------------------------------------------------------------------
  For more information, refer to the documentation at https://usepa.github.io/FrEDI.
