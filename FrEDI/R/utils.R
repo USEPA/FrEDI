@@ -223,20 +223,26 @@ get_econAdjValues <- function(
     scenario,  ### Population and GDP scenario
     multipliers ### List of multipliers
 ){
-  # data |> names() |> print();
   ###### Multipliers
   multiplier0 <- "none"
   multipliers <- multipliers[multipliers!=multiplier0]
   ###### Scenario information
+  # Get column names:
+  cNames      <- scenario |> names();
+  # Check if data is broken down by state:
+  byState     <- "state" %in% cNames
+
   cRegions    <- scenario$region |> unique()
-  cNames      <- scenario |> names(); cNames <- cNames[cNames %in% multipliers]
+  if (byState) {cStates <- scenario$state |> unique(); cPostals <- scenario$postal |> unique()}
+  cNames      <- cNames[cNames %in% multipliers]
 
   ###### Format scalar data
   ###### Get values for a single region since the multipliers are the same for all regions
   ###### Gather scenario information
-  scalars     <- scenario |> filter(region==cRegions[1])
-  scalars     <- scalars  |> select(c("year", all_of(cNames)))
-  scalars     <- scalars  |> gather(key="econMultiplierName", value="econMultiplierValue", -c("year"))
+  scalars      <- scenario |> filter(region==cRegions[1])
+  if (byState) {scalars <- scalars |> filter(state==cStates[1])}
+  scalars      <- scalars  |> select(c("year", all_of(cNames)))
+  scalars      <- scalars  |> gather(key="econMultiplierName", value="econMultiplierValue", -c("year"))
   # data |> names() |> print(); scalars |> names() |> print()
   ###### Multiplier Adjustment
   ### Rename scalars and convert year to character
@@ -507,6 +513,10 @@ get_annual_model_stats <- function(
   defaultSectors   <- data$sector |> as.character() |> unique()
   if(is.null(sectors)){sectors <- defaultSectors}
 
+  ###### Check if data is by state ######
+  cNames       <- data |> colnames()
+  byState      <- "state" %in% cNames
+
   ###### Names of Data ######
   ### Models
   model_labels <- data$model |> unique()
@@ -541,6 +551,7 @@ get_annual_model_stats <- function(
   ###### Reshape the data ######
   # default_groupCols <- c("sector", "variant", "model_type", "impactType", "impactYear", "region")
   default_groupCols <- c("sector", "variant", "model_type", "impactType", "impactYear", "region", "year", "model", "yvar")
+  if (byState) {default_groupCols <- default_groupCols |> c("state", "postal")}
   groupByCols       <- default_groupCols[which(default_groupCols %in% names(data))]
 
   ### Reshape the data and prepare a column indicating which rows have is.na() for all models
