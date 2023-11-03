@@ -15,6 +15,7 @@
 #' @param maxYear=2090 A numeric value indicating the maximum year for the analysis.
 #' @param thru2300 A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300.
 #' @param outputList A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
+#' @param byState A `TRUE/FALSE` value indicating whether to run at the state level for available sectors (default=`FALSE`).
 #' @param silent A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
 #'
@@ -146,6 +147,7 @@ run_fredi <- function(
     maxYear    = 2090,
     thru2300   = FALSE,
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
+    byState    = FALSE, ### Whether to run at state level for available sectors
     silent     = TRUE   ### Whether to message the user
 ){
 
@@ -174,6 +176,12 @@ run_fredi <- function(
   ### Configuration and data list
   for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
   for(i in 1:length(rDataList   )) assign(names(rDataList)[i], rDataList[[i]])
+  for(i in 1:length(frediData   )) assign(names(frediData)[i], frediData[[i]])
+  if(byState){
+    for(i in 1:length(stateData   )) assign(names(stateData)[i], stateData[[i]])
+  } else{
+    for(i in 1:length(regionData  )) assign(names(regionData)[i], regionData[[i]])
+  }
 
   ### Years
   maxYear    <- maxYear0
@@ -183,7 +191,7 @@ run_fredi <- function(
   ###### Aggregation level  ######
   ### Types of summarization to do: default
   doPrimary <- ifelse(is.null(doPrimary), FALSE, doPrimary)
-  aggList0     <- c("national", "modelaverage", "impactyear", "impacttype")
+  aggList0  <- c("national", "modelaverage", "impactyear", "impacttype")
   if(!is.null(aggLevels)){
     ### Aggregation levels
     aggLevels    <- aggLevels |> tolower()
@@ -200,8 +208,15 @@ run_fredi <- function(
 
   ###### Sectors List ######
   ### Sector names
-  sector_names  <- co_sectors$sector_id
-  sector_labels <- co_sectors$sector_label
+  ### Limit to just available sectors by state/region
+  if(byState){
+    sector_names  <- co_stateSectors$sector_id
+    sector_labels <- co_stateSectors$sector_label    
+  } else{
+    sector_names  <- co_sectors$sector_id
+    sector_labels <- co_sectors$sector_label    
+  }
+
   ### Initialize sector list if the sectors list is null
   if(is.null(sectorList)){
     sectorList       <- sector_names
@@ -239,7 +254,7 @@ run_fredi <- function(
   list_inputs     <- co_inputScenarioInfo$inputName
   num_inputNames  <- co_inputScenarioInfo |> nrow()
 
-  if(is.null(inputsList)) {inputsList <- list()}else{message("Checking input values...")}
+  if(is.null(inputsList)) {inputsList <- list()} else{message("Checking input values...")}
   ### Iterate over the input list
   # if(!is.null(inputsList)){
   ### Assign inputs to objects
@@ -258,7 +273,7 @@ run_fredi <- function(
     valueCol_i  <- inputInfo_i$valueCol |> unique()
     ### Initialize column names
     numCols_i   <- colNames_i <- c("year", valueCol_i) #; print(colNames_i)
-    ### Add region column
+    ### Add region column ##wm need to be state if byState?
     if(region_i == 1){
       colNames_i  <- c(colNames_i[1], "region", colNames_i[2])
     }
@@ -305,7 +320,7 @@ run_fredi <- function(
       minYear_x <- x$year |> min()
       interpYrs <- refYear_temp:maxYear
       ### Interpolate
-      x_interp  <- x |> interpolate_annual(
+      x_interp  <- x |> interpolate_annual(#wm I think this is fine to leave with region, no byState = T for now unless we plan to allow state-level temps
         years  = interpYrs,
         column = "temp_C",
         rule   = 1:2
@@ -344,7 +359,7 @@ run_fredi <- function(
       minYear_x <- x$year |> min()
       interpYrs <- refYear_slr:maxYear
       ### Interpolate annual values
-      x_interp  <- x |> interpolate_annual(
+      x_interp  <- x |> interpolate_annual(#wm same as temps above, I *think* this is fine to leave
         years  = interpYrs,
         column = "slr_cm",
         rule   = 1:2
@@ -391,7 +406,9 @@ run_fredi <- function(
   ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
   ### Reformat GDP inputs if provided, or use defaults
   gdpCols0 <- c("year", "gdp_usd")
-  popCols0 <- c("year", "region", "reg_pop")
+  popCols0 <- c("year", "region")
+  if(byState){popCols0 <- popCols0 |> c("state", "postal", "state_pop")} else{popCols0 <- popCols0 |> c("reg_pop")}
+  
   if(has_gdpUpdate){
     message("Creating GDP scenario from user inputs...")
     gdp_df <- gdpInput |> filter(!is.na(gdp_usd)) |> filter(!is.na(year))
@@ -408,13 +425,24 @@ run_fredi <- function(
   if(has_popUpdate){
     message("Creating Population scenario from user inputs...")
     ### Standardize region and then interpolate
-    pop_df         <- popInput |> mutate(region = gsub(" ", ".", region))
-    pop_df         <- pop_df   |> interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2) |> ungroup()
+    if(byState){
+      pop_df         <- popInput |> mutate(state = gsub(" ", ".", state))
+      pop_df         <- pop_df   |> interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2, byState = TRUE) |> ungroup()       
+    } else{
+      pop_df         <- popInput |> mutate(region = gsub(" ", ".", region))
+      pop_df         <- pop_df   |> interpolate_annual(years= c(list_years), column = "reg_pop", rule = 2) |> ungroup()      
+    }
+
     # pop_df |> glimpse()
     ### Calculate national population
-    national_pop   <- pop_df       |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c("reg_pop"), sum, na.rm=T) |> ungroup()
-    national_pop   <- national_pop |> rename(national_pop = reg_pop)
-    # national_pop |> glimpse()
+    if(byState){
+      national_pop   <- pop_df       |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c("state_pop"), sum, na.rm=T) |> ungroup()
+      national_pop   <- national_pop |> rename(national_pop = state_pop)      
+    }else{
+      national_pop   <- pop_df       |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c("reg_pop"), sum, na.rm=T) |> ungroup()
+      national_pop   <- national_pop |> rename(national_pop = reg_pop)
+    }
+    # national_pop |> glimpse()  
     rm("popInput")
   } ### if(has_popUpdate)
   else{
@@ -442,7 +470,11 @@ run_fredi <- function(
 
   ### Updated scenario
   updatedScenario   <- national_scenario |> left_join(pop_df, by=c("year"))
-  updatedScenario   <- updatedScenario   |> arrange_at(.vars=c("region", "year"))
+  if(byState){
+    updatedScenario   <- updatedScenario   |> arrange_at(.vars=c("state", "year"))
+  } else{
+    updatedScenario   <- updatedScenario   |> arrange_at(.vars=c("region", "year"))
+  }
   # updatedScenario |> group_by_at(.vars=c("region", "year")) |> summarize(n=n(), .groups="keep") |> ungroup() |> filter(n>1) |> nrow() |> print()
 
   ###### Update Scalars ######
