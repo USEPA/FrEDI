@@ -86,6 +86,7 @@ temps2slr <- function(
   ###### Initial Values ######
   ### Reference year 2000 and equilibrium temperature offset for 2000
   ### Assign reference year from config file (max_year)
+  fredi_config        <- "fredi_config" |> get_frediDataObj("frediData")
   temps2slr_constants <- fredi_config[["temps2slr"]]
   names_slrConstants  <- temps2slr_constants |> names()
   for(name_i in names_slrConstants){assign(name_i, temps2slr_constants[[name_i]])}
