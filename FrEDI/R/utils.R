@@ -1021,17 +1021,19 @@ extend_slr   <- function(
 ){
   ### Values
   maxYear_x <- x$year |> max()
+  newYears  <- (maxYear_x + 1):newMax_x
   ### Format Dataframes
-  x_nu <- tibble(year = (maxYear_x + 1):newMax_x) |> mutate(dummyCol = 1)
-  x_up <- x |> filter(year == maxYear_x) |> mutate(dummyCol = 1) |> select(-c("year"))
+  x_nu <- tibble(year = newYears) |> mutate(joinCol = 1)
+  x_up <- x |> filter(year == maxYear_x) |> mutate(joinCol = 1) |> select(-c("year"))
   x_lo <- x |> filter(year <= maxYear_x)
   rm("x")
   ### Join data
-  x_up <- x_up |> left_join(x_nu, by = c("dummyCol")) |> select(-c("dummyCol"))
+  x_up <- x_up |> left_join(x_nu, by = c("joinCol")) |> select(-c("joinCol"))
   x    <- x_lo |> rbind(x_up)
   rm("x_nu", "x_up", "x_lo")
-  ### Arrange and standardize model type
-  x  <- x |> arrange_at(.vars = c(arrange_x)) |> mutate(model_type = "slr")
+  # ### Arrange and standardize model type
+  # x  <- x |> arrange_at(.vars = c(arrange_x)) |> mutate(model_type = "slr")
+  ### Return
   return(x)
 }
 
