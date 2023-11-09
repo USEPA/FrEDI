@@ -88,6 +88,8 @@ interpolate_annual <- function(
     byState   = FALSE ### If breakdown by state
 ){
   ###### Data Info ######
+  ##### Other values
+  region0   <- region; rm(region)
   ##### By state
   if (byState) {stateCols0 <- c("state", "postal")} else{stateCols0 <- c()}
   ##### Columns
@@ -110,7 +112,6 @@ interpolate_annual <- function(
     years  <- years[1]:years[2]
   }; rm("doYears")
   ##### Regions
-  region0   <- region
   addRegion <- !("region" %in% dataCols)
   if (addRegion) {data     <- data |> mutate(region = region0)}
   if (byState  ) {states0  <- data |> get_uniqueValues("state" )}
@@ -179,10 +180,11 @@ interpolate_annual <- function(
     group_by_at(c(names0)) |>
     summarize(n=n(), .groups="keep") |> ungroup() |>
     select(-c("n"))
+
   ### Do join
   if(doJoin){
     # df_interp |> glimpse(); data |> glimpse()
-    data   <- data |> left_join(df_interp, by=c(join0))
+    data <- data |> left_join(df_interp, by=c(join0))
   } else{
     data <- df_interp
   } ### End else
@@ -380,9 +382,8 @@ calcScalars <- function(
 ### Function to standardize the creation of the scenario_id
 get_scenario_id <- function(
     data_x,
-    include=c("model_dot", "region_dot") ### Character vector of column names to include
+    include=c("region_dot", "model_dot") ### Character vector of column names to include
 ){
-
   ### Other vals
   mnl0   <- "\n" ### Message new line
   msg0   <- "\t" ### Message indent level 0
@@ -391,7 +392,7 @@ get_scenario_id <- function(
   mqu1   <- mqu0 |> paste0(mcom, mqu0, collapse="")
   mend0  <- "..."
   ### Columns to include
-  main0  <- c("sector", "variant", "impactYear", "impactType", "model_type")
+  main0  <- c("sector", "variant", "impactType", "impactYear")
   cols0  <- main0  |> c(include)
   ### Check names
   names0 <- data_x |> names()
@@ -1116,8 +1117,17 @@ fun_formatScalars <- function(
 ){
   ### By state
   if(byState){stateCols0 <- c("state", "postal")} else{stateCols0 <- c()}
+
+  ### Join info
+  join0    <- c("scalarName", "scalarType")
+  select0  <- join0 |> c("national_or_regional", "constant_or_dynamic")
+  select1  <- join0 |> c("region") |> c(stateCols0) |> c("year", "value")
+  info_x   <- info_x |> select(all_of(select0))
+  data_x   <- data_x |> select(all_of(select1))
+  data_x   <- data_x |> left_join(info_x, by=c(join0))
+
   ### Get unique names & types
-  group0  <- c("scalarName", "scalarType")
+  group0  <- select0
   dfNames <- data_x |>
     group_by_at(c(group0)) |>
     summarize(n=n(), .groups="keep") |> ungroup() |>
@@ -1128,61 +1138,52 @@ fun_formatScalars <- function(
   listPm  <- list()
   listPm[["name_i"]] <- dfNames[["scalarName"]] |> as.list()
   listPm[["type_i"]] <- dfNames[["scalarType"]] |> as.list()
-  # names_x <- data_x$scalarName |> unique()
-  # num_x   <- names_x |> length()
-  # new_x   <- 1:num_x |> map(function(i){
-  new_x   <- listPm |> pmap(function(name_i, type_i){
-    ### Figure out name, method, region
-    # name_i     <- names_x[i]
-    # name_i |> print()
-    # c(name_i, type_i) |> print()
-    ### Tibbles
-    scalar_i   <- data_x |> filter(scalarName==name_i & scalarType==type_i)
-    info_i     <- info_x |> filter(scalarName==name_i & scalarType==type_i)
-    ### Info about scalar
-    method_i   <- info_i[["constant_or_dynamic"]][1]
-    method_i   <- (method_i=="constant") |> ifelse(method_i, "linear")
-    # region_i   <- info_i$national_or_regional[1]
+  listPm[["con_i" ]] <- dfNames[["constant_or_dynamic" ]] |> as.list()
+  listPm[["nat_i" ]] <- dfNames[["national_or_regional"]] |> as.list()
+  # listPm |> print()
+
+  ### Iterate over list and interpolate annual values
+  data_x   <- listPm %>% pmap(function(name_i, type_i, con_i, nat_i){
+    ### Filter to appropriate name and type
+    data_i    <- data_x |> filter(scalarName==name_i)
+    data_i    <- data_i |> filter(scalarType==type_i)
+    data_i    <- data_i |> filter(national_or_regional==nat_i)
+    ### Info about method
+    method_i  <- (con_i=="constant") |> ifelse(con_i, "linear")
+    if(byState){states_i <- data_i[["state"]] |> unique()} else{states_i <- "N/A"}
+    byState_i <- !("N/A" %in% states_i) & byState
     ### Interpolate data
-    scalar_i   <- scalar_i |> interpolate_annual(
+    data_i    <- data_i |> interpolate_annual(
       years   = years_x,
       column  = "value",
       rule    = 1:2,
       method  = method_i,
-      byState = byState
+      byState = byState_i
     )
-    # ### Add in name and return
-    # scalar_i   <- scalar_i |> mutate(scalarName=name_i)
-    # scalar_i   <- scalar_i |> mutate(scalarType=type_i)
-    # scalar_i |> glimpse()
     ### Return
-    return(scalar_i)
+    return(data_i)
   }) |> bind_rows()
-  ### Join info
-  select0 <- c("scalarName", "scalarType", "national_or_regional")
-  select1 <- c("scalarName", "scalarType", "region") |> c(stateCols0) |> c("year", "value")
-  join0   <- c("scalarName", "scalarType")
-  # info_x |> glimpse(); new_x |> glimpse()
-  info_x  <- info_x |> select(c(all_of(select0)))
-  new_x   <- new_x  |> select(c(all_of(select1)))
-  new_x   <- new_x  |> left_join(info_x, by=c(join0))
-  new_x   <- new_x  |> arrange_at(c(select1))
+
+  # ### Bind rows
+  # data_x   <- data_x |> bind_rows()
+  ### Arrange
+  arrange0 <- select1 |> c("national_or_regional") |> unique()
+  data_x   <- data_x |> select(all_of(arrange0))
+  data_x   <- data_x |> arrange_at(c(arrange0))
   ### Return
-  return(new_x)
+  return(data_x)
 }
 
 
 ###### fun_getScale ######
 ### This function creates a set of breaks for a particular column
 ### It returns a list of breaks, the power of 10, and the limits
-fun_getScale <-
-  function(
+fun_getScale <- function(
     data,
     scaleCol = "driverValue",
     # zero = F,
     nTicks = 5
   ){
-
     ### Defaults
     if(scaleCol |> is.null()){scaleCol <- "driverValue"}
     ### Default is not to zero out in case there are negative numbers
