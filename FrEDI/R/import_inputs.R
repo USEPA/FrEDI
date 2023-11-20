@@ -199,9 +199,11 @@ import_inputs <- function(
         ###### Standardize All Columns ######
         ### Rename Inputs and Convert all columns to numeric
         ### Rename Inputs and Convert all columns to numeric
-        df_input_i <- df_input_i |>
-          left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
-          select(colNames_i)
+        if(byState){
+          df_input_i <- df_input_i |>
+            left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
+            select(colNames_i) 
+        }
         
         df_input_i  <- df_input_i |>
           rename_inputs(colNames_i) |>
