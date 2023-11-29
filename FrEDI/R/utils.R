@@ -629,8 +629,8 @@ get_econAdjValues <- function(
     values_to = "econMultiplierValue"
   ) ### End pivot_longer()
   ### Rename year to year0 and convert to character
-  scalars     <- scalars |> mutate(year0 = year |> as.character())
-  scalars     <- scalars |> select(-c("year"))
+  #scalars     <- scalars |> mutate(year0 = year |> as.character())
+  #scalars     <- scalars |> select(-c("year"))
   # data |> glimpse(); scalars |> glimpse()
 
   ###### Format data and separate
@@ -657,8 +657,8 @@ get_econAdjValues <- function(
     # join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState")
     rename0   <- c("econMultiplierName", "econMultiplierValue")
     rename1   <- c("econAdjName"       , "econAdjValue")
-    join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year0")
-    join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year0")
+    join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
+    join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
     ### Scalar Adjustments
     # scalars |> glimpse()
     scalarAdj <- scalars |> rename_at(c(rename0), ~rename1)
