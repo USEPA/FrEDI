@@ -377,7 +377,7 @@ extend_slrScalars <- function(
   ### Get 2090 values and then bind them in
   rename0    <- c("econMultiplierValue")
   rename1    <- c("econMultiplierValue0")
-  select0    <- c("refYear") |> c(join0) |> c(rename0)
+  select0    <- c("refYear", "byState","econMultiplierName") |> c(rename0)
   df_gdp1    <- df_gdp0 |>
     filter(year == refYear) |>
     select(all_of(select0)) |>
@@ -387,9 +387,13 @@ extend_slrScalars <- function(
   ###### Economic Multipliers ######
   ### Join with reference info & scalar info
   join0      <- c("econMultiplierName")
-  join1      <- c("refYear") |> c(join0)
-  df_gdp0    <- df_gdp0 |> left_join(df_gdp1, by=c(join0))
-  df_gdp0    <- df_gdp0 |> left_join(df_info, by=c(join1), relationship="many-to-many")
+  join1      <- c("refYear","byState") |> c(join0)
+  df_gdp0 |> glimpse()
+  df_gdp1 |> glimpse()
+  df_gdp0    <- df_gdp0 |> left_join(df_gdp1, by=c(join1))
+  #df_gdp0    <- df_gdp0 |> left_join(df_info, by=c(join1), relationship="many-to-many")
+  df_gdp0    <- df_info |> left_join(df_gdp0, by=c(join1), relationship="many-to-many")
+
   rm(join0, df_gdp1); rm(join1, df_info)
 
   ### Calculate econ scalar values
@@ -411,6 +415,17 @@ extend_slrScalars <- function(
   join0      <- c("econMultiplierName", "byState", "year")
   df_scalars <- df_scalars |> left_join(df_gdp0, by=c(join0))
   rm(join0, df_gdp0)
+
+  ########## TONY THINKS THERE IS SOME COLUMN MISSING THAT MAKES THE JOIN UNABLE TO HAPPEN ###############
+  ### Join new econ multipliers & scalars
+  #join0      <- c("econMultiplierName", "byState", "year")
+  #join0      <- c("byState", "year")
+
+  #df_scalars |> glimpse()
+  #df_gdp0 |> glimpse()
+  #df_scalars |> filter(scalarName %in% df_gdp0$econMultiplierName |> unique())
+  #df_scalars <- df_gdp0 |> left_join(df_scalars_new, by=c(join0, "physScalarName" = "scalarName" ))
+  #rm(join0, df_gdp0)
 
   ###### Physical Scalar Values ######
   ### Add physical scalars
@@ -666,7 +681,7 @@ get_econAdjValues <- function(
     # scalarAdj   <- scalarAdj |> mutate(year0 = year0 |> as.character())
     # data$year |> class() |> print(); scalarAdj$year |> class() |> print()
     ###### Join with scalars
-    scalars <- scalars |> left_join(scalarAdj, relationship = "many-to-many")
+    scalars <- scalars |> left_join(scalarAdj, by =  c("byState", "year0","year", "econMultiplierName"="econAdjName")) |> mutate(econAdjName = econMultiplierName)
     data      <- data    |> left_join(scalars, by=c(join1))
   } ### End if(hasOther0)
 
@@ -738,7 +753,7 @@ initialize_resultsDf <- function(
   ###### SLR Scalars for Years > 2090 ######
   ### Scalars for SLR past 2090
   slrScalars <- "co_slrScalars" |> get_frediDataObj("frediData")
-  types0     <- df0[["model_type"]] |> unique() |> tolower()
+  types0     <- df0[["modelType"]] |> unique() |> tolower()
   # slrSectors <- x
   do_slr     <- "slr" %in% types0
   if(do_slr){
@@ -749,8 +764,8 @@ initialize_resultsDf <- function(
     ) ### End extend_slrScalars
 
     ### Separate GCM & SLR values
-    df_gcm0    <- df0 |> filter(model_type |> tolower() != "slr")
-    df_slr0    <- df0 |> filter(model_type |> tolower() == "slr")
+    df_gcm0    <- df0 |> filter(modelType |> tolower() != "slr")
+    df_slr0    <- df0 |> filter(modelType |> tolower() == "slr")
 
     ### Filter to reference year
     refYear0   <- (slrScalars[["refYear"]] |> unique())[1]
