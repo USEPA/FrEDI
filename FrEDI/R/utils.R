@@ -594,7 +594,7 @@ match_scalarValues <- function(
 
 
 ###### get_econAdjValues ######
-### Last updated 2023.11.15
+### Last updated 2023.11.30
 ### Get Economic Adjustment/Multiplier
 ### This function matches interpolated scalar values for each scalar type to the time series scenario information
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
@@ -629,8 +629,7 @@ get_econAdjValues <- function(
     values_to = "econMultiplierValue"
   ) ### End pivot_longer()
   ### Rename year to year0 and convert to character
-  #scalars     <- scalars |> mutate(year0 = year |> as.character())
-  #scalars     <- scalars |> select(-c("year"))
+  scalars     <- scalars |> mutate(year0 = min(year)  |> as.character())
   # data |> glimpse(); scalars |> glimpse()
 
   ###### Format data and separate
@@ -658,16 +657,17 @@ get_econAdjValues <- function(
     rename0   <- c("econMultiplierName", "econMultiplierValue")
     rename1   <- c("econAdjName"       , "econAdjValue")
     join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
-    join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
+    join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year0","year","econMultiplierName")
     ### Scalar Adjustments
-    # scalars |> glimpse()
-    scalarAdj <- scalars |> rename_at(c(rename0), ~rename1)
+    ## scalars |> glimpse()
+    # Take value at base year
+    base_vals <- scalars |> filter(year == year0) |> select(-year)|> rename_at(c(rename0), ~rename1)
+    scalarAdj <- scalars |> rename_at(c(rename0), ~rename1) |> select(-econAdjValue)|>  left_join(base_vals,by =  c("byState", "year0","econAdjName"),relationship = "many-to-many")
     # scalarAdj   <- scalarAdj |> mutate(year0 = year0 |> as.character())
     # data$year |> class() |> print(); scalarAdj$year |> class() |> print()
     ###### Join with scalars
-    data      <- data    |> left_join(scalars, by=c(join0))
-    ###### Join with scalar adjustment
-    data      <- data    |> left_join(scalarAdj, by=c(join1))
+    scalars <- scalars |> left_join(scalarAdj, relationship = "many-to-many")
+    data      <- data    |> left_join(scalars, by=c(join1))
   } ### End if(hasOther0)
 
   ###### Rename value column
