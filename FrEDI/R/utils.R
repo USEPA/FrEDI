@@ -416,7 +416,6 @@ extend_slrScalars <- function(
   df_scalars <- df_scalars |> left_join(df_gdp0, by=c(join0))
   rm(join0, df_gdp0)
 
-  ########## TONY THINKS THERE IS SOME COLUMN MISSING THAT MAKES THE JOIN UNABLE TO HAPPEN ###############
   ### Join new econ multipliers & scalars
   #join0      <- c("econMultiplierName", "byState", "year")
   #join0      <- c("byState", "year")
@@ -456,9 +455,9 @@ extend_slrScalars <- function(
 
   ###### Physical Scalars ######
   ### Calculate physical multiplier values
-  df_pop0    <- df_pop0 |> mutate(physScalar     = c2 * (physScalarValue / physScalarValue0))
-  df_pop0    <- df_pop0 |> mutate(physAdjName    = physScalarName )
-  df_pop0    <- df_pop0 |> mutate(physAdjValue   = physScalarValue)
+  df_pop0    <- df_pop0 |> mutate(physScalar   = c2 * (physScalarValue / physScalarValue0))
+  df_pop0    <- df_pop0 |> mutate(physAdjName  = physScalarName )
+  df_pop0    <- df_pop0 |> mutate(physAdjValue = physScalarValue)
   rm(drop0)
 
   ### Drop columns & join
@@ -492,7 +491,7 @@ extend_slrScalars <- function(
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
 ### Function "match_scalarValues" replaces "get_popWts", "get_physMultipliers", and "get_econScalars"
 match_scalarValues <- function(
-    df0,    ### Initial results dataframe
+    df0,     ### Initial results dataframe
     scalars, ### Scalars dataframe
     scalarType
 ){
@@ -534,7 +533,7 @@ match_scalarValues <- function(
   filter_nat       <- df0[[scalarColName]] %in% scalarNames_nat
 
   ###### Filter Data ######
-  df_none          <- df0[filter_none,] |> mutate(value = 1)
+  df_none          <- df0[filter_none,] #|> mutate(value = 1)
   df_regional      <- df0[filter_reg,]
   df_national      <- df0[filter_nat,]
   ### Whether filtered data has rows
@@ -568,8 +567,10 @@ match_scalarValues <- function(
   # scalars_national |> glimpse(); df_national |> glimpse();
   ### Join & drop
   if(has_national){
-    join0            <- c(scalarColName) |> c("byState", "year")
-    drop0            <- c("region") |> c(stateCols0)
+    # join0            <- c(scalarColName) |> c("byState", "year")
+    # drop0            <- c("region") |> c(stateCols0)
+    join0            <- c(scalarColName) |> c("year")
+    drop0            <- c("region") |> c(stateCols0) |> c("byState")
     scalars_national <- scalars_national |> select(-all_of(drop0))
     df_national      <- df_national |> left_join(scalars_national, by=c(join0))
     rm(join0, drop0)
@@ -587,7 +588,8 @@ match_scalarValues <- function(
   # data_x |> glimpse()
   if(hasData0){
     ### Replace NA values ?
-    data_x  <- data_x |> mutate(value = value |> replace_na(1))
+    # data_x  <- data_x |> mutate(value = value |> replace_na(1))
+    data_x  <- data_x |> mutate(value = value)
   } else{
     data_x |> mutate(value=1)
   } ### End if(hasData0)
@@ -849,7 +851,7 @@ get_gcmScaledImpacts <- function(
 
   ### Get df_imp0 & list_impactFunctions
   sectors0   <- df0[["sector"]] |> unique()
-  df_imp0    <- "data_scaledImpacts"   |> get_frediDataObj("stateData")
+  df_imp0    <- "data_scaledImpacts" |> get_frediDataObj("stateData")
   df_imp0    <- df_imp0 |> filter(sector %in% sectors0)
 
   ### Drivers
