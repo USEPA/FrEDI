@@ -332,15 +332,16 @@ update_popScalars <- function(
 ###### extend_slrScalars ######
 ### Scalars for SLR past 2090
 extend_slrScalars <- function(
+    df0,        ### Dataframe of initial results
     df_se,      ### Socioeconomic scenario
     df_scalars, ### Main scalar values: df_mainScalars
-    # df_info,    ### SLR scalar info: co_slrScalars
     elasticity  = NULL
 ){
   ###### Elasticity ######
   ### Update exponent
   if(!(elasticity |> is.null())){
-    df_scalars <- df_scalars |> mutate(exp0 = (exp0 == 1) |> ifelse(exp0, elasticity))
+    # df_scalars <- df_scalars |> mutate(exp0 = (exp0 == 1) |> ifelse(exp0, elasticity))
+    df_scalars <- df_scalars |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
   } ### End if(!(elasticity |> is.null()))
 
   ###### By State ######
@@ -353,135 +354,126 @@ extend_slrScalars <- function(
   ### Filter to years >= refYear (2090)
   df_info    <- "co_slrScalars" |> get_frediDataObj("frediData")
   refYear0   <- (df_info[["refYear"]] |> unique())[1]
-  df_se      <- df_se      |> filter(year >= refYear0)
   df_scalars <- df_scalars |> filter(year >= refYear0)
+  df_se      <- df_se      |> filter(year >= refYear0)
+  df0        <- df0        |> filter(year >= refYear0)
+  # df_se      <- df_se      |> filter(year >= refYear0)
 
-  ###### Gather Multipliers ######
+  ### Drop columns from data
+  drop0      <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econMultiplier", "econAdj")
+  drop1      <- drop0 |> paste0("Name") |> c(drop0 |> paste0("Value"))
+  drop1      <- drop1 |> c("physScalar", "econScalar", "econMultiplier", "physEconScalar")
+  drop1      <- drop1 |> c("c1", "exp0")
+  df0        <- df0   |> select(-all_of(drop1))
+  rm(drop0, drop1)
+
+  ###### Join Data & Scalar Info ######
+  ### Join initial results & scalar info
+  drop0      <- c("byState")
+  join0      <- c("sector")
+  df_info    <- df_info |> select(-all_of(drop0))
+  df0        <- df0     |> left_join(df_info, by=c(join0))
+  rm(drop0, join0)
+
+  ###### Set Default Columns ######
+  ### Make some columns none and 1
+  mutate0    <- c("damageAdj", "econScalar") |> paste0("Name")
+  mutate1    <- c("damageAdj", "econScalar") |> paste0("Value")
+  df0[,mutate0] <- "none"
+  df0[,mutate1] <- 1
+  rm(mutate0, mutate1)
+
+  ###### Get Multiplier Values ######
   ### Gather econMultiplier scalars
   gather0    <- c("gdp_usd", "gdp_percap")
-  select0    <- gather0 |> c("byState", "year")
-  df_gdp0    <- df_se   |> summarize_seScenario(national=T)
-  df_gdp0    <- df_gdp0 |> select(all_of(select0))
-  df_gdp0    <- df_gdp0 |> pivot_longer(
+  select0    <- gather0 |> c("year")
+  # select0    <- gather0 |> c("byState", "year")
+  df_mult0   <- df_se   |> summarize_seScenario(national=T)
+  df_mult0   <- df_mult0 |> filter(byState==0)
+  df_mult0   <- df_mult0 |> select(all_of(select0))
+  df_mult0   <- df_mult0 |> pivot_longer(
     cols      = all_of(gather0),
     names_to  = "econMultiplierName",
     values_to = "econMultiplierValue"
   ) ### End pivot_longer()
+
   ### Drop values
   rm(gather0, select0)
 
-  ### Add reference year
-  df_gdp0      <- df_gdp0 |> mutate(refYear = refYear0)
+  ### Join with data
+  join0      <- c("econMultiplierName", "year")
+  df0        <- df0 |> left_join(df_mult0, by=c(join0))
+  # df0        <- df0 |> mutate(econAdjName = econMultiplierName)
+  rm(join0)
 
-  ###### Reference Year Data ######
-  ### Get 2090 values and then bind them in
-  rename0    <- c("econMultiplierValue")
-  rename1    <- c("econMultiplierValue0")
-  select0    <- c("refYear", "byState","econMultiplierName") |> c(rename0)
-  df_gdp1    <- df_gdp0 |>
-    filter(year == refYear) |>
-    select(all_of(select0)) |>
-    rename_at(c(rename0), ~rename1)
-  rm(rename0, rename1, select0)
-
-  ###### Economic Multipliers ######
-  ### Join with reference info & scalar info
-  join0      <- c("econMultiplierName")
-  join1      <- c("refYear","byState") |> c(join0)
-  df_gdp0 |> glimpse()
-  df_gdp1 |> glimpse()
-  df_gdp0    <- df_gdp0 |> left_join(df_gdp1, by=c(join1))
-  #df_gdp0    <- df_gdp0 |> left_join(df_info, by=c(join1), relationship="many-to-many")
-  df_gdp0    <- df_info |> left_join(df_gdp0, by=c(join1), relationship="many-to-many")
-
-  rm(join0, df_gdp1); rm(join1, df_info)
-
+  ###### Economic Adjustment Values ######
+  ### Get adjustment values & join with data
+  rename0    <- c("econMultiplierValue", "year")
+  rename1    <- c("econAdjValue", "refYear")
+  join0      <- c("econMultiplierName", "refYear") #|> c("byState")
+  select0    <- join0    |> c("econAdjValue")
+  df_adj0    <- df_mult0 |> filter(year == refYear0)
+  df_adj0    <- df_adj0  |> rename_at(c(rename0), ~rename1)
+  # df0 |> glimpse(); df_adj0 |> glimpse()
+  df_adj0    <- df_adj0  |> select(all_of(select0))
+  df0        <- df0      |> left_join(df_adj0, by=c(join0))
+  ### Drop values
+  rm(rename0, rename1, select0, join0, df_mult0, df_adj0)
+  # "got here1" |> print()
+  ###### Economic Multiplier & Scalar ######
   ### Calculate econ scalar values
-  # drop0      <- c("c1", "exp0", "econMultiplierValue0", "refYear")
-  df_gdp0    <- df_gdp0 |> mutate(econMultiplierValue = c1 * (econMultiplierValue / econMultiplierValue0)**exp0)
-  df_gdp0    <- df_gdp0 |> mutate(econAdjName  = econMultiplierName )
-  df_gdp0    <- df_gdp0 |> mutate(econAdjValue = econMultiplierValue)
-  df_gdp0    <- df_gdp0 |> mutate(econScalar   = econMultiplierValue)
-
-  ### Drop columns & join
-  drop0      <- c("econMultiplierValue0", "refYear")
-  drop1      <- c("c1", "exp0", "econMultiplierValue")
-  drop1      <- drop1 |> c("econAdjName", "econAdjValue", "econScalar")
-  df_gdp0    <- df_gdp0    |> select(-any_of(drop0))
-  df_scalars <- df_scalars |> select(-any_of(drop1))
-  rm(drop0, drop1)
-
-  ### Join new econ multipliers & scalars
-  join0      <- c("econMultiplierName", "byState", "year")
-  df_scalars <- df_scalars |> left_join(df_gdp0, by=c(join0))
-  rm(join0, df_gdp0)
-
-  ### Join new econ multipliers & scalars
-  #join0      <- c("econMultiplierName", "byState", "year")
-  #join0      <- c("byState", "year")
-
-  #df_scalars |> glimpse()
-  #df_gdp0 |> glimpse()
-  #df_scalars |> filter(scalarName %in% df_gdp0$econMultiplierName |> unique())
-  #df_scalars <- df_gdp0 |> left_join(df_scalars_new, by=c(join0, "physScalarName" = "scalarName" ))
-  #rm(join0, df_gdp0)
+  df0        <- df0 |> mutate(econMultiplier = c1 * (econMultiplierValue / econAdjValue)**exp0)
+  df0        <- df0 |> mutate(econScalar     = econScalarValue * econMultiplier)
 
   ###### Physical Scalar Values ######
-  ### Add physical scalars
+  ###### Get Multiplier Values ######
   ### Gather econMultiplier scalars
-  rename0    <- c("scalarName",     "scalarValue")
+  type0      <- "physScalar"
+  rename0    <- c("scalarName", "value")
   rename1    <- c("physScalarName", "physScalarValue")
-  select0    <- c(rename0) |> c("byState", "region") |> c(stateCols0) |> c("year", "refYear")
-  df_pop0    <- df_scalars |> filter(scalarType=="physScalar" & scalarName=="reg_pop")
-  df_pop0    <- df_pop0    |> rename_at(c(rename0), ~rename1)
-  df_pop0    <- df_pop0    |> mutate(refYear = refYear0)
-  df_pop0    <- df_pop0    |> select(all_of(select0))
-  rm(rename0, rename1, select0)
+  join0      <- c("physScalarName", "year") |> c("byState", "region") |> c(stateCols0)
+  # select0    <- rename1 |> c("year")
+  select0    <- rename1 |> c("year") |> c("byState", "region") |> c(stateCols0)
+  vals0      <- df0[["physScalarName"]] |> unique()
+  ### Filter, rename, select, join
+  df_phys0   <- df_scalars |> filter(scalarType == type0)
+  df_phys0   <- df_phys0   |> filter(scalarName %in% vals0)
+  df_phys0   <- df_phys0   |> rename_at(c(rename0), ~rename1)
+  df_phys0   <- df_phys0   |> select(all_of(select0))
+  # df0 |> glimpse(); df_phys0 |> glimpse()
+  df0        <- df0        |> left_join(df_phys0, by=c(join0))
+  ### Drop values
+  rm(type0, rename0, rename1, join0, select0, vals0)
 
-  ### Get reference info
-  rename0    <- c("physScalarValue")
-  rename1    <- c("physScalarValue0")
-  drop0      <- c("year")
-  df_pop1    <- df_pop0 |> filter(year == refYear)
-  df_pop1    <- df_pop1 |> select(-all_of(select0))
-  df_pop1    <- df_pop1 |> rename_at(c(rename0), ~rename1)
-  rm(rename0, rename1, drop0)
+  ###### Physical Adjustment Values ######
+  ### Get adjustment values & join with data
+  rename0    <- c("physScalarName", "physScalarValue", "year")
+  rename1    <- c("physAdjName", "physAdjValue", "refYear")
+  join0      <- c("physAdjName", "refYear") |> c("byState", "region") |> c(stateCols0)
+  select0    <- rename1  |> c("refYear") |> c("byState", "region") |> c(stateCols0)
+  df_adj0    <- df_phys0 |> filter(year == refYear0)
+  df_adj0    <- df_adj0  |> rename_at(c(rename0), ~rename1)
+  df_adj0    <- df_adj0  |> select(all_of(select0))
+  df0        <- df0      |> mutate(physAdjName = physScalarName)
+  # df0 |> glimpse(); df_adj0 |> glimpse()
+  df0        <- df0      |> left_join(df_adj0, by=c(join0))
+  ### Drop values
+  rm(rename0, rename1, select0, join0, df_phys0, df_adj0)
 
-  ### Join reference values with population scalar info
-  ### Join with reference info & scalar info
-  join0      <- c("physScalarName") |> c("byState", "region") |> c(stateCols0) |> c("refYear")
-  df_pop0    <- df_pop0 |> left_join(df_pop1, by=c(join0))
-  rm(join0, df_pop1)
-
-  ###### Physical Scalars ######
-  ### Calculate physical multiplier values
-  df_pop0    <- df_pop0 |> mutate(physScalar   = c2 * (physScalarValue / physScalarValue0))
-  df_pop0    <- df_pop0 |> mutate(physAdjName  = physScalarName )
-  df_pop0    <- df_pop0 |> mutate(physAdjValue = physScalarValue)
-  rm(drop0)
+  ###### Physical Scalar & Phys Econ Scalar ######
+  ### Calculate econ scalar values
+  df0        <- df0 |> mutate(physScalar     = c2 * physScalarValue / physAdjValue)
+  df0        <- df0 |> mutate(physEconScalar = econScalar * physScalar)
 
   ### Drop columns & join
-  drop0      <- c("c2", "physScalarValue0", "refYear")
-  drop1      <- c("physScalarValue", "physAdjName", "physAdjValue", "physScalar")
-  df_pop0    <- df_pop0    |> select(-all_of(drop0))
-  df_scalars <- df_scalars |> select(-any_of(drop1))
-  rm(drop0, drop1)
-
-  ### Join population values with scalar info
-  join0      <- c("physScalarName", "byState", "region") |> c(stateCols0)
-  df_scalars <- df_scalars |> left_join(df_pop0, by=c(join0))
-  df_scalars <- df_scalars |> mutate(physEconScalar = physScalar + econScalar)
-  rm(join0, df_pop0)
-
-  ###### Filter Data ######
-  ### Filter to years > refYear
-  drop0      <- c("refYear")
-  df_scalars <- df_scalars |> filter(year > refYear)
+  drop0      <- c("c2", "refYear")
+  df0        <- df0    |> filter(year > refYear)
+  df0        <- df0    |> select(-all_of(drop0))
   rm(drop0)
 
   ###### Return ######
   ### Return
-  return(df_scalars)
+  return(df0)
 }
 
 ###### match_scalarValues ######
@@ -667,29 +659,45 @@ get_econAdjValues <- function(
   if(hasOther0) {
     ###### Multiplier Adjustment
     ### Rename scalars and convert year to character
-    # rename0   <- c("year" , "econMultiplierName", "econMultiplierValue")
-    # rename1   <- c("year0", "econAdjName"       , "econAdjValue")
-    # join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState")
-    # join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState")
-    rename0   <- c("econMultiplierName", "econMultiplierValue")
-    rename1   <- c("econAdjName"       , "econAdjValue")
-    join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
-    join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year0","year","econMultiplierName")
+    # # rename0   <- c("year" , "econMultiplierName", "econMultiplierValue")
+    # # rename1   <- c("year0", "econAdjName"       , "econAdjValue")
+    # # join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState")
+    # # join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState")
+    # rename0   <- c("econMultiplierName", "econMultiplierValue")
+    # rename1   <- c("econAdjName"       , "econAdjValue")
+    # join0     <- rename0 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year")
+    # join1     <- rename1 |> (function(x){x[!(x %in% mutate0)]})() |> c("byState", "year0", "year", "econMultiplierName")
     ### Scalar Adjustments
     ## scalars |> glimpse()
     # Take value at base year
-    base_vals <- scalars |> filter(year == year0) |> select(-year)|> rename_at(c(rename0), ~rename1)
-    scalarAdj <- scalars |> rename_at(c(rename0), ~rename1) |> select(-econAdjValue)|>  left_join(base_vals,by =  c("byState", "year0","econAdjName"),relationship = "many-to-many")
+    rename0   <- c("econMultiplierName", "econMultiplierValue")
+    rename1   <- c("econAdjName"       , "econAdjValue")
+    drop0     <- c("year")
+    drop1     <- c("econAdjValue")
+    join0     <- c("byState", "year0","econAdjName")
+    base_vals <- scalars   |> filter(year == year0)
+    base_vals <- base_vals |> select(-all_of(drop0))|> rename_at(c(rename0), ~rename1)
+    scalarAdj <- scalars   |> rename_at(c(rename0), ~rename1)
+    scalarAdj <- scalarAdj |> select(-all_of(drop1))
+    scalarAdj <- scalarAdj |> left_join(base_vals, by=c(join0), relationship = "many-to-many")
+    rm(rename0, rename1, drop0, drop1, join0)
     # scalarAdj   <- scalarAdj |> mutate(year0 = year0 |> as.character())
     # data$year |> class() |> print(); scalarAdj$year |> class() |> print()
+
     ###### Join with scalars
-    scalars <- scalars |> left_join(scalarAdj, by =  c("byState", "year0","year", "econMultiplierName"="econAdjName")) |> mutate(econAdjName = econMultiplierName)
-    data      <- data    |> left_join(scalars, by=c(join1))
+    # scalars   <- scalars |> left_join(scalarAdj, by =  c("byState", "year0","year", "econMultiplierName"="econAdjName")) |> mutate(econAdjName = econMultiplierName)
+    join0     <- c("byState", "year0","year", "econAdjName")
+    # join1     <- c("econMultiplierName") |> c("year0", "year", "econMultiplierName", "byState")
+    join1     <- c("econMultiplierName") |> c("year0", "year", "econAdjName", "byState")
+    scalars   <- scalars |> mutate(econAdjName = econMultiplierName)
+    # scalars |> glimpse(); scalarAdj |> glimpse(); data |> glimpse()
+    scalars   <- scalars |> left_join(scalarAdj, by=c(join0))
+    data      <- data    |> left_join(scalars  , by=c(join1))
   } ### End if(hasOther0)
 
   ###### Rename value column
-  data        <- data |> rbind(df_none) |> select(-all_of(drop0))
-
+  data        <- data |> rbind(df_none) #|> select(-all_of(drop0))
+  # data |> glimpse()
   ###### Return results values
   return(data)
 }
@@ -724,65 +732,49 @@ initialize_resultsDf <- function(
   ###### Update Scalar Info ######
   ### Update scalar info
   ### Physical scalars
-  # "got here1" |> print(); df0 |> glimpse()
   df0        <- df0 |> match_scalarValues(df_scalars, scalarType="physScalar")
-  # "got here1" |> print(); df0 |> names() |> print()
   ### Physical adjustment
-  # "got here2" |> print(); df0 |> glimpse()
   df0        <- df0 |> match_scalarValues(df_scalars, scalarType="physAdj")
-  # "got here2" |> print(); df0 |> names() |> print()
   ### Damage adjustment
-  # "got here3" |> print(); df0 |> glimpse()
   df0        <- df0 |> match_scalarValues(df_scalars, scalarType="damageAdj")
-  # "got here3" |> print(); df0 |> names() |> print()
   ### Economic scalar
-  # "got here4" |> print(); df0 |> names() |> print()
   df0        <- df0 |> match_scalarValues(df_scalars, scalarType="econScalar")
-  # "got here4" |> print(); df0 |> names() |> print()
-  # ### Drop extra columns and add to data list
-  # drop0      <- c("gdp_usd", "reg_pop", "state_pop", "national_pop", "gdp_percap")
-  # df0        <- df0 |> select(-any_of(drop0))
 
   ###### Economic Adjustment Values ######
   ### Get economic adjustment values
   df_mult    <- "co_econMultipliers" |> get_frediDataObj("frediData")
   df0        <- df0 |> get_econAdjValues(scenario=df_se, multipliers=df_mult[["econMultiplierName"]])
-  # "got here5" |> print(); df0 |> names() |> print()
+
   ###### Calculate Scalars ######
   ### Calculate scalars
   df0        <- df0 |> calcScalars(elasticity = elasticity)
-  # "got here6" |> print(); df0 |> names() |> print()
+
   ###### SLR Scalars for Years > 2090 ######
   ### Scalars for SLR past 2090
   slrScalars <- "co_slrScalars" |> get_frediDataObj("frediData")
   types0     <- df0[["modelType"]] |> unique() |> tolower()
-  # slrSectors <- x
-  do_slr     <- "slr" %in% types0
+  refYear0   <- (slrScalars[["refYear"]] |> unique())[1]
+  has_slr    <- "slr" %in% types0
+  maxYr0     <- df0[["year"]] |> max()
+  do_slr     <- has_slr & (maxYr0 > refYear0)
   if(do_slr){
-    ### Get extended scalars
-    slrScalars <- df_se |> extend_slrScalars(
-      df_scalars = df_scalars,
-      elasticity = elasticity
-    ) ### End extend_slrScalars
-
     ### Separate GCM & SLR values
     df_gcm0    <- df0 |> filter(modelType |> tolower() != "slr")
     df_slr0    <- df0 |> filter(modelType |> tolower() == "slr")
 
     ### Filter to reference year
-    refYear0   <- (slrScalars[["refYear"]] |> unique())[1]
     df_slr1    <- df_slr0 |> filter(year <= refYear0)
-    df_slr2    <- df_slr0 |> filter(year >  refYear0)
+    df_slr2    <- df_slr0 |> filter(year >= refYear0)
     rm(df_slr0)
 
-    ### Get initial results for NPD
-    join0      <- c("sector", "region") |> c(stateCols0) |> c("year")
-    drop0      <- c("econMultiplierName", "econMultiplierValue", "econAdjName", "econAdjValue", "econScalar")
-    drop0      <- drop0 |> c("physScalarName", "physScalarValue", "physAdjName", "physAdjValue", "physScalar")
-    drop0      <- drop0 |> c("physEconScalar")
-    df_slr2    <- df_slr2 |> select(-all_of(drop0))
-    df_slr2    <- df_slr2 |> left_join(slrScalars, by=c(join0))
-    rm(join0, drop0)
+    ### Get extended scalars
+    df_slr2    <- df_slr2 |> extend_slrScalars(
+      df_se      = df_se,
+      df_scalars = df_scalars,
+      elasticity = elasticity
+    ) ### End extend_slrScalars
+    ### Ensure there are no duplicate years
+    df_slr2    <- df_slr2 |> filter(year > refYear0)
 
     ### Add results back together
     df_slr0    <- df_slr1 |> rbind(df_slr2)
@@ -809,12 +801,12 @@ calcScalars <- function(
   ###### Calculate physical scalar ######
   ### Physical scalars are the product of the physical scalar, the physical adjustment, and the damage adjustment
   # data |> glimpse()
-  data   <- data |> mutate(physScalar = physScalarValue * physAdjValue * damageAdjValue )
+  data <- data |> mutate(physScalar = physScalarValue * physAdjValue * damageAdjValue )
 
   ###### Adjust Elasticity for VSL ######
   ### Adjust Elasticity for VSL only
   if(!(elasticity |> is.null())){
-    data       <- data |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
+    data <- data |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
     # if(is.numeric(elasticity)){data   <- data |> mutate(exp0 = elasticity)}
   }
 
@@ -822,16 +814,16 @@ calcScalars <- function(
   ### Economic multipliers are the economic multiplier value divided by the adjustment
   ### The economic multiplier value is 1, GDP, or GDP per capita
   ### The economic adjustment value is usually the economic multiplier value at a reference year
-  data   <- data |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
+  data <- data |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
 
   ###### Economic scalars ######
   ### The economic scalar is calculated using the following equation.
   ### Constants c0, c1, and exp0 are from the
-  data   <- data |> mutate(econScalar = c0 + c1 * econScalarValue * (econMultiplier) )
+  data <- data |> mutate(econScalar = c0 + c1 * econScalarValue * (econMultiplier) )
 
   ###### Economic-physical scalar ######
   ### Combine the physical and economic scalar.
-  data   <- data |> mutate(physEconScalar  = econScalar * physScalar )
+  data <- data |> mutate(physEconScalar  = econScalar * physScalar )
 
   ###### Return ######
   return(data)
@@ -928,7 +920,6 @@ get_slrScaledImpacts <- function(
     df0, ### Initial results for SLR sectors
     df1  ### Driver data frames
     ){
-  # "got here1" |> print()
   ####### By State
   ### By state
   byState     <- "state" %in% (df0 |> names())
