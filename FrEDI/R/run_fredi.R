@@ -287,7 +287,6 @@ run_fredi <- function(
     ### Initialize column names
     colNames_i  <- "year" |> c(regCol_i) |> c(valueCol_i) #; print(colNames_i)
     numCols_i   <- colNames_i |> length()
-    ### Add region column ##wm need to be state if byState?
     has_i        <- paste0("has_", input_i, "Update")
     # has_update_i <- is.null(inputsList[[inputName_i]])
     df_input_i   <- inputsList[[inputName_i]]
@@ -377,7 +376,7 @@ run_fredi <- function(
       minYear_x <- x$year |> min()
       interpYrs <- refYear_slr:maxYear
       ### Interpolate annual values
-      x_interp  <- x |> interpolate_annual(#wm same as temps above, I *think* this is fine to leave
+      x_interp  <- x |> interpolate_annual(#wm same as temps above, I think fine to leave
         years  = interpYrs,
         column = "slr_cm",
         rule   = 1:2
@@ -566,7 +565,6 @@ run_fredi <- function(
     rm(df_gcm0)
   } ### End if(nrow_gcm)
   # df_scenarioResults |> filter(!is.na(scaled_impacts)) |> nrow() |> print()
-
   ###### ** SLR Scaled Impacts ######
   if(nrow_slr){
     # "got here1" |> print()
@@ -585,7 +583,6 @@ run_fredi <- function(
 
   ### Message user
   if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
-
   ###### Calculate Impacts  ######
   ### Join results with initialized results and update missing observations with NA
   ### Drop columns, then join with scenario results
@@ -646,7 +643,7 @@ run_fredi <- function(
 
   #### Rename Sector Columns
   df_results <- df_results |> rename(sector_id = sector, sector = sector_label)
-  #### Regions
+  #### Regions #wm should we do something similar for state?
   # df_results |> names() |> print()
   reg_lvls   <- co_regions[["region_dot"]]
   reg_lbls   <- co_regions[["region_label"]]
