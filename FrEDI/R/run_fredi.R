@@ -456,6 +456,7 @@ run_fredi <- function(
     # pop_df |> glimpse()
     ### Calculate national population
     national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()
+    national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
     # national_pop |> glimpse()
     rm("popInput")
   } ### if(has_popUpdate)
