@@ -143,19 +143,20 @@ run_fredi <- function(
     inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
-    elasticity = 0.4, ### Override value for elasticity for economic values
+    # elasticity = 0.4, ### Override value for elasticity for economic values
+    elasticity = NULL, ### Override value for elasticity for economic values
     maxYear    = 2090,
     thru2300   = FALSE,
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
-    byState    = FALSE, ### Whether to run at state level for available sectors
+    # byState    = FALSE, ### Whether to run at state level for available sectors
+    allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
 ){
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   silent    <- silent |> is.null() |> ifelse(T, silent)
   msgUser   <- !silent
-  ### Uncomment for testing
-  testing   <- F  ### Whether to include scaled impact values
+  ### Uncomment for allCols
   doPrimary <- F  ### whether to filter to primary impacts
   ### Model years and NPD (FrEDI past 2090)
   refYear   <- 2090
@@ -171,24 +172,19 @@ run_fredi <- function(
 
   ###### Create file paths ######
   ### Assign data objects to objects in this namespace
-  ### - Configuration objects
-  # names_frediConfig <- fredi_config |> names()
-  # for(name_i in names_frediConfig){assign(name_i, fredi_config[[name_i]]); rm(name_i)}
-  ### - FrEDI data objects
-  # rDataList |> names() |> print()
-  # for(obj_i in rDataList){ assign(obj_i[["name"]], obj_i[["data"]])}
-  # frediData |> names() |> print(); stateData |> names() |> print(); regionData |> names() |> print()
-  ### Update name in rDataList for region level until fixed
-  # rDataList[["regionData"]][["name"]] <- "regionData"
-  names_frediData   <- rDataList[["frediData"]][["data"]] |> names()
-  for(name_i in names_frediData){assign(name_i, rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
+  for(list_i in rDataList){
+    ### Assign list elements to name space
+    name_i <- list_i[["name"]]
+    data_i <- list_i[["data"]]
+    ### Assign list elements to name space
+    name_i |> assign(data_i)
+    ### Assign elements of list i to name space
+    names_i <- data_i |> names()
+    for(name_j in names_i){name_j |> assign(data_i[[name_j]]); rm(name_j)}
+    rm(list_i, name_i, data_i)
+  } ### End for(i in rDataList)
   ### Assign FrEDI config
-  names_frediConfig <- fredi_config |> names()
-  for(name_i in names_frediConfig){assign(name_i, fredi_config[[name_i]]); rm(name_i)}
-  ### Assign region- or state-level objects
-  dataLvl0          <- byState |> ifelse("stateData", "regionData")
-  names_dataLvl0    <- rDataList[[dataLvl0]][["data"]] |> names()
-  for(name_i in names_dataLvl0){assign(name_i, rDataList[[dataLvl0]][["data"]][[name_i]]); rm(name_i)}
+  for(name_i in fredi_config |> names()){assign(name_i, fredi_config[[name_i]]); rm(name_i)}
 
   ### Years
   maxYear    <- maxYear0
@@ -215,67 +211,62 @@ run_fredi <- function(
   requiresAgg <- aggLevels |> length() > 0
 
   ###### Sectors List ######
-  ### Sector names
-  ### Limit to just available sectors by state/region
-  # if(byState){
-  #   sector_names  <- co_stateSectors$sector_id
-  #   sector_labels <- co_stateSectors$sector_label
-  # } else{
-  #   sector_names  <- co_sectors$sector_id
-  #   sector_labels <- co_sectors$sector_label
-  # }
-  sector_names  <- co_sectors$sector_id
-  sector_labels <- co_sectors$sector_label
-  # sector_names |> print()
-
+  ### Sector names & labels
+  sectorIds    <- co_sectors[["sector_id"   ]]
+  sectorLbls   <- co_sectors[["sector_label"]]
   ### Initialize sector list if the sectors list is null
   if(sectorList |> is.null()){
-    sectorList    <- sector_names
+    sectorList    <- sectorIds
   } else{
+    # sectorIds |> print()
+    ### Get lower case versions
+    sectors0   <- sectorIds  |> tolower()
+    sectors1   <- sectorLbls |> tolower()
+    sectors2   <- sectorList |> tolower()
+    # sectors0 |> print(); sectors1 |> print(); sectors2 |> print()
     ### Compare inputs to names and labels in the data
     ### Subset to sector list in sector names
-    sectors0   <- sector_names  |> tolower()
-    sectors1   <- sector_labels |> tolower()
-    sectors2   <- sectorList    |> tolower()
     which0     <- (sectors0 %in% sectors2) | (sectors1 %in% sectors2)
-    sectorList <- sector_names[which0]
+    sectorIds  <- sectorIds [which0]
+    sectorList <- sectorLbls[which0]
     ### Message users about missing sectors
     which1     <- (sectors2 %in% sectors0) | (sectors2 %in% sectors1)
     na_sectors <- sectorList[!which1]
     rm(sectors0, sectors1, sectors2, which0, which1)
     ### Message the user
     if(na_sectors |> length() >= 1){
-      paste0(
-        "Warning! Error in `sectorList`.",
-        "\n\t", "Impacts are not available for the following: '",
-        "\n\t\t", paste(missing_sectors, collapse= "', '"), "'...",
-        "\n\t", "Available sectors: '",
-        "\n\t\t", paste(sector_names, collapse= "', '"), "'"
+      paste0("Warning! Error in `sectorList`:") |> message()
+      "\n\t" |> paste0(
+        "Impacts are not available for the following sectors: '",
+        na_sectors |> paste(collapse= "', '"),
+        "'..."
+      ) |> message()
+      "\n\t" |> paste0(
+        "Available sectors: '",
+        sectorLbls |> paste(collapse= "', '"),
+        "'."
       ) |> message() ### End message
     } ### End if(length(missing_sectors)>=1)
   } ### End else(is.null(sectorList))
   ### Number of sectors
+  # sectorList |> print()
   num_sectors  <- sectorList |> length()
 
+  ### Filter to sectors
+  co_slrScalars  <- co_slrScalars  |> filter(sector %in% sectorIds)
+  df_sectorsInfo <- df_sectorsInfo |> filter(sector %in% sectorIds)
+
   ###### By State ######
-  if(byState){
-    stateCols0   <- c("state", "postal")
-    popCol0      <- "state_pop"
-  } else{
-    stateCols0   <- c()
-    popCol0      <- "reg_pop"
-  } ### End byState
+  byState <- TRUE
+  popCol0 <- byState |> ifelse("state_pop", "reg_pop")
+  if(byState){stateCols0 <- c("state", "postal")} else{stateCols0 <- c()}
 
   ###### Inputs ######
   ###### ** Load Inputs ######
   ### Create logicals and initialize inputs list
-  list_inputs     <- co_inputScenarioInfo$inputName
+  list_inputs     <- co_inputScenarioInfo[["inputName"]]
   num_inputNames  <- co_inputScenarioInfo |> nrow()
-  if(inputsList |> is.null()) {
-    inputsList <- list()
-  } else{
-    message("Checking input values...")
-  }
+  if(inputsList |> is.null()) {inputsList <- list()} else{"Checking input values..." |> message()}
   ### Iterate over the input list
   # if(!is.null(inputsList)){
   ### Assign inputs to objects
@@ -292,21 +283,27 @@ run_fredi <- function(
     ### Column Info
     region_i    <- inputInfo_i$region |> unique()
     valueCol_i  <- inputInfo_i$valueCol |> unique()
+    if(region_i == 1){regCol_i <- c("region")} else{regCol_i <- c()}
     ### Initialize column names
-    numCols_i   <- colNames_i <- c("year", valueCol_i) #; print(colNames_i)
+    colNames_i  <- "year" |> c(regCol_i) |> c(valueCol_i) #; print(colNames_i)
+    numCols_i   <- colNames_i |> length()
     ### Add region column ##wm need to be state if byState?
-    if(region_i == 1){
-      colNames_i  <- c(colNames_i[1], "region", colNames_i[2])
-    }
     has_i        <- paste0("has_", input_i, "Update")
     # has_update_i <- is.null(inputsList[[inputName_i]])
     df_input_i   <- inputsList[[inputName_i]]
-    has_update_i <- !is.null(df_input_i)
+    has_update_i <- !(df_input_i |> is.null())
     ### Assign inputs to objects
-    assign(has_i,    has_update_i)
-    assign(inputName_i, df_input_i)
+    has_i       |> assign(has_update_i)
+    inputName_i |> assign(df_input_i  )
   } ### End iterate over inputs
   # }
+
+  ### Message user about elasticity
+  if(!(elasticity |> is.null()) & !(elasticity |> is.numeric())){
+    paste0("\t", "Incorrect value type provided for argument 'elasticity'...") |> message()
+    paste0("\t\t", "Using default elasticity values.") |> message()
+  } ### End if
+
 
   ### Update arguments list
   argsList[["sectorList"]] <- sectorList
@@ -485,334 +482,125 @@ run_fredi <- function(
   arrange0          <- "region" |> c(stateCols0) |> c(join0)
   updatedScenario   <- national_scenario |> left_join(pop_df, by=join0)
   updatedScenario   <- updatedScenario   |> arrange_at(c(arrange0))
-  # updatedScenario   <- updatedScenario   |> mutate_at (c("region"), function(x){gsub(" ", ".", x)})
   rm(join0, arrange0)
-  # updatedScenario |> group_by_at(.vars=c("region", "year")) |> summarize(n=n(), .groups="keep") |> ungroup() |> filter(n>1) |> nrow() |> print()
 
   ###### Update Scalars ######
   if(msgUser) message("", list_messages[["updateScalars"]]$try, "")
-  # mutateCols0     <- c("scalarName", "scalarType", "national_or_regional")
-  # mutateVals0     <- c("reg_pop", "physScalar", "regional")
   ### Filter main scalars to correct years and filter out regional population
-  ### Join with regPopScalar
   df_mainScalars <- df_mainScalars |> filter(year >= minYear) |> filter(year <= maxYear)
-  df_mainScalars <- df_mainScalars |> filter(scalarName!="reg_pop")
-  df_mainScalars <- df_mainScalars |> (function(df0, pop0 = pop_df, popCols = popCols0){
-    ### Format population
-    pop0 <- pop0 |> select(all_of(popCols))
-    # pop0 <- pop0 |> rename(value=reg_pop)
-    pop0 <- pop0 |> mutate(scalarName           = "reg_pop")
-    pop0 <- pop0 |> mutate(scalarType           = "physScalar")
-    pop0 <- pop0 |> mutate(national_or_regional = "regional")
-    pop0 <- pop0 |> rename_at(c(popCol0), ~"value")
-    ### Bind regional population with other scalars
-    df0  <- df0  |> rbind(pop0)
-    return(df0)
-  })()
+  # df_mainScalars |> glimpse();
+  df_mainScalars <- df_mainScalars |> update_popScalars(updatedScenario)
+  # df_mainScalars1 |> glimpse();
 
-  ###### NPD Scalars ######
-  ### Scalars for SLR past 2090
-  if(do_npd){
-    # slr_sectors    <- c("CoastalProperties", "HTF")
-    co_npdScalars <- tibble(sector = c("CoastalProperties", "HTF"))
-    co_npdScalars <- co_npdScalars |> mutate(npd_scalarType  = c("gdp_percap", "gdp_usd"))
-    co_npdScalars <- co_npdScalars |> mutate(c1   = c(1,  0.1625))
-    co_npdScalars <- co_npdScalars |> mutate(exp0 = c(elasticity |> is.null() |> ifelse(0.45, elasticity), 1))
-    co_npdScalars <- co_npdScalars |> mutate(c2   = c(0, 0.8375))
-
-    ### Columns
-    select0    <- c("year", "gdp_usd", "gdp_percap")
-    gather0    <- c("gdp_usd", "gdp_percap")
-    ### Calculate scalars and gather scalars
-    npdScalars <- national_scenario |> filter(year >= refYear)
-    npdScalars <- npdScalars |> select(all_of(select0))
-    npdScalars <- npdScalars |> pivot_longer(
-      cols      = c(all_of(gather0)),
-      names_to  = "npd_scalarType",
-      values_to = "npd_scalarValue"
-    )
-    rm("select0", "gather0")
-    ### Get 2090 values and then bind them
-    npdScalars <- npdScalars |> (function(npd0, co_npd = co_npdScalars){
-      #### Columns
-      join0 <- c("npd_scalarType")
-      ### Filter to year and drop year column, rename scalar value
-      npd1  <- npd0 |> filter(year == refYear) |> select(-c("year"))
-      npd1  <- npd1 |> rename(npd_scalarValueRef = npd_scalarValue)
-      ### Join with scalar and sector info
-      npd0  <- npd0 |> left_join(npd1  , by = c(join0))
-      npd0  <- npd0 |> left_join(co_npd, by = c(join0))
-      return(npd0)
-    })()
-    ### Calculate scalar value and drop scalar columns
-    select0    <- c("c1", "exp0", "npd_scalarValueRef")
-    npdScalars <- npdScalars |> mutate(npd_scalarValue = c1 * (npd_scalarValue / npd_scalarValueRef)**exp0)
-    npdScalars <- npdScalars |> select(-all_of(select0))
-    rm("select0")
-    # (npdScalars |> filter(year > 2090))$year |> head() |> print()
-    ### Join with regional population
-    npdScalars <- npdScalars |> (function(npd0, pop0 = pop_df, refYear0 = refYear){
-      ### Columns
-      select0 <- c("year", "region") |> c(stateCols0) |> c(popCol0)
-      join0   <- select0[!(select0 %in% c("year"))]
-      join1   <- "region" |> c(stateCols0)
-      ### Separate population
-      pop1  <- pop0 |> filter(year >= refYear0) |> select(all_of(join0))
-      pop2  <- pop0 |> filter(year == refYear0) |> select(all_of(join0)) |> rename_at(c(popCol0), ~"reg_popRef")
-      ### Join by year
-      npd0  <- npd0 |> left_join(pop1, by = c("year"))
-      ### Join by region
-      npd0  <- npd0 |> left_join(pop2, by = c("region"))
-      ### Return
-      return(npd0)
-    })()
-    ### Calculate value and rename values
-    # npdScalars <- npdScalars |> mutate(npd_scalarValue = npd_scalarValue + c2 * (reg_pop / reg_popRef))
-    select0    <- c("c2", popCol0, "reg_popRef")
-    npdScalars <- npdScalars |> mutate(npd_scalarValue = npd_scalarValue)
-    npdScalars[["npd_scalarValue"]] <- npdScalars[["npd_scalarValue"]] + npdScalars[["c2"]] * npdScalars[[popCol0]] / npdScalars[["reg_popRef"]]
-    npdScalars <- npdScalars |> select(-all_of(select0))
-    rm(select0)
-    ### Rename values
-    npdScalars <- npdScalars |> mutate(econScalar     = npd_scalarValue)
-    npdScalars <- npdScalars |> mutate(physEconScalar = npd_scalarValue)
-    npdScalars <- npdScalars |> select(-c("npd_scalarValue", "npd_scalarType"))
-    npdScalars <- npdScalars |> filter(year > refYear)
-  }
-
+  # ### Message the user
+  # if(msgUser) {paste0("\t", messages_data[["calcScalars"]]$success) |> message()}
+  # # ### Message the user
+  # # if(msgUser) message("\t", list_messages[["updateScalars"]]$success)
+  # "got here" |> print()
 
   ###### Initialize Results ######
-  ### Filter initial results to specified sectors
-  ### Join to the updated base scenario
+  ### Initialized results: Join sector info and default scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
-  if(!(elasticity |> is.null()) & !(elasticity |> is.numeric())){
-    paste0("\t", "Incorrect value type provided for argument 'elasticity'...") |> message()
-    paste0("\t\t", "Using default elasticity values.") |> message()
-  } ### End if
-  initialResults <- df_results0    |> filter(year >= minYear) |> filter(year <= maxYear)
-  initialResults <- initialResults |> filter(sector %in% sectorList)
-  rm("df_results0")
+  # df_sectorsInfo |> glimpse(); #df_mainScalars |> glimpse(); df_mainScalars1 |> glimpse()
+  df_results0    <- updatedScenario |> initialize_resultsDf(
+    df_info    = df_sectorsInfo,
+    df_scalars = df_mainScalars,
+    elasticity = elasticity
+  )
+  # df_mainScalars1 |> glimpse();
+  ### Filter to years
+  df_results0    <- df_results0 |> filter(year >= minYear & year <= maxYear)
+  # df_results0    <- df_results0 |> mutate(model_type=modelType)
 
-  ### Update scalar values
-  # initialResults$region |> unique() |> print(); updatedScenario$region |> unique() |> print()
-  join0          <- c("year", "region") |> c(stateCols0)
-  initialResults <- initialResults |> left_join(updatedScenario, by=c(join0))
-  initialResults <- initialResults |> match_scalarValues(df_mainScalars, scalarType="physScalar")
-  initialResults <- initialResults |> get_econAdjValues(scenario=updatedScenario, multipliers=co_econMultipliers[,1])
-  initialResults <- initialResults |> calcScalars(elasticity = elasticity)
-  rm("df_mainScalars", "updatedScenario", join0) ### df_mainScalars no longer needed
-  # paste0("Initial Results: ", nrow(initialResults)) |> print(); initialResults |> head() |> glimpse()
+  ##### Scenario ID  ######
+  ### Mutate model for SLR sectors
+  # df_results0 |> glimpse()
+  modelCols0     <- c("model_id", "model_dot", "model_underscore", "model_label")
+  co_models0     <- "co_models" |> get_frediDataObj("frediData")
+  ### Change model to interpolation for SLR models
+  group0         <- co_models0 |> names()
+  which_slr      <- (co_models0[["modelType"]] |> tolower() == "slr") |> which()
+  co_models0[which_slr,modelCols0] <- "Interpolation"
+  co_models0     <- co_models0 |>
+    group_by_at(c(group0)) |>
+    summarize(n=n(), .groups="keep") |> ungroup() |>
+    select(-c("n"))
+  rm(group0, which_slr, modelCols0)
+  # "got here" |> print()
+  ### Join with initial results
+  join0          <- c("modelType")
+  df_results0    <- df_results0 |> left_join(co_models0, by=c(join0))
+  # df_results0 |> glimpse()
+  rm(join0, co_models0)
+  # return(df_results0)
 
-  ###### Initialize Results for NPD ######
-  if(do_npd){
-    ### Get initial results for NPD
-    join0              <- c("sector", "year", "region") |> c(stateCols0)
-    initialResults_npd <- initialResults     |> filter((sector %in% co_npdScalars$sector & year > refYear))
-    initialResults_npd <- initialResults_npd |> select(-c("econScalar", "physEconScalar"))
-    initialResults_npd <- initialResults_npd |> left_join(npdScalars, by = c(join0))
-    rm(join0)
-    # ### Adjust NPD scalars
-    initialResults     <- initialResults     |> filter(!(sector %in% co_npdScalars$sector & year > refYear))
-    initialResults     <- initialResults     |> rbind(initialResults_npd)
-    rm("initialResults_npd", "co_npdScalars", "npdScalars")
-  }
-  ### Message the user
-  if(msgUser) message("\t", list_messages[["updateScalars"]]$success)
-
-  ###### Scenario ID  ######
   ### Create scenario ID and separate by model type
-  initialResults     <- initialResults |> mutate(model_type=modelType)
-  initialResults_slr <- initialResults |> filter(modelType=="slr")
-  initialResults     <- initialResults |> filter(modelType!="slr")
-  ### Number of GCM and SLR rows
-  nrow_gcm           <- initialResults     |> nrow()
-  nrow_slr           <- initialResults_slr |> nrow()
-  # nrow_gcm |> c(nrow_slr) |> print()
+  include0        <- c("region") |> c(stateCols0) |> c("model_label")
+  df_results0     <- df_results0 |> get_scenario_id(include = include0)
 
   ###### Scaled Impacts  ######
   ### Initialize and empty data frame df_scenarioResults
   if(msgUser) message(list_messages[["scaledImpacts"]]$try)
   if(msgUser) message("Calculating scaled impacts...")
   df_scenarioResults  <- tibble()
-  impactSelectCols    <- c("year", "scaled_impacts", "scenario_id")
+  # df_results0    <- df_results0 |> mutate(model_type=modelType)
+  df_results0_gcm <- df_results0 |> filter(modelType!="slr")
+  df_results0_slr <- df_results0 |> filter(modelType=="slr")
+  rm(df_results0)
 
-  ###### GCM Scaled Impacts ######
+  ### Number of GCM and SLR rows
+  nrow_gcm        <- df_results0_gcm |> nrow()
+  nrow_slr        <- df_results0_slr |> nrow()
+  # nrow_gcm |> c(nrow_slr) |> print()
+
+  ###### ** GCM Scaled Impacts ######
   if(nrow_gcm){
-    ### Drivers
-    df_drivers_gcm <- df_drivers |> filter(modelType == "gcm")
-    ### Join with model info
-    ### Get scenario id
-    # initialResults_slr <- initialResults_slr |> get_scenario_id(include=c())
-    include0       <- c("region") |> c(stateCols0) |> c("model_label")
-    initialResults <- initialResults |> left_join(co_models, by="modelType")
-    initialResults <- initialResults |> get_scenario_id(include=c(include0))
-    initialResults <- initialResults |> select(-c("model_type"))
-    rm(include0)
-
-    # testIds0 <- (data_scaledImpacts |> filter(sector=="WindDamage" & hasScenario==1))$scenario_id |> unique()
-    # testIds1 <- initialResults$scenario_id |> unique()
-    # (c("WindDamage_NA_NA_NA_Northeast_N/A_N/A_MIROC5", "WindDamage_NA_NA_NA_Northeast_N/A_N/A_CCSM4") %in% testIds0) |> print()
-    # (c("WindDamage_NA_NA_NA_Northeast_N/A_N/A_MIROC5", "WindDamage_NA_NA_NA_Northeast_N/A_N/A_CCSM4") %in% testIds1) |> print()
-    # testIds1[!(testIds1 %in% testIds0)] |> head() |> print()
-    # testIds0[!(testIds0 %in% testIds1)] |> head() |> print()
-
-    ### Get list of unique impact functions
-    impFunNames <- list_impactFunctions |> names() |> unique()
-    ### Check whether the scenario has an impact function (scenarios with all missing values have no functions)
-    gcmAllFuncs <- initialResults[["scenario_id"]] |> unique()
-    df_gcm      <- tibble(scenario_id = gcmAllFuncs)
-    df_gcm      <- df_gcm |> mutate(hasScenario = 1 * (scenario_id %in% impFunNames))
-    ### Figure out which have functions
-    gcmHasFunc  <- df_gcm[["hasScenario"]]==1
-    gcmHasFuns  <- (gcmHasFunc |> which() |> length()) > 0
-    gcmNoFuns   <- ((!gcmHasFunc) |> which() |> length()) > 0
-    # gcmHasFuns |> c(gcmNoFuns) |> print();
-    # df_gcm |> filter(hasScenario==1) |> glimpse(); df_gcm |> filter(hasScenario==0) |> glimpse()
-
-    ### Get impacts for scenario_ids that have functions
-    if(gcmHasFuns){
-      # "got here" |> print()
-      hasFunNames <- df_gcm[["scenario_id"]][gcmHasFunc] |> unique()
-      hasFunsList <- list_impactFunctions[impFunNames %in% hasFunNames]
-      ### Get impacts
-      imp_hasFuns <- hasFunsList |> interpolate_impacts(xVar = df_drivers_gcm$modelUnitValue, years = df_drivers_gcm$year)
-      imp_hasFuns <- imp_hasFuns |> rename(modelUnitValue = xVar) |> filter(year>=minYear)
-      imp_hasFuns <- imp_hasFuns |> select(all_of(impactSelectCols))
-      # df_scenarioResults |> names() |> print()
-      df_scenarioResults <- df_scenarioResults |> rbind(imp_hasFuns)
-      rm("hasFunNames", "hasFunsList", "imp_hasFuns")
-    } #; return(df_i)
-    if(gcmNoFuns){
-      imp_noFuns  <- df_gcm[!gcmHasFunc,]
-      imp_noFuns  <- imp_noFuns |> mutate(scaled_impacts = NA, joinCol = 1)
-      imp_noFuns  <- imp_noFuns |> left_join(df_drivers_gcm |> mutate(joinCol = 1), by=c("joinCol"))
-      imp_noFuns  <- imp_noFuns |> select(all_of(impactSelectCols))
-      # df_scenarioResults |> names() |> print(); imp_noFuns |> names() |> print()
-      df_scenarioResults <- df_scenarioResults |> rbind(imp_noFuns)
-      rm("imp_noFuns")
-    }
-    rm("df_drivers_gcm", "gcmAllFuncs", "gcmHasFuns", "gcmNoFuns")
-  }
+    # df_results0_gcm |> glimpse()
+    df_gcm0            <- df_results0_gcm |> get_gcmScaledImpacts(df1=df_drivers)
+    df_scenarioResults <- df_scenarioResults |> rbind(df_gcm0)
+    # # df_scenarioResults |> glimpse()
+    # df_results0_gcm$scenario_id |> unique() |> head() |> print()
+    # (df_gcm0 |> filter(!is.na(scaled_impacts)))$scenario_id |> unique() |> head() |> print()
+    # df_scenarioResults$scenario_id |> unique() |> head() |> print()
+    rm(df_gcm0)
+  } ### End if(nrow_gcm)
   # df_scenarioResults |> filter(!is.na(scaled_impacts)) |> nrow() |> print()
 
-  ###### SLR Scaled Impacts ######
+  ###### ** SLR Scaled Impacts ######
   if(nrow_slr){
     # "got here1" |> print()
-    ### Filter to appropriate number of years
-    slrImpacts     <- slrImpacts  |> filter(year <= maxYear)
-    slrExtremes    <- slrExtremes |> filter(year <= maxYear)
-    slrDrivers     <- df_drivers  |> filter(modelType=="slr") #|> rename(model_type=modelType)
+    df_slr0            <- df_results0_slr |> get_slrScaledImpacts(df1=df_drivers)
+    df_scenarioResults <- df_scenarioResults |> rbind(df_slr0)
+    rm(df_slr0)
+  } ### End if(nrow_slr)
 
-    ###### ** SLR Scaled Impacts Above Max #######
-    ### Examine driver values: combine with extremeSs
-    slrMax         <- (co_modelTypes |> filter(modelType=="slr"))$modelMaxOutput[1]
-    ### Combine SLR with extremes and filter to appropriate years
-    df_slrMax      <- slrDrivers
-    df_slrMax      <- df_slrMax   |> left_join(slrExtremes, by=c("year"))
-    df_slrMax      <- df_slrMax   |> filter(modelUnitValue >= driverValue_ref)
-    slrMaxYears    <- df_slrMax   |> get_uniqueValues(column="year")
-    ### Calculate scaled impacts for values > slrMax
-    df_slrMax      <- df_slrMax   |> mutate(deltaDriver    = modelUnitValue    - driverValue_ref)
-    df_slrMax      <- df_slrMax   |> mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
-    # df_slrMax |> filter(deltaDriver < 0) |> nrow() |> print()
+  ###### ** Format Scaled Impacts ######
+  ### Drop columns
+  # df_results0 |> glimpse() |> print()
+  drop0              <- c("modelUnitValue")
+  df_scenarioResults <- df_scenarioResults |> select(-all_of(drop0))
+  # df_scenarioResults |> names() |> print()
+  rm(drop0)
 
-    ###### ** SLR Other Scaled Impacts #######
-    ### Get impacts and create scenario ID for values <= slrMax
-    df_slrImpacts  <- slrDrivers    |> filter(!(year %in% slrMaxYears))
-    df_slrImpacts  <- df_slrImpacts |> left_join(slrImpacts, by=c("year"))
-    # "got here2" |> print()
-
-    ###### ** SLR Interpolation ######
-    nrow_oth       <- df_slrImpacts |> nrow()
-    # nrow_oth |> print()
-    if(nrow_oth){
-      ### Group by cols
-      cols0          <- c("modelType",  "modelUnitValue")
-      cols1          <- c("model_type", "driverValue")
-      cols2          <- c("lower_model", "upper_model")
-      ### Group by cols
-      slr_names      <- df_slrImpacts |> names()
-      slrGroupByCols <- c("sector", "variant", "impactYear", "impactType", "region")
-      slrGroupByCols <- slrGroupByCols |> c(stateCols0) |> c("model", "model_dot") |> c("scenario_id")
-      slrGroupByCols <- slrGroupByCols[slrGroupByCols %in% slr_names] |> c(cols1)
-      # rm("slrGroupByCols", "slr_names")
-      #### Interpolate driver values
-      slrDrivers     <- slrDrivers  |> rename_at(c(cols0), ~cols1)
-      slrScenario    <- slrDrivers  |> filter(model_type |> tolower() == "slr") |> select(-c("model_type"))
-      slrScenario    <- slrScenario |> slr_Interp_byYear()
-      slrScenario    <- slrScenario |> mutate_at(c(cols2), function(y){gsub(" ", "", y)})
-      ### Interpolate
-      df_slrImpacts  <- df_slrImpacts |> rename_at(c("modelUnitValue"), ~"driverValue")
-      df_slrImpacts  <- df_slrImpacts |> fredi_slrInterp(slr_x = slrScenario, groupByCols=slrGroupByCols)
-      df_slrImpacts  <- df_slrImpacts |> rename_at(c("driverValue"), ~"modelUnitValue")
-      rm("slrGroupByCols", "slr_names", "slrScenario")
-      rm("cols0", "cols1")
-    }
-    rm("nrow_oth")
-    # df_slrImpacts |> filter(!is.na(scaled_impacts)) |> nrow() |> print()
-
-    ### Get scenario ID and adjust the model value
-    # df_slrMax |> names() |> print()
-    df_slrMax      <- df_slrMax     |> mutate(model_dot = "Interpolation")
-    df_slrImpacts  <- df_slrImpacts |> mutate(model_dot = "Interpolation")
-    ### Scenario ID
-    include0       <- c("region", "model_dot") |> c(stateCols0)
-    df_slrMax      <- df_slrMax     |> get_scenario_id(include=c(include0))
-    df_slrImpacts  <- df_slrImpacts |> get_scenario_id(include=c(include0))
-    rm(include0)
-
-    ###### ** SLR Join Scaled Impacts ######
-    ### Add other results back in
-    # "got here7" |> print()
-    df_slrMax      <- df_slrMax     |> select(all_of(impactSelectCols))
-    df_slrImpacts  <- df_slrImpacts |> select(all_of(impactSelectCols))
-    df_slrMax_ids  <- df_slrMax$scenario_id |> unique() |> sort()
-    df_slrImp_ids  <- df_slrImpacts$scenario_id |> unique() |> sort()
-    # df_slrMax_ids |> head() |> print(); df_slrImp_ids |> head() |> print()
-
-    df_slrImpacts  <- df_slrImpacts |> rbind(df_slrMax)
-    df_slrImpacts  <- df_slrImpacts |> arrange_at(c("scenario_id", "year"))
-    df_slrImpacts  <- df_slrImpacts |> filter(!is.na(scaled_impacts))
-    # df_slrImpacts  <- df_slrImpacts |> mutate(across("scenario_id",str_replace, '(\\d)[0-9]{1,3}cm', '\\Interpolation'))
-    rm("df_slrMax")
-
-    ### Bind with other results
-    df_scenarioResults  <- df_scenarioResults |> rbind(df_slrImpacts)
-    rm("df_slrImpacts")
-
-    ###### ** SLR Initial Results #######
-    ### Separate initial results out
-    ### Join with model type or model
-    ### Add additional columns and get scenario ID
-    include0            <- c("region") |> c(stateCols0) |> c("model_label")
-    initialResults_slr  <- initialResults_slr |> left_join(co_modelTypes, by="modelType")
-    modelCols0          <- c("model_id", "model_dot", "model_underscore", "model_label")
-    initialResults_slr[,modelCols0]  <- "Interpolation"
-    initialResults_slr  <- initialResults_slr |> get_scenario_id(include=c(include0))
-    rm("modelCols0", include0)
-
-    # in_slrImp_ids <- initialResults_slr$scenario_id |> unique() |> sort()
-    # # in_slrImp_ids |> head() |> print()
-    # check_inMax_ids <- df_slrMax_ids[!(df_slrMax_ids %in% in_slrImp_ids)];
-    # check_inSlr_ids <- df_slrImp_ids[!(df_slrImp_ids %in% in_slrImp_ids)];
-    # # check_inMax_ids |> head() |> print(); check_inSlr_ids |> head() |> print()
-
-    ###### ** SLR Bind Initial Results #######
-    ### Arrange and bind with other results
-    initialResults_slr  <- initialResults_slr |> select(-c("model_type"))
-    initialResults_slr  <- initialResults_slr |> arrange_at(.vars=c("scenario_id", "year"))
-    initialResults      <- initialResults     |> rbind(initialResults_slr)
-    rm("initialResults_slr")
-  }
-  rm("impactSelectCols")
+  ### Message user
+  if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
 
   ###### Calculate Impacts  ######
   ### Join results with initialized results and update missing observations with NA
-  ### Remove intermediate values
-  # initialResults |> names |> print(); df_scenarioResults |> names() |> print()
-  df_impacts <- initialResults |> left_join(df_scenarioResults, by=c("scenario_id", "year"));
-  rm("initialResults")
-  if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
+  ### Drop columns, then join with scenario results
+  # df_results0_gcm |> names() |> print(); df_results0_slr |> names() |> print()
+  join0       <- c("scenario_id", "year")
+  df_results0 <- df_results0_gcm |> rbind(df_results0_slr)
+  # df_results0 |> names() |> print()
+  # return(df_results0)
+  # df_results0 |> names() |> print(); df_scenarioResults |> names() |> print()
+  # df_results0 |> glimpse(); df_scenarioResults |> glimpse()
+  # df_results0$scenario_id |> unique() |> head() |> print();
+  # df_scenarioResults$scenario_id |> unique() |> head() |> print()
+  df_impacts  <- df_results0 |> left_join(df_scenarioResults, by=c(join0));
+  # df_impacts |> glimpse()
+  rm(df_results0, df_scenarioResults); rm(join0)
+
 
   ### Physical impacts = physScalar * scaled_impacts
   ### Annual impacts = phys-econ scalar value by the scaled impacts
@@ -821,125 +609,166 @@ run_fredi <- function(
 
   ###### Add Scenario Information ######
   ### Add in model info
-  message("Formatting results", "...")
-  df_impacts <- df_impacts |> filter(year>=minYear) |> rename(model_type = modelType)
-  df_drivers <- df_drivers |> filter(year>=minYear) |> rename(model_type = modelType)
-  df_results <- df_impacts |> left_join(df_drivers, by=c("year", "model_type"))
-  rm("df_impacts")
+  paste0("Formatting results", "...") |> message()
+
+  # ###### ** Model Types ######
+  # ### Model types and models
+  rename0    <- c("model_label", "modelType_label", "modelUnitValue", "modelUnit_label", "modelUnitDesc")
+  rename1    <- c("model"      , "model_type"     , "driverValue"   , "driverUnit",      "driverType")
+  select0    <- rename0 |> c("modelType")
+  join0      <- c("modelType", "year")
+  drop0      <- c("model_type")
+  drop1      <- c("modelType")
+  # drop1      <- drop0 |> c("modelUnitValue")
+  ### Drop columns
+  # df_drivers |> glimpse(); df_impacts |> glimpse()
+  # df_drivers <- df_drivers |> select(all_of(select0))
+  df_impacts <- df_impacts |> select(-any_of(drop0))
+  ### Join values
+  df_results <- df_impacts |> left_join(df_drivers, by=c(join0))
+  rm(df_drivers, df_impacts)
+  ### Drop join column & rename columns
+  df_results <- df_results |> select(-any_of(drop1))
+  df_results <- df_results |> rename_at(c(rename0), ~rename1)
+  rm(rename0, rename1, select0, join0, drop0, drop1)
+  # df_results |> glimpse()
+
+
 
   ### Update inputs in outputs list
   returnList[["results"]] <- df_results
 
   ###### Format Outputs ######
   ### Refactor sectors, variants, impactTypes
-  co_variants    <- co_variants    |> mutate(sector_variant    = paste(sector_id, variant_id, sep="_"))
-  co_impactTypes <- co_impactTypes |> mutate(sector_impactType = paste(sector_id, impactType_id, sep="_"))
+  co_variants    <- co_variants    |> mutate(sector_variant    = sector_id |> paste0("_", variant_id))
+  co_impactTypes <- co_impactTypes |> mutate(sector_impactType = sector_id |> paste0("_", impactType_id))
 
   #### Rename Sector Columns
   df_results <- df_results |> rename(sector_id = sector, sector = sector_label)
   #### Regions
   # df_results |> names() |> print()
-  reg_lvls   <- co_regions$region_dot
-  reg_lbls   <- co_regions$region_label
+  reg_lvls   <- co_regions[["region_dot"]]
+  reg_lbls   <- co_regions[["region_label"]]
   df_results <- df_results |> rename(region_id = region)
   df_results <- df_results |> mutate(region    = region_id |> factor(reg_lvls, reg_lbls))
-  rm("reg_lvls", "reg_lbls")
+  rm(reg_lvls, reg_lbls)
 
-  ### Model types and models
-  modelCols0 <- c("model_label", "modelType_label", "modelUnitValue", "modelUnit_label", "modelUnitDesc")
-  modelCols1 <- c("model"      , "model_type"     , "driverValue"   , "driverUnit",      "driverType")
-  modelCols2 <- c("model_id", "model_dot", "model_underscore", "modelUnit_id")
-  modelCols3 <- c("modelRefYear", "modelMaxOutput", "modelUnitScale", "modelMaxExtrap")
-  select0    <- c(modelCols2, modelCols3)
-  df_results <- df_results |> select(-c("model_type"))
-  df_results <- df_results |> rename_at(c(modelCols0), ~modelCols1)
-  df_results <- df_results |> select(-all_of(select0))
-  # df_results |> glimpse()
-  rm("modelCols0", "modelCols1", "modelCols2", "modelCols3", select0)
-  # df_results |> names() |> print()
-  # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
+
 
   ### Variant labels
-  var_lvls   <- co_variants$sector_variant
-  var_lbls   <- co_variants$variant_label
-  df_results <- df_results |> mutate(sect_var = sector_id |> paste(variant, sep="_"))
-  df_results <- df_results |> mutate(variant  = sect_var |> factor(var_lvls, var_lbls))
+  var_lvls   <- co_variants[["sector_variant"]]
+  var_lbls   <- co_variants[["variant_label"]]
+  df_results <- df_results |> mutate(sect_var = sector_id |> paste0("_", variant))
+  df_results <- df_results |> mutate(variant  = sect_var  |> factor(var_lvls, var_lbls))
   df_results <- df_results |> select(-c("sect_var"))
   rm("var_lvls", "var_lbls")
   # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
 
   ### Impact types
-  imp_lvls   <- co_impactTypes$sector_impactType
-  imp_lbls   <- co_impactTypes$impactType_label
-  df_results <- df_results |> mutate(sect_imp   = sector_id |> paste(impactType, sep="_"))
-  df_results <- df_results |> mutate(impactType = sect_imp |> factor(imp_lvls, imp_lbls))
+  imp_lvls   <- co_impactTypes[["sector_impactType"]]
+  imp_lbls   <- co_impactTypes[["impactType_label"]]
+  df_results <- df_results |> mutate(sect_imp   = sector_id |> paste0("_", impactType))
+  df_results <- df_results |> mutate(impactType = sect_imp  |> factor(imp_lvls, imp_lbls))
   df_results <- df_results |> select(-c("sect_imp", "sector_id"))
   rm("imp_lvls", "imp_lbls")
   # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
 
   ###### Columns ######
-  ### Scalar column names, Sector info names, Scenario names
-  groupCols0       <- c("sector", "variant", "impactType", "impactYear", "model_type", "model", "region") |> c(stateCols0)
-  addCols0         <- c("sectorprimary", "includeaggregate")
-  cSectorInfoNames <- c("modelUnitType", "c0", "c1", "exp0", "year0")
-  cScenarioNames   <- c("scenario_id")
-  cScalarNames     <- c("physScalarName", "physAdjName", "damageAdjName", "physScalar") |>
-    c("physScalarValue", "physAdjValue"       , "damageAdjValue") |>
-    c("econScalarName" , "econMultiplierName" , "econScalar") |>
-    c("econScalarValue", "econMultiplierValue", "econAdjValue", "econMultiplier") |>
-    c("physEconScalar" , "scaled_impacts")
-  selectCols0      <- c(cScenarioNames, cScalarNames, cSectorInfoNames)
+  ### Grouping columns
+  groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0)
+  groupCols0  <- groupCols0 |> c("model_type", "model")
+  groupCols0  <- groupCols0 |> c("modelUnitType")
+  groupCols0  <- groupCols0 |> c("sectorprimary", "includeaggregate")
+  groupCols0  <- groupCols0 |> c("physicalmeasure")
+  groupCols0  <- groupCols0 |> (function(x){x[!(x %in% (x |> names()))]})()
+  groupCols0  <- groupCols0 |> unique()
+  ### Driver columns
+  driverCols0 <- c("driverType", "driverUnit", "driverValue")
+  ### National & regional scenario columns
+  scenCols0   <- c("gdp_usd", "national_pop", "gdp_percap") |> c(popCol0)
+  ### Impact columns
+  impactCols0 <- c("physical_impacts", "annual_impacts")
+  ### Columns to select
+  select0     <- groupCols0 |> c(driverCols0, scenCols0) |> c("year") #|> c(impactCols0)
+  ### Relocate columns
+  # df_results |> names() |> print(); groupCols0 |> print(); select0 |> print()
+  df_results  <- df_results |> relocate(all_of(select0))
+  # scenarioCol0     <- c("scenario_id")
+
+  ### Scalar columns
+  scalarCols0 <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier")
+  infoCols0   <- c("c0", "c1", "exp0", "year0")
+  suffix0     <- c("Name", "Value")
+  scalarCols0 <- scalarCols0 |> map(~.x |> paste0(c(suffix0))) |> unlist()
+  scalarCols0 <- scalarCols0 |> c("physScalar", "econScalar", "physEconScalar")
+  scalarCols0 <- scalarCols0 |> c("scaled_impacts")
+  scalarCols0 <- infoCols0   |> c(scalarCols0)
+  rm(suffix0, infoCols0)
+  ### Rearrange or drop scalar columns
+  # df_results |> names() |> print()
+  if(allCols){
+    df_results  <- df_results |> relocate(any_of(scalarCols0), .after=all_of(select0))
+  } else{
+    df_results  <- df_results |> select(-any_of(scalarCols0))
+  } ### End if(allCols)
+  # df_results |> names() |> print()
+  ### Other columns
+  # otherCols0  <- df_results |> names() |> (function(x){x[!(x %in% c(select0, scalarCols0))]})()
+  # df_results  <- df_results |> relocate(all_of(otherCols0), .before=all_of(impactCols0))
+  otherCols0  <- df_results |> names() |> (function(x){x[!(x %in% c(select0, scalarCols0, impactCols0))]})()
+  df_results  <- df_results |> select(-all_of(otherCols0))
 
   ### Convert to character and drop sector id
   df_results <- df_results |> mutate_at(c(groupCols0), as.character)
-  df_results <- df_results |> filter(!is.na(sector))
+  # df_results <- df_results |> filter(!(sector |> is.na()))
   # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
 
   ###### Testing ######
-  if(!testing) {df_results <- df_results |> select(-all_of(selectCols0))}
-  # df_results |> glimpse()
-  # return(df_results)
+  # if(allCols) {
+  #   drop1      <- select0
+  #   df_results <- df_results |> select(-all_of(drop1))
+  # } ### End if(!allCols)
+  # # df_results |> glimpse()
+  # # return(df_results)
+
+  ###### Primary Columns ######
+  if(doPrimary){
+    df_results   <- df_results |> filter(sectorprimary   ==1)
+    df_results   <- df_results |> filter(includeaggregate==1)
+  } ### End if(doPrimary)
+  df_results    <- df_results |> mutate_at(c("sectorprimary", "includeaggregate"), as.numeric)
+
   ###### Aggregation ######
-  ### For regular use (i.e., not impactYears), simplify the data:
+  ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(requiresAgg){
-    ### Aggregation types
-    aggGroupCols   <- groupCols0
-    includeAggCol  <- c("includeaggregate", "sectorprimary")
-    if( doPrimary){
-      df_results   <- df_results |> filter(sectorprimary   ==1)
-      df_results   <- df_results |> filter(includeaggregate==1)
-    } else{
-      aggGroupCols <- aggGroupCols |> c(includeAggCol)
-    }
-    ### If the user specifies primary type, filter to primary types and variants and drop that column
-    df_results <- df_results |> aggregate_impacts(aggLevels = aggLevels, groupByCols = aggGroupCols)
-    rm("aggGroupByCols")
-  }
+    # df_results <- df_results |> aggregate_impacts(aggLevels=aggLevels, groupByCols=groupCols0)
+    # group0     <- groupCols0
+    # group0     <- select0 |> (function(x){x[!(x %in% driverCols0)]})()
+    # select0 |> print(); df_results |> names() |> print()
+    group0     <- select0
+    df_results <- df_results |> aggregate_impacts(
+      aggLevels   = aggLevels,
+      groupByCols = group0,
+      columns     = impactCols0
+    ) ### End aggregate_impacts
+  } ### End if(requiresAgg)
   # df_results |> names() |> print()
 
   ###### Order the Output ######
   ### Convert levels to character
   ### Order the rows, then order the columns
-  if(!testing){
-    resultNames   <- df_results |> names()
-    groupByCols   <- c("sector",  "variant", "impactType", "impactYear", "region") |>
-      c(stateCols0) |>
-      c("model_type", "model", "year")
-    driverCols    <- c("driverValue", "driverUnit", "driverType")
-    nonGroupCols  <- resultNames[!(resultNames %in% c(groupByCols, driverCols))]
-    orderColIndex <- data |> names() %in% groupByCols
-    selectCols    <- c(groupByCols, driverCols, nonGroupCols) |> (function(x){x[x!="annual_impacts"] |>  c("annual_impacts")})()
-    ### Select columns
-    df_results    <- df_results |> select(all_of(selectCols)) |> arrange_at(c(groupByCols))
-  }
-
-  # c_aggColumns <- c("sectorprimary", "includeaggregate") |> (function(y){y[which(y %in% names(df_results))]})()
-  # if(length(c_aggColumns)>0){df_results <- df_results |> mutate_at(.vars=c(all_of(c_aggColumns)), as.numeric)}
+  # if(!allCols){
+  arrange0   <- groupCols0 |> c("year")
+  arrange0   <- arrange0 |> (function(x){x[x %in% names(df_results)]})()
+  ### Select columns
+  df_results <- df_results |> arrange_at(c(arrange0))
+  df_results <- df_results |> relocate(any_of(select0))
+  # df_results <- df_results |> relocate(any_of(otherCols0), .after=any_of(select0))
+  rm(arrange0)
+  # } ### End if(!allCols)
 
   ###### Format as Data Frame ######
-  ### Format as data frame
   ### Update results in list
-  # df_results   <- df_results |> ungroup() |> as.data.frame()
   df_results   <- df_results |> ungroup()
   returnList[["results"]] <- df_results
   ### Which object to return
