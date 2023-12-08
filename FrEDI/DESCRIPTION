@@ -41,6 +41,6 @@ Depends: R (>= 3.5.0),
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 LazyData: TRUE
-Suggests: knitr, rmarkdown, prettydoc, devtools
+Suggests: knitr, rmarkdown, prettydoc, devtools, kableExtra
 VignetteBuilder: knitr
 Language: en-US
