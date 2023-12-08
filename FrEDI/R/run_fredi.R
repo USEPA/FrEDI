@@ -450,7 +450,8 @@ run_fredi <- function(
     pop_df       <- pop_df   |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
     # pop_df |> glimpse()
     ### Calculate national population
-    national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
+    national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()
+    national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
     # national_pop |> glimpse()
     rm("popInput")
   } ### if(has_popUpdate)
