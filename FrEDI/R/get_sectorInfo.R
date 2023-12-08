@@ -49,7 +49,8 @@ get_sectorInfo <- function(
   if(is.null(gcmOnly    )){gcmOnly    <-F}
   if(is.null(slrOnly    )){slrOnly    <-F}
   # co_sectorsRef$sector_label
-  assign("co_sectorsRef", rDataList[["co_sectors"]])
+  # assign("co_sectorsRef", rDataList[["co_sectors"]])
+  co_sectorsRef  <- "co_sectorsRef" |> get_frediDataObj("frediData")
 
   co_sectorsRef <- co_sectorsRef |>
     select(-c("sector_id")) |>
