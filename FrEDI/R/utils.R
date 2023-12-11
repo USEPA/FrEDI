@@ -1368,79 +1368,7 @@ interp_slr_byYear <- function(
 
 }
 
-###### fun_slrModel2Height ######
-### Helper function to convert SLR model to height in cm
-fun_slrModel2Height <- function(
-    col_x, ### column "model_dot"
-    include   = c("factor", "values"),
-    valType   = c("numeric", "character", "factor"),
-    labelType = c("numeric", "character") ### Used for factor or label
 
-){
-  ### Checks
-  do_factor <- "factor" %in% include
-  do_values <- "values" %in% include
-  do_both   <- do_factor & do_values
-  ### Value types and priority
-  valTypes <- c("numeric", "character", "factor")
-  valType0 <- valType
-  valType0 <- valTypes |> (function(y, types_y=valTypes){
-    ls1 <- ls0 <- types_y
-    c0  <- ls0[1] %in% y
-    c1  <- ls0[2] %in% y
-    c3  <- ls0[2] %in% y
-    if(c0) {ls1 <- ls0[1]}
-    else if(c1) {ls1 <- ls0[2]}
-    else        {ls1 <- ls0[3]}
-    return(ls1)
-  })()
-  do_numb  <- "numeric"   %in% valType
-  do_char  <- "character" %in% valType
-  do_fact  <- "factor"    %in% valType
-  # valType |> print(); labelType |> print()
-  ### Label types and priority
-  labTypes <- c("numeric", "character")
-  label_x0 <- labelType |>
-    (function(y, types_y=labTypes){
-      ls1 <- ls0 <- types_y
-      c0  <- do_numb | do_char
-      c1  <- ls0[1] %in% y
-      if(c0) {ls1 <- ls0[1]}
-      else if(c1) {ls1 <- ls0[1]}
-      else        {ls1 <- ls0[2]}
-      return(ls1)
-    })()
-  # label_x0 |> print()
-  labChar       <- "character" %in% label_x0
-  # label_x0 |> print(); labChar |> print()
-  ### Original labels
-  lvl_x0        <- col_x |> unique()
-  df_x0         <- tibble(levels=lvl_x0)
-  ### Standardize
-  df_x0$labels  <- gsub("_" , "", df_x0$levels)
-  df_x0$numbers <- gsub("cm", "", df_x0$labels)
-  df_x0$values  <- df_x0$numbers |> as.character() |> as.numeric()
-  ### Sprt
-  df_x0         <- df_x0 |> arrange_at(.vars=c("values"))
-  ### Create factor list
-  list_x        <- list(factors=df_x0)
-  ### Adjust values
-  vals_x        <- NULL
-  if(do_values){
-    if(labChar){labels_x <- df_x0$labels}
-    else       {labels_x <- df_x0$values}
-    vals_x <- col_x  |> factor(levels=df_x0$levels, labels=labels_x)
-    if(do_char){vals_x <- vals_x |> as.character()}
-    if(do_numb){vals_x <- vals_x |> as.numeric()}
-    list_x[["values"]] <- vals_x
-  }
-  ### Return list
-  if     (do_both  ) {return_x <- list_x}
-  else if(do_factor) {return_x <- list_x$factors}
-  else               {return_x <- list_x$values}
-  ### Return
-  return(return_x)
-}
 
 ####### fun_getNeighbors ######
 ### Figure out which SLR heights are immediately above and below a driver value
