@@ -5,7 +5,7 @@ on:
     inputs:
       fredi_data_branches:
         type: string
-        description: Which `data_only_branch_` branch of FrEDI_data to pull in data from
+        description: Which data only branch of FrEDI_data to pull in data from? (i.e. data_only_branch_state_initial)
 
 
 jobs:
