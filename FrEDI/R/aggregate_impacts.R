@@ -505,7 +505,7 @@ aggregate_impacts <- function(
     ### Group data, sum data, calculate averages, and drop NA column
     sum0        <- summaryCols |> c("not_isNA")
     df_national <- df_national |>
-      mutate(state_pop = NA) |>
+      mutate(state_pop = NA,physicalmeasure = NA) |>
       group_by_at(c(group0)) |>
       summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
     rm(sum0)
