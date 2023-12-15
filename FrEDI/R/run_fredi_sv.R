@@ -663,7 +663,7 @@ run_fredi_sv <- function(
   })
   ###### Format Results ######
   ### Bind results and ungroup
-  df_results <- df_results  (function(x){do.call(rbind, x)})()
+  df_results <- df_results |> (function(x){do.call(rbind, x)})()
   df_results <- df_results |> ungroup() |> as.data.frame()
 
   ###### Save Results ######
