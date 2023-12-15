@@ -173,7 +173,13 @@ aggregate_impacts <- function(
     dropCols    <- c("physicalmeasure") |> c(scalarCols)
     isDropCol   <- groupByCols %in% dropCols
     hasDropCols <- isDropCol |> any()
-    ### If hasDropCols, message user
+    ### If hasDropCols
+    if(hasDropCols){
+      ### Drop levels
+      groupByCols  <- groupByCols |> (function(y){y[!(y %in% dropCols)]})()
+    } ### End if(hasDropCols)
+
+    ### If message user
     if(hasDropCols & msgUser){
       ### Message user
       msg0 (1) |> paste0(
@@ -185,9 +191,7 @@ aggregate_impacts <- function(
         groupByCols[isDropCol] |> paste(collapse="`, `"),
         "`) from grouping columns..."
       ) |> message()
-      ### Drop levels
-      groupByCols  <- groupByCols |> (function(y){y[!(y %in% dropCols)]})()
-    } ### End if(hasDropCols)
+    }### End if(msgUsr)
     ### Remove extra names
     rm(scalarCols, dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
@@ -221,7 +225,13 @@ aggregate_impacts <- function(
     dropCols    <- c("physical_impacts")
     isDropCol   <- summaryCols %in% dropCols
     hasDropCols <- isDropCol |> any()
-    ### If hasDropCols, message user
+    ### If hasDropCols drop columns
+    if(hasDropCols){
+      ### Drop levels
+      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
+    }
+
+    ### If, message user
     if(hasDropCols & msgUser){
       ### Message user
       msg0 (1) |> paste0(
@@ -232,20 +242,25 @@ aggregate_impacts <- function(
         "Dropping columns = c(`",
         summaryCols[isDropCol] |> paste(collapse="`, `"),
         "`) from summary columns...") |> message()
-      ### Drop levels
-      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
     } ### End if(hasDropCols)
+
     ### Remove extra names
     rm(scalarCols, dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
 
   ### Drop some columns if certain aggLevels present
-  if(aggImpTypes & msgUser){
+  if(aggImpTypes ){
     dropCols    <- c("scaled_impacts")
     isDropCol   <- summaryCols %in% dropCols
     hasDropCols <- isDropCol |> any()
     ### If hasDropCols, message user
     if(hasDropCols){
+      ### Drop levels
+      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
+      } ### End if(hasDropCols)
+
+    ###
+    if(msgUser){
       ### Message user
       msg0 (1) |> paste0(
         "Warning: cannot aggregate columns = c(`",
@@ -255,9 +270,7 @@ aggregate_impacts <- function(
         "Dropping columns = c(`",
         summaryCols[ isDropCol] |> paste(collapse="`, `"),
         "`) from summary columns...") |> message()
-      ### Drop levels
-      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
-    } ### End if(hasDropCols)
+    } ### End if(msgUser)
     ### Remove extra names
     rm(dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
@@ -505,7 +518,7 @@ aggregate_impacts <- function(
     ### Group data, sum data, calculate averages, and drop NA column
     sum0        <- summaryCols |> c("not_isNA")
     df_national <- df_national |>
-      mutate(state_pop = NA,physicalmeasure = NA) |>
+      mutate(state_pop = "N/A") |>
       group_by_at(c(group0)) |>
       summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
     rm(sum0)
