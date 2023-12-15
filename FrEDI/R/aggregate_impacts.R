@@ -173,7 +173,13 @@ aggregate_impacts <- function(
     dropCols    <- c("physicalmeasure") |> c(scalarCols)
     isDropCol   <- groupByCols %in% dropCols
     hasDropCols <- isDropCol |> any()
-    ### If hasDropCols, message user
+    ### If hasDropCols
+    if(hasDropCols){
+      ### Drop levels
+      groupByCols  <- groupByCols |> (function(y){y[!(y %in% dropCols)]})()
+    } ### End if(hasDropCols)
+
+    ### If message user
     if(hasDropCols & msgUser){
       ### Message user
       msg0 (1) |> paste0(
@@ -185,9 +191,7 @@ aggregate_impacts <- function(
         groupByCols[isDropCol] |> paste(collapse="`, `"),
         "`) from grouping columns..."
       ) |> message()
-      ### Drop levels
-      groupByCols  <- groupByCols |> (function(y){y[!(y %in% dropCols)]})()
-    } ### End if(hasDropCols)
+    }### End if(msgUsr)
     ### Remove extra names
     rm(scalarCols, dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
@@ -221,7 +225,13 @@ aggregate_impacts <- function(
     dropCols    <- c("physical_impacts")
     isDropCol   <- summaryCols %in% dropCols
     hasDropCols <- isDropCol |> any()
-    ### If hasDropCols, message user
+    ### If hasDropCols drop columns
+    if(hasDropCols){
+      ### Drop levels
+      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
+    }
+
+    ### If, message user
     if(hasDropCols & msgUser){
       ### Message user
       msg0 (1) |> paste0(
@@ -232,20 +242,25 @@ aggregate_impacts <- function(
         "Dropping columns = c(`",
         summaryCols[isDropCol] |> paste(collapse="`, `"),
         "`) from summary columns...") |> message()
-      ### Drop levels
-      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
     } ### End if(hasDropCols)
+
     ### Remove extra names
     rm(scalarCols, dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
 
   ### Drop some columns if certain aggLevels present
-  if(aggImpTypes & msgUser){
+  if(aggImpTypes ){
     dropCols    <- c("scaled_impacts")
     isDropCol   <- summaryCols %in% dropCols
     hasDropCols <- isDropCol |> any()
     ### If hasDropCols, message user
     if(hasDropCols){
+      ### Drop levels
+      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
+      } ### End if(hasDropCols)
+
+    ###
+    if(msgUser){
       ### Message user
       msg0 (1) |> paste0(
         "Warning: cannot aggregate columns = c(`",
@@ -255,9 +270,7 @@ aggregate_impacts <- function(
         "Dropping columns = c(`",
         summaryCols[ isDropCol] |> paste(collapse="`, `"),
         "`) from summary columns...") |> message()
-      ### Drop levels
-      summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
-    } ### End if(hasDropCols)
+    } ### End if(msgUser)
     ### Remove extra names
     rm(dropCols, isDropCol, hasDropCols)
   } ### End if(aggImpTypes)
@@ -496,14 +509,14 @@ aggregate_impacts <- function(
     ### Ungroup first
     df_agg      <- df_agg |> ungroup()
     ### Grouping columns
-    group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0, yearCol0))]})()
+    group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0,popCol0, yearCol0))]})()
     group0      <- group0 |> c("year")
     ### Calculate number of non missing values
     df_national <- df_agg |> (function(w){
       w |> mutate(not_isNA = 1 * (!(w[[summaryCol1]] |> is.na())))
     })()
     ### Group data, sum data, calculate averages, and drop NA column
-    sum0        <- summaryCols |> c("not_isNA")
+    sum0        <- summaryCols |> c(popCol0,"not_isNA")
     df_national <- df_national |>
       group_by_at(c(group0)) |>
       summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
@@ -517,13 +530,16 @@ aggregate_impacts <- function(
     ### Drop columns, adjust values
     df_national <- df_national |> select(-c("not_isNA"))
     df_national <- df_national |> mutate(region="National Total")
+    ### Join with National Pop
+    #join0       <- natPopCols |> (function(y){y[!(y %in% c("national_pop"))]})()
+    #df_national <- df_national |> left_join(nationalPop, by = c(join0))
     if(byState){
       df_national   <- df_national |> mutate(state ="All")
       df_national   <- df_national |> mutate(postal="US")
     } ### End if(byState)
 
     ### Add back into regional values and bind national population to impact types
-    # df_agg |> glimpse(); df_national |> glimpse()
+    #df_agg |> glimpse(); df_national |> glimpse()
     df_agg      <- df_agg |> rbind(df_national);
 
     ### Add national to total populations
