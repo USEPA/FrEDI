@@ -94,6 +94,11 @@ jobs:
 
           ### Test results
           if(do_tests){
+
+            ### Check if path exists and, if not, create it
+            exists0 <- oPath1 |> dir.exists()
+            if(!exists0){oPath1 |> dir.create()}
+
             ### Run FrEDI
             results0 <- run_fredi()
             ### Run tests
