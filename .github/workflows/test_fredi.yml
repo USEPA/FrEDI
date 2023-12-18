@@ -97,10 +97,8 @@ jobs:
 
             ### Check if path exists and, if not, create it
             exists0 <- oPath1 |> dir.exists()
-            print(oPath1)
-            print(exists0)
-            if(!exists0){oPath1 |> dir.create()}
-            list.files(oPath1)
+            if(!exists0){oPath1 |> dir.create(recursive = TRUE)}
+
             ### Run FrEDI
             results0 <- run_fredi()
             ### Run tests
@@ -126,10 +124,8 @@ jobs:
 
             ### Check if path exists and, if not, create it
             exists0 <- oPath2 |> dir.exists()
-            if(!exists0){oPath2 |> dir.create()}
-            print(oPath2)
-            print(exists0)
-            list.files(oPath2)
+            if(!exists0){oPath2 |> dir.create(recursice = TRUE)}
+
 
             ### Create report figures
             reports0 <- create_DoW_results(
