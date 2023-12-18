@@ -97,6 +97,8 @@ jobs:
 
             ### Check if path exists and, if not, create it
             exists0 <- oPath1 |> dir.exists()
+            print(oPath1)
+            prints(exists0)
             if(!exists0){oPath1 |> dir.create()}
 
             ### Run FrEDI
@@ -125,7 +127,8 @@ jobs:
             ### Check if path exists and, if not, create it
             exists0 <- oPath2 |> dir.exists()
             if(!exists0){oPath2 |> dir.create()}
-
+            print(oPath2)
+            prints(exists0)
             ### Create report figures
             reports0 <- create_DoW_results(
               outPath  = oPath2,
