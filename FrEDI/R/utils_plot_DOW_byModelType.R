@@ -143,7 +143,7 @@ plot_DOW_byModelType <- function(
 
   ### Add list names
   # # x |> length() |> print()
-  plotList_x <- plotList_x |> addListNames(c_sectors)
+  plotList_x <- plotList_x |> set_names(c_sectors)
 
   ###### Get Reference Plot ######
   refPlot_x  <- c_sectors[1] |> plot_DOW_bySector(

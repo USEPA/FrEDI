@@ -127,18 +127,25 @@ filter_years <- function(
   df0 <- df0 |> filter(year %in% years)
   ### Return
   return(df0)
-} ### End filter_years
+} ### End filter_years()
 
 ### Filter values
 ### Format values to specific number of decimal places
 format_values <- function(
     df0, ### data
-    cols0  = c("driverValue", "gdp_usd", "national_pop", "gdp_percap", "reg_pop", "annual_impacts"), ### Columns to format
+    byState = TRUE,
+    # cols0  = c("driverValue", "gdp_usd", "national_pop", "gdp_percap", "reg_pop", "annual_impacts"), ### Columns to format
     digits = 16
 ){
-  df0 <- df0 |> mutate_at(.vars=c(cols0), function(x){format(x, digits=digits)})
+  ### Pop columns
+  if(byState){popCols <- c("state", "postal")} else{c()}
+  popCol <- byState |> ifelse("state_pop", "reg_pop")
+  ### Columns
+  cols0 <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap", popCol, "annual_impacts")
+  ### Mutate
+  df0 <- df0 |> mutate_at(vars(cols0), function(x){format(x, digits=digits)})
   return(df0)
-}
+} ### End format_values()
 
 ### Run CONUS scenarios
 create_constant_temp_scenario <- function(
@@ -189,7 +196,8 @@ create_constant_temp_scenario <- function(
 #### Get scenario inputs
 #### Get inputs list for a single scenario
 get_scenario_inputsList <- function(
-    df0   ### Data
+    df0,   ### Data
+    byState = TRUE
 ){
   ### df0 names
   names0  <- df0 |> names()
@@ -199,12 +207,15 @@ get_scenario_inputsList <- function(
   slr0    <- NULL
   gdp0    <- NULL
   pop0    <- NULL
+  ### Pop columns
+  if(byState){popCols <- c("state", "postal")} else{c()}
+  popCol <- byState |> ifelse("state_pop", "reg_pop")
   ### Columns for scenarios
   cTemp0  <- c("year", "temp_C_conus")
   cTemp1  <- c("year", "temp_C")
   cSlr    <- c("year", "slr_cm")
   cGdp    <- c("year", "gdp_usd")
-  cPop    <- c("year", "region", "reg_pop")
+  cPop    <- c("year", "region") |> c(popCols, popCol)
   ### Whether to create scenarios
   doTemp0 <- (cTemp0 %in% names0) |> all()
   doTemp1 <- (cTemp1 %in% names0) |> all()
@@ -217,28 +228,28 @@ get_scenario_inputsList <- function(
   if(doTemp){
     if(doTemp0){cTemp <- cTemp0}
     else       {cTemp <- cTemp1}
-    temp0   <- df0 |> select(c(all_of(cTemp)))
+    temp0   <- df0 |> select(all_of(cTemp))
     if(doTemp0){
-      temp0 <- temp0 |> rename_at(.vars=c("temp_C_conus"), ~c("temp_C"))
-    }
+      temp0 <- temp0 |> rename_at(vars("temp_C_conus"), ~c("temp_C"))
+    } ### End if(doTemp0)
     list0[["tempInput"]] <- temp0
     rm("temp0")
   } ### End if(doTemp)
 
   if(doSlr){
-    slr0   <- df0 |> select(c(all_of(cSlr)))
+    slr0   <- df0 |> select(all_of(cSlr))
     list0[["slrInput"]] <- slr0
     rm("slr0")
   } ### End if(doSlr)
 
   if(doGdp){
-    gdp0   <- df0 |> select(c(all_of(cGdp)))
+    gdp0   <- df0 |> select(all_of(cGdp))
     list0[["gdpInput"]] <- gdp0
     rm("gdp0")
   } ### End if(doGdp)
 
   if(doPop){
-    pop0   <- df0 |> select(c(all_of(cPop)))
+    pop0   <- df0 |> select(all_of(cPop))
     list0[["popInput"]] <- pop0
     rm("pop0")
   } ### End if(doPop)
@@ -275,11 +286,20 @@ agg_fredi_scenario <- function(
     joinCols  = c("year"),
     aggLevels = c("modelaverage", "national")
 ){
+  ### Pop cols
+  byState <- "state" %in% (df0 |> names())
+  if(byState){stateCols <- c("state", "postal")} else{stateCols <- c()}
+  popCol  <- byState |> ifelse("state_pop", "reg_pop")
   ### Filter to grouping columns
   drop0   <- scenCols[!(scenCols %in% joinCols)]
   ### Run FrEDI
-  group0  <- c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region") |> c(drop0)
+  group0  <- c("sector", "variant", "impactType", "impactYear")
+  group0  <- group0 |> c("region", stateCols)
+  group0  <- group0 |> c("model_type", "model")
+  group0  <- group0 |> c("sectorprimary", "includeaggregate")
+  group0  <- group0 |> c(drop0)
   df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels = aggLevels, groupByCols = group0)
+  # df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels = aggLevels)
   ### Return
   return(df0)
 } ### End agg_fredi_scenario
@@ -301,22 +321,30 @@ run_scenario <- function(
   rm("df0")
   ### Run FrEDI
   if(fredi){
-    df_x0     <- df_x0 |> run_fredi_scenario(
+    df_x0 <- df_x0 |> run_fredi_scenario(
       sectors   = sectors,
       scenCols  = scenCols,
       joinCols  = joinCols
     ) ### End run_fredi_scenario
   } ### End if(fredi)
+  # "got here1" |> print(); df_x0 |> glimpse()
+
   ### Aggregate FrEDI
   agg0      <- !("none" %in% aggLevels)
   # agg0 |> print()
   if(agg0){
-    df_x0     <- df_x0 |> agg_fredi_scenario(
+    # "got here1" |> print()
+    df_x0 <- df_x0 |> agg_fredi_scenario(
       scenCols  = scenCols,
       joinCols  = joinCols,
       aggLevels = aggLevels
     ) ### End run_fredi_scenario
   } ### End if(agg0)
+  # "got here2" |> print(); df_x0 |> glimpse()
+
+  ### Format other values
+  mutate0   <- c("temp_C_conus", "temp_C_global", "slr_cm")
+  df_x0     <- df_x0 |> mutate_at(vars(mutate0), as.numeric)
 
   ### Return
   return(df_x0)
@@ -352,7 +380,8 @@ run_scenarios <- function(
     return(df_x)
   }) ### End function(.x), walk
   ### Bind values into a list
-  df0    <- list0 %>% (function(x){do.call(rbind, x)})
+  # df0    <- list0 %>% (function(x){do.call(rbind, x)})
+  df0    <- list0 |> bind_rows()
 
   ### Return
   return(df0)
@@ -407,7 +436,8 @@ sum_impacts_byDoW <- function(
     return(df_z)
   })
   ### Bind together
-  df0        <- list0 %>% (function(x){do.call(rbind, x)})
+  # df0        <- list0 %>% (function(x){do.call(rbind, x)})
+  df0        <- list0 |> bind_rows()
   rm(list0)
   ### Adjust values
   df0[[adjCol]] <- df0[["annual_impacts"]] * adjVal
@@ -468,7 +498,8 @@ sum_impacts_byDoW_years <- function(
     return(df_x)
   }) ### End walk
   ### Bind values together
-  df0 <- list0 %>% (function(x){do.call(rbind, x)})
+  # df0 <- list0 %>% (function(x){do.call(rbind, x)})
+  df0 <- list0 |> bind_rows()
   rm(list0)
   ### Convert to tibble
   df0 <- df0 |> as_tibble()
@@ -845,8 +876,10 @@ plot_DoW <- function(
   df_types   <- tibble()
   if(do_gcm){
     df_gcm   <- "GCM" %>%
-      map(function(.x){tibble(type=.x, year=years0, label=.x |> paste0("_", years0))}) %>%
-      (function(y){do.call(rbind, y)})
+      # map(function(.x){tibble(type=.x, year=years0, label=.x |> paste0("_", years0))}) %>%
+      # (function(y){do.call(rbind, y)})
+      map(function(.x){tibble(type=.x, year=years0, label=.x |> paste0("_", years0))}) |>
+      bind_rows()
     df_types <- df_types |> rbind(df_gcm)
     rm(df_gcm)
   }
@@ -884,7 +917,7 @@ plot_DoW <- function(
   ### Add list names
   # list0 |> print()
   labels0    <- df_types[["label"]]
-  list0      <- list0 |> addListNames(labels0)
+  list0      <- list0 |> set_names(labels0)
 
   ### Return
   return(list0)
@@ -922,10 +955,12 @@ plot_DoW_by_sector <- function(
         df1      <- df0 |> filter(model_type=="GCM")
         sectors0 <- df1[["sector"]] |> unique()
         df_x     <- sectors0 |> map(function(.y){tibble(type=.x, sector=.y, year=years, label=.y |> paste0("_", years))})
-        df_x     <- df_x %>% (function(y){do.call(rbind, y)})
+        # df_x     <- df_x %>% (function(y){do.call(rbind, y)})
+        df_x     <- df_x |> bind_rows()
         return(df_x)
       })
-    df_gcm   <- df_gcm %>% (function(y){do.call(rbind, y)})
+    # df_gcm   <- df_gcm %>% (function(y){do.call(rbind, y)})
+    df_gcm   <- df_gcm |> bind_rows()
     df_types <- df_types |> rbind(df_gcm)
     rm(df_gcm)
   } ### End if(do_gcm)
@@ -972,12 +1007,12 @@ plot_DoW_by_sector <- function(
     })
     ### Add names
     labels_x <- types_x[["label"]]
-    list_x   <- list_x |> addListNames(labels_x)
+    list_x   <- list_x |> set_names(labels_x)
     ### Return
     return(list_x)
   })
   ### Add names
-  list0   <- list0 |> addListNames(models)
+  list0   <- list0 |> set_names(models)
   ### Return
   return(list0)
 } ### End plot_DoW_by_sector
