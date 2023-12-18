@@ -11,7 +11,7 @@ create_DoW_results <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
     gcmYears = c(2090),   ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
-    byState  = TRUE       ### Whether values are by state or just by region
+    byState  = TRUE,       ### Whether values are by state or just by region
     silent   = TRUE,      ### Degree of messaging
     testing  = FALSE,     ### Whether to print out extra diagnostic values
     aggOnly  = TRUE,      ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
