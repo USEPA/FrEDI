@@ -121,7 +121,8 @@ create_DoW_results <- function(
   conusPrefix0   <- "Other_Integer"
   globalPrefix0  <- "preI_global"
   ### Temperatures
-  c_conusTemps   <- 0:7
+  # c_conusTemps   <- 0:7
+  c_conusTemps   <- 0:10
   c_globalTemps  <- c(1.487, 2.198)
   ### Numbers of scenarios
   n_conusTemps   <- c_conusTemps |> length()
@@ -254,36 +255,36 @@ create_DoW_results <- function(
   } ### End if(saveFile)
   # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals, w=sum_gcm_totals))
 
-  # ###### ** -- Plots
-  # #### Create plots
-  # ### Scale isn't the same across sectors
-  # # codePath  |> loadCustomFunctions()
-  # if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
-  # plots_dow_gcm  <- sum_gcm_totals |> plot_DoW(
-  #   types0  = c("GCM"), ### Model type: GCM or SLR
-  #   years   = gcmYears,
-  #   xCol    = "driverValue",
-  #   yCol    = "annual_impacts",
-  #   thresh0 = breakChars
-  # )
-  # ### Glimpse
-  # if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
-  # if(testing) plots_dow_gcm[["GCM_2010"]] |> print()
-  # ### Save
-  # # codePath  |> loadCustomFunctions()
-  # if(saveFile){
-  #   if(do_msg) paste0("Saving plots of GCM results by sector, degree of warming...") |> message()
-  #   ### Save plots as Rdata
-  #   plots_dow_gcm |> save_data(fpath = fig7ResultsPath, fname = "gcm_fig7_plots", ftype = "rda")
-  #
-  #   ### Save plots as image files
-  #   saved0 <- plots_dow_gcm |> save_fig7_images(
-  #     modelType = "GCM",
-  #     fpath     = fig7ResultsPath,
-  #     device    = img_dev,
-  #     units     = imgUnits
-  #   )
-  # } ### End if(saveFile)
+  ###### ** -- Plots
+  #### Create plots
+  ### Scale isn't the same across sectors
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
+  plots_dow_gcm  <- sum_gcm_totals |> plot_DoW(
+    types0  = c("GCM"), ### Model type: GCM or SLR
+    years   = gcmYears,
+    xCol    = "driverValue",
+    yCol    = "annual_impacts",
+    thresh0 = breakChars
+  )
+  ### Glimpse
+  if(testing) plots_dow_gcm[["GCM_2090"]] |> print()
+  if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
+  ### Save
+  # codePath  |> loadCustomFunctions()
+  if(saveFile){
+    if(do_msg) paste0("Saving plots of GCM results by sector, degree of warming...") |> message()
+    ### Save plots as Rdata
+    plots_dow_gcm |> save_data(fpath = fig7ResultsPath, fname = "gcm_fig7_plots", ftype = "rda")
+
+    ### Save plots as image files
+    saved0 <- plots_dow_gcm |> save_fig7_images(
+      modelType = "GCM",
+      fpath     = fig7ResultsPath,
+      device    = img_dev,
+      units     = imgUnits
+    )
+  } ### End if(saveFile)
 
   ###### ** Appendix Figs: DoW By Type ######
   # codePath  |> loadCustomFunctions()
@@ -299,8 +300,8 @@ create_DoW_results <- function(
     silent      = TRUE
   )
   ### Glimpse
-  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   if(testing) sum_gcm_byType |> glimpse()
+  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   ### Save summary table
   if(saveFile){
     if(do_msg) paste0("Saving summary of GCM results by sector, impact type, degree of warming...") |> message()
@@ -308,34 +309,35 @@ create_DoW_results <- function(
       save_data(fpath = appxResultsPath, fname = "gcm_results_byDoW_byType", ftype = "csv", row.names = F)
   } ### End if(saveFile)
 
-  # ### Create Plots
-  # # codePath  |> loadCustomFunctions()
-  # if(testing|do_msg) "Plotting GCM results by sector, impact type, degree of warming (DOW)..." |> message()
-  # plots_gcm_byType <- sum_gcm_byType |>
-  #   # filter(sector %in% c_sectorNames[c(10)]) |>
-  #   plot_DoW_by_sector(
-  #     models  = c("GCM"),
-  #     yCol    = "annual_impacts"
-  #   )
-  # ### Glimpse
-  # if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
-  # if(testing) plots_gcm_byType$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
-  # ### Save
-  # if(saveFile){
-  #   if(do_msg) paste0("Saving plots of GCM results by  sector, impact type, degree of warming...") |> message()
-  #   ### Save plots as a data object
-  #   plots_gcm_byType |> save_data(fpath = appxResultsPath, fname = "gcm_appendix_plots", ftype = "rda")
-  #
-  #   ### Save plots as image files
-  #   saved0 <- plots_gcm_byType |> save_appendix_figures(
-  #     df0       = sum_gcm_byType,
-  #     modelType = "GCM", ### Or SLR
-  #     fpath     = appxResultsPath,
-  #     device    = img_dev,
-  #     res       = imgRes,
-  #     units     = imgUnits
-  #   ) ### End save_appendix_figures
-  # } ### End if(saveFile)
+  ### Create Plots
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting GCM results by sector, impact type, degree of warming (DOW)..." |> message()
+  plots_gcm_byType <- sum_gcm_byType |>
+    # filter(sector %in% c_sectorNames[c(10)]) |>
+    filter(!(sector %in% c("Roads"))) |>
+    plot_DoW_by_sector(
+      models  = c("GCM"),
+      yCol    = "annual_impacts"
+    )
+  ### Glimpse
+  if(testing) plots_gcm_byType$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
+  if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
+  ### Save
+  if(saveFile){
+    if(do_msg) paste0("Saving plots of GCM results by  sector, impact type, degree of warming...") |> message()
+    ### Save plots as a data object
+    plots_gcm_byType |> save_data(fpath = appxResultsPath, fname = "gcm_appendix_plots", ftype = "rda")
+
+    ### Save plots as image files
+    saved0 <- plots_gcm_byType |> save_appendix_figures(
+      df0       = sum_gcm_byType,
+      modelType = "GCM", ### Or SLR
+      fpath     = appxResultsPath,
+      device    = img_dev,
+      res       = imgRes,
+      units     = imgUnits
+    ) ### End save_appendix_figures
+  } ### End if(saveFile)
 
 
 
@@ -435,33 +437,33 @@ create_DoW_results <- function(
       save_data(fpath = fig7ResultsPath, fname = "slr_results_byDoW_totals", ftype = "csv", row.names = F)
   } ### End if(saveFile)
 
-  # ###### ** -- Plots
-  # ### Create the plots
-  # # codePath  |> loadCustomFunctions()
-  # if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
-  # plots_dow_slr  <- sum_slr_totals |> plot_DoW(
-  #   types0     = c("SLR"), ### Model type: GCM or SLR
-  #   yCol       = "annual_impacts",
-  #   nCol       = 2,
-  #   thresh0    = breakChars
-  # )
-  # ### Glimpse
-  # if(return0) resultsList[["plots_dow_slr"]] <- plots_dow_slr
-  # if(testing) plots_dow_slr[["SLR_all"]] |> print()
-  # ### Save
-  # if(saveFile){
-  #   if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
-  #   ### Save plots as a data object
-  #   plots_dow_slr |> save_data(fpath = fig7ResultsPath, fname = "slr_fig7_plots", ftype = "rda")
-  #
-  #   ### Save plots as image files
-  #   plots_dow_slr |> save_fig7_images(
-  #     modelType = "SLR", ### Or SLR
-  #     fpath     = fig7ResultsPath,
-  #     device    = img_dev,
-  #     units     = imgUnits
-  #   )
-  # } ### End if(saveFile)
+  ###### ** -- Plots
+  ### Create the plots
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
+  plots_dow_slr  <- sum_slr_totals |> plot_DoW(
+    types0     = c("SLR"), ### Model type: GCM or SLR
+    yCol       = "annual_impacts",
+    nCol       = 2,
+    thresh0    = breakChars
+  )
+  ### Glimpse
+  if(return0) resultsList[["plots_dow_slr"]] <- plots_dow_slr
+  if(testing) plots_dow_slr[["SLR_all"]] |> print()
+  ### Save
+  if(saveFile){
+    if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
+    ### Save plots as a data object
+    plots_dow_slr |> save_data(fpath = fig7ResultsPath, fname = "slr_fig7_plots", ftype = "rda")
+
+    ### Save plots as image files
+    plots_dow_slr |> save_fig7_images(
+      modelType = "SLR", ### Or SLR
+      fpath     = fig7ResultsPath,
+      device    = img_dev,
+      units     = imgUnits
+    )
+  } ### End if(saveFile)
 
   ###### ** Appendix Figs: DoW By Type ######
   # codePath  |> loadCustomFunctions()
@@ -484,33 +486,33 @@ create_DoW_results <- function(
       save_data(fpath = appxResultsPath, fname = "slr_results_byDoW_byType", ftype = "csv", row.names = F)
   } ### End if(saveFile)
 
-  # ### Create SLR plots
-  # # codePath  |> loadCustomFunctions()
-  # if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
-  # plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
-  #   models  = c("SLR"),
-  #   xCol    = "year",
-  #   yCol    = "annual_impacts"
-  # )
-  # ### Glimpse
-  # if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
-  # if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
-  # ### Save
-  # if(saveFile){
-  #   if(do_msg) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
-  #   ### Save plots as a data object
-  #   plots_slr_byType |> save_data(fpath = appxResultsPath, fname = "slr_appendix_plots", ftype = "rda")
-  #
-  #   ### Save plots as image files
-  #   saved0 <- plots_slr_byType |> save_appendix_figures(
-  #     df0       = sum_slr_byType,
-  #     modelType = "SLR", ### Or SLR
-  #     fpath     = appxResultsPath,
-  #     device    = img_dev,
-  #     res       = imgRes,
-  #     units     = imgUnits
-  #   ) ### End save_appendix_figures
-  # } ### End if(saveFile)
+  ### Create SLR plots
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
+  plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
+    models  = c("SLR"),
+    xCol    = "year",
+    yCol    = "annual_impacts"
+  )
+  ### Glimpse
+  if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
+  if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
+  ### Save
+  if(saveFile){
+    if(do_msg) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
+    ### Save plots as a data object
+    plots_slr_byType |> save_data(fpath = appxResultsPath, fname = "slr_appendix_plots", ftype = "rda")
+
+    ### Save plots as image files
+    saved0 <- plots_slr_byType |> save_appendix_figures(
+      df0       = sum_slr_byType,
+      modelType = "SLR", ### Or SLR
+      fpath     = appxResultsPath,
+      device    = img_dev,
+      res       = imgRes,
+      units     = imgUnits
+    ) ### End save_appendix_figures
+  } ### End if(saveFile)
 
   ###### Return ######
   return(resultsList)

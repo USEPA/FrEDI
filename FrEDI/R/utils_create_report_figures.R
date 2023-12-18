@@ -839,13 +839,13 @@ plot_DoW <- function(
       bind_rows()
     df_types <- df_types |> rbind(df_gcm)
     rm(df_gcm)
-  }
+  } ### if(do_gcm)
   ### SLR data
   if(do_slr){
     df_slr   <- tibble(type="SLR", year="all", label="SLR" |> paste0("_", "all"))
     df_types <- df_types |> rbind(df_slr)
     rm(df_slr)
-  }
+  } ### if(do_slr)
   # "got here" |> print()
   # df_types |> glimpse()
 
@@ -854,7 +854,7 @@ plot_DoW <- function(
   ### Initialize list
   list0      <- pList0 %>% pmap(function(x1, x2){
     x1 |> paste0("_", x2) |> print()
-    plot_y <- plot_DoW_by_modelYear(
+    plot_y   <- plot_DoW_by_modelYear(
       df0        = df0, ### Data (e.g., output from sum_impactsByDegree)
       type0      = x1,  ### Model type: GCM or SLR
       year0      = x2,

@@ -84,17 +84,25 @@ plot_DOW_bySector <- function(
   if(!hasMUnits){mUnit0 <- "cm"}
 
   ###### Create the plot ######
-  # df0 %>% names() %>% print()
-  # df0 %>% glimpse()
+  # df0 |> names() |> print()
+  # df0 |> glimpse()
   plot0      <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
+  # plot0      <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], group=interaction(sector, model)))
 
   ### Add Geoms
   plot0      <- plot0 + geom_line (aes(color = model))
+  # plot0      <- plot0 + geom_point(aes(color = model))
   plot0      <- plot0 + geom_point(aes(color = model, shape=model))
 
   ### Add Scales
   plot0      <- plot0 + scale_color_discrete(lgdTitle0)
-  plot0      <- plot0 + scale_shape_discrete(lgdTitle0)
+  # plot0      <- plot0 + scale_shape_discrete(lgdTitle0)
+  shapeLvls  <- df0[["model"]] |> unique() |> sort()
+  numShapes  <- shapeLvls |> length()
+  shapeVals  <- c(1:numShapes)
+  # shapeLvls |> print()
+  # plot0      <- plot0 + scale_shape_discrete(lgdTitle0)
+  plot0      <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
   plot0      <- plot0 + scale_x_continuous(xTitle0, limits = x_limits, breaks = x_breaks)
   plot0      <- plot0 + scale_y_continuous(yTitle0, limits = y_limits, breaks = y_breaks)
 
