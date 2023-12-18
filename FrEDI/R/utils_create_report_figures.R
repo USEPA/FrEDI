@@ -1,46 +1,3 @@
-# ### Add names to list object
-# addListNames <- function(
-#     list0, ### List object
-#     names0 ### Names to give to list or data frame
-# ){
-#   names(list0) <- names0
-#   return(list0)
-# } ### End addListNames
-
-# ### This function makes it easier to get data objects from the sysdata.rda file
-# get_ciraDataObj <- function(
-#     x,       ### Object name
-#     listall  = FALSE,
-#     listName = "rDataList",
-#     pkg      = "FrEDI",
-#     lib.loc  = .libPaths()[1] ### Library path to look for packages
-#     ){
-#   ### Messaging
-#   msg0    <- "\t"
-#   ### Check if list name exists
-#   exists0 <- listName |> exists()
-#   ### If the listname exists in the name space, parse it
-#   ### Otherwise, grab it from a package name space
-#   if(exists0){new_x <- parse(text=listName) |> eval()}
-#   else       {
-#     ### Check if package & list name
-#     pkgList0    <- lib.loc |> installed.packages()
-#     pkgExists0  <- pkg %in% pkgList0
-#     if(!pkgExists0){
-#       msg0 |> paste0("Package doesn't exist...") |> message()
-#       msg0 |> paste0("Exiting...") |> message()
-#       return()
-#     } ### End if(!pkgExists0)
-#     else           {new_x <- getFromNamespace(listName, ns=pkg)}
-#   } ### End else(exists0)
-#
-#   ### Whether to list all items in data object or not
-#   if(listall) {return_x <- new_x |> names()}
-#   else        {return_x <- new_x[[x]]}
-#   ### Return
-#   return(return_x)
-# } ### End get_ciraDataObj
-
 ### Get column values from a tibble
 get_column_values <- function(
     df0,    ### Tibble
@@ -519,19 +476,19 @@ get_fig7_slrDataObj <- function(
   ### Sector Info
   ### Variant Info
   ### Model Info
-  dfSectors <- "co_sectors"  |> get_ciraDataObj()
-  dfVariant <- "co_variants" |> get_ciraDataObj()
-  slrRef    <- "co_models"   |> get_ciraDataObj()
+  dfSectors <- "co_sectors"  |> get_frediDataObj()
+  dfVariant <- "co_variants" |> get_frediDataObj()
+  slrRef    <- "co_models"   |> get_frediDataObj()
 
   ### SLR Driver values
   ### SLR Scaled impct values
-  if(drivers){slrCm  <- "slr_cm"     |> get_ciraDataObj()}
-  if(impacts){slrImp <- "slrImpacts" |> get_ciraDataObj()}
+  if(drivers){slrCm  <- "slr_cm"     |> get_frediDataObj()}
+  if(impacts){slrImp <- "slrImpacts" |> get_frediDataObj(listSub="stateData")}
 
   ###### SLR Models ######
   ### Format SLR Models
   slrRef    <- slrRef |> filter(modelType=="slr")
-  slrRef    <- slrRef |> rename_at(.vars=c("model_label"), ~c("model"))
+  slrRef    <- slrRef |> rename_at(vars("model_label"), ~c("model"))
 
   ###### Levels & Labels ######
   ### Initial levels & labels
@@ -544,7 +501,7 @@ get_fig7_slrDataObj <- function(
   # slrLevels |> print(); slrLabels |> print()
   ### Vector of model labels and number of models
   c_slrs    <- slrLabels
-  n_slrs    <- c_slrs %>% length
+  n_slrs    <- c_slrs |> length()
 
   ###### Sectors Data ######
   ### Format Sectors data
@@ -1045,10 +1002,10 @@ plot_slr_scenarios <- function(
     scale_x_continuous("Year") +
     scale_y_continuous("GMSL (cm)")
 
-  plot0      <- plot0 +
-    theme(panel.background = element_rect(fill="white")) +
-    theme(panel.grid       = element_line(color="lightgrey")) +
-    theme(axis.line        = element_line(color="darkgrey"))
+  # plot0      <- plot0 +
+  #   theme(panel.background = element_rect(fill="white")) +
+  #   theme(panel.grid       = element_line(color="lightgrey")) +
+  #   theme(axis.line        = element_line(color="darkgrey"))
 
   plot0      <- plot0 +
     ggtitle(title0, subTitle0) +
