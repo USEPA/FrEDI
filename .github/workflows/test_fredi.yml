@@ -124,7 +124,7 @@ jobs:
 
             ### Check if path exists and, if not, create it
             exists0 <- oPath2 |> dir.exists()
-            if(!exists0){oPath2 |> dir.create(recursice = TRUE)}
+            if(!exists0){oPath2 |> dir.create(recursive = TRUE)}
 
 
             ### Create report figures
