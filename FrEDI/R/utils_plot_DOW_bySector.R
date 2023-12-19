@@ -125,7 +125,7 @@ plot_DOW_bySector <- function(
     plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
   } else{
     ### Initialize plot
-    plot0  <- ggplot(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]])
+    plot0  <- df0 |> ggplot(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]])
     ### Add geoms
     plot0  <- plot0 + geom_line (alpha=0.65)
     plot0  <- plot0 + geom_point(aes(shape = model), alpha=0.65)
