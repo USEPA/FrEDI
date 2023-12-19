@@ -177,7 +177,7 @@ calc_tractScaledImpacts <- function(
   ### Names of functions
   c_tracts <- funList |> names()
   years_x  <- driverValues$year |> as.vector()
-  values_x <- driverValues[,xCol] |> as.vector()
+  values_x <- driverValues[,xCol] |> pull() |> as.vector()
   funcs_x  <- funList |> names()
   # # c_tracts <- c_tracts[1:1e3]; funcs_x <- funcs_x[1:1e3]
   # c_tracts <- c(29031880500);

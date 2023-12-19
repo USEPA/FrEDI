@@ -1,0 +1,28 @@
+name: Update Base System Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      fredi_data_branches:
+        type: string
+        description: Which data only branch of FrEDI_data to pull in data from? (i.e. data_only_branch_state_initial)
+
+
+jobs:
+  get_data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Commit results
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git ${{ github.event.inputs.fredi_data_branches }} --allow-unrelated-histories
+          mv data/tmp_sysdata.rda FrEDI/R/sysdata.rda
+          git branch --show-current
+          git add FrEDI/R/sysdata.rda
+          git rm -r data
+          git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
+          git status
+          git commit -am "add new sysdata.rda from ${{ github.event.inputs.fredi_data_branches }}"
+          git push

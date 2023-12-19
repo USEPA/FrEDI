@@ -220,7 +220,7 @@ plot_DOW_byImpactTypes <- function(
       })
 
       ### Name the plots
-      listVars_j  <- listVars_j |> addListNames(c_variants)
+      listVars_j  <- listVars_j |> set_names(c_variants)
       # return(listVars_j)
       # "got here1..." |> print()
 
@@ -245,7 +245,7 @@ plot_DOW_byImpactTypes <- function(
 
     ### Name the plots
     # listTypes_i |> length() |> print(); c_impTypes |> print()
-    listTypes_i <- listTypes_i |> addListNames(c_impTypes)
+    listTypes_i <- listTypes_i |> set_names(c_impTypes)
     # "got here3..." |> print()
     # return(listTypes_i)
 
@@ -284,7 +284,7 @@ plot_DOW_byImpactTypes <- function(
     return(plotGrid_i)
   })
   ### Name the plots
-  listYears0 <- listYears0 |> addListNames(c_impYears)
+  listYears0 <- listYears0 |> set_names(c_impYears)
 
   ###### Return ######
   ### Return the plot

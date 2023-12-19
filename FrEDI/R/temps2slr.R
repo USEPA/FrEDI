@@ -86,17 +86,18 @@ temps2slr <- function(
   ###### Initial Values ######
   ### Reference year 2000 and equilibrium temperature offset for 2000
   ### Assign reference year from config file (max_year)
-  temps2slr_constants <- fredi_config$temps2slr
-  for(i in 1:length(temps2slr_constants)){
-    assign(names(temps2slr_constants)[i], temps2slr_constants[[i]])
-  }
+  fredi_config        <- "fredi_config" |> get_frediDataObj("frediData")
+  temps2slr_constants <- fredi_config[["temps2slr"]]
+  names_slrConstants  <- temps2slr_constants |> names()
+  for(name_i in names_slrConstants){assign(name_i, temps2slr_constants[[name_i]])}
   #### Reference year is 2000
-  ref_year0     <- rDataList[["co_modelTypes"]] |> filter(modelType_id == "slr") |> (function(x){x$modelRefYear[1]})()
+  co_modelTypes <- rDataList[["frediData"]][["data"]][["co_modelTypes"]] |> filter(modelType_id == "slr")
+  ref_year0     <- co_modelTypes$modelRefYear[1]
   # year0         <- ref_year0
   eqtemp_offset <- 0.62
 
   ###### Other constants ######
-  mm2cm        <- 0.1 ### Number of centimeters per millimeter
+  mm2cm         <- 0.1 ### Number of centimeters per millimeter
 
   # We used HadCrUT4 to determine the appropriate temperature offset between the actual temperature and the equilibrium temperature in 2000.
   # Met Office Hadley Centre observations datasets. https://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/download.html.
@@ -109,7 +110,7 @@ temps2slr <- function(
   # ind_x        <- 1:num_x
 
   # ### Initialize Data
-  # df_x0 <- data.frame(year = years, temp_C = temps) |>
+  # df_x0 <- tibble(year = years, temp_C = temps) |>
   #   filter(year >= year0) |>
   #   filter(year <= max_year)
   #
@@ -127,7 +128,7 @@ temps2slr <- function(
 
   ###### Initialize Data ######
   ### Filter NA values and make sure values are numeric
-  df_x0 <- data.frame(year = years, temp_C = temps) |>
+  df_x0 <- tibble(year = years, temp_C = temps) |>
     mutate_at(c("year", "temp_C"), as.character) |>
     mutate_at(c("year", "temp_C"), as.numeric) |>
     filter(!is.na(year) & !is.na(temp_C)) |>
@@ -145,9 +146,7 @@ temps2slr <- function(
     df_x0 <- df_x0 |>
       group_by_at(.vars = c("year")) |>
       summarize_at(c("temp_C"), mean, na.rm=T)
-  }
-
-
+  } ### End if(hasDuplicates)
 
   ### Check for 2020 (year0)
   checkRefYear <- (ref_year0 %in% df_x0$year)
@@ -155,22 +154,20 @@ temps2slr <- function(
   if(!checkRefYear){
     minYearInput0 <- df_x0$year |> min(na.rm=T)
     maxYearInput0 <- df_x0$year |> max(na.rm=T)
-    checkRefYear     <- (minYearInput0 < ref_year0) & (maxYearInput0 > ref_year0)
+    checkRefYear  <- (minYearInput0 < ref_year0) & (maxYearInput0 > ref_year0)
   }
 
   ### If 2020 is still not found, message the user and exit
   ###To-do exit gracefully within tempbin()
+  ### Else, if there is a valid temperature series: Calculate temperatures
   if(!checkRefYear) {
     message("\t", "Warning:")
     message("\t\t", "In 'temps2slr()': Missing values for the reference year ", ref_year0 , ".")
     message("\t\t\t", "The reference year ", ref_year0 , " must be present in the input (or the input must have values above and below the reference year).")
-
     message("\n", "\t", "Enter a valid temperature series.")
     message("\n", "Exiting...")
     return()
-  }
-  ### If there is a valid temperature series
-  else{
+  } else{
     year0 <- df_x0$year |> min(na.rm=T)
 
     ###### Standardize data #####
@@ -186,47 +183,44 @@ temps2slr <- function(
     ###### Interpolate the data #####
     ### Interpolated Data
     # function require annual data
-    df_x1 <-
-      data.frame(year = new_years0, temp_C = NA) |>
-      mutate(temp_C=approx(
-        x    = df_x0$year,
-        y    = df_x0$temp_C,
-        xout = new_years0,
-        rule = 2
-      )$y) |>
-      filter(year>=ref_year0) |>
-      mutate(equilTemp = NA, slr_mm = NA) |>
-      select(year, temp_C, equilTemp, slr_mm) |>
-      mutate(yearFrom0 = year - ref_year0) |>
-      mutate(phi = phi0 * exp(-yearFrom0 / tau2))
-
+    df_x1 <- tibble(year = new_years0, temp_C = NA)
+    df_x1 <- df_x1 |> mutate(temp_C=approx(
+      x    = df_x0$year,
+      y    = df_x0$temp_C,
+      xout = new_years0,
+      rule = 2
+    )$y)
+    df_x1 <- df_x1 |> filter(year>=ref_year0)
+    df_x1 <- df_x1 |> mutate(equilTemp = NA, slr_mm = NA)
+    df_x1 <- df_x1 |> select(c("year", "temp_C", "equilTemp", "slr_mm"))
+    df_x1 <- df_x1 |> mutate(yearFrom0 = year - ref_year0)
+    df_x1 <- df_x1 |> mutate(phi = phi0 * exp(-yearFrom0 / tau2))
 
     ###### Series ######
     ### Calculate base values
-    df_x  <- df_x1 |>
-      ### Equilibrium temps
-      (function(k){
-        for(i in ind_x){
-          if(i == 1){
-            ### Initialize temperature
-            temp_C0        <- (df_x1 |> filter(year==ref_year0))$temp_C[1]
-            k$equilTemp[i] <- temp_C0 - eqtemp_offset
-            k$slr_mm[i]    <- 0
-          } else{
-            k$equilTemp[i] <- k$equilTemp[i - 1] + ( k$temp_C[i] - k$equilTemp[i-1] ) / tau1
-            k$slr_mm[i]    <- k$slr_mm[i-1] + alpha * ( k$temp_C[i] - k$equilTemp[i] ) + k$phi[i]
-          }
-        }
-        return(k)
-      })() |>
+    ### Equilibrium temps
+    df_x  <- df_x1 |> (function(k){
+      for(i in ind_x){
+        if(i == 1){
+          ### Initialize temperature
+          temp_C0        <- (df_x1 |> filter(year==ref_year0))$temp_C[1]
+          k$equilTemp[i] <- temp_C0 - eqtemp_offset
+          k$slr_mm   [i] <- 0
+        } else{
+          k$equilTemp[i] <- k$equilTemp[i - 1] + ( k$temp_C[i] - k$equilTemp[i-1] ) / tau1
+          k$slr_mm   [i] <- k$slr_mm[i-1] + alpha * ( k$temp_C[i] - k$equilTemp[i] ) + k$phi[i]
+        } ### End else
+      } ### End for(i in ind_x)
+      return(k)
+    })()
 
-      ### GMSL in cm
-      select(year, slr_mm) |>
-      mutate(slr_cm = slr_mm * mm2cm) |> # convert from mm to cm
-      select(-slr_mm)
-
+    ### GMSL in cm
+    df_x  <- df_x |> select(c("year", "slr_mm"))
+    df_x  <- df_x |> mutate(slr_cm = slr_mm * mm2cm) ### convert from mm to cm
+    df_x  <- df_x |> select(-c("slr_mm"))
+    ### Return
     return(df_x)
-  }
+  } ### End else
 
 }
 

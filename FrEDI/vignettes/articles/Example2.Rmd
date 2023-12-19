@@ -199,10 +199,10 @@ output_df <- run_fredi_sv(sector      = sectorFlag,
 
 # Option: write output
 ## Write Full Dataframe to CSV (or feather)
-# write.csv(output_df, './output/example_output.csv')
+# write.csv(output_df$results, './output/example_output.csv')
 
 #First five lines of output dataframe
-#output_df[5,]
+#output_df$results[1:5,]
 ```
 
 # Step 4. Analyze `FrEDI_SV` {#analyzeFrEDI}

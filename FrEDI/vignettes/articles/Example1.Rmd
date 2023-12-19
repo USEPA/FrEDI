@@ -222,10 +222,10 @@ output_df <- run_fredi(inputsList= inputs_list,
 
 # Option: write output
 ## Write Full Dataframe to CSV (or feather)
-# write.csv(output_df, './output/example_output.csv')
+# write.csv(output_df$results, './output/example_output.csv')
 
 #First five lines of output dataframe
-#output_df[5,]
+#output_df$results[1:5,]
 ```
 
 <br>

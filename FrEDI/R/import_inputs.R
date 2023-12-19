@@ -81,7 +81,8 @@ import_inputs <- function(
   popfile  = NULL,
   gdpfile  = NULL,
   temptype = "conus", ### "global", or "conus" (default)
-  popform  = "wide" ### "wide" or "long" ### Previously: "gather", "spread"
+  popform  = "wide", ### "wide" or "long" ### Previously: "gather", "spread"
+  byState  = FALSE
 ){
   ###### Messaging ######
   hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile) |>
@@ -103,6 +104,7 @@ import_inputs <- function(
   popform_default  <- "wide"
   popform          <- ifelse(is.null(popform), popform_default, tolower(popform))
   wide_pop         <- popform=="wide"
+  if(byState){geo_msg <- " state..."} else{geo_msg <- " region..."}
 
   ### Set temperature type default and set temperature type to default if none
   ### is declared. Check whether inputs temperatures are already in CONUS degrees
@@ -113,7 +115,9 @@ import_inputs <- function(
   ###### Initialize Inputs List ######
   ### Get input scenario info: co_inputScenarioInfo
   name_dfScenarioInfo <- "co_inputScenarioInfo"
-  assign(name_dfScenarioInfo, rDataList[[name_dfScenarioInfo]])
+  assign(name_dfScenarioInfo, rDataList[["regionData"]][["data"]][[name_dfScenarioInfo]])
+  name_stateInfo <- "co_states"
+  assign(name_stateInfo, rDataList[["frediData"]][["data"]][[name_stateInfo]])
   input_names_vector  <- co_inputScenarioInfo$inputName
   num_inputNames      <- co_inputScenarioInfo |> nrow()
 
@@ -139,9 +143,16 @@ import_inputs <- function(
     valueCol_i  <- inputInfo_i$valueCol |> unique()
     ### Initialize column names
     numCols_i   <- colNames_i <- c("year", valueCol_i)
-    ### Add region column
+    cols0       <- c("region")
+    statecols0  <- c("region", "state", "postal")
+    if(byState){
+      cols0      <- statecols0
+      colNames_i <- numCols_i <- c("year", "state_pop")
+    }
+    
+    ### Add state/region columns as needed
     if(region_i == 1){
-      colNames_i  <- c(colNames_i[1], "region", colNames_i[2])
+      colNames_i  <- c(colNames_i[1], cols0, colNames_i[2])
     }
 
     ###### Initialize Results List Element ######
@@ -174,16 +185,26 @@ import_inputs <- function(
         ###### Gather population inputs ######
         if(input_i=="pop" & wide_pop){
           msg3 |> paste0("User specified `popform='wide'`...") |>
-            paste0("Gathering population by region...") |>
+            paste0("Gathering population by", geo_msg) |>
             message()
 
           names(df_input_i)[1] <- colNames_i[1]
-          df_input_i <- df_input_i |> gather(key = "region", value="reg_pop", -year)
+          if(byState){
+            df_input_i <- df_input_i |> gather(key = "state", value="state_pop", -year)
+          } else{
+            df_input_i <- df_input_i |> gather(key = "region", value="reg_pop", -year)
+          }
         }
 
         ###### Standardize All Columns ######
         ### Rename Inputs and Convert all columns to numeric
         ### Rename Inputs and Convert all columns to numeric
+        if(byState){
+          df_input_i <- df_input_i |>
+            left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
+            select(colNames_i) 
+        }
+        
         df_input_i  <- df_input_i |>
           rename_inputs(colNames_i) |>
           mutate_all(as.character) |>

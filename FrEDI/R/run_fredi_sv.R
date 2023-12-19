@@ -409,7 +409,7 @@ run_fredi_sv <- function(
     ### Otherwise use default scenario and add scenario column
     msg2 |> message("Using default temperature scenario...")
     # rDataList$co_defaultTemps |> names() |> print()
-    driverInput <- rDataList$co_defaultTemps |>
+    driverInput <- rDataList$frediData$data$co_defaultTemps |>
       mutate(temp_C = temp_C_global |> convertTemps(from="global")) |>
       mutate(scenario="FrEDI Default")
     ### Select columns
@@ -423,7 +423,7 @@ run_fredi_sv <- function(
     c_scenarios <- driverInput$scenario |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearTemp <- (rDataList$co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear[1]
+    refYearTemp <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear[1]
     ### Drivers
     drivers_df  <- c_scenarios |> lapply(function(
     scenario_i, data_x = driverInput,
@@ -479,7 +479,7 @@ run_fredi_sv <- function(
     c_scenarios <- driverInput$scenario |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearSLR  <- (rDataList$co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear[1]
+    refYearSLR  <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear[1]
     ### Drivers
     drivers_df  <- c_scenarios |> lapply(function(
     scenario_i, data_x = driverInput,
@@ -663,7 +663,7 @@ run_fredi_sv <- function(
   })
   ###### Format Results ######
   ### Bind results and ungroup
-  df_results <- df_results  (function(x){do.call(rbind, x)})()
+  df_results <- df_results |> (function(x){do.call(rbind, x)})()
   df_results <- df_results |> ungroup() |> as.data.frame()
 
   ###### Save Results ######
