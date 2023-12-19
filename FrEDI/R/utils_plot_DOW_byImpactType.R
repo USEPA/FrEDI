@@ -157,39 +157,46 @@ plot_DOW_byImpactType <- function(
   # subtitle0 <- variant0
 
   ###### Create the plot ######
-  plot0  <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
+  plot0     <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
 
   ### Add Geoms
-  plot0  <- plot0 + geom_line (aes(color = model))
+  plot0     <- plot0 + geom_line (aes(color = model))
   if(do_slr){df_points0 <- df0 |> filter(year %in% x_breaks)}
   else      {df_points0 <- df0}
-  plot0  <- plot0 + geom_point(data=df_points0, aes(color = model, shape=model))
+  plot0     <- plot0 + geom_point(data=df_points0, aes(color = model, shape=model))
 
   ### Add Scales
-  plot0  <- plot0 + scale_color_discrete(lgdLbl)
-  plot0  <- plot0 + scale_shape_discrete(lgdLbl)
+  # plot0     <- plot0 + scale_shape_discrete(lgdTitle0)
+  shapeLvls <- df0[["model"]] |> unique() |> sort()
+  numShapes <- shapeLvls |> length()
+  shapeVals <- c(1:numShapes)
+  # shapeLvls |> print()
+  # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
+  plot0     <- plot0 + scale_shape_manual(lgdLbl, breaks=shapeLvls, values=shapeVals)
+  plot0     <- plot0 + scale_color_discrete(lgdLbl)
+  # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
 
   ###### Adjust legend title ######
   if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}
 
   ###### Add themes and title ######
-  plot0  <- plot0 + ggtitle(title0, subtitle0)
+  plot0     <- plot0 + ggtitle(title0, subtitle0)
 
   ###### Add scales ######
-  plot0  <- plot0 + scale_x_continuous(xTitle, breaks = x_breaks, limits = x_limits)
-  # plot0    <- plot0 + scale_y_continuous(yTitle)
-  plot0  <- plot0 + scale_y_continuous(y_label)
+  plot0     <- plot0 + scale_x_continuous(xTitle, breaks = x_breaks, limits = x_limits)
+  # plot0     <- plot0 + scale_y_continuous(yTitle)
+  plot0     <- plot0 + scale_y_continuous(y_label)
 
   ###### Adjust Appearance ######
-  # plot0  <- plot0 + theme(panel.background = element_rect(fill="white"))
-  # plot0  <- plot0 + theme(panel.grid = element_line(color="lightgrey"))
-  # plot0  <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=11))
-  plot0  <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=11))
-  plot0  <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=10))
-  # plot0  <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9, color="white"))
-  plot0  <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9))
-  plot0  <- plot0 + theme(axis.title.y  = element_text(hjust = 0.5, size=9))
-  plot0  <- plot0 + theme(legend.position = "bottom")
+  # plot0     <- plot0 + theme(panel.background = element_rect(fill="white"))
+  # plot0     <- plot0 + theme(panel.grid = element_line(color="lightgrey"))
+  # plot0     <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=11))
+  plot0     <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=11))
+  plot0     <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=10))
+  # plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9, color="white"))
+  plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9))
+  plot0     <- plot0 + theme(axis.title.y  = element_text(hjust = 0.5, size=9))
+  plot0     <- plot0 + theme(legend.position = "bottom")
 
   ###### Plot Index #####
   ###### If plotIndex, remove some plot elements

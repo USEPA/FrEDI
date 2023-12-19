@@ -9,18 +9,32 @@ require(ggpubr)
 ###### create_DoW_results ######
 create_DoW_results <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
-    gcmYears = c(2090), ### Which years to report on for GCM sectors
+    gcmYears = c(2090),   ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
-    silent   = TRUE,  ### Degree of messaging
-    testing  = FALSE, ### Whether to print out extra diagnostic values
-    aggOnly  = TRUE, ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+    byState  = TRUE,       ### Whether values are by state or just by region
+    silent   = TRUE,      ### Degree of messaging
+    testing  = FALSE,     ### Whether to print out extra diagnostic values
+    aggOnly  = TRUE,      ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     loadCode = "project", ### Whether to load code as source or devtools
-    fpath    = "." ,  ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
-    saveFile = FALSE, ### Save file
+    fpath    = "." ,      ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
+    saveFile = FALSE,     ### Save file
     outPath  = "." |> file.path("report_figures"),  ### Path to save results if saveFile == TRUE
-    img_dev  = "pdf", ### Image device if saveFile == TRUE
-    return   = TRUE   ### Whether to return list object
+    img_dev  = "pdf",     ### Image device if saveFile == TRUE
+    return   = TRUE       ### Whether to return list object
 ){
+  # sectors  = FrEDI::get_sectorInfo() ### Which sectors
+  # gcmYears = c(2090) ### Which years to report on for GCM sectors
+  # slrYears = c(2050, 2090) ### Which years to report on for SLR sectors
+  # silent   = TRUE    ### Degree of messaging
+  # testing  = TRUE    ### Whether to print out extra diagnostic values
+  # byState  = TRUE    ### Whether values are by state or just by region
+  # aggOnly  = TRUE    ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+  # loadCode = "project" ### Whether to load code as source or devtools
+  # fpath    = "."     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
+  # saveFile = FALSE   ### Save file
+  # outPath  = "." |> file.path("report_figures")  ### Path to save results if saveFile == TRUE
+  # img_dev  = "pdf"   ### Image device if saveFile == TRUE
+  # return   = TRUE    ### Whether to return list object
   ###### Initial values ######
   ### Messaging
   do_msg          <- !silent
@@ -100,12 +114,15 @@ create_DoW_results <- function(
   ###### ** Constants ######
   ### Numeric columns: Specify so that we can print out the associated data
   ### Number of digits to format
-  c_numVars      <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap", "reg_pop", "annual_impacts")
+  c_popCol       <- byState |> ifelse("state_pop", "reg_pop")
+  # c_numVars      <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap", "reg_pop", "annual_impacts")
+  c_numVars      <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap") |> c(c_popCol) |> c("annual_impacts")
   ### Integer temperatures: data frame of inputs
   conusPrefix0   <- "Other_Integer"
   globalPrefix0  <- "preI_global"
   ### Temperatures
-  c_conusTemps   <- 0:7
+  # c_conusTemps   <- 0:7
+  c_conusTemps   <- 0:10
   c_globalTemps  <- c(1.487, 2.198)
   ### Numbers of scenarios
   n_conusTemps   <- c_conusTemps |> length()
@@ -136,7 +153,9 @@ create_DoW_results <- function(
     x = df_scenarios[["temp_C"  ]],
     y = df_scenarios[["tempType"]],
     z = df_scenarios[["prefix"  ]]
-    ) |> pmap(function(x, y, z){
+  )
+  ### Create constant temp scenarios
+  inputs_df_int  <- inputs_df_int |> pmap(function(x, y, z){
     create_constant_temp_scenario(
       temp0   = x,
       type0   = y,
@@ -162,6 +181,7 @@ create_DoW_results <- function(
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year")
   )
+
   ### Glimpse results
   if(return0) resultsList[["df_int_byType"]] <- df_int_byType
   if(testing) df_int_byType |> glimpse()
@@ -182,7 +202,7 @@ create_DoW_results <- function(
   ###### ** Result Totals ######
   if(testing|do_msg) "Aggregating integer scenario results..." |> message()
   #### Aggregate Impact Types, Impact Years
-  df_int_totals  <- df_int_byType %>% run_scenarios(
+  df_int_totals  <- df_int_byType |> run_scenarios(
     col0      = "scenario",
     fredi     = FALSE,
     aggLevels = c("impactyear", "impacttype"),
@@ -241,15 +261,15 @@ create_DoW_results <- function(
   # codePath  |> loadCustomFunctions()
   if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
   plots_dow_gcm  <- sum_gcm_totals |> plot_DoW(
-      types0  = c("GCM"), ### Model type: GCM or SLR
-      years   = gcmYears,
-      xCol    = "driverValue",
-      yCol    = "annual_impacts",
-      thresh0 = breakChars
-    )
+    types0  = c("GCM"), ### Model type: GCM or SLR
+    years   = gcmYears,
+    xCol    = "driverValue",
+    yCol    = "annual_impacts",
+    thresh0 = breakChars
+  )
   ### Glimpse
+  if(testing) plots_dow_gcm[["GCM_2090"]] |> print()
   if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
-  if(testing) plots_dow_gcm[["GCM_2010"]] |> print()
   ### Save
   # codePath  |> loadCustomFunctions()
   if(saveFile){
@@ -280,8 +300,8 @@ create_DoW_results <- function(
     silent      = TRUE
   )
   ### Glimpse
-  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   if(testing) sum_gcm_byType |> glimpse()
+  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   ### Save summary table
   if(saveFile){
     if(do_msg) paste0("Saving summary of GCM results by sector, impact type, degree of warming...") |> message()
@@ -294,13 +314,14 @@ create_DoW_results <- function(
   if(testing|do_msg) "Plotting GCM results by sector, impact type, degree of warming (DOW)..." |> message()
   plots_gcm_byType <- sum_gcm_byType |>
     # filter(sector %in% c_sectorNames[c(10)]) |>
+    filter(!(sector %in% c("Roads"))) |>
     plot_DoW_by_sector(
       models  = c("GCM"),
       yCol    = "annual_impacts"
     )
   ### Glimpse
-  if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
   if(testing) plots_gcm_byType$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
+  if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
   ### Save
   if(saveFile){
     if(do_msg) paste0("Saving plots of GCM results by  sector, impact type, degree of warming...") |> message()

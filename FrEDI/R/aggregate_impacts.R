@@ -47,9 +47,12 @@
 ### This function aggregates outputs produced by temperature binning
 aggregate_impacts <- function(
     data,             ### Data frame of outputs from temperature binning
-    aggLevels   = c("national", "modelaverage", "impactyear", "impacttype"),  ### Levels of aggregation
+    aggLevels   = c("national", "modelaverage", "impacttype", "impactyear"),  ### Levels of aggregation
     columns     = c("annual_impacts"), ### Columns to aggregate
-    groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region"),
+    groupByCols = c("sector", "variant", "impactType", "impactYear") |>
+      c("region", "state", "postal") |>
+      c("model_type", "model") |>
+      c("includeaggregate", "sectorprimary"),
     silent      = TRUE
 ){
   ###### Defaults ######
@@ -59,7 +62,7 @@ aggregate_impacts <- function(
   yearCol0     <- c("year")
   # summaryCols  <- columns; rm(columns)
   ####### By State  ######
-  byState      <- c("state") %in% groupByCols
+  byState      <- c("state") %in% (data |> names())
   if(byState){stateCols0 <- c("state", "postal")} else{stateCols0 <- c()}
   popCol0      <- byState |> ifelse("state_pop", "reg_pop")
   # byState |> print()
@@ -76,7 +79,7 @@ aggregate_impacts <- function(
   ###### Aggregation Levels  ######
   ### Types of summarization to do: default
   # aggList0     <- c("national", "modelaverage", "impactyear", "impacttype", "all")
-  aggList0     <- c("national", "modelaverage", "impactyear", "impacttype")
+  aggList0     <- c("national", "modelaverage", "impacttype", "impactyear")
   null_aggLvls <- aggLevels |> is.null()
   aggLevels    <- aggLevels |> tolower()
   aggNone      <- "none" %in% aggLevels
@@ -145,7 +148,8 @@ aggregate_impacts <- function(
 
   ###### Grouping Columns  ######
   ### Use default group by columns if none specified...otherwise, check which are present
-  groupByCols0 <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0)
+  groupByCols0 <- c("sector", "variant", "impactType", "impactYear")
+  groupByCols0 <- groupByCols0 |> c("region") |> c(stateCols0)
   groupByCols0 <- groupByCols0 |> c("model_type", "model")
   groupByCols0 <- groupByCols0 |> c("sectorprimary", "includeaggregate")
   if(groupByCols |> is.null()){groupByCols <- groupByCols0}
@@ -170,7 +174,7 @@ aggregate_impacts <- function(
     scalarCols  <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Name")
     # scalarCols  <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier")
     # scalarCols  <- scalarCols0 |> map(~.x |> paste0(c(scalarSuffix0))) |> unlist()
-    dropCols    <- c("physicalmeasure") |> c(scalarCols)
+    dropCols    <- c("physicalmeasure") |> c(scalarCols) |> c(popCol0, "national_pop")
     isDropCol   <- groupByCols %in% dropCols
     hasDropCols <- isDropCol |> any()
     ### If hasDropCols
@@ -217,7 +221,7 @@ aggregate_impacts <- function(
   summaryCols <- summaryCols[isPresent0]
   rm(summaryCols0, nullSumCols, isPresent0, hasNaCols0)
 
-   ### Drop some columns from summary columns
+  ### Drop some columns from summary columns
   if(aggImpTypes){
     scalarCols  <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Value")
     scalarCols  <- scalarCols |> c("physScalar", "econScalar", "physEconScalar")
@@ -229,7 +233,7 @@ aggregate_impacts <- function(
     if(hasDropCols){
       ### Drop levels
       summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
-    }
+    } ### End if(hasDropCols)
 
     ### If, message user
     if(hasDropCols & msgUser){
@@ -257,7 +261,7 @@ aggregate_impacts <- function(
     if(hasDropCols){
       ### Drop levels
       summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
-      } ### End if(hasDropCols)
+    } ### End if(hasDropCols)
 
     ###
     if(msgUser){
@@ -294,7 +298,8 @@ aggregate_impacts <- function(
   numCols0      <- numCols0    |> c("gdp_usd", "national_pop", "gdp_percap")
   numCols0      <- numCols0    |> c("driverValue") |> c(popCol0) |> c(yearCol0)
   numCols0      <- numCols0    |> unique()
-  data          <- data |> mutate_at(c(chrCols0), as.character)
+  # data          <- data |> mutate_at(c(chrCols0), as.character)
+  data          <- data |> mutate_at(c(numCols0), as.character)
   data          <- data |> mutate_at(c(numCols0), as.numeric  )
   rm(mutate0)
 
@@ -305,6 +310,7 @@ aggregate_impacts <- function(
   regPopCols    <- c("year", "region") |> c(stateCols0) |> c(popCol0) |> unique()
   natPopCols    <- c("year", "region") |> c("national_pop")
   driverCols    <- c("year", "model_type", "driverType", "driverUnit", "driverValue")
+
   ### Get names in names
   names0        <- data |> names()
   baseCols      <- baseCols   |> (function(y){y[(y %in% names0)]})()
@@ -312,6 +318,12 @@ aggregate_impacts <- function(
   natPopCols    <- natPopCols |> (function(y){y[(y %in% names0)]})()
   driverCols    <- driverCols |> (function(y){y[(y %in% names0)]})()
   rm(names0)
+
+  # ### Add state_pop column
+  # if(aggNational){
+  #   groupByCols <- groupByCols |> c(regPopCols) |> unique()
+  #   summaryCols <- summaryCols |> (function(y){y[!(y %in% groupByCols)]})()
+  # } ### End if(aggNational)
 
   ### List of standardized columns
   standardCols  <- c(groupByCols, baseCols, regPopCols, natPopCols) |> unique()
@@ -353,7 +365,7 @@ aggregate_impacts <- function(
   rm(data)
   # df_agg |> nrow() |> print(); df_agg |> head() |> glimpse()
 
-  ###### Impact Years ######
+  ###### ** Impact Years ######
   ### Separate into years after 2090 and before 2090
   if(aggImpYear){
     if(msgUser){msg0 (1) |> paste0("Interpolating between impact year estimates...") |> message()}
@@ -454,7 +466,8 @@ aggregate_impacts <- function(
   # paste0("Finished impact year interpolation: ", nrow(df_agg)) |> print(); df_agg |> head() |> glimpse()
   # "got here1" |> print()
 
-  ###### Model Averages ######
+  ###### ** Model Averages ######
+  # groupByCols |> print(); df_agg |> glimpse()
   ### Average values across models
   if(aveModels){
     modelAveMsg   <- "Calculating model averages..."
@@ -465,6 +478,7 @@ aggregate_impacts <- function(
     ### Group by columns
     group0        <- groupByCols |> (function(y){y[!(y %in% c("model", yearCol0))]})()
     group0        <- group0 |> c("year")
+    # group0 |> print()
     ### Separate model types
     df_gcm        <- df_agg |> filter(model_type |> tolower() == "gcm")
     df_agg        <- df_agg |> filter(model_type |> tolower() != "gcm")
@@ -500,23 +514,27 @@ aggregate_impacts <- function(
     df_agg <- df_gcm |> rbind(df_agg)
     rm(df_gcm, group0)
   } ### End if "model" %in% aggLevels
-  # paste0("Finished model aggregation: ", nrow(df_agg)) |> print(); df_agg |> head() |> glimpse()
+  # paste0("Finished model aggregation: ", nrow(df_agg)) |> print();
+  # df_agg |> glimpse()
   # "got here2" |> print()
 
-  ###### National Totals ######
+  ###### ** National Totals ######
   if(aggNational){
     if(msgUser){msg0 (1) |> paste0("Calculating national totals...") |> message()}
     ### Ungroup first
     df_agg      <- df_agg |> ungroup()
     ### Grouping columns
-    group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0,popCol0, yearCol0))]})()
+    # group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0, popCol0, yearCol0))]})()
+    group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0, popCol0, yearCol0))]})()
     group0      <- group0 |> c("year")
     ### Calculate number of non missing values
     df_national <- df_agg |> (function(w){
       w |> mutate(not_isNA = 1 * (!(w[[summaryCol1]] |> is.na())))
     })()
     ### Group data, sum data, calculate averages, and drop NA column
-    sum0        <- summaryCols |> c(popCol0,"not_isNA")
+    # sum0        <- summaryCols |> c(popCol0) |> c("not_isNA")
+    sum0        <- summaryCols |> c("not_isNA")
+    # df_national |> glimpse()
     df_national <- df_national |>
       group_by_at(c(group0)) |>
       summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
@@ -531,15 +549,15 @@ aggregate_impacts <- function(
     df_national <- df_national |> select(-c("not_isNA"))
     df_national <- df_national |> mutate(region="National Total")
     ### Join with National Pop
-    #join0       <- natPopCols |> (function(y){y[!(y %in% c("national_pop"))]})()
-    #df_national <- df_national |> left_join(nationalPop, by = c(join0))
+    # join0       <- natPopCols |> (function(y){y[!(y %in% c("national_pop", popCol0))]})()
+    # df_national <- df_national |> left_join(nationalPop, by = c(join0))
     if(byState){
       df_national   <- df_national |> mutate(state ="All")
       df_national   <- df_national |> mutate(postal="US")
     } ### End if(byState)
 
     ### Add back into regional values and bind national population to impact types
-    #df_agg |> glimpse(); df_national |> glimpse()
+    # df_agg |> glimpse(); df_national |> glimpse()
     df_agg      <- df_agg |> rbind(df_national);
 
     ### Add national to total populations
@@ -551,7 +569,7 @@ aggregate_impacts <- function(
   # paste0("Finished national totals: ", nrow(df_agg)) |> print; df_agg |> head |> glimpse
   # "got here3" |> print()
 
-  ###### Impact Types ######
+  ###### ** Impact Types ######
   ### Summarize by Impact Type
   if(aggImpTypes){
     if(msgUser){msg0 (1) |> paste0("Summing across impact types...") |> message()}
@@ -613,12 +631,20 @@ aggregate_impacts <- function(
   df_agg        <- df_agg |> left_join(df_base      , by=c(join1))
   rm(names0, names1, join0, join1)
 
+  ###### Format Columns ######
   # ###### Reformat sectorprimary and includeaggregate, which were converted to character
   # mutate0         <- c("sectorprimary", "includeaggregate")
-  # mutate0         <- mutate0[mutate0 %in% names(df_return)]
+  # mutate0         <- mutate0[mutate0 %in% names(df_agg)]
   # doMutate        <- mutate0 |> length() > 0
-  # if(doMutate){df_return <- df_return |> mutate_at(c(mutate0), as.numeric)}
-  # if(doMutate){df_return <- df_return |> mutate_at(c(mutate0), as.numeric)}
+  # if(doMutate){df_agg <- df_agg |> mutate_at(c(mutate0), as.numeric)}
+  # if(doMutate){df_agg <- df_agg |> mutate_at(c(mutate0), as.numeric)}
+  mutate0       <- baseCols |> c(popCol0) |> c("driverValue")
+  mutate0       <- mutate0  |> c(summaryCols)
+  mutate0       <- mutate0  |> c("sectorprimary", "includeaggregate")
+  mutate0       <- mutate0  |> unique()
+  mutate0       <- mutate0  |> (function(y){y[y %in% (df_agg |> names())]})()
+  doMutate      <- (mutate0 |> length()) > 0
+  if(doMutate){df_agg <- df_agg |> mutate_at(c(mutate0), as.numeric)}
 
   ###### Order Columns ######
   ### Order the data frame and ungroup

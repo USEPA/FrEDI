@@ -740,10 +740,10 @@ run_fredi <- function(
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(requiresAgg){
     # df_results <- df_results |> aggregate_impacts(aggLevels=aggLevels, groupByCols=groupCols0)
-    # group0     <- groupCols0
+    group0     <- groupCols0
     # group0     <- select0 |> (function(x){x[!(x %in% driverCols0)]})()
     # select0 |> print(); df_results |> names() |> print()
-    group0     <- select0
+    # group0     <- select0
     df_results <- df_results |> aggregate_impacts(
       aggLevels   = aggLevels,
       groupByCols = group0,
