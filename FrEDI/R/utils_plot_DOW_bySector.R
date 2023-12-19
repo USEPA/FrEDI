@@ -24,6 +24,7 @@ plot_DOW_bySector <- function(
   ###### Data ######
   df0        <- df0  |> filter(sector==sector0)
   type0      <- df0[["model_type"]] |> unique()
+  do_gcm     <- (type0 |> tolower()) == "gcm"
   ###### Sector info ######
   info0      <- infoList0[["sectorInfo"]] |> filter(sector==sector0)
   index0     <- info0[["sector_order"]][1]
@@ -77,50 +78,86 @@ plot_DOW_bySector <- function(
   ggtitle0    <- options[["title"      ]]
   subtitle0   <- sector0
   ### Has plot options
-  hasTheme   <- !is.null(theme0  )
-  hasMargins <- !is.null(margins0)
-  hasMUnits  <- !is.null(mUnit0  )
+  hasTheme    <- !is.null(theme0  )
+  hasMargins  <- !is.null(margins0)
+  hasMUnits   <- !is.null(mUnit0  )
   ### If units or no
   if(!hasMUnits){mUnit0 <- "cm"}
 
+  ###### Add in Model info ######
+  if(do_gcm)  {
+    ### Get model info
+    select0   <- c("model_id", "maxUnitValue")
+    rename0   <- c("model_id")
+    rename1   <- c("model")
+    co_models <- "co_models" |> get_frediDataObj("frediData")
+    co_models <- co_models |> filter((modelType |> tolower()) == "gcm")
+    co_models <- co_models |> select(all_of(select0))
+    co_models <- co_models |> rename_at(vars(rename0), ~rename1)
+    rm(select0, rename0, rename1)
+    ### Join model info with df0
+    join0     <- c("model")
+    df0       <- df0 |> left_join(co_models, by=c(join0))
+    rm(join0)
+  } ### if(do_gcm)
+
   ###### Create the plot ######
-  # df0 |> names() |> print()
-  # df0 |> glimpse()
-  plot0      <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
-  # plot0      <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], group=interaction(sector, model)))
+  # # df0 |> names() |> print()
+  # # df0 |> glimpse()
+  # plot0       <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
+  # # plot0       <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], group=interaction(sector, model)))
 
   ### Add Geoms
-  plot0      <- plot0 + geom_line (aes(color = model))
-  # plot0      <- plot0 + geom_point(aes(color = model))
-  plot0      <- plot0 + geom_point(aes(color = model, shape=model))
+  # plot0       <- plot0 + geom_line (aes(color = model))
+  # # plot0       <- plot0 + geom_point(aes(color = model))
+  # plot0       <- plot0 + geom_point(aes(color = model, shape=model))
+  if(do_gcm){
+    ### Separate GCM values
+    ### Plot these values as lines
+    df0_1  <- df0 |> filter((maxUnitValue < 6 & driverValue <= maxUnitValue) | maxUnitValue >=6)
+    ### Plot these values as points
+    df0_2  <- df0 |> filter((maxUnitValue < 6 & driverValue >= maxUnitValue))
+    ### Initialize plot
+    plot0  <- ggplot()
+    ### Plot values as lines
+    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.65)
+    ### Plot values as points
+    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
+  } else{
+    ### Initialize plot
+    plot0  <- ggplot(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]])
+    ### Add geoms
+    plot0  <- plot0 + geom_line (alpha=0.65)
+    plot0  <- plot0 + geom_point(aes(shape = model), alpha=0.65)
+  } ### End if(do_gcm)
 
   ### Add Scales
-  plot0      <- plot0 + scale_color_discrete(lgdTitle0)
-  # plot0      <- plot0 + scale_shape_discrete(lgdTitle0)
-  shapeLvls  <- df0[["model"]] |> unique() |> sort()
-  numShapes  <- shapeLvls |> length()
-  shapeVals  <- c(1:numShapes)
+  plot0       <- plot0 + scale_color_discrete(lgdTitle0)
+  # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
+  shapeLvls   <- df0[["model"]] |> unique() |> sort()
+  numShapes   <- shapeLvls |> length()
+  shapeVals   <- c(1:numShapes)
   # shapeLvls |> print()
-  # plot0      <- plot0 + scale_shape_discrete(lgdTitle0)
-  plot0      <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
-  plot0      <- plot0 + scale_x_continuous(xTitle0, limits = x_limits, breaks = x_breaks)
-  plot0      <- plot0 + scale_y_continuous(yTitle0, limits = y_limits, breaks = y_breaks)
+  # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
+  plot0       <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
+  plot0       <- plot0 + scale_x_continuous(xTitle0, limits = x_limits, breaks = x_breaks)
+  plot0       <- plot0 + scale_y_continuous(yTitle0, limits = y_limits, breaks = y_breaks)
 
   ###### Add titles ######
-  plot0      <- plot0 + ggtitle(ggtitle0, subtitle0)
-    # plot0      <- plot0 + theme(panel.background = element_rect(fill="white"))
-    # plot0      <- plot0 + theme(panel.grid = element_line(color="lightgrey"))
-    # plot0      <- plot0 + theme(axis.line = element_line(color="lightgrey"))
-  plot0      <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=12))
-  plot0      <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=9))
+  plot0       <- plot0 + ggtitle(ggtitle0, subtitle0)
+  # plot0       <- plot0 + theme(panel.background = element_rect(fill="white"))
+  # plot0       <- plot0 + theme(panel.grid = element_line(color="lightgrey"))
+  # plot0       <- plot0 + theme(axis.line = element_line(color="lightgrey"))
+  plot0       <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=12))
+  plot0       <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=9))
 
   ###### Format Plot ######
   ### Legend position = bottom if refPlot; otherwise, don't show
-  lgdPos0    <- refPlot |> ifelse("bottom", "none")
-  plot0      <- plot0 + theme(legend.position = lgdPos0)
-  plot0      <- plot0 + theme(plot.title   = element_blank())
-  plot0      <- plot0 + theme(axis.title   = element_text(size=8))
-  plot0      <- plot0 + theme(axis.title.x = element_blank())
+  lgdPos0     <- refPlot |> ifelse("bottom", "none")
+  plot0       <- plot0 + theme(legend.position = lgdPos0)
+  plot0       <- plot0 + theme(plot.title   = element_blank())
+  plot0       <- plot0 + theme(axis.title   = element_text(size=8))
+  plot0       <- plot0 + theme(axis.title.x = element_blank())
   ###### If plotIndex>1, remove some plot elements
   ###### White out axis text if column > 1
   if(col0 > 1){
