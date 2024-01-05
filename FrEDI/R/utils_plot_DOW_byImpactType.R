@@ -156,14 +156,60 @@ plot_DOW_byImpactType <- function(
   # title0    <- impType0
   # subtitle0 <- variant0
 
-  ###### Create the plot ######
-  plot0     <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
+  ###### Add in Model info ######
+  if(do_gcm)  {
+    ### Get model info
+    select0   <- c("model_id", "maxUnitValue")
+    rename0   <- c("model_id")
+    rename1   <- c("model")
+    co_models <- "co_models" |> get_frediDataObj("frediData")
+    co_models <- co_models |> filter((modelType |> tolower()) == "gcm")
+    co_models <- co_models |> select(all_of(select0))
+    co_models <- co_models |> rename_at(vars(rename0), ~rename1)
+    rm(select0, rename0, rename1)
+    ### Join model info with df0
+    join0     <- c("model")
+    df0       <- df0 |> left_join(co_models, by=c(join0))
+    rm(join0)
+  } ### if(do_gcm)
+
+  # ###### Create the plot ######
+  # plot0     <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]]))
+  #
+  # ### Add Geoms
+  # plot0     <- plot0 + geom_line (aes(color = model))
+  # if(do_slr){df_points0 <- df0 |> filter(year %in% x_breaks)}
+  # else      {df_points0 <- df0}
+  # plot0     <- plot0 + geom_point(data=df_points0, aes(color = model, shape=model))
 
   ### Add Geoms
-  plot0     <- plot0 + geom_line (aes(color = model))
-  if(do_slr){df_points0 <- df0 |> filter(year %in% x_breaks)}
-  else      {df_points0 <- df0}
-  plot0     <- plot0 + geom_point(data=df_points0, aes(color = model, shape=model))
+  # plot0       <- plot0 + geom_line (aes(color = model))
+  # # plot0       <- plot0 + geom_point(aes(color = model))
+  # plot0       <- plot0 + geom_point(aes(color = model, shape=model))
+  if(do_gcm){
+    ### Separate GCM values
+    ### Plot these values as lines
+    df0_1  <- df0 |> filter((maxUnitValue < 6 & driverValue <= maxUnitValue) | maxUnitValue >=6)
+    ### Plot these values as points
+    df0_2  <- df0 |> filter((maxUnitValue < 6 & driverValue >= maxUnitValue))
+    ### Initialize plot
+    plot0  <- ggplot()
+    ### Plot values as lines
+    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), alpha=0.65)
+    ### Plot values as points
+    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    ### Remove values
+    rm(df0_1, df0_2)
+  } else{
+    ### Points data
+    df0_2  <- df0 |> filter(year %in% x_breaks)
+    ### Initialize plot
+    plot0  <- df0 |> ggplot(aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]))
+    plot0  <- plot0 + geom_line (alpha=0.65)
+    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    ### Remove values
+    rm(df0_2)
+  } ### End if(do_gcm)
 
   ### Add Scales
   # plot0     <- plot0 + scale_shape_discrete(lgdTitle0)
