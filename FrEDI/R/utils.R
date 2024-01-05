@@ -341,7 +341,9 @@ extend_slrScalars <- function(
   ### Update exponent
   if(!(elasticity |> is.null())){
     # df_scalars <- df_scalars |> mutate(exp0 = (exp0 == 1) |> ifelse(exp0, elasticity))
-    df_scalars <- df_scalars |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
+    #df_scalars <- df_scalars |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
+    df_scalars <- df_scalars |> mutate(exp0 = case_when(scalarName == "vsl_usd" ~ elasticity,
+                                                        .default = NA))
   } ### End if(!(elasticity |> is.null()))
 
   ###### By State ######
@@ -777,8 +779,9 @@ initialize_resultsDf <- function(
     df_slr2    <- df_slr2 |> filter(year > refYear0)
 
     ### Add results back together
-    df_slr0    <- df_slr1 |> rbind(df_slr2)
-    df0        <- df_gcm0 |> rbind(df_slr0)
+    df_slr0    <- df_slr1 |> bind_rows(df_slr2)
+    df0        <- df_gcm0 |> bind_rows(df_slr0)
+
     rm(df_slr1, df_slr2, df_slr0, df_gcm0)
   } ### End if(do_npd)
 

@@ -115,7 +115,7 @@ import_inputs <- function(
   ###### Initialize Inputs List ######
   ### Get input scenario info: co_inputScenarioInfo
   name_dfScenarioInfo <- "co_inputScenarioInfo"
-  assign(name_dfScenarioInfo, rDataList[["regionData"]][["data"]][[name_dfScenarioInfo]])
+  assign(name_dfScenarioInfo, rDataList[["frediData"]][["data"]][[name_dfScenarioInfo]])
   name_stateInfo <- "co_states"
   assign(name_stateInfo, rDataList[["frediData"]][["data"]][[name_stateInfo]])
   input_names_vector  <- co_inputScenarioInfo$inputName
@@ -149,7 +149,7 @@ import_inputs <- function(
       cols0      <- statecols0
       colNames_i <- numCols_i <- c("year", "state_pop")
     }
-    
+
     ### Add state/region columns as needed
     if(region_i == 1){
       colNames_i  <- c(colNames_i[1], cols0, colNames_i[2])
@@ -202,9 +202,9 @@ import_inputs <- function(
         if(byState){
           df_input_i <- df_input_i |>
             left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
-            select(colNames_i) 
+            select(colNames_i)
         }
-        
+
         df_input_i  <- df_input_i |>
           rename_inputs(colNames_i) |>
           mutate_all(as.character) |>
