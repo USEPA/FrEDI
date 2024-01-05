@@ -675,7 +675,7 @@ run_fredi <- function(
   ### Grouping columns
   groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0)
   groupCols0  <- groupCols0 |> c("model_type", "model")
-  groupCols0  <- groupCols0 |> c("modelUnitType")
+  # groupCols0  <- groupCols0 |> c("modelUnitType")
   groupCols0  <- groupCols0 |> c("sectorprimary", "includeaggregate")
   groupCols0  <- groupCols0 |> c("physicalmeasure")
   groupCols0  <- groupCols0 |> (function(x){x[!(x %in% (x |> names()))]})()

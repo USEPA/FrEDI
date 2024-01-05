@@ -337,13 +337,6 @@ extend_slrScalars <- function(
     df_scalars, ### Main scalar values: df_mainScalars
     elasticity  = NULL
 ){
-  ###### Elasticity ######
-  ### Update exponent
-  if(!(elasticity |> is.null())){
-    # df_scalars <- df_scalars |> mutate(exp0 = (exp0 == 1) |> ifelse(exp0, elasticity))
-    df_scalars <- df_scalars |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
-  } ### End if(!(elasticity |> is.null()))
-
   ###### By State ######
   ### By state
   byState    <- TRUE
@@ -367,6 +360,15 @@ extend_slrScalars <- function(
   df0        <- df0   |> select(-all_of(drop1))
   rm(drop0, drop1)
 
+  ###### Elasticity ######
+  ### Update exponent
+  if(!(elasticity |> is.null())){
+    # df_info <- df_info |> mutate(exp0 = (exp0 == 1) |> ifelse(exp0, elasticity))
+    df_info <- df_info |> mutate(exp0 = (econMultiplierName=="vsl_usd") |> ifelse(elasticity, exp0))
+  } ### End if(!(elasticity |> is.null()))
+  ### Add column
+  df_info    <- df_info |> mutate(econAdjName = "none")
+
   ###### Join Data & Scalar Info ######
   ### Join initial results & scalar info
   drop0      <- c("byState")
@@ -388,7 +390,7 @@ extend_slrScalars <- function(
   gather0    <- c("gdp_usd", "gdp_percap")
   select0    <- gather0 |> c("year")
   # select0    <- gather0 |> c("byState", "year")
-  df_mult0   <- df_se   |> summarize_seScenario(national=T)
+  df_mult0   <- df_se    |> summarize_seScenario(national=T)
   df_mult0   <- df_mult0 |> filter(byState==0)
   df_mult0   <- df_mult0 |> select(all_of(select0))
   df_mult0   <- df_mult0 |> pivot_longer(
@@ -777,8 +779,9 @@ initialize_resultsDf <- function(
     df_slr2    <- df_slr2 |> filter(year > refYear0)
 
     ### Add results back together
-    df_slr0    <- df_slr1 |> rbind(df_slr2)
-    df0        <- df_gcm0 |> rbind(df_slr0)
+    df_slr0    <- df_slr1 |> bind_rows(df_slr2)
+    df0        <- df_gcm0 |> bind_rows(df_slr0)
+
     rm(df_slr1, df_slr2, df_slr0, df_gcm0)
   } ### End if(do_npd)
 
