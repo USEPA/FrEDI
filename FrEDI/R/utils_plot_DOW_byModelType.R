@@ -14,7 +14,7 @@ plot_DOW_byModelType <- function(
       yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
       heights    = NULL,
-      margins    = c(0, 0, .15, 0),
+      margins    = c(0, 1, .15, 1),
       marginUnit = "cm",
       nameBreak  = 18, ### Sector name break
       theme      = NULL
