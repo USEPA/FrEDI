@@ -1,0 +1,38 @@
+name: Update SV ImpactsList Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      fredi_data_branches:
+        type: string
+        description: Which data only branch of FrEDI_data to pull in data from? (i.e. data_only_branch_state_initial)
+      sv_impact_type:
+        type: choice
+        description: Which branch SV impact type data object to update
+        options:
+          - impactsList_airQuality
+          - impactsList_coastalProp
+          - impactsList_extremeTemp
+          - impactsList_htf
+          - impactsList_labor
+          - impactsList_roads
+
+jobs:
+  get_data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Commit results
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git ${{ github.event.inputs.fredi_data_branches }} --allow-unrelated-histories
+          mv -f data_new/sv/impactsLists/${{ github.event.inputs.sv_impact_type }}*.rds FrEDI/inst/extdata/sv/impactLists/
+          rm -r data_new/
+          git branch --show-current
+          git add FrEDI/inst/extdata/sv/impactLists/*
+          git rm -r data_new/
+          git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
+          git status
+          git commit -am "add new ${{ github.event.inputs.sv_impact_type }} data from FrEDI_Data"
+          git push
