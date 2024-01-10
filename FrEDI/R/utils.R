@@ -346,7 +346,6 @@ extend_slrScalars <- function(
   ###### Ref Year ######
   ### Filter to years >= refYear (2090)
   df_info    <- "co_slrScalars" |> get_frediDataObj("frediData")
-  df_info <- df_info |> mutate(refYear = 2100)
   refYear0   <- (df_info[["refYear"]] |> unique())[1]
   df_scalars <- df_scalars |> filter(year >= refYear0)
   df_se      <- df_se      |> filter(year >= refYear0)
@@ -756,7 +755,6 @@ initialize_resultsDf <- function(
   ### Scalars for SLR past 2090
   slrScalars <- "co_slrScalars" |> get_frediDataObj("frediData")
   types0     <- df0[["modelType"]] |> unique() |> tolower()
-  slrScalars <- slrScalars |> mutate(refYear = 2100)
   refYear0   <- (slrScalars[["refYear"]] |> unique())[1]
   has_slr    <- "slr" %in% types0
   maxYr0     <- df0[["year"]] |> max()
