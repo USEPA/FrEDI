@@ -110,7 +110,8 @@ run_fredi_sv <- function(
   # impactsPath <- libPath |> file.path("FrEDI", "extdata", "sv", "impactLists")
 
   ### Assign previous configuration objects
-  for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
+  fredi_config <- "fredi_config" |> get_frediDataObj("frediData")
+  for(name_i in names(fredi_config)){ assign(name_i, fredi_config[[name_i]])}
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
   ### Update years,
