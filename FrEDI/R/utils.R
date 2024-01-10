@@ -465,7 +465,7 @@ extend_slrScalars <- function(
   ###### Physical Scalar & Phys Econ Scalar ######
   ### Calculate econ scalar values
   df0        <- df0 |> mutate(physScalar     = c2 * physScalarValue / physAdjValue)
-  df0        <- df0 |> mutate(physEconScalar = econScalar * physScalar)
+  df0        <- df0 |> mutate(physEconScalar = econScalar + physScalar)
 
   ### Drop columns & join
   drop0      <- c("c2", "refYear")
