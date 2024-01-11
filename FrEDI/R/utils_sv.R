@@ -364,7 +364,7 @@ calc_tractImpacts <- function(
   cutoffReg0    <- c("regional_cutoff")
   ### 126 rows
   ### Calculate terciles and rename column
-  select0         <- c(groupsNat0, scaledImpact0)
+  select0          <- c(groupsReg0, scaledImpact0)
   quants_regional  <- x_impacts |> select(all_of(select0))
   quants_regional  <- quants_regional |>
     group_by_at (vars(groupsReg0)) |>

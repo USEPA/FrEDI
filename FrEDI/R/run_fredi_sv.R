@@ -654,7 +654,7 @@ run_fredi_sv <- function(
       ### Adjust results
       # df_validGroups |> glimpse(); results_i |> glimpse()
       results_i <- results_i |> left_join(df_validGroups, by = c("svGroupType"))
-      results_i <- results_i |> mutate_at(.vars(valCols1), function(col_j){col_j * results_i$valueAdj})
+      results_i <- results_i |> mutate_at(vars(valCols1), function(col_j){col_j * results_i$valueAdj})
       results_i <- results_i |> select(-all_of(drop0))
       rm(drop0)
       # (results_i$impPop_ref != 0) |> which() |> length() |> print()
@@ -681,7 +681,7 @@ run_fredi_sv <- function(
   ###### Return Object ######
   msg1 |> paste0("Finished.") |> message()
   returnList <- df_results
-  rm(returnList)
+  rm(df_results)
   # if(.testing) {returnList <- list(results = df_results, county_pop = df_popProj)}
   # else         {returnList <- df_results}
   return(returnList)
