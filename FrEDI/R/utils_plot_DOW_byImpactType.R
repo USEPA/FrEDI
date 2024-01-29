@@ -189,15 +189,17 @@ plot_DOW_byImpactType <- function(
   if(do_gcm){
     ### Separate GCM values
     ### Plot these values as lines
-    df0_1  <- df0 |> filter((maxUnitValue < 6 & driverValue <= maxUnitValue) | maxUnitValue >=6)
-    ### Plot these values as points
-    df0_2  <- df0 |> filter((maxUnitValue < 6 & driverValue >= maxUnitValue))
+    df0_1  <- df0 |> filter((driverValue <= maxUnitValue)) #after ->| maxUnitValue >=6) # maxUnitValue < 6 & <- before
+    ### Plot these values as points (now dashed lines)
+    df0_2  <- df0 |> filter((driverValue >= maxUnitValue)) # maxUnitValue <= 6 &
     ### Initialize plot
     plot0  <- ggplot()
     ### Plot values as lines
     plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), alpha=0.65)
     ### Plot values as points
-    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    #plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    ### plot values as dashed lines:
+    plot0  <- plot0 + geom_line (data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), linetype="dashed", alpha=0.65)
     ### Remove values
     rm(df0_1, df0_2)
   } else{
@@ -206,6 +208,8 @@ plot_DOW_byImpactType <- function(
     ### Initialize plot
     plot0  <- df0 |> ggplot(aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]))
     plot0  <- plot0 + geom_line (alpha=0.65)
+
+
     plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
     ### Remove values
     rm(df0_2)

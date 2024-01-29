@@ -236,7 +236,7 @@ plot_DOW_byImpactTypes <- function(
       typeTitle_j  <- "Impact Type: " |> paste0(impType_j)
       grobType_j   <- text_grob(typeTitle_j, face="italic", size=11)
       plotList_j   <- list(spacer1=spacer0, plots=plotGrid_j, spacer2=spacer0)
-      plotGrid_j   <- ggarrange(plotlist=plotList_j, nrow=3, ncol=1, common.legend=T, legend="none", heights=c(0.01, 1, 0.01))
+      plotGrid_j   <- ggarrange(plotlist=plotList_j, nrow=3, ncol=1, common.legend=T, legend="none", heights=c(0.01, 1, 0.05))
       plotGrid_j   <- plotGrid_j |> annotate_figure(top=grobType_j)
 
       ### Return

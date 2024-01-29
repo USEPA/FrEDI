@@ -4,6 +4,7 @@ format_sectorNames <- function(
     names0, ### Sector names
     thresh0 = 18
 ){
+  names0 <- names0 |> as.character()
   names1 <- names0 |> map(fun_getLineBreaks, thresh=thresh0)
   names1 <- names1 |> unlist() |> trimws()
   names2 <- names1 |> standardize_lines()
