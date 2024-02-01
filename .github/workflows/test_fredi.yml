@@ -141,7 +141,7 @@ jobs:
             ### Figure H results
             results0 <- run_fredi(aggLevels=c("modelaverage", "national"))
             results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
-            save0    <- write.csv(results0, file=oPath2 |> file.path("FigH_results.csv", row.names=F)) |> try()
+            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
           }
           '
 
