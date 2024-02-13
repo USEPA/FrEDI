@@ -190,7 +190,7 @@ calc_tractScaledImpacts <- function(
     ### Function for tract i and whether the function exists
     which_i   <- (funcs_x %in% c(tract_i)) |> which()
     fun_i     <- funList[[which_i]]
-    has_fun_i <- !(fun_i |> is.null())
+    has_fun_i <- !(fun_i |> is.null() | fun_i %>% is.na())
 
     ### Calculate values if the function is not missing
     ### Add values to the dataframe
