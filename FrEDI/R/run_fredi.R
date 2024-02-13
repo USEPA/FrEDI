@@ -24,7 +24,7 @@
 #'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). [FrEDI::run_fredi()] uses default scenarios for temperature, population, and GDP when no inputs are specified (i.e., `inputsList=NULL`) or for empty elements of the inputs list. If the user does not specify an input scenario for GMSL (i.e., `inputsList=list(slrInput=NULL)`, [FrEDI::run_fredi()] first converts the CONUS temperature scenario to global temperatures and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters. For more information on the conversion of CONUS temperatures to global temperatures, see [FrEDI::convertTemps()]. For more information on the conversion of global temperatures to GMSL, see [FrEDI::temps2slr()].
 #'
-#' Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier. Values for input scenarios must be within reasonable ranges (for instance, negative values for population and GDP are non-sensical). If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()].
+#' Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier. Values for input scenarios must be within reasonable ranges (for instance, negative values for population and GDP are nonsensical). If a user inputs a custom scenario with values outside the allowable ranges, [FrEDI::run_fredi()] will not run the scenarios and will instead stop and return an error message. For more information, see [FrEDI::import_inputs()].
 #'
 #' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for CONUS in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero degrees Celsius (CONUS temperatures). Users can convert global temperatures to CONUS temperatures using `FrEDI::convertTemps(from="global")` or by specifying `FrEDI::import_inputs(temptype="global")` when importing a temperature scenario from a CSV file.
 #' * Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
@@ -312,7 +312,7 @@ run_fredi <- function(
   argsList[["thru2300"  ]] <- thru2300
   ### Add to return list and remove intermediate arguments
   returnList[["arguments"]] <- argsList
-  rm("argsList")
+  rm(argsList)
 
   ###### ** Temperature Scenario ######
   ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
@@ -323,7 +323,7 @@ run_fredi <- function(
 
   ### If no user input (default): Use temperature scenario for one region
   if(has_tempUpdate){
-    message("Creating temperature scenario from user inputs...")
+    "\t" |> message("Creating temperature scenario from user inputs...")
     ### Select appropriate columns
     ### Remove missing values of years, temperatures
     ### Zero out series at the temperature reference year
@@ -346,14 +346,15 @@ run_fredi <- function(
     })()
     temp_df  <- temp_df |> rename(temp_C_conus  = temp_C)
     temp_df  <- temp_df |> mutate(temp_C_global = temp_C_conus |> convertTemps(from="conus"))
-    # rm("tempInput")
-  } ### End if(has_tempUpdate)
-  ### Load default temperature scenario
-  else{
-    message("No temperature scenario provided...using default temperature scenario...")
+    rm(tempInput)
+  } else{
+    ### Load default temperature scenario
+    "\t" |> message("No temperature scenario provided...using default temperature scenario...")
     tempInput <- co_defaultTemps
     temp_df   <- tempInput
   } ### End else(has_tempUpdate)
+  ### Filter to appropriate years
+  temp_df <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
   # temp_df |> nrow() |> print()
 
   ###### ** SLR Scenario ######
@@ -366,7 +367,7 @@ run_fredi <- function(
   ### Select out NA values and filter to appropriate years
   ### Zero out series at the temperature reference year
   if(has_slrUpdate){
-    message("Creating SLR scenario from user inputs...")
+    "\t" |> message("Creating SLR scenario from user inputs...")
     slrInput  <- slrInput |> select(c("year", "slr_cm"))
     slrInput  <- slrInput |> filter(!(slr_cm |> is.na()) & !(year |> is.na()))
     slrInput  <- slrInput |> filter(year >  refYear_slr)
@@ -383,19 +384,17 @@ run_fredi <- function(
       ) |> select(-c("region"))
       return(x_interp)
     })()
-    # rm("slrInput")
-  }  ### else(has_slrUpdate)
-  ### If there is no SLR scenario, calculate from temperatures
-  ### First convert temperatures to global temperatures
-  ### Then convert global temps to SLR
-  else{
-    message("Creating SLR scenario from temperature scenario...")
-    # slr_df <- temp_df %>% (function(x){temps2slr(temps = x$temp_C_global, years = x$year)})
+    rm(slrInput)
+  } else{
+    ### If there is no SLR scenario, calculate from temperatures
+    ### First convert temperatures to global temperatures
+    ### Then convert global temps to SLR
+    "\t" |> message("Creating SLR scenario from temperature scenario...")
     slr_df <- temps2slr(temps = temp_df$temp_C_global, years = temp_df$year)
   } ### End else(has_slrUpdate)
-  # slr_df |> nrow() |> print()
-  # slr_df |> head() |> print()
-  # slr_df$year |> range() |> print()
+  ### Filter to appropriate years
+  slr_df  <- slr_df |> filter(year >= refYear_slr) |> filter(year <= maxYear)
+
 
   ###### ** Driver Scenario  ######
   ### Select columns
@@ -422,7 +421,7 @@ run_fredi <- function(
   returnList[["driverScenarios"]][["temp"]] <- temp_df
   returnList[["driverScenarios"]][["slr" ]] <- slr_df
   ### Remove intermediate values
-  rm("co_modelType0", "temp_df", "slr_df")
+  rm(co_modelType0, temp_df, slr_df)
 
   ###### ** Socioeconomic Scenario ######
   ### Update the socioeconomic scenario with any GDP or Population inputs and message the user
@@ -430,20 +429,19 @@ run_fredi <- function(
   gdpCols0 <- c("year", "gdp_usd")
   popCols0 <- c("year", "region") |> c(stateCols0, popCol0)
   if(has_gdpUpdate){
-    message("Creating GDP scenario from user inputs...")
-    gdp_df  <- gdpInput |> filter(!(is.na(gdp_usd)) & !(year |> is.na()))
+    "\t" |> message("Creating GDP scenario from user inputs...")
+    gdp_df  <- gdpInput |> filter(!((gdp_usd |> is.na())) & !(year |> is.na()))
     gdp_df  <- gdp_df   |> interpolate_annual(years=list_years, column="gdp_usd", rule = 2) |> select(-c("region"))
-    rm("gdpInput")
-  } ### End if(has_gdpUpdate)
-  else{
-    message("No GDP scenario provided...Using default GDP scenario...")
+    rm(gdpInput)
+  } else{
+    "\t" |> message("No GDP scenario provided...Using default GDP scenario...")
     gdp_df  <- gdp_default |> select(all_of(gdpCols0))
-    rm("gdp_default")
+    rm(gdp_default)
   } ### End else(has_gdpUpdate)
 
   ### Population inputs
   if(has_popUpdate){
-    message("Creating Population scenario from user inputs...")
+    "\t" |> message("Creating population scenario from user inputs...")
     ### Standardize region and then interpolate
     pop_df       <- popInput |> mutate(region = gsub(" ", ".", region))
     pop_df       <- pop_df   |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
@@ -452,17 +450,17 @@ run_fredi <- function(
     national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()
     national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
     # national_pop |> glimpse()
-    rm("popInput")
-  } ### if(has_popUpdate)
-  else{
-    message("Creating Population scenario from defaults...")
+    rm(popInput)
+  } else{
+    "\t" |> message("Creating population scenario from defaults...")
     ### Select columns and filter
     pop_df        <- pop_default          |> select(all_of(popCols0))
     national_pop  <- national_pop_default |> select("year", "national_pop")
-    rm("pop_default", "national_pop_default")
+    rm(pop_default, national_pop_default)
   } ### End else(has_popUpdate)
   ### Message user
-  if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_data[["updatePopGDP"]]}}
+  # if(has_gdpUpdate|has_popUpdate){if(msgUser){messages_data[["updatePopGDP"]]}}
+
   ### Filter to correct years
   gdp_df            <- gdp_df            |> filter(year >= minYear & year <= maxYear)
   pop_df            <- pop_df            |> filter(year >= minYear & year <= maxYear)
@@ -475,7 +473,7 @@ run_fredi <- function(
   returnList[["driverScenarios"]][["gdp"]] <- gdp_df
   returnList[["driverScenarios"]][["pop"]] <- pop_df
   # gdp_df |> nrow() |> print(); national_pop |> nrow() |> print(); national_scenario |> nrow() |> print()
-  rm("gdp_df", "national_pop")
+  rm(gdp_df, national_pop)
 
   ### Updated scenario
   join0             <- "year"
@@ -485,12 +483,13 @@ run_fredi <- function(
   rm(join0, arrange0)
 
   ###### Update Scalars ######
-  if(msgUser) message("", list_messages[["updateScalars"]]$try, "")
+  message("Updating scalars...")
+  # if(msgUser) message("", list_messages[["updateScalars"]]$try, "")
+  # message("", list_messages[["updateScalars"]]$try, "")
   ### Filter main scalars to correct years and filter out regional population
   df_mainScalars <- df_mainScalars |> filter(year >= minYear) |> filter(year <= maxYear)
-  # df_mainScalars |> glimpse();
   df_mainScalars <- df_mainScalars |> update_popScalars(updatedScenario)
-  # df_mainScalars1 |> glimpse();
+  # df_mainScalars |> glimpse()
 
   # ### Message the user
   # if(msgUser) {paste0("\t", messages_data[["calcScalars"]]$success) |> message()}
@@ -498,19 +497,22 @@ run_fredi <- function(
   # # if(msgUser) message("\t", list_messages[["updateScalars"]]$success)
   # "got here" |> print()
 
+  ### Message the user
+  message("Calculating impacts...")
+
   ###### Initialize Results ######
   ### Initialized results: Join sector info and default scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
   # df_sectorsInfo |> glimpse(); #df_mainScalars |> glimpse(); df_mainScalars1 |> glimpse()
+  df_mainScalars <- df_mainScalars |> filter(year >= minYear & year <= maxYear)
   df_results0    <- updatedScenario |> initialize_resultsDf(
     df_info    = df_sectorsInfo,
     df_scalars = df_mainScalars,
     elasticity = elasticity
   )
-  # df_mainScalars1 |> glimpse();
+  # df_mainScalars |> glimpse();
   ### Filter to years
   df_results0    <- df_results0 |> filter(year >= minYear & year <= maxYear)
-  # df_results0    <- df_results0 |> mutate(model_type=modelType)
 
   ##### Scenario ID  ######
   ### Mutate model for SLR sectors
@@ -526,24 +528,21 @@ run_fredi <- function(
     summarize(n=n(), .groups="keep") |> ungroup() |>
     select(-c("n"))
   rm(group0, which_slr, modelCols0)
-  # "got here" |> print()
   ### Join with initial results
   join0          <- c("modelType")
   df_results0    <- df_results0 |> left_join(co_models0, by=c(join0))
   # df_results0 |> glimpse()
   rm(join0, co_models0)
-  # return(df_results0)
 
   ### Create scenario ID and separate by model type
   include0        <- c("region") |> c(stateCols0) |> c("model_label")
   df_results0     <- df_results0 |> get_scenario_id(include = include0)
 
   ###### Scaled Impacts  ######
-  ### Initialize and empty data frame df_scenarioResults
-  if(msgUser) message(list_messages[["scaledImpacts"]]$try)
-  if(msgUser) message("Calculating scaled impacts...")
+  # ### Initialize and empty data frame df_scenarioResults
+  # if(msgUser) message(list_messages[["scaledImpacts"]]$try)
+  # if(msgUser) message("Calculating scaled impacts...")
   df_scenarioResults  <- tibble()
-  # df_results0    <- df_results0 |> mutate(model_type=modelType)
   df_results0_gcm <- df_results0 |> filter(modelType!="slr")
   df_results0_slr <- df_results0 |> filter(modelType=="slr")
   rm(df_results0)
@@ -582,7 +581,7 @@ run_fredi <- function(
   rm(drop0)
 
   ### Message user
-  if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
+  # if(msgUser) message("\t", list_messages[["scaledImpacts"]]$success)
   ###### Calculate Impacts  ######
   ### Join results with initialized results and update missing observations with NA
   ### Drop columns, then join with scenario results
@@ -659,7 +658,7 @@ run_fredi <- function(
   df_results <- df_results |> mutate(sect_var = sector_id |> paste0("_", variant))
   df_results <- df_results |> mutate(variant  = sect_var  |> factor(var_lvls, var_lbls))
   df_results <- df_results |> select(-c("sect_var"))
-  rm("var_lvls", "var_lbls")
+  rm(var_lvls, var_lbls)
   # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
 
   ### Impact types
@@ -668,7 +667,7 @@ run_fredi <- function(
   df_results <- df_results |> mutate(sect_imp   = sector_id |> paste0("_", impactType))
   df_results <- df_results |> mutate(impactType = sect_imp  |> factor(imp_lvls, imp_lbls))
   df_results <- df_results |> select(-c("sect_imp", "sector_id"))
-  rm("imp_lvls", "imp_lbls")
+  rm(imp_lvls, imp_lbls)
   # (df_results |> filter(driverUnit=="cm"))$year |> range() |> print()
 
   ###### Columns ######

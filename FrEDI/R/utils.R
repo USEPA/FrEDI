@@ -731,6 +731,10 @@ initialize_resultsDf <- function(
   rm(join0)
   # df0 |> glimpse()
 
+  ###### Filter to values in years ######
+  maxYr0     <- df0[["year"]] |> max()
+  df_scalars <- df_scalars |> filter(year <= maxYr0)
+
   ###### Update Scalar Info ######
   ### Update scalar info
   ### Physical scalars
@@ -757,7 +761,7 @@ initialize_resultsDf <- function(
   types0     <- df0[["modelType"]] |> unique() |> tolower()
   refYear0   <- (slrScalars[["refYear"]] |> unique())[1]
   has_slr    <- "slr" %in% types0
-  maxYr0     <- df0[["year"]] |> max()
+  # maxYr0     <- df0[["year"]] |> max()
   do_slr     <- has_slr & (maxYr0 > refYear0)
   if(do_slr){
     ### Separate GCM & SLR values
@@ -781,7 +785,7 @@ initialize_resultsDf <- function(
     ### Add results back together
     df_slr0    <- df_slr1 |> bind_rows(df_slr2)
     df0        <- df_gcm0 |> bind_rows(df_slr0)
-
+    df0        <- df0     |> filter(year <= maxYr0)
     rm(df_slr1, df_slr2, df_slr0, df_gcm0)
   } ### End if(do_npd)
 
