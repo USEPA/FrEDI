@@ -46,12 +46,12 @@ jobs:
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
             pPath0   <- rPath0 |> file.path("FrEDI")
-            oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
+            # oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
             ###### Create Default Results ######
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+            # pPath0 |> devtools::load_all()
+            # defaultResults <- run_fredi()
+            # save(defaultResults, file=oPath0)
 
             ###### Update Documentation ######
             ###### - Build Manual
