@@ -2,7 +2,6 @@
 
 export(aggregate_impacts)
 export(convertTemps)
-export(get_plots)
 export(get_sectorInfo)
 export(get_sv_sectorInfo)
 export(import_inputs)
