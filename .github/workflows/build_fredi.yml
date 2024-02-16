@@ -51,7 +51,7 @@ jobs:
           ###### Create Default Results ######
           pPath0 |> devtools::load_all()
           defaultResults <- run_fredi()
-          save(defaultResults, file=oPath0))
+          save(defaultResults, file=oPath0)
 
           ###### Update Documentation ######
           ###### - Build Manual
