@@ -63,7 +63,7 @@ jobs:
             # devtools::build_vignettes(pkg = pPath0)
 
             ###### Build Package ######
-            ###### - Build Package but don't include vignettes
+            ###### - Build Package but do not include vignettes
             # devtools::build(pkg=pPath0, path=rPath0)
             # pPath0 |> print()
             devtools::build(pkg=pPath0)
