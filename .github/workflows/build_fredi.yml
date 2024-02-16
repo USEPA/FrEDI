@@ -43,30 +43,30 @@ jobs:
       - name: Build Package
         run: |
           Rscript -e '
-          ### Main repo path, FrEDI project path, scripts path
-          rPath0   <- ".";
-          pPath0   <- rPath0 |> file.path("FrEDI")
-          oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            pPath0   <- rPath0 |> file.path("FrEDI")
+            oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
-          ###### Create Default Results ######
-          pPath0 |> devtools::load_all()
-          defaultResults <- run_fredi()
-          save(defaultResults, file=oPath0)
+            ###### Create Default Results ######
+            pPath0 |> devtools::load_all()
+            defaultResults <- run_fredi()
+            save(defaultResults, file=oPath0)
 
-          ###### Update Documentation ######
-          ###### - Build Manual
-          ###### - Add and build vignettes
-          ###### - Generate Documentation
-          roxygen2::roxygenise(pPath0)
-          devtools::document(pkg = pPath0)
-          # devtools::build_manual(pkg = pPath0)
-          # devtools::build_vignettes(pkg = pPath0)
+            ###### Update Documentation ######
+            ###### - Build Manual
+            ###### - Add and build vignettes
+            ###### - Generate Documentation
+            roxygen2::roxygenise(pPath0)
+            devtools::document(pkg = pPath0)
+            # devtools::build_manual(pkg = pPath0)
+            # devtools::build_vignettes(pkg = pPath0)
 
-          ###### Build Package ######
-          ###### - Build Package but don't include vignettes
-          # devtools::build(pkg=pPath0, path=rPath0)
-          pPath0 |> print()
-          devtools::build(pkg=pPath0)
+            ###### Build Package ######
+            ###### - Build Package but don't include vignettes
+            # devtools::build(pkg=pPath0, path=rPath0)
+            # pPath0 |> print()
+            devtools::build(pkg=pPath0)
 
           '
 
