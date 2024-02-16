@@ -40,7 +40,7 @@ jobs:
           rm *.tar.gz
 
 
-      - name: Run create_DoW_results
+      - name: Build Package
         run: |
           Rscript -e '
           ### Main repo path, FrEDI project path, scripts path
@@ -65,6 +65,7 @@ jobs:
           ###### Build Package ######
           ###### - Build Package but don't include vignettes
           devtools::build(pkg=pPath0, path=rPath0)
+
           '
 
 
@@ -73,6 +74,7 @@ jobs:
           git config --local core.autocrlf false
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name  "${{ github.actor }}"
+          git add FrEDI/data/defaultResults.rda
           git add *.tar.gz
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
           git commit -a -m "New package build"
