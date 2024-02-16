@@ -6,52 +6,53 @@
 \usage{
 aggregate_impacts(
   data,
-  aggLevels = c("national", "modelaverage", "impactyear", "impacttype"),
-  columns = c("annual_impacts"),
-  groupByCols = c("sector", "variant", "impactYear", "impactType", "model_type", "model",
-    "region"),
-  mode = "all"
+  aggLevels = c("national", "modelaverage", "impacttype", "impactyear"),
+  columns = c("physical_impacts", "annual_impacts"),
+  groupByCols = c(c(c(c("sector", "variant", "impactType", "impactYear"), "region",
+    "state", "postal"), "model_type", "model"), "includeaggregate", "sectorprimary"),
+  silent = TRUE
 )
 }
 \arguments{
 \item{data}{Data frame of results FrEDI (outputs from \code{\link[=run_fredi]{run_fredi()}})}
 
-\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \code{c("national", "modelAverage", "impactYear", "impactType", "all")}. Defaults to all levels (i.e., \code{aggLevels="all"}).}
+\item{aggLevels}{Levels of aggregation at which to summarize data: one or more of \code{c( "national", "modelAverage", "impactYear", "impactType", "all" )}. Defaults to all levels (i.e., \code{aggLevels="all"}). Note that, if \code{"impacttype"} is in \code{aggLevels} (e.g., \code{aggLevels= "all"}), column \code{"physical_measure"} is dropped from the \code{groupByCols} and column \code{"physical_impacts"} is dropped from \code{columns}. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.}
 
-\item{columns}{Character vector of columns for which to aggregate results (defaults to \verb{columns=c("annual_impacts"})).}
+\item{columns}{Character vector of columns for which to aggregate results (defaults to \code{columns=c( "physical_impacts", "annual_impacts")}).}
 
-\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \code{groupByCols=c("sector", "variant", "impactYear", "impactType", "model_type", "model", "region")}. Note that the \code{"variant"} column referred to below contains information about the variant (or adaptation) name or \verb{“N/A”}, as applicable.}
-}
-\value{
-The output of \code{\link[=run_fredi]{run_fredi()}} is an R data frame object containing annual average impacts, by year (2010-2090), summarized at the specified aggregation and grouping levels.
+\item{groupByCols}{Character vector indicating which columns to use for grouping. Defaults to \code{groupByCols=c( "sector", "variant", "impactYear", "impactType", "model_type", "model", "sectorprimary", "includeaggregate", "physicalmeasure", "region", "state", "postal" )}. Note that the \code{"variant"} column referred to below contains information about the variant or adaptation name (or \verb{“N/A”}), as applicable.}
 }
 \description{
 Summarize and aggregate impacts from FrEDI (calculate national totals, average across models, sum impact types, and interpolate between impact estimate years).
 }
 \details{
-This post-processing helper function aggregates and summarizes the FrEDI results to levels of aggregation specified by the user (passed to \code{aggLevels}). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels="national"}), averaging across model types and models (\code{aggLevels="modelAverage"}), summing over all impact types (\code{aggLevels="impactType"}), and interpolating between impact year estimates (\code{aggLevels="impactYear"}). Users can specify all aggregation levels at once by specifying \code{aggLevels="all"} (default).
-This post-processing helper function aggregates and summarizes temperature binning results to levels of aggregation specified by the user (passed to \code{aggLevels}). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels="national"}), averaging across model types and models (\code{aggLevels="modelaverage"}), summing over all impact types (\code{aggLevels="impacttype"}), and interpolate between impact year estimates (\code{aggLevels="impactyear"}). Users can specify all aggregation levels at once by specifying \code{aggLevels="all"} (default) or no aggregation levels (\code{aggLevels="none"}).
+This function can be used to aggregate and summarize the FrEDI results to levels of aggregation specified by the user (passed to \code{aggLevels}). Users can specify all aggregation levels at once by specifying \code{aggLevels= "all"} (default) or no aggregation levels (\code{aggLevels= "none"}). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels= "national"}), averaging across model types and models (\code{aggLevels= "modelAverage"}), summing over all impact types (\code{aggLevels= "impactType"}), and interpolating between impact year estimates (\code{aggLevels= "impactYear"}).
 
-Before aggregating impacts for national totals and/or model averages, \code{\link[=aggregate_impacts]{aggregate_impacts()}} will drop any pre-summarized results  (i.e., values for which \code{region="National Total"} and/or for which \code{model="average"}, respectively) that are already present in the data `and then reaggregate at those levels.
+Before aggregating impacts for national totals and/or model averages, \code{\link[=aggregate_impacts]{aggregate_impacts()}} will drop any pre-summarized results (i.e., values for which \code{region= "National Total"} and/or for which \code{model= "Average"}, respectively) that are already present in the data and then re-summarize results at those respective levels.
 
-For each of the \code{aggLevels}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} performs the following calculations (note that the \code{"variant"} column referred to below contains information about the variant (or adaptation) name or \verb{“N/A”}, as applicable):
+If users specify \code{aggLevels= "none"}, \code{\link[=aggregate_impacts]{aggregate_impacts()}} returns the data frame passed to the \code{data} argument.
+
+If users specify \code{aggLevels= "all"} or other combinations of aggregation levels, the \code{\link[=aggregate_impacts]{aggregate_impacts()}} function uses performs the following calculations using the grouping columns specified by the \code{groupByCols} argument: \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"}, \code{"region"}, \code{"state"}, \code{"postal"}, \code{"model_type"}, \code{"model"}, \code{"sectorprimary"}, \code{"includeaggregate"}, \code{"physicalmeasure"}, and \code{"year"}.
 
 \tabular{ll}{
 \strong{Aggregation Level} \tab \strong{Description} \cr
-\code{national} \tab Annual values are summed across all regions present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"},  \code{"impactYear"}, \code{"model_type"}, \code{"model"}, and \code{"year"}) and summed across regions. Years which have missing column data for all regions return as \code{NA}. The rows of the data frame of national values (with column \code{region="National Total"}) are then added as rows to the results. \cr
-\code{modelaverage} \tab For temperature-driven sectors, annual results are averaged across all GCM models present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"}, \code{"model_type"}, \code{"region"}, and \code{"year"} and averaged across models (SLR impacts are estimated as an interpolation between SLR scenarios). Averages exclude missing values. Years which have missing column data for all models return as \code{NA}. The rows of model averages (with column \code{model="Average"} are then added as rows to the results data frame. \cr
-\code{impacttype} \tab Annual results are summed across all impact types by sector present in the data. I.e., data is grouped by columns \code{"sector"}, \code{"variant"}, \code{"impactType"}, \code{"impactYear"},\code{"model_type"}, \code{"model"}, \code{"region"}, and \code{"year"} and summed across impact types. Mutates column \code{impactType="all"} for all values. Years which have missing column data for all impact types return as \code{NA}. If results are aggregated across impact types, information about physical impacts (columns \code{"physicalmeasure"} and \code{"physical_impacts"}) are dropped.\cr
-\code{impactyear} \tab Annual results for sectors with only one impact year estimate (i.e., \code{impactYear = "N/A"}) are separated from those with multiple impact year estimates. Sectors with multiple impact years have separate results for impact years 2010 and 2090. For these sectors, annual results are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are bound back to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear="Interpolation"} for all values. \cr
+\emph{\code{impactyear}} \tab To aggregate over impact years, \code{\link[=aggregate_impacts]{aggregate_impacts()}} first separates results for sectors with only one impact year estimate (i.e., \code{impactYear= "N/A"}) from from observations with multiple impact year estimates (i.e., sectors with results for both \code{impactYear= "2010"} and \code{impactYear= "2090"}). For these sectors with multiple impact years, physical impacts and annual costs (columns \code{"physical_impacts"} and \code{"annual_impacts"}) are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are then row-bound to the results for sectors with a single impact year estimate, and column \code{impactYear} set to \code{impactYear= "Interpolation"} for all values. If \code{"impactyear"} is included in \code{aggLevels} (e.g., \code{aggLevels= "all"}), \code{\link[=aggregate_impacts]{aggregate_impacts()}} aggregates over impact years before performing other types of aggregation. \cr
+
+\emph{\code{modelaverage}} \tab To aggregate over models for temperature-driven sectors, \code{\link[=aggregate_impacts]{aggregate_impacts()}} averages physical impacts and annual costs (columns \code{"physical_impacts"} and \code{"annual_impacts"}, respectively) across all GCM models present in the data. \code{\link[=aggregate_impacts]{aggregate_impacts()}} drops the column \code{"model"} from the grouping columns when averaging over models. Averages exclude observations with missing values. However, If all values within a grouping are missing, the model average is set to \code{NA}. The values in column \code{"model"} are set to \code{"Average"} for model averages and the model averages data frame is then row-bound to the main results data frame. For SLR-driven sectors, there is no need for additional model aggregation; these values already have \code{model="Interpolation"}. If \code{"modelaverage"} is included in \code{aggLevels} (e.g., \code{aggLevels= "all"}), \code{\link[=aggregate_impacts]{aggregate_impacts()}} first aggregates over impact years  (if \code{"impactyear"} present in \code{aggLevels} or if \code{aggLevels="all"}) before aggregating over models.\cr
+
+\emph{\code{national}} \tab To aggregate values to the national level, \code{\link[=aggregate_impacts]{aggregate_impacts()}} sums physical impacts and annual costs (columns \code{"physical_impacts"} and \code{"annual_impacts"}, respectively) across all regions present in the data. \code{\link[=aggregate_impacts]{aggregate_impacts()}} drops the columns \code{"region"}, \code{"state"}, and \code{"postal"} when summing over states and regions. Years which have missing column data for all regions return as \code{NA}. Values for column \code{"region"} are set to \code{"National Total"}; values for column \code{"state"} are set to \code{All}, and values for column \code{"postal"} are set to \code{US}. The data frame with national totals is then row-bound to the main results data frame. If \code{"national"} is included in \code{aggLevels} (e.g., \code{aggLevels= "all"}), \code{\link[=aggregate_impacts]{aggregate_impacts()}} first aggregates over impact years and/or models (if \code{"impactyear"} and/or \code{"modelaverage"} are present in \code{aggLevels} or if \code{aggLevels= "all"}) before aggregating over models.\cr
+
+\emph{\code{impacttype}} \tab To aggregate values over impact types, \code{\link[=aggregate_impacts]{aggregate_impacts()}} sums annual impacts (column \code{"annual_impacts"}) across all impact types for each sector. \code{\link[=aggregate_impacts]{aggregate_impacts()}} drops the column \code{"impactType"} and \code{"physicalmeasure"} from the grouping columns when summing over impact types. Years which have missing column data for all impact types return as \code{NA}. All values in column \code{"impactType"} are set to \code{"all"}. Aggregating over impact types, drops columns related to physical impacts (i.e., columns \code{"physicalmeasure"} and \code{"physical_impacts"}). These columns are dropped since aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.\cr
 }
 
-Note that \code{\link[=aggregate_impacts]{aggregate_impacts()}} drops columns not used in grouping or aggregation.
+After aggregating values, \code{\link[=aggregate_impacts]{aggregate_impacts()}} joins the data frame of impacts with information about \code{"driverType"}, \code{"driverUnit"}, \code{"driverValue"}, \code{"gdp_usd"}, \code{"national_pop"}, \code{"gdp_percap"}, and \code{"state_pop"}.
 }
 \examples{
 ### Create temperature binning scenario
-df_tempExOut <- run_fredi(aggLevels="none", pv=TRUE, silent=TRUE)
+df_results1 <- run_fredi(aggLevels="none", silent=TRUE)
 
 ### Aggregate temperature binning summary across multiple columns
-agg_tempExOut <- df_tempExOut \%>\% aggregate_impacts(columns=c("annual_impacts", "discounted_impacts"))
+df_results2 <- df_results1 |> aggregate_impacts(columns=c("annual_impacts"), aggLevels="all")
 
 }
 \references{

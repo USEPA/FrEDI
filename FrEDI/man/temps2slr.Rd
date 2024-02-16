@@ -39,13 +39,13 @@ And \eqn{\tau_1}{k1} and \eqn{\tau_2}{k2} are both constants.
 \examples{
 
 ### Path to example scenarios
-scenariosPath <- system.file(package="FrEDI") \%>\% file.path("extdata","scenarios")
+scenariosPath <- system.file(package="FrEDI") |> file.path("extdata","scenarios")
 ### View example scenario names
 
-scenariosPath \%>\% list.files
+scenariosPath |> list.files()
 
 ### Temperature Scenario File Name
-tempInputFile <- scenariosPath \%>\% file.path("GCAM_scenario.csv")
+tempInputFile <- scenariosPath |> file.path("GCAM_scenario.csv")
 
 ### Import example temperature scenario
 example_inputsList <- import_inputs(tempfile = tempInputFile)

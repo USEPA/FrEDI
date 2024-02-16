@@ -1,25 +1,36 @@
-#' Import custom scenarios for climate and socioeconomics (temperature and global mean sea level rise (GMSL), population, and GDP) from user-specified file names
+#' Import custom scenarios for temperature, global mean sea level rise (GMSL), population, and GDP from user-specified file names
 #'
 #' @description
 #' This function enables users to import data on custom scenarios for use with [FrEDI::FREDI] (supplied as inputs to [FrEDI::run_fredi()]). Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and population scenarios. [FrEDI::import_inputs()] reads in and format any specified files as data frames and returns a list of data frames for imported scenarios.
 #'
 #' @param tempfile A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years; second column contains temperatures, in degrees Celsius, above the 1995 baseline year). The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
 #' @param slrfile A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years; second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline). The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param popfile A character string indicating the location of a CSV file containing a custom population scenario for NCA regions. The first column contains years in the interval 2010 to 2300. The number of additional columns, column names, and column contents depend on the population format set by `popform`. For more details, see `popform`. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#' @param popfile A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column contains years in the interval 2010 to 2300. The second column should contain the NCA Region label associated with the state. The third column should contain state names. The fourth column should contain the state postal code abbreviation. The fifth column should contain the population values. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
 #' @param gdpfile A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years; second column contains values for GDP, in total 2015$). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
 #' @param temptype A character string indicating whether the temperature values in the temperature input file (specified by `tempfile` represent global temperature change (`temptype="global"`) or temperature change for the contiguous U.S. (`temptype="conus"`) in degrees Celsius. By default, the model assumes temperatures are CONUS temperatures (i.e., `temptype="conus"`).
-#' @param popform A character string indicating whether the populations in the population input file specified by `popfile` are spread across multiple columns (i.e., `popform="wide"`) or are combined in a single column (i.e., `popform="long"`). By default, the model assumes `popform="wide"`. For both formats (`popform="wide"` or `popform="long"`), the first column contains years. If `popform="wide"` (default), the second through eighth columns of `popfile ` must contain population values for each NCA region, with the associated NCA region as the column name. If `popform="long"`, the second column must contain NCA region names and the third column must contain values for the associated region population.
+#'
+#'
 #'
 #' @details
-#' This function enables users to import data on custom scenarios for use with temperature binning. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), population, and gross domestic product (GDP) scenarios (`tempfile`, `slrfile`, `gdpfile`, and `popfile`, respectively). [FrEDI::import_inputs()] reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios. Users can specify whether the temperature input is for the contiguous U.S. (CONUS) or global using `temptype` and specify the format of the population scenario using `popform`.
+#' This function enables users to import data on custom scenarios for use with temperature binning. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), population, and gross domestic product (GDP) scenarios (`tempfile`, `slrfile`, `gdpfile`, and `popfile`, respectively). [FrEDI::import_inputs()] reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios. Users can specify whether the temperature input is for the contiguous U.S. (CONUS) or global using `temptype`.
 #'
-#' Values for input scenarios must be within reasonable ranges. Temperature and GMSL inputs must begin in 2000 or earlier, whereas values for population and GDP scenarios can start in 2010 or earlier.
 #'
-#' * The input temperature scenario (passed to [FrEDI::run_fredi()] via the `inputsList` argument) requires temperatures for CONUS in degrees Celsius relative to 1995 (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero degrees if warming (CONUS). Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps(from="global")] or by specifying [FrEDI::import_inputs(temptype="global")] when importing a temperature scenario from a CSV file.
-#' * Values for the sea level rise (SLR) scenario are for global mean sea level rise (GMSL) must be in centimeters (cm) and values must be greater than or equal to zero and less than or equal to 250 cm.
-#' * Population and gross domestic product (GDP) values must be greater than or equal to zero.
 #'
-#' If the population input is spread across multiple columns (i.e., `popform="wide"`), columns must be named according to the NCA regions. If the population input is in the long format, the region value must be in the second column. The NCA region names for population inputs must be in the following character vector: `c("Midwest"`, `"Northeast"`, `"Northern.Plains"`, `"Northwest"`, `"Southeast"`, `"Southern.Plains"`, `"Southwest")`. All regions must be present in the population input file.
+#' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
+#'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from="global")` (or by specifying [FrEDI::import_inputs]`(temptype="global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
+#'    * Temperature inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __SLR Inputs.__ The input SLR scenario requires values for changes in global mean sea level rise (GMSL) heights in centimeters (cm). GMSL heights must be greater than or equal to zero.
+#'    * `slrInput` requires a data frame object with two columns containing the year and global mean sea level rise (GMSL) in centimeters, respectively.
+#'    * SLR inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
+#'    * `gdpInput` requires a data frame object with five columns with names `"year"`, and `"gdp_usd"`, containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
+#'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
+#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"reg_pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.
+#'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#'
+#'
+#'
 #'
 #' [FrEDI::import_inputs()] outputs a list of data frames that can be passed to the main FREDI function [FrEDI::run_fredi()] using the `inputList` argument. For example, specify `run_fredi(inputsList=x)` to generate impacts for a custom scenario `x` (where `x` is a list of data frames such as that output from [FrEDI::import_inputs()]) (see [FrEDI::run_fredi()]).
 #'
@@ -31,10 +42,10 @@
 #'
 #' \tabular{ll}{
 #' \strong{List Index} \tab \strong{Description} \cr
-#' `tempInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `tempfile`, with missing values removed. `tempInput` has two columns with names `c("year"`, `"temp_C")` containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
-#' `slrInput` \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by `slrfile`, with missing values removed. `slrInput` has two columns with names `c("year"`, `"slr_cm")` containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
-#' `gdpInput` \tab Data frame containing a custom GDP scenario imported from the CSV file specified by `gdpfile`, with missing values removed. `gdpInput` has two columns with names `c("year", "gdp_usd")` containing the year and the U.S. national GDP in 2015$, respectively. \cr
-#' `popInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `popfile`, with missing values removed. `popInput` has and three columns with names `c("year"`, `"region"`, `"reg_pop")` containing the year, the NCA region name, and the NCA region population, respectively. \cr
+#' `tempInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `tempfile`, with missing values removed. `tempInput` has two columns with names `"year"` and `"temp_C"`, containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
+#' `slrInput` \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by `slrfile`, with missing values removed. `slrInput` has two columns with names `"year"`, and `"slr_cm"`, containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
+#' `gdpInput` \tab Data frame containing a custom GDP scenario imported from the CSV file specified by `gdpfile`, with missing values removed. `gdpInput` has two columns with names `"year"`, and `"gdp_usd"`, containing the year and the national GDP, respectively. \cr
+#' `popInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `popfile`, with missing values removed. `popInput` has three columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"reg_pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.. \cr
 #' }
 #'
 #'
@@ -72,6 +83,11 @@
 #' @export
 #' @md
 #'
+#'
+# #' @param popform A character string indicating whether the populations in the population input file specified by `popfile` are spread across multiple columns (i.e., `popform="wide"`) or are combined in a single column (i.e., `popform="long"`). By default, the model assumes `popform="wide"`. For both formats (`popform="wide"` or `popform="long"`), the first column contains years. If `popform="wide"` (default), the second through eighth columns of `popfile ` must contain population values for each NCA region, with the associated NCA region as the column name. If `popform="long"`, the second column must contain NCA region names and the third column must contain values for the associated region population.
+# #' Users can specify whether the temperature input is for the contiguous U.S. (CONUS) or global using `temptype` and specify the format of the population scenario using `popform`.
+# #' If the population input is spread across multiple columns (i.e., `popform="wide"`), columns must be named according to the NCA regions. If the population input is in the long format, the region value must be in the second column. The NCA region names for population inputs must match the following values: `"Midwest"`, `"Northeast"`, `"Northern.Plains"`, `"Northwest"`, `"Southeast"`, `"Southern.Plains"`, `"Southwest"`. All regions must be present in the population input file.
+
 ###### import_inputs ######
 ### Created 2021.02.08. Last updated 2021.02.08
 ### This function imports data from user-specified file names.
