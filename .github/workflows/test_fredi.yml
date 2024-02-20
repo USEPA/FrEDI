@@ -80,9 +80,7 @@ jobs:
           rPath0   <- ".";
           pPath0   <- rPath0 |> file.path("FrEDI")
           sPath0   <- pPath0 |> file.path("scripts")
-          rPath0 |> list.files() |> print()
-          pPath0 |> list.files() |> print()
-          sPath0 |> list.files() |> print()
+          tPath0   <- pPath0 |> file.path("testing")
 
           ### Load FrEDI
           pPath0 |> devtools::load_all()
@@ -94,6 +92,9 @@ jobs:
 
           ### Test results
           if(do_tests){
+            ### Load test code
+            tFiles0 <- tFiles0 |> list.files(full.names=TRUE)
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
             ### Check if path exists and, if not, create it
             exists0 <- oPath1 |> dir.exists()
