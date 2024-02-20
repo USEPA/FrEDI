@@ -190,6 +190,7 @@ plot_DOW_byModelType <- function(
   main_grid      <- ggarrange(plotlist=plotList0, ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2))
   main_grid      <- main_grid |> annotate_figure(left = plot_yTitle)
   # main_list      <- list(spacer=plot_spacer, plots=main_grid, lgd = plotList0[["lgd"]])
+
   ###### Add Legend ######
   plotList0      <- list( x=plot_spacer, y=main_grid, z=plot_legend)
   main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=plot_heights0)

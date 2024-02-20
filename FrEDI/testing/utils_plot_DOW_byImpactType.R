@@ -137,7 +137,7 @@ plot_DOW_byImpactType <- function(
   def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
   def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
   def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
-  def_lgdPos  <- "top"
+  def_lgdPos  <- "bottom"
   def_yTitle  <- "Impacts ($2015)"
   def_mUnit   <- "cm"
   def_theme   <- NULL
@@ -242,6 +242,7 @@ plot_DOW_byImpactType <- function(
   # plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9, color="white"))
   plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9))
   plot0     <- plot0 + theme(axis.title.y  = element_text(hjust = 0.5, size=9))
+  plot0     <- plot0 + theme(legend.direction = "vertical", legend.box = "vertical")
   plot0     <- plot0 + theme(legend.position = "bottom")
 
   ###### Plot Index #####

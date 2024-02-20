@@ -137,12 +137,13 @@ save_appendix_figures <- function(
     # n_types |> c(n_vars, n_models) |> print()
 
     ### Get number of legend rows
-    lgdCols  <- case_when(
-      n_vars <= 1 ~ 2 ,
-      n_vars == 2 ~ 3,
-      .default = 4
-    )
-    lgdRows  <- (n_models - 1) %/% lgdCols + 1
+    # lgdCols  <- case_when(
+    #   n_vars <= 1 ~ 2 ,
+    #   n_vars == 2 ~ 3,
+    #   .default = 4
+    # )
+    # lgdRows  <- (n_models - 1) %/% lgdCols + 1
+    lgdRows  <- 2 * 3 + 2
 
     ### Plot heights
     ### Functions for plot height & width

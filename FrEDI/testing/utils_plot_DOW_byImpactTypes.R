@@ -186,12 +186,14 @@ plot_DOW_byImpactTypes <- function(
   grobLgd0  <- ggarrange(plotlist=list(legend=legend0))
 
   ###### Create Plot List ######
-  ### Iterate over Impact Years
+  ###### ** Create Impact Years plots ######
   listYears0 <- c_impYears |> map(function(impYear_i){
+    ###### ** Create impact type plots ######
     listTypes_i <- c_impTypes |> map(function(impType_j){
       ### Figure out min/max across all variants for an impact type to get the y-scale
       listVars_j <- c_variants |> map(function(variant_k){
-        ###### Create the plot ######
+        ###### ** Create variant plot ######
+        ref0   <- (n_impYears > 1) |> ifelse(TRUE, FALSE)
         plot_k <- df0 |> plot_DOW_byImpactType(
           sector0   = sector0,
           impYear0  = impYear_i,
@@ -201,7 +203,8 @@ plot_DOW_byImpactTypes <- function(
           xCol      = xCol,   ### X-Column,
           yCol      = yCol,   ### Y-Column,
           xInfo     = x_info, ### xScale...outputs of get_colScale
-          refPlot   = FALSE, ### Whether to do a ref plot
+          # refPlot   = FALSE,  ### Whether to do a ref plot
+          refPlot   = ref0,   ### Whether to do a ref plot
           silent    = silent,
           options   = plotOpts0
         )
