@@ -154,7 +154,8 @@ plot_DOW_bySector <- function(
   ###### Format Plot ######
   ### Legend position = bottom if refPlot; otherwise, don't show
   lgdPos0     <- refPlot |> ifelse("bottom", "none")
-  plot0       <- plot0 + theme(legend.direction = "vertical", legend.box = "vertical")
+  plot0       <- plot0 + theme(legend.box = "vertical")
+  # plot0       <- plot0 + theme(legend.direction = "vertical")
   plot0       <- plot0 + theme(legend.position = lgdPos0)
   plot0       <- plot0 + theme(plot.title   = element_blank())
   plot0       <- plot0 + theme(axis.title   = element_text(size=8))

@@ -57,7 +57,9 @@
 #' By submitting a pull request to the GitHub and/or by installing this package, you make an agreement with EPA that you will not submit a claim of compensation for services rendered to EPA or any other federal agency. Further, you agree not to charge the time you spend developing software code related to this project to any federal grant or cooperative agreement.
 #'
 #'
-#' @docType _PACKAGE
+# @docType _PACKAGE
+#' @docType package
+"_PACKAGE"
 #' @name FrEDI
 #' @md
 NULL

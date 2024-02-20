@@ -193,7 +193,7 @@ plot_DOW_byImpactTypes <- function(
       ### Figure out min/max across all variants for an impact type to get the y-scale
       listVars_j <- c_variants |> map(function(variant_k){
         ###### ** Create variant plot ######
-        ref0   <- (n_impYears > 1) |> ifelse(TRUE, FALSE)
+        # ref0   <- (n_impYears > 1) |> ifelse(TRUE, FALSE)
         plot_k <- df0 |> plot_DOW_byImpactType(
           sector0   = sector0,
           impYear0  = impYear_i,
@@ -203,8 +203,8 @@ plot_DOW_byImpactTypes <- function(
           xCol      = xCol,   ### X-Column,
           yCol      = yCol,   ### Y-Column,
           xInfo     = x_info, ### xScale...outputs of get_colScale
-          # refPlot   = FALSE,  ### Whether to do a ref plot
-          refPlot   = ref0,   ### Whether to do a ref plot
+          refPlot   = FALSE,  ### Whether to do a ref plot
+          # refPlot   = ref0,   ### Whether to do a ref plot
           silent    = silent,
           options   = plotOpts0
         )
@@ -231,7 +231,7 @@ plot_DOW_byImpactTypes <- function(
       plotGrid_j <- ggarrange(plotlist=listVars_j, nrow=1, ncol=nCol, common.legend=T, legend="none")
       # return(plotGrid_j)
 
-      ###### Annotate Plots ######
+      ###### ** Annotate Variant Plots ######
       ### Labels on top
       ### Longest impact type: "Acute Myocardial Infarction"
       # title_j      <- "Impact Type: " |> paste0(impType_j)
@@ -246,6 +246,7 @@ plot_DOW_byImpactTypes <- function(
       return(plotGrid_j)
     })
 
+    ###### ** Annotate Impact Year Plots ######
     ### Name the plots
     # listTypes_i |> length() |> print(); c_impTypes |> print()
     listTypes_i <- listTypes_i |> set_names(c_impTypes)
@@ -282,8 +283,9 @@ plot_DOW_byImpactTypes <- function(
     if(doNote_i){
       plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
       plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
-    }
-    ###### Return Impact Type Plot ######
+    } ### End if(doNote_i)
+
+    ###### ** Return Impact Year Plots ######
     return(plotGrid_i)
   })
   ### Name the plots

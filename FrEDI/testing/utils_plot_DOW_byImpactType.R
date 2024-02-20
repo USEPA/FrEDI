@@ -242,7 +242,8 @@ plot_DOW_byImpactType <- function(
   # plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9, color="white"))
   plot0     <- plot0 + theme(axis.title.x  = element_text(hjust = 0.5, size=9))
   plot0     <- plot0 + theme(axis.title.y  = element_text(hjust = 0.5, size=9))
-  plot0     <- plot0 + theme(legend.direction = "vertical", legend.box = "vertical")
+  plot0     <- plot0 + theme(legend.box = "vertical")
+  # plot0     <- plot0 + theme(legend.direction = "vertical")
   plot0     <- plot0 + theme(legend.position = "bottom")
 
   ###### Plot Index #####
