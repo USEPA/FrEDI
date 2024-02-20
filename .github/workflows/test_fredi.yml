@@ -86,7 +86,7 @@ jobs:
           pPath0 |> devtools::load_all()
 
           ### Load test code
-          tFiles0 <- tFiles0 |> list.files(full.names=TRUE)
+          tFiles0 <- tPath0 |> list.files(full.names=TRUE)
           for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
           ### Where to save results
