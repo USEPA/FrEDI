@@ -223,7 +223,7 @@ plot_DOW_byImpactType <- function(
   # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
 
   ###### Adjust legend title ######
-  if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}
+  # if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}
 
   ###### Add themes and title ######
   plot0     <- plot0 + ggtitle(title0, subtitle0)
