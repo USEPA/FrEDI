@@ -165,7 +165,7 @@ save_appendix_figures <- function(
         ntypes == 5 ~ 3,
         nrows == 3 ~ 1.5,
         nrows == 4 ~ 2,
-        nrows >  4 ~ lgdRows * 0.3,
+        nrows >  4 ~ lgdRows * 0.2,
         .default = 1
       )
       1.5 + spacer0 + factor0 * ntypes
@@ -222,7 +222,7 @@ save_fig7_images <- function(
   type0  <- modelType |> tolower()
   ### Figure options
   # h0     <- ("gcm" %in% type0) |> ifelse(9, 4.5)
-  h0     <- ("gcm" %in% type0) |> ifelse(12, 4.5)
+  h0     <- ("gcm" %in% type0) |> ifelse(13, 5)
   w0     <- 6.9
   dev0   <- device |> tolower()
   # type0 |> print(); ("gcm" %in% type0) |> print(); h0 |> print()

@@ -266,9 +266,10 @@ plot_DOW_byImpactTypes <- function(
 
     ### Add Plot Title & Y Title
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=legend0)
-    plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
+    # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
+    plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, spacer2=spacer0, legend=grobLgd0)
     # plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.1, n_impTypes, 0.25))
-    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=3, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.2))
+    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=3, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.01, 0.2, 0.01))
     title0_i   <- sector0
     grobTit_i  <- text_grob(title0_i, color="black", size=14, face="bold", hjust=0.5)
     plotYTit_i <- text_grob(yTitle, color = "black", rot  = 90)
@@ -277,13 +278,13 @@ plot_DOW_byImpactTypes <- function(
     # return(plotGrid_i)
 
     ### Add Note
-    # note_i     <- "Note: Figure scale varies by impact type"
-    note_i     <- create_fig_scale_note(ntypes=n_impTypes, nvars=n_variants)
-    doNote_i   <- !(note_i == "")
-    if(doNote_i){
-      plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
-      plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
-    } ### End if(doNote_i)
+    # # note_i     <- "Note: Figure scale varies by impact type"
+    # note_i     <- create_fig_scale_note(ntypes=n_impTypes, nvars=n_variants)
+    # doNote_i   <- !(note_i == "")
+    # if(doNote_i){
+    #   plotNote_i <- text_grob(note_i, face = "italic", size=10, hjust=.93)
+    #   plotGrid_i <- plotGrid_i |> annotate_figure(bottom = plotNote_i)
+    # } ### End if(doNote_i)
 
     ###### ** Return Impact Year Plots ######
     return(plotGrid_i)
