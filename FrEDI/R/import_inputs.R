@@ -143,7 +143,7 @@ import_inputs <- function(
     ###### Column Info ######
     region_i    <- inputInfo_i$region |> unique()
     valueCol_i  <- inputInfo_i$valueCol |> unique()
-    valueCol_i  <- (input_i == "pop") |> ifelse(valueCol_i, state_pop)
+    valueCol_i  <- (input_i == "pop") |> ifelse("state_pop", valueCol_i)
     ### Initialize column names
     numCols_i   <- colNames_i <- c("year") |> c(valueCol_i)
     # cols0       <- c("region")
