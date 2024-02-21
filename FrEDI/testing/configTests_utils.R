@@ -18,7 +18,7 @@
 # }
 
 ## Function to check if column has at least one non NA value
-has_nonNA_values_df <- function(x, groups0="sector", col0="annual_impacts") {
+has_nonNA_values_df <- function(df0, groups0="sector", col0="annual_impacts") {
   # ### Check whether values in x are NA
   # x <- x |> is.na()
   # ### Calculate number of rows
@@ -26,15 +26,16 @@ has_nonNA_values_df <- function(x, groups0="sector", col0="annual_impacts") {
   # ### Number of NA values
   # y <- y |> mutate(numNA = x |> colSums() |> nrow() |> is.null() |> if_else(., 0, 1))
   ### Add counters
-  x    <- x |> mutate(numRows = 1)
-  x    <- x |> mutate(numNA   = 1 * (x[[col0]] |> is.na()))
+  df0   <- df0 |> mutate(numRows = 1)
+  vals0 <- df0[[col0]] |> is.na()
+  x     <- df0 |> mutate(numNA   = 1 * vals0)
   ### Summarize
-  sum0 <- c("numRows", "numNA")
-  y    <- x |> group_by_at(c(groups0)) |> summarize_at(c(sum0), sum)
+  sum0  <- c("numRows", "numNA")
+  y     <- x |> group_by_at(c(groups0)) |> summarize_at(c(sum0), sum)
   ### Whether all results are missing
-  y    <- y |> mutate(allNA = (numRows == numNA))
+  y     <- y |> mutate(allNA = (numRows == numNA))
   ### Filter to values with allNA
-  z    <- y |> filter(allNA)
+  z     <- y |> filter(allNA)
   # ### Get number of rows |>
   # z    <- y |> nrow()
   # # z <- 1 * (z > 0)

@@ -26,14 +26,15 @@ general_fredi_test <- function(
   #### Check if each sector has at least one non-NA-value
 
   # Get names of sector "group-names" consistent with dplyr
-  sect_names <- newOutputs |> pull(sector) |> unique()
+  # sect_names <- newOutputs |> pull(sector) |> unique()
 
   # For each sector group, check if each sector has nonNA values
-  sect_na_check <- newOutputs |>
-    group_by_at(c("sector")) |>
-    has_nonNA_values_df(groups0="sector", col0="annual_impacts")
-    # group_map(~ has_nonNA_values_df(., col0="annual_impacts")) |>
-    # set_names(sect_names$sector)
+  # sect_na_check <- newOutputs |>
+  #   group_by_at(c("sector")) |>
+  #   group_map(~ has_nonNA_values_df(., col0="annual_impacts")) |>
+  #   set_names(sect_names$sector)
+  sect_na_check <- newOutputs |> has_nonNA_values_df(groups0="sector", col0="annual_impacts")
+
 
   # If there are any sector groups with all NA values, filter to that sector and save to output list
   # sect_na_check$`ATS Extreme Temperature` <- 1
