@@ -21,43 +21,40 @@ general_fredi_test <- function(
   c_genTest0  <- "dataInfo_test"
   c_diff0     <- "outputs_diffs"
   c_sectorNA0 <- "sector_NA"
-  
+
   #### Sector NA Check ####
-  #### Check if each sector has at least one non-NA-value 
-  
+  #### Check if each sector has at least one non-NA-value
+
   # Get names of sector "group-names" consistent with dplyr
-  sect_names <- newOutputs |> 
-    group_by(sector) |>
-    group_keys() 
-  
+  sect_names <- newOutputs |> pull(sector) |> unique()
+
   # For each sector group, check if each sector has nonNA values
   sect_na_check <- newOutputs |>
-    group_by(sector) %>%
-    group_map(
-      ~ has_nonNA_values_df(.)
-      ## add check for annual impacts
-    ) %>%
-    set_names(sect_names$sector)
-  
-  # If there are any sector groups with all NA values, filter to that sector and  save to output list
-  
-  sect_na_check$`ATS Extreme Temperature` <- 1
-  
-  if(any(sect_na_check >0)){
-    
-    sectorNA_names <- which(sect_na_check >0) |>
-      names()
-    sectorNA <-  newOutputs |>
-      filter(
-        sector %in% sectorNA_names ) 
+    group_by_at(c("sector")) |>
+    has_nonNA_values_df(groups0="sector", col0="annual_impacts")
+    # group_map(~ has_nonNA_values_df(., col0="annual_impacts")) |>
+    # set_names(sect_names$sector)
+
+  # If there are any sector groups with all NA values, filter to that sector and save to output list
+  # sect_na_check$`ATS Extreme Temperature` <- 1
+  has_no_nonNA_values <- (sect_na_check |> nrow()) > 0
+  if(has_no_nonNA_values) {
     save_list[[c_sectorNA0]] <- sectorNA
-    
   } else {
-    
+  # if((sect_na_check > 0) |> any()){
+  #
+  #   sectorNA_names <- (sect_na_check > 0) |>
+  #     names()
+  #   sectorNA <-  newOutputs |>
+  #     filter(
+  #       sector %in% sectorNA_names )
+  #   save_list[[c_sectorNA0]] <- sectorNA
+  # } else {
+
     save_list[[c_sectorNA0]] <- tibble("All Sectors have some non-missing and non-zero values")
-  }
-  
-  
+  } ### End else
+
+
   ###### Load Reference Data ######
   ### Load previous Default Data to compare to new outputs
   ### 0. Names for reference data
@@ -70,7 +67,7 @@ general_fredi_test <- function(
   expr0       <- substitute(data(d, package=dPkg0, envir=newEnv), list(d=dName0))
   expr0 |> eval()
   refOutputs  <- dName0 |> get(envir=newEnv, inherits = F)
-  rm("newEnv")
+  rm(newEnv)
   # refOutputs %>% glimpse
 
 

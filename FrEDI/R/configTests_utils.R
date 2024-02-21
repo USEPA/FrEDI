@@ -18,20 +18,26 @@
 # }
 
 ## Function to check if column has at least one non NA value
-has_nonNA_values_df <- function(x) {
-  ### Check whether values in x are NA
-  x <- x %>% is.na
-  ### Calculate number of rows
-  y <- tibble(numRows = x %>% nrow)
-  ### Number of NA values
-  y <- y %>% mutate(numNA = x %>% colSums %>% nrow %>% is.null %>% if_else(.,0,1))
+has_nonNA_values_df <- function(x, groups0="sector", col0="annual_impacts") {
+  # ### Check whether values in x are NA
+  # x <- x |> is.na()
+  # ### Calculate number of rows
+  # y <- tibble(numRows = x |> nrow())
+  # ### Number of NA values
+  # y <- y |> mutate(numNA = x |> colSums() |> nrow() |> is.null() |> if_else(., 0, 1))
+  ### Add counters
+  x    <- x |> mutate(numRows = 1)
+  x    <- x |> mutate(numNA   = 1 * (x[[col0]] |> is.na()))
+  ### Summarize
+  sum0 <- c("numRows", "numNA")
+  y    <- x |> group_by_at(c(groups0)) |> summarize_at(c(sum0), sum)
   ### Whether all results are missing
-  y <- y %>% mutate(allNA = (numRows == numNA))
+  y    <- y |> mutate(allNA = (numRows == numNA))
   ### Filter to values with allNA
-  y <- y %>% filter(allNA)
-  ### Get number of rows %>%
-  z <- y %>% nrow
-  # z <- 1 * (z > 0)
+  z    <- y |> filter(allNA)
+  # ### Get number of rows |>
+  # z    <- y |> nrow()
+  # # z <- 1 * (z > 0)
   ### Return
   return(z)
 }
@@ -57,7 +63,7 @@ has_nonNA_values_misc <- function(x) {
       y1 <- x %>% map(~ .y %>% length) %>% unlist
       y  <- y0 & (y1 > 1)
     }
-  } ### End if(isList0) 
+  } ### End if(isList0)
   else        {y <- x %>% is.na %>% all(na.rm=TRUE)}
   ### Which observations
   which_x <- y %>% which
