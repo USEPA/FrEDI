@@ -9,10 +9,6 @@ run_fredi_sv(
   driverInput = NULL,
   popInput = NULL,
   silent = TRUE,
-  save = FALSE,
-  outpath = getwd(),
-  overwrite = FALSE,
-  addDate = FALSE,
   .testing = FALSE
 )
 }
