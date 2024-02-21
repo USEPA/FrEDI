@@ -269,7 +269,7 @@ plot_DOW_byImpactTypes <- function(
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
     plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, spacer2=spacer0, legend=grobLgd0)
     # plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.1, n_impTypes, 0.25))
-    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=3, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.01, 0.2, 0.01))
+    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=3, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.01, 0.2))
     title0_i   <- sector0
     grobTit_i  <- text_grob(title0_i, color="black", size=14, face="bold", hjust=0.5)
     plotYTit_i <- text_grob(yTitle, color = "black", rot  = 90)
