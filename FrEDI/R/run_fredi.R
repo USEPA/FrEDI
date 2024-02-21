@@ -8,11 +8,11 @@
 #'
 #' As of FrEDI Version 4.0.1, [FrEDI::run_fredi()] calculates impacts at the state-level for the following sectors: **ATS Temperature-Related Mortality**, **Asphalt Roads**, **Climate-Driven Changes in Air Quality**, **Electricity Transmission and Distribution**, **Labor**, **Suicide**, **Transportation Impacts from High Tide Flooding**, **Urban Drainage**, **Wildfire**, **Wind Damage**. Eventually, all sectors will be converted to state-level. Sectors that have only region-level impacts will have values in the `"state"` and `"postal"` columns of the outputs data frame set to `"N/A"`.
 #'
-#' @param inputsList=NULL A list of named elements named elements (`names(inputsList)= c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
+#' @param inputsList=NULL A list of named elements named elements (`names(inputsList) = c( "tempInput", "slrInput", "gdpInput", "popInput" )`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #'
 #' @param sectorList=NULL A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included (i.e., `sectorList=get_sectorInfo()`).
 #'
-#' @param aggLevels="all" Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels="all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()]. Note that, if `"impacttype"` is in `aggLevels` (e.g., `aggLevels="all"`), columns `"physical_measure"` and `"physical_impacts"` will be dropped from the results data frame. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.
+#' @param aggLevels="all" Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels= "all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()]. Note that, if `"impacttype"` is in `aggLevels` (e.g., `aggLevels= "all"`), columns `"physical_measure"` and `"physical_impacts"` will be dropped from the results data frame. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.
 #'
 #' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=1`). Applicable sectors and impacts are: **Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality**  (`impactType="N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType= "All Mortality"`), **Valley Fever** (`impactType= "Mortality"`), **Vibriosis** (`impactType="N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
 #'
@@ -20,7 +20,7 @@
 #'
 #' @param thru2300=FALSE A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300. Defaults to `thru2300=FALSE`.
 #'
-#' @param outputList=FALSE A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList=FALSE`, default) or to return a list of objects (`outputList=TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
+#' @param outputList=FALSE A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList = FALSE`, default) or to return a list of objects (`outputList = TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
 #'
 #' @param silent=TRUE A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
@@ -31,10 +31,10 @@
 #'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with elements `tempInput`, `slrInput`, `gdpInput`, and `popInput`, with each containing a data frame with a custom scenario for temperature, GMSL, GDP, and state-level population, respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' If `inputsList=NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList= list())` returns the same outputs as running [FrEDI::run_fredi()]).
+#' If `inputsList=NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi( inputsList = list() )` returns the same outputs as running [FrEDI::run_fredi()]).
 #'
 #' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
-#'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from="global")` (or by specifying [FrEDI::import_inputs]`(temptype="global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
+#'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from="global")` (or by specifying [FrEDI::import_inputs]`( temptype = "global" )` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
 #'    * `tempInput` requires a data frame object with two columns with names `"year"`, and `"temp_C"` containing the year and CONUS temperatures in degrees Celsius, respectively.
 #'    * Temperature inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for temperature (i.e., `inputsList=list(tempInput=NULL)`, [FrEDI::run_fredi()] uses a default temperature scenario.
@@ -47,7 +47,7 @@
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for GDP (i.e., `inputsList=list(gdpInput=NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"reg_pop"` containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.
+#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.
 #'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for population (i.e., `inputsList=list(popInput=NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
@@ -55,7 +55,7 @@
 #' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, [FrEDI::run_fredi()] subsets the input scenarios to values within the analysis period.
 #'
 #' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit= "degrees Celsius"` and `driverUnit= "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type="GCM"` and `model_type="SLR"` for temperature- and SLR-driven sectors, respectively
-#' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"reg_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
+#' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"state_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
 #'
 #' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList= NULL` (default), all sectors are included.
 #'
@@ -130,18 +130,15 @@
 #' scenariosPath <- system.file(package="FrEDI") |> file.path("extdata","scenarios")
 #' scenariosPath |> list.files()
 #'
-#' ### Temperature Scenario File Name
-#' tempInputFile <- scenariosPath |> file.path("GCAM_scenario.csv")
 #'
 #' ### SLR Scenario File Name
 #' slrInputFile  <- scenariosPath |> file.path("slr_from_GCAM.csv")
 #'
 #' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath |> file.path("pop_scenario.csv")
+#' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
 #' x_inputs <- import_inputs(
-#'   tempfile = tempInputFile,
 #'   slrfile  = slrInputFile,
 #'   popfile  = popInputFile
 #' )

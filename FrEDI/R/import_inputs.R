@@ -56,18 +56,14 @@
 #' ### View example scenario names
 #' scenariosPath |> list.files()
 #'
-#' ### Temperature Scenario File Name
-#' tempInputFile <- scenariosPath |> file.path("GCAM_scenario.csv")
-#'
 #' ### SLR Scenario File Name
 #' slrInputFile  <- scenariosPath |> file.path("slr_from_gcam.csv")
 #'
 #' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath |> file.path("pop_scenario.csv")
+#' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
 #' example_inputsList <- import_inputs(
-#'   tempfile = tempInputFile,
 #'   slrfile  = slrInputFile,
 #'   popfile  = popInputFile,
 #'   temptype = "global"
