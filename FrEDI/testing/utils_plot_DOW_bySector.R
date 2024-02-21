@@ -157,8 +157,8 @@ plot_DOW_bySector <- function(
   ### Legend position = bottom if refPlot; otherwise, don't show
   lgdPos0     <- refPlot |> ifelse("bottom", "none")
   plot0       <- plot0 + theme(legend.box = "vertical")
-  plot0       <- plot0 + guides(color = guide_legend(title.position="top", ncol=4, byrow=TRUE))
-  plot0       <- plot0 + guides(shape = guide_legend(title.position="top", ncol=3, byrow=TRUE))
+  plot0       <- plot0 + guides(color = guide_legend(title.position="left", ncol=4, byrow=TRUE))
+  plot0       <- plot0 + guides(shape = guide_legend(title.position="left", ncol=3, byrow=TRUE))
   # plot0       <- plot0 + theme(legend.direction = "vertical")
   plot0       <- plot0 + theme(legend.position = lgdPos0)
   plot0       <- plot0 + theme(plot.title   = element_blank())
