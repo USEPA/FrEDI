@@ -163,8 +163,9 @@ save_appendix_figures <- function(
       ### Spacer for titles & legend
       spacer0 <- case_when(
         ntypes == 5 ~ 3,
-        nrows == 4 ~ 2,
         nrows == 3 ~ 1.5,
+        nrows == 4 ~ 2,
+        nrows >  4 ~ lgdRows,
         .default = 1
       )
       1.5 + spacer0 + factor0 * ntypes
