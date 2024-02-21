@@ -143,7 +143,13 @@ save_appendix_figures <- function(
     #   .default = 4
     # )
     # lgdRows  <- (n_models - 1) %/% lgdCols + 1
-    lgdRows  <- 2 * 3 + 2
+    # lgdRows  <- 2 * 3 + 6
+    lgdRows  <- case_when(
+      c_vars == 1 ~ 2 * 5 + 3,
+      c_vars == 2 ~ 2 * 4 + 3,
+      .default = 2 * 3 + 6
+    ) ### End case_when
+
 
     ### Plot heights
     ### Functions for plot height & width
@@ -214,7 +220,8 @@ save_fig7_images <- function(
   ### Other values
   type0  <- modelType |> tolower()
   ### Figure options
-  h0     <- ("gcm" %in% type0) |> ifelse(9, 4.5)
+  # h0     <- ("gcm" %in% type0) |> ifelse(9, 4.5)
+  h0     <- ("gcm" %in% type0) |> ifelse(11, 4)
   w0     <- 6.9
   dev0   <- device |> tolower()
   # type0 |> print(); ("gcm" %in% type0) |> print(); h0 |> print()
