@@ -192,8 +192,8 @@ plot_DOW_byModelType <- function(
   # main_list      <- list(spacer=plot_spacer, plots=main_grid, lgd = plotList0[["lgd"]])
 
   ###### Add Legend ######
-  plotList0      <- list( x=plot_spacer, y=main_grid, z=plot_legend)
-  main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=plot_heights0)
+  plotList0      <- list( x=plot_spacer, y=main_grid, w=plot_spacer, z=plot_legend, u=plot_spacer)
+  main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=c(0.2, nRow + 1, 0.2, 1, 0.2))
   main_plot      <- main_plot |> annotate_figure(top=plot_title)
 
   ###### Return######

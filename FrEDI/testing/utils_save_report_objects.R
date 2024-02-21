@@ -222,7 +222,7 @@ save_fig7_images <- function(
   type0  <- modelType |> tolower()
   ### Figure options
   # h0     <- ("gcm" %in% type0) |> ifelse(9, 4.5)
-  h0     <- ("gcm" %in% type0) |> ifelse(13, 5)
+  h0     <- ("gcm" %in% type0) |> ifelse(12, 5)
   w0     <- 6.9
   dev0   <- device |> tolower()
   # type0 |> print(); ("gcm" %in% type0) |> print(); h0 |> print()
