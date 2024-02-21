@@ -245,8 +245,8 @@ plot_DOW_byImpactType <- function(
   plot0     <- plot0 + theme(legend.box = "vertical")
   # plot0     <- plot0 + theme(legend.direction = "vertical")
   plot0     <- plot0 + theme(legend.position = "bottom")
-  plot0     <- plot0 + guides(shape = guide_legend(title.position="top", ncol=3, byrow=TRUE))
   plot0     <- plot0 + guides(color = guide_legend(title.position="top", ncol=3, byrow=TRUE))
+  plot0     <- plot0 + guides(shape = guide_legend(title.position="top", ncol=3, byrow=TRUE))
 
   ###### Plot Index #####
   ###### If plotIndex, remove some plot elements
