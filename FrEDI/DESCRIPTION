@@ -15,14 +15,18 @@ Authors@R: c(person("Corinne", "Hartin",
                      role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0002-4412-5302", 
                                  github = "knoiva-indecon")),
+             person("Tony","Gardella",
+                     role    = "ctb",
+                     comment = c(ORCID = "0000-0003-4380-3412",
+                                 github = "tonygard-indecon")),
              person("Will","Maddock",
                      role    = "ctb",
                      comment = c(ORCID = "0000-0002-6107-0315",
                                  github = "maddockw")),
-             person("Tony","Gardella",
+             person("Hugh","Easton",
                      role    = "ctb",
-                     comment = c(ORCID = "0000-0003-4380-3412",
-                                 github = "tonygard-indecon"))
+                     comment = c(
+                                 github = "heaston-indecon"))
              )
 URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
 Description: This R package models damages and impacts from climate change in the contiguous United States (CONUS) 
@@ -31,11 +35,11 @@ Description: This R package models damages and impacts from climate change in th
     implement FrEDI for projecting impacts from climate change and sea level rise for a selected set of 
     sectors. Version 3 and above includes a module for estimating impacts on socially vulnerable populations for 
     select sectors. Versions > 3.3.0 extend calculations out to 2300 to facilitate the calculation of Net Present Values 
-    (NPV) but only contains default values through 2090--users must provide their own inputs through 2300. Versions 4.0 and 
+    (NPV) but only contains default values through 2090--users must provide their own inputs through 2300. Versions 4.0.1 and 
     above calculate values at the state-level.  
 License: file LICENSE
 Encoding: UTF-8
-Depends: R (>= 3.5.0),
+Depends: R (>= 4.2.0),
     tidyverse,
     ggpubr,
     openxlsx
