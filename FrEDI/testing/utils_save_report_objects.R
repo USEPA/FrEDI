@@ -165,7 +165,7 @@ save_appendix_figures <- function(
         ntypes == 5 ~ 3,
         nrows == 3 ~ 1.5,
         nrows == 4 ~ 2,
-        nrows >  4 ~ lgdRows,
+        nrows >  4 ~ lgdRows * 0.2,
         .default = 1
       )
       1.5 + spacer0 + factor0 * ntypes
