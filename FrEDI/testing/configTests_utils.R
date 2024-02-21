@@ -16,8 +16,26 @@
 #   ### Return
 #   return(z)
 # }
+### Function to check if column has at least one non NA value
+has_nonNA_values <- function(x) {
+  ### Check whether values in x are NA
+  x <- x |> is.na()
+  ### Calculate number of rows
+  y <- tibble(numRows = x |> nrow())
+  ### Number of NA values
+  y <- y |> mutate(numNA = x |> colSums() |> nrow() |> is.null() |> if_else(0,1))
+  ### Whether all results are missing
+  y <- y |> mutate(allNA = (numRows == numNA))
+  ### Filter to values with allNA
+  y <- y |> filter(allNA)
+  ### Get number of rows %>%
+  z <- y |> nrow()
+  # z <- 1 * (z > 0)
+  ### Return
+  return(z)
+} ### End has_nonNA_values_df
 
-## Function to check if column has at least one non NA value
+### Function to check if column has at least one non NA value
 has_nonNA_values_df <- function(df0, groups0="sector", col0="annual_impacts") {
   # ### Check whether values in x are NA
   # x <- x |> is.na()
@@ -127,7 +145,7 @@ fun_nNna <- function(z, a, b){
   # val1    <- do_df0
   val1 <- "data.frame" %in% a[[z]]
   ### What to do for data frames
-  if(val1) {val2 <- b[[z]] %>% has_nonNA_values_df  }
+  if(val1) {val2 <- b[[z]] %>% has_nonNA_values  }
   else     {val2 <- b[[z]] %>% has_nonNA_values_misc}
   # else if(do_list) {
   #   if(do_list){"got here3" %>% print}
