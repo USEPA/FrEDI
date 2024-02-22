@@ -114,20 +114,22 @@ plot_DOW_bySector <- function(
   if(do_gcm){
     ### Separate GCM values
     ### Plot these values as lines
-    df0_1  <- df0 |> filter((maxUnitValue < 6 & driverValue <= maxUnitValue) | maxUnitValue >=6)
+    df0_1  <- df0 |> filter((driverValue <= maxUnitValue) )#| maxUnitValue >=6)#maxUnitValue < 6 &
     ### Plot these values as points
-    df0_2  <- df0 |> filter((maxUnitValue < 6 & driverValue >= maxUnitValue))
+    df0_2  <- df0 |> filter((driverValue >= maxUnitValue)) # maxUnitValue <= 6 &
     ### Initialize plot
     plot0  <- ggplot()
     ### Plot values as lines
     plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.65)
-    ### Plot values as points
-    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    ### Plot values as points (dashed lines)
+    plot0  <- plot0 + geom_line(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
+    #plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
   } else{
     ### Initialize plot
     plot0  <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
     ### Add geoms
     plot0  <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.65)
+    #plot0  <- plot0 + geom_line(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
     plot0  <- plot0 + geom_point(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]], shape = model), alpha=0.65)
   } ### End if(do_gcm)
 
@@ -155,8 +157,8 @@ plot_DOW_bySector <- function(
   ### Legend position = bottom if refPlot; otherwise, don't show
   lgdPos0     <- refPlot |> ifelse("bottom", "none")
   plot0       <- plot0 + theme(legend.box = "vertical")
-  plot0       <- plot0 + guides(color = guide_legend(title.position="top", ncol=4, byrow=TRUE))
-  plot0       <- plot0 + guides(shape = guide_legend(title.position="top", ncol=3, byrow=TRUE))
+  plot0       <- plot0 + guides(color = guide_legend(title.position="left", ncol=4, byrow=TRUE))
+  plot0       <- plot0 + guides(shape = guide_legend(title.position="left", ncol=3, byrow=TRUE))
   # plot0       <- plot0 + theme(legend.direction = "vertical")
   plot0       <- plot0 + theme(legend.position = lgdPos0)
   plot0       <- plot0 + theme(plot.title   = element_blank())

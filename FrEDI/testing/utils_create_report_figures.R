@@ -772,7 +772,7 @@ plot_DoW_by_modelYear <- function(
       yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
       heights    = NULL,
-      margins    = c(0, 0, .15, 0),
+      margins    = c(0, 0.05, .15, 0.05),
       marginUnit = "cm",
       theme      = NULL
     )
@@ -818,7 +818,7 @@ plot_DoW <- function(
       yTitle     = "Impacts ($2015)",
       lgdTitle   = "Model",
       heights    = NULL,
-      margins    = c(0, 0, .15, 0),
+      margins    = c(0, 0.05, .15, 0.05),
       marginUnit = "cm",
       theme      = NULL
     )
@@ -945,7 +945,8 @@ plot_DoW_by_sector <- function(
         c_yrs  <- c("NA", x2)
         df_y   <- df_y |> filter(summaryYear == x2)
         df_y   <- df_y |> filter(impactYear %in% c_yrs)
-        # df_y |> glimpse()
+        #"look here" %>% print()
+        #df_y |> glimpse()
       } ### End if(do_gcm)
 
       plot_y <- df_y |> plot_DOW_byImpactTypes(
