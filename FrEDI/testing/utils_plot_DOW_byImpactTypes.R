@@ -264,15 +264,27 @@ plot_DOW_byImpactTypes <- function(
     plotGrid_i  <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.01, 1))
     plotGrid_i  <- plotGrid_i |> annotate_figure(top=grobYear_i)
 
+    ### Heights for spacer
+    h_spacer1  <- 0.05
+    h_spacer2  <- 0.05
+    h_plots    <- n_impTypes * (1 + 0.07)
+    # h_legend   <- 0.75 / n_impTypes
+    # h_legend   <- case_when(
+    #   n_impTypes = 1 ~ 0.5,
+    #   n_impTypes > 3 ,
+    #   0.5
+    #   )
+    h_legend   <- 0.5
+    h_spacers  <- c(h_spacer1, h_plots, h_spacer1, h_legend, h_spacer1/4)
     ### Add Plot Title & Y Title
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=legend0)
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
-    plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, spacer2=spacer0, legend=grobLgd0, spacer3=spacer0)
+    plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, spacer2=spacer0, legend=grobLgd0, spacer1=spacer0)
     # plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.1, n_impTypes, 0.25))
-    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=5, ncol=1, legend="none", heights=c(0.01, n_impTypes, 0.05, 0.75, 0.01))
+    plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=5, ncol=1, legend="none", heights=h_spacers)
     title0_i   <- sector0
     grobTit_i  <- text_grob(title0_i, color="black", size=12, face="bold", hjust=0.5)
-    plotYTit_i <- text_grob(yTitle, color = "black", rot  = 90)
+    plotYTit_i <- text_grob(yTitle  , color="black", rot =90)
     plotGrid_i <- plotGrid_i |> annotate_figure(top=grobTit_i, left=plotYTit_i)
     # "got here4..." |> print()
     # return(plotGrid_i)

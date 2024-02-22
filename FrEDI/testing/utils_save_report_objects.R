@@ -83,6 +83,26 @@ save_image <- function(
 } ### End save_image
 
 ###### save_appendix_figures ######
+### Functions for plot height & width
+fun_appx_plot_width  <- function(nvars =1){1.5 + 3.3 * nvars}
+fun_appx_plot_height <- function(ntypes=1, nrows=1){
+  ### Multiplier
+  factor0 <- case_when(
+    ntypes == 5 ~ 3.5,
+    .default = 3
+  )
+  ### Spacer for titles & legend
+  spacer0 <- case_when(
+    ntypes == 5 ~ 3,
+    # nrows >  4 ~ lgdRows * 0.2,
+    nrows == 4 ~ 2,
+    nrows == 3 ~ 1.5,
+    .default = 1
+  )
+  1.5 + spacer0 + factor0 * ntypes
+  # 2 + nrows + 3.5 * ntypes
+}
+
 ### Wrapper function to help save appendix figures to file
 save_appendix_figures <- function(
     plotList,
@@ -137,13 +157,6 @@ save_appendix_figures <- function(
     # n_types |> c(n_vars, n_models) |> print()
 
     ### Get number of legend rows
-    # lgdCols  <- case_when(
-    #   n_vars <= 1 ~ 2 ,
-    #   n_vars == 2 ~ 3,
-    #   .default = 4
-    # )
-    # lgdRows  <- (n_models - 1) %/% lgdCols + 1
-    # lgdRows  <- 2 * 3 + 6
     lgdRows  <- case_when(
       c_vars == 1 ~ 2 * 5 + 3,
       c_vars == 2 ~ 2 * 4 + 3,
@@ -152,27 +165,8 @@ save_appendix_figures <- function(
 
 
     ### Plot heights
-    ### Functions for plot height & width
-    fun_plot_width  <- function(nvars =1){1.5 + 3.3 * nvars}
-    fun_plot_height <- function(ntypes=1, nrows=1){
-      ### Multiplier
-      factor0 <- case_when(
-        ntypes == 5 ~ 3.5,
-        .default = 3
-      )
-      ### Spacer for titles & legend
-      spacer0 <- case_when(
-        ntypes == 5 ~ 3,
-        nrows == 3 ~ 1.5,
-        nrows == 4 ~ 2,
-        nrows >  4 ~ lgdRows * 0.2,
-        .default = 1
-      )
-      1.5 + spacer0 + factor0 * ntypes
-      # 2 + nrows + 3.5 * ntypes
-    }
-    w_x       <- n_vars  |> fun_plot_width ()
-    h_x       <- n_types |> fun_plot_height(nrows = lgdRows)
+    w_x       <- n_vars  |> fun_appx_plot_width ()
+    h_x       <- n_types |> fun_appx_plot_height(nrows = lgdRows)
     # w_x |> c(h_x) |> print()
 
     ### Plot options
@@ -215,7 +209,7 @@ save_fig7_images <- function(
     createDir = TRUE ### Whether to create directory if it doesn't exist
 ){
   ### Create directory if it doesn't exist
-  fdir      <- fpath; rm("fpath")
+  fdir      <- fpath; rm(fpath)
   createDir <- fdir  |> check_and_create_path(createDir=createDir)
 
   ### Other values

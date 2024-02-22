@@ -195,11 +195,11 @@ plot_DOW_byImpactType <- function(
     ### Initialize plot
     plot0  <- ggplot()
     ### Plot values as lines
-    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), alpha=0.65)
+    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), alpha=0.80)
     ### Plot values as points
     #plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
     ### plot values as dashed lines:
-    plot0  <- plot0 + geom_line (data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), linetype="dashed", alpha=0.65)
+    plot0  <- plot0 + geom_line (data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), linetype="dashed", alpha=0.80)
     ### Remove values
     rm(df0_1, df0_2)
   } else{
@@ -207,10 +207,9 @@ plot_DOW_byImpactType <- function(
     df0_2  <- df0 |> filter(year %in% x_breaks)
     ### Initialize plot
     plot0  <- df0 |> ggplot(aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]))
-    plot0  <- plot0 + geom_line (alpha=0.65)
-
-
-    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.65)
+    plot0  <- plot0 + geom_line (alpha=0.80)
+    plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]]), alpha=0.80)
+    # plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color = .data[["model"]], shape = .data[["model"]]), alpha=0.80)
     ### Remove values
     rm(df0_2)
   } ### End if(do_gcm)
@@ -222,9 +221,10 @@ plot_DOW_byImpactType <- function(
   shapeVals <- c(1:numShapes)
   # shapeLvls |> print()
   # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
-  plot0     <- plot0 + scale_shape_manual(lgdLbl, breaks=shapeLvls, values=shapeVals)
-  plot0     <- plot0 + scale_color_discrete(lgdLbl)
-  # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
+  # plot0     <- plot0 + scale_shape_manual(lgdLbl, breaks=shapeLvls, values=shapeVals)
+  # plot0     <- plot0 + scale_color_discrete(lgdLbl)
+  colorVals <- fun_manual_colors()
+  plot0     <- plot0 + scale_color_manual(lgdLbl, values=colorVals)
 
   ###### Adjust legend title ######
   # if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}
