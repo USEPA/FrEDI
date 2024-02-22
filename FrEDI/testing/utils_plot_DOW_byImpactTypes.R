@@ -268,7 +268,7 @@ plot_DOW_byImpactTypes <- function(
     h_spacer1  <- 0.05
     h_spacer2  <- 0.05
     h_plots    <- n_impTypes * (1 + 0.07)
-    h_legend   <- 0.4 / h_plots
+    h_legend   <- 0.75 / n_impTypes
     # h_legend   <- case_when(n_variants = 1, , 0.5)
     h_spacers  <- c(h_spacer1, h_plots, h_spacer1, h_legend, h_spacer1/4)
     ### Add Plot Title & Y Title

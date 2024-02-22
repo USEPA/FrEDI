@@ -120,7 +120,7 @@ plot_DOW_bySector <- function(
     ### Initialize plot
     plot0  <- ggplot()
     ### Plot values as lines
-    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.65)
+    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.80)
     ### Plot values as points (dashed lines)
     plot0  <- plot0 + geom_line(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
     #plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
@@ -128,18 +128,18 @@ plot_DOW_bySector <- function(
     ### Initialize plot
     plot0  <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
     ### Add geoms
-    plot0  <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.65)
+    plot0  <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.80)
     #plot0  <- plot0 + geom_line(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
-    plot0  <- plot0 + geom_point(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]], shape = model), alpha=0.65)
+    # plot0  <- plot0 + geom_point(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]], shape = model), alpha=0.65)
   } ### End if(do_gcm)
 
   ### Add Scales
-  # plot0       <- plot0 + scale_color_discrete(lgdTitle0)
-  # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
-  shapeLvls   <- df0[["model"]] |> unique() |> sort()
-  numShapes   <- shapeLvls |> length()
-  shapeVals   <- c(1:numShapes)
-  # shapeLvls |> print()
+  # # plot0       <- plot0 + scale_color_discrete(lgdTitle0)
+  # # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
+  # shapeLvls   <- df0[["model"]] |> unique() |> sort()
+  # numShapes   <- shapeLvls |> length()
+  # shapeVals   <- c(1:numShapes)
+  # # shapeLvls |> print()
   # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
   # plot0       <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
   colorVals <- fun_manual_colors()

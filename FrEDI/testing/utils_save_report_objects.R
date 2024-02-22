@@ -209,7 +209,7 @@ save_fig7_images <- function(
     createDir = TRUE ### Whether to create directory if it doesn't exist
 ){
   ### Create directory if it doesn't exist
-  fdir      <- fpath; rm("fpath")
+  fdir      <- fpath; rm(fpath)
   createDir <- fdir  |> check_and_create_path(createDir=createDir)
 
   ### Other values
