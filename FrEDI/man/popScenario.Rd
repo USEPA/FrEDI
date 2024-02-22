@@ -3,13 +3,15 @@
 \docType{data}
 \name{popScenario}
 \alias{popScenario}
-\title{Population scenario to use as an input to \code{\link[=run_fredi_sv]{run_fredi_sv()}}}
+\title{Population scenario to use as an input to \code{\link[=run_fredi]{run_fredi()}}}
 \format{
-A data frame with 133 rows and 3 columns:
+A data frame with 14,259 rows and 5 columns:
 \describe{
 \item{year}{Year}
 \item{region}{Region of U.S. ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", and "Southwest")}
-\item{reg_pop}{Regional population for associated region and year}
+\item{state}{One of 48 contiguous U.S. states or the District of Columbia}
+\item{postal}{Postal code abbreviation associated with the state}
+\item{state_pop}{State population for associated region and year}
 }
 }
 \source{
@@ -19,10 +21,10 @@ A data frame with 133 rows and 3 columns:
 popScenario
 }
 \description{
-A dataframe containing a population scenario to be passed as an input to \code{\link[=run_fredi_sv]{run_fredi_sv()}}.
+A dataframe containing a population scenario to be passed as an input to \code{\link[=run_fredi]{run_fredi()}}.
 }
 \details{
-This dataframe contains population projections at the regional level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).
+This dataframe contains population projections at the state level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).
 
 Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
 

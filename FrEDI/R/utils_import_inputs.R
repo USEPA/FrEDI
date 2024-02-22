@@ -23,7 +23,7 @@ fun_tryInput <- function(
     fileExists  <- filename |> file.exists()
     ### If the file exists, try loading the file and then check the class of the result
     if(fileExists){
-      fileInput   <- try(filename |> read.csv(), silent=T)
+      fileInput   <- try(filename |> read.csv(check.names = F), silent=T)
       classInput  <- fileInput |> class()
       inputExists <- ("data.frame" %in% classInput)
 

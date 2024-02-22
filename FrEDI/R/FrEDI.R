@@ -43,10 +43,9 @@
 # Installing [FrEDI] requires [devtools] (Tools to Make Developing R Packages Easier). More information on [devtools] can be found [here.](https://cran.r-project.org/web/packages/devtools/index.html) [devtools] can be installed using `install.packages("devtools")`, or see [link](https://www.r-project.org/nosvn/pandoc/devtools.html) for more information.
 #'
 #' [FrEDI] depends on:
-#' * [tidyr] (Tidy Messy Data). The official documentation for [tidyr] can be found [here](https://cran.r-project.org/web/packages/tidyr/index.html). [tidyr] can be installed using `install.packages("tidyr")`, or see [link](https://tidyr.tidyverse.org/) for more information.
-#' * [dplyr] (A Grammar of Data Manipulation). The official documentation for [dplyr] can be found [here](https://cran.r-project.org/web/packages/dplyr/index.html). [dplyr] can be installed using `install.packages("dplyr")`, or see [link](https://dplyr.tidyverse.org/) for more information.
-#' * [ggplot2] (Create Elegant Data Visualisations Using the Grammar of Graphics). The official documentation for [ggplot2] can be found [here](https://cran.r-project.org/web/packages/ggplot2/index.html). [ggplot2] can be installed using `install.packages("ggplot2")`, or see [link](https://ggplot2.tidyverse.org/) for more information.
-#' [openxlsx] (Read, Write and Edit `xlsx` Files). The official documentation for [openxlsx] can be found [here](https://cran.r-project.org/web/packages/openxlsx/openxlsx.pdf). [openxlsx] can be installed using `install.packages("openxlsx")`.
+#' * [tidyverse] (Easily Install and Load the 'Tidyverse'). The official documentation for [tidyverse] can be found [here](https://cran.r-project.org/web/packages/tidyverse/index.html). [tidyverse] can be installed using `install.packages("tidyverse")`, or see [link](https://tidyverse.tidyverse.org/) for more information.
+#' * [ggpubr] ('ggplot2' Based Publication Ready Plots). The official documentation for [ggpubr] can be found [here](https://cran.r-project.org/web/packages/ggpubr/index.html). [ggpubr] can be installed using `install.packages("ggpubr")`, or see [link](https://rpkgs.datanovia.com/ggpubr/) for more information.
+#' * [openxlsx] (Read, Write and Edit `xlsx` Files). The official documentation for [openxlsx] can be found [here](https://cran.r-project.org/web/packages/openxlsx/index.html). [openxlsx] can be installed using `install.packages("openxlsx")`.
 #'
 #' @section License:
 #' This repository is released under the MIT License.
@@ -57,8 +56,8 @@
 #' By submitting a pull request to the GitHub and/or by installing this package, you make an agreement with EPA that you will not submit a claim of compensation for services rendered to EPA or any other federal agency. Further, you agree not to charge the time you spend developing software code related to this project to any federal grant or cooperative agreement.
 #'
 #'
-#' @docType package
+# @docType package
+"_PACKAGE"
 #' @name FrEDI
 #' @md
-NULL
 #> NULL

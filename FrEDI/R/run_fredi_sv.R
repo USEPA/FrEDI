@@ -97,34 +97,33 @@ run_fredi_sv <- function(
     driverInput = NULL,
     popInput    = NULL,
     silent      = TRUE,  ### Whether to message the user
-    save        = FALSE,
-    outpath     = getwd(),
-    overwrite   = FALSE,
-    addDate     = FALSE,
     .testing    = FALSE
     # addDate     = FALSE, ### Whether to add the date to the file name
     # libPath     = .libPaths()[1]
 ){
   ###### Set up the environment ######
   pkgPath     <- NULL
-  pkgPath     <- ifelse(is.null(pkgPath), system.file(package="FrEDI"), pkgPath);
+  pkgPath     <- (pkgPath |> is.null()) |> ifelse(system.file(package="FrEDI"), pkgPath);
   rDataType   <- "rds"
   #pkgPath |> print()
   impactsPath <- pkgPath |> file.path("extdata", "sv", "impactLists")
   # impactsPath <- libPath |> file.path("FrEDI", "extdata", "sv", "impactLists")
 
   ### Assign previous configuration objects
-  for(i in 1:length(fredi_config)) assign(names(fredi_config)[i], fredi_config[[i]])
+  fredi_config <- "fredi_config" |> get_frediDataObj("frediData")
+  for(name_i in names(fredi_config)){ assign(name_i, fredi_config[[name_i]])}
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
   ### Update years,
-  minYear <- 2010; maxYear <- 2090; list_years_by5 <- seq(minYear, maxYear, by=5)
+  minYear <- 2010
+  maxYear <- 2090
+  list_years_by5 <- seq(minYear, maxYear, by=5)
 
   ### Testing
-  save    <- ifelse(.testing, FALSE, save)
+  save    <- .testing |> ifelse(FALSE, save)
 
   ### Level of messaging (default is to message the user)
-  silent  <- ifelse(is.null(silent), T, silent)
+  silent  <- (silent |> is.null()) |> ifelse(T, silent)
   msgUser <- !silent
   msg0    <- ""
   msg1    <- msg0 |> paste0("\t")
@@ -141,7 +140,8 @@ run_fredi_sv <- function(
   co_formatting <- svDataList$co_formatting
   # co_modelTypes <- rDataList$co_modelTypes
   ### Sector names
-  if(is.null(sector)){
+  hasSector <- !(sector |> is.null())
+  if(!hasSector){
     sector_msg1   <- paste0("Please select a sector: ") |> print()
     sector_msg2   <- 1:nrow(sectorInfo) |> lapply(function(i){
       sector_i    <- sectorInfo$sector[i]
@@ -153,8 +153,8 @@ run_fredi_sv <- function(
     sector_msg3   <- "Enter a number:"
     sector_input  <- readline(prompt = sector_msg3) |> as.numeric()
     sector        <- sectorInfo$sector[sector_input]
-    rm("sector_msg1", "sector_msg2", "sector_msg3", "sector_input")
-  }
+    rm(sector_msg1, sector_msg2, sector_msg3, sector_input)
+  } ### End if(hasSector)
   c_sector        <- sector
   paste0("Running FrEDI SV for sector '", c_sector, "':") |> message()
   ### Sector info
@@ -162,23 +162,23 @@ run_fredi_sv <- function(
   df_sectorInfo   <- svSectorInfo[which_sector,]
   c_variants      <- df_sectorInfo[["variant_abbr" ]][which_sector]
   c_variantLabels <- df_sectorInfo[["variant_label"]][which_sector]
-  rm("which_sector")
+  rm(which_sector)
   ###### Invalid Sectors ######
   which_sector    <- (sectorInfo$sector == c_sector) |> which() #; which_sector |> print()
   c_popWtCol      <- sectorInfo[["popWeightCol"]][which_sector] |> tolower()
   c_modelType     <- sectorInfo[["modelType"   ]][which_sector] |> tolower()
-  rm("which_sector")
+  rm(which_sector)
   df_validGroups  <- svDemoInfo |> get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
   # return(df_validGroups)
 
   ###### Check Driver Inputs ######
   ### Initialize whether to check for inputs
-  check_slrInput  <- ifelse(c_modelType=="slr", T, F)
+  check_slrInput  <- (c_modelType=="slr") |> ifelse(T, F)
   # check_tempInput <- TRUE
-  check_tempInput <- ifelse(c_modelType=="gcm", T, F)
-  check_popInput  <- ifelse(is.null(popInput), F, T)
+  check_tempInput <- (c_modelType=="gcm") |> ifelse(T, F)
+  check_popInput  <- (popInput |> is.null()) |> ifelse(F, T)
   ### Initialize whether inputs exist
-  has_driverInput <- ifelse(is.null(driverInput), F, T)
+  has_driverInput <- (driverInput |> is.null()) |> ifelse(F, T)
   has_slrInput    <- FALSE
   has_tempInput   <- FALSE
   has_popInput    <- FALSE
@@ -189,7 +189,7 @@ run_fredi_sv <- function(
   ### Scenario ranges
   tempRange       <- c(0, 6)
   slrRange        <- c(0, 200)
-  driverRange     <- c(0) |> c(ifelse(c_modelType=="slr", slrRange[2], tempRange[2]))
+  driverRange     <- c(0) |> c((c_modelType=="slr") |> ifelse(slrRange[2], tempRange[2]))
 
   ### Check inputs
   if(has_driverInput){
@@ -218,13 +218,12 @@ run_fredi_sv <- function(
         c_scenarios <- c_scenarios[1:4]; n_scenarios <- c_scenarios |> length()
         driverInput <- driverInput |> filter(scenario %in% c_scenarios)
       } ### End if(n_scenarios > 4)
-    } ### End if(has_scenarioCol)
-    else{
+    } else{ ### End if(has_scenarioCol)
       msg2 |> message("Error: `driverInput` must have column='scenario' present`!", "\n")
       msg2 |> message("Exiting...")
       return()
     } ### End else(has_scenarioCol)
-    rm("has_scenarioCol")
+    rm(has_scenarioCol)
 
     ### Check input years
     if(!has_yearCol){
@@ -232,27 +231,26 @@ run_fredi_sv <- function(
       msg2 |> message("Exiting...")
       return()
     } ### if(!has_yearCol)
-    rm("has_yearCol")
+    rm(has_yearCol)
 
     ### Check for SLR inputs
     if(has_driverInput & check_slrInput){
       msg1 |> message("Checking `driverInput` values for SLR scenario...")
       ### Check for SLR columns
       slrCols_inInput <- slrCols %in% driverInputCols
-      if(all(slrCols_inInput)){
+      if(slrCols_inInput |> all()){
         msg2 |> message("All SLR scenario columns present in `driverInput`...")
         ### Filter to non-missing data
-        driverInput     <- driverInput |> filter(!is.na(year) & !is.na(slr_cm) & !is.na(scenario))
+        driverInput   <- driverInput |> filter(!is.na(year) & !is.na(slr_cm) & !is.na(scenario))
         ### Check non-missing values
         if(driverInput |> nrow()){
-          df_nonNA      <- driverInput |>
+          df_nonNA    <- driverInput |>
             group_by_at(.vars=c("scenario")) |>
             summarize(n=n(), .groups="keep") |> ungroup()
           naIssues    <- !all(df_nonNA$n >= 2)
-          rm("df_nonNA")
-        } ### End if(driverInput |> nrow())
-        else{
-          naIssues <- TRUE
+          rm(df_nonNA)
+        } else{ ### End if(driverInput |> nrow())
+          naIssues    <- TRUE
         } ### End else(driverInput |> nrow())
 
         ### If missing values are an issue:
@@ -261,36 +259,40 @@ run_fredi_sv <- function(
           msg2 |> message("Exiting...")
           return()
         } ### End if(naIssues)
-        has_slrInput <- TRUE ; has_tempInput <- FALSE; check_tempInput <- FALSE
-        rm("naIssues")
+        has_slrInput    <- TRUE
+        has_tempInput   <- FALSE
+        check_tempInput <- FALSE
+        rm(naIssues)
       } ### End if(all(slrCols_inInput))
       ### Message user about missing columns
       else{
         msg1 |> message("Warning: `driverInput` is missing the following SLR scenario input columns:")
         msg2 |> message("\'", paste(slrCols[!slrCols_inInput], collapse="\', \'"),"'...", "\n")
         msg1 |> message("Looking for temperature scenario instead", "...", "\n")
-        has_slrInput <- FALSE; has_tempInput <- FALSE; check_tempInput <- TRUE
+        has_slrInput    <- FALSE
+        has_tempInput   <- FALSE
+        check_tempInput <- TRUE
       } ### End else(all(slrCols_inInput))
-      rm("slrCols_inInput")
+      rm(slrCols_inInput)
     } ### End if(has_driverInput & check_slrInput)
 
     ### Otherwise, check temperature inputs
     if(has_driverInput & check_tempInput){
-      ifelse(check_slrInput, msg2, msg1) |> message("Checking `driverInput` values for temperature scenario...")
+      check_slrInput |> ifelse(msg2, msg1) |> message("Checking `driverInput` values for temperature scenario...")
       ### Check for temperature columns
       tempCols_inInput <- (tempCols %in% driverInputCols)
-      if(all(tempCols_inInput)){
-        ifelse(check_slrInput, msg3, msg2) |> message("All temperature scenario columns present...")
+      if(tempCols_inInput |> all()){
+        check_slrInput |> ifelse(msg3, msg2) |> message("All temperature scenario columns present...")
         ### Filter to non-missing data
-        driverInput     <- driverInput |> filter(!is.na(year) & !is.na(temp_C))
+        driverInput <- driverInput |> filter(!is.na(year) & !is.na(temp_C))
         ### Check non-missing values
         if(driverInput |> nrow()){
-          df_nonNA       <- driverInput |>
-            filter(!is.na(year) & !is.na(temp_C)) |>
+          df_nonNA <- driverInput |> filter(!is.na(year) & !is.na(temp_C))
+          df_nonNA <- df_nonNA |>
             group_by_at(.vars=c("scenario")) |>
             summarize(n=n(), .groups="keep") |> ungroup()
-          naIssues    <- !all(df_nonNA$n >= 2)
-          rm("df_nonNA")
+          naIssues <- !all(df_nonNA$n >= 2)
+          rm(df_nonNA)
         } ### End if(driverInput |> nrow())
         else{
           naIssues <- TRUE
@@ -302,8 +304,9 @@ run_fredi_sv <- function(
           msg2 |> message("Exiting...")
           return()
         }  ### End if(naIssues)
-        has_tempInput <- TRUE; check_tempInput <- TRUE
-        rm("naIssues")
+        has_tempInput   <- TRUE
+        check_tempInput <- TRUE
+        rm(naIssues)
       } ### End if(all(tempCols_inInput))
       else{
         msg2 |> message("Warning: `driverInput` is missing the following temperature scenario input columns...")
@@ -311,12 +314,12 @@ run_fredi_sv <- function(
         msg2 |> message("Exiting...")
         return()
       } ### End else(all(tempCols_inInput))
-      rm("tempCols_inInput")
+      rm(tempCols_inInput)
     } ### if(has_driverInput & check_tempInput)
     else{
       has_driverInput <- FALSE
-    }
-    rm("class_driverInput", "driverInputCols")
+    } ### end else(has_driverInput & check_tempInput)
+    rm(class_driverInput, driverInputCols)
   } ### End if(has_driverInput)
   # ### Check input SLR heights
   # checkIssues <- (driverInput$slr_cm < slrRange[1]) | (driverInput$slr_cm > slrRange[2])
@@ -337,7 +340,7 @@ run_fredi_sv <- function(
     ### Info about popInputs
     popInputCols    <-  popInput |> names()
     popCols_inInput <- (popCols %in% popInputCols)
-    if(all(popCols_inInput)){
+    if(popCols_inInput |> all()){
       msg2 |> message("All population scenario columns present in `popInput`...")
       ### Filter to non-missing data
       popInput     <- popInput |> filter(!is.na(year) & !is.na(region) & !is.na(reg_pop))
@@ -348,18 +351,17 @@ run_fredi_sv <- function(
           group_by_at(.vars=c("year", "region")) |>
           summarize(n=n(), .groups="keep") |> ungroup()
         checkIssues  <- any(df_dups$n > 1)
-        rm("df_dups")
-      } ### End if(popInput |> nrow())
-      else{
+        rm(df_dups)
+      } else{ ### if(popInput |> nrow())
         checkIssues <- TRUE
-      }
+      } ### End else(popInput |> nrow())
       ### If there are issues with years:
       if(checkIssues){
         msg2 |> message("Error: duplicate years present in `popInput`!")
         msg2 |> message("Exiting...")
         return()
       } ### End if(checkIssues)
-      rm("checkIssues")
+      rm(checkIssues)
 
       ### Check input Population values: population >= 0
       checkIssues <- (popInput$reg_pop < 0)
@@ -370,7 +372,7 @@ run_fredi_sv <- function(
         return()
       } ### End if(checkIssues)
       has_popInput <- TRUE
-      rm("checkIssues", "anyIssues")
+      rm(checkIssues, anyIssues)
     } ### End if(all(popCols_inInput))
     else{
       ### Exit and message the user
@@ -381,7 +383,7 @@ run_fredi_sv <- function(
       msg2 |> message("Exiting...")
       return()
     } ### End else(all(popCols_inInput))
-    rm("class_popInput", "popInputCols", "popCols_inInput")
+    rm(class_popInput, popInputCols, popCols_inInput)
   } ### End if(check_popInput)
 
   ###### Driver Scenario ######
@@ -403,17 +405,17 @@ run_fredi_sv <- function(
     # if(checkTemp1){msg1 |> message("No SLR inputs provided...")}
     msg2 |> message("Using temperature scenario from user inputs...")
     ### Format inputs
-    driverInput    <- driverInput |> select(c(all_of(tempCols))) |> rename(driverValue = temp_C)
+    driverInput    <- driverInput |> select(all_of(tempCols)) |> rename(driverValue = temp_C)
   } ### End if(checkTemp0 | checkTemp1)
   else if(checkTemp2 | checkTemp3){
     ### Otherwise use default scenario and add scenario column
     msg2 |> message("Using default temperature scenario...")
     # rDataList$co_defaultTemps |> names() |> print()
-    driverInput <- rDataList$co_defaultTemps |>
+    driverInput <- rDataList$frediData$data$co_defaultTemps |>
       mutate(temp_C = temp_C_global |> convertTemps(from="global")) |>
       mutate(scenario="FrEDI Default")
     ### Select columns
-    driverInput    <- driverInput |> select(c(all_of(tempCols))) |> rename(driverValue = temp_C)
+    driverInput    <- driverInput |> select(all_of(tempCols)) |> rename(driverValue = temp_C)
   } ### End else if(checkTemp2 | checkTemp3)
 
 
@@ -423,19 +425,21 @@ run_fredi_sv <- function(
     c_scenarios <- driverInput$scenario |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearTemp <- (rDataList$co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear[1]
+    refYearTemp <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear[1]
     ### Drivers
-    drivers_df  <- c_scenarios |> lapply(function(
-    scenario_i, data_x = driverInput,
-    refYear_x = refYearTemp, refValue_x = 0,
-    maxYear_x = maxYear
+    drivers_df  <- c_scenarios |> map(function(
+    scenario_i,
+    data_x     = driverInput,
+    refYear_x  = refYearTemp,
+    refValue_x = 0,
+    maxYear_x  = maxYear
     ){
       ### - Filter to scenario i and drop scenario column
       ### - Zero out series at the temperature reference year
       # tempInput |> names() |> print()
       input_i <- data_x  |> filter(scenario==scenario_i) |> select(-c("scenario"))
       input_i <- input_i |> filter(year > refYear_x) |> filter(year <= maxYear_x)
-      input_i <- data.frame(year= refYear_x, driverValue = refValue_x) |> rbind(input_i)
+      input_i <- tibble(year= refYear_x, driverValue = refValue_x) |> rbind(input_i)
 
       ### Then, interpolate
       ### - Use minimum series year to determine interpolation years
@@ -450,7 +454,7 @@ run_fredi_sv <- function(
       input_i <- input_i |> mutate(scenario = scenario_i)
       ### Return
       return(input_i)
-    }) |> (function(x){do.call(rbind, x)})()
+    }) |> bind_rows()
     ### Add driver unit
     drivers_df <- drivers_df |> mutate(driverUnit  = "degrees Celsius")
     ### Remove values
@@ -474,24 +478,26 @@ run_fredi_sv <- function(
   ### Then convert global temps to SLR
   if(checkSLR0){
     msg2 |> message("Using SLR scenario from user inputs...")
-    driverInput  <- driverInput |> select(c(all_of(slrCols)))
+    driverInput <- driverInput |> select(all_of(slrCols))
     ### Scenarios
     c_scenarios <- driverInput$scenario |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearSLR  <- (rDataList$co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear[1]
+    refYearSLR  <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear[1]
     ### Drivers
-    drivers_df  <- c_scenarios |> lapply(function(
-    scenario_i, data_x = driverInput,
-    refYear_x = refYearSLR, refValue_x = 0,
-    maxYear_x = maxYear
+    drivers_df  <- c_scenarios |> map(function(
+    scenario_i,
+    data_x     = driverInput,
+    refYear_x  = refYearSLR,
+    refValue_x = 0,
+    maxYear_x  = maxYear
     ){
       ### - Filter to scenario i and drop scenario column
       ### - Zero out series at the temperature reference year
       # tempInput |> names() |> print()
       input_i <- data_x  |> filter(scenario==scenario_i) |> select(-c("scenario"))
       input_i <- input_i |> filter(year > refYear_x) |> filter(year <= maxYear_x) |> rename(driverValue = slr_cm)
-      input_i <- data.frame(year= refYear_x, driverValue = refValue_x) |> rbind(input_i)
+      input_i <- tibble(year= refYear_x, driverValue = refValue_x) |> rbind(input_i)
 
       ### Then, interpolate
       ### - Use minimum series year to determine interpolation years
@@ -505,16 +511,17 @@ run_fredi_sv <- function(
       input_i <- input_i |> mutate(scenario = scenario_i)
       ### Return
       return(input_i)
-    }) |> (function(x){do.call(rbind, x)})()
+    }) |> bind_rows()
     ### Add driver unit
     drivers_df <- drivers_df |> mutate(driverUnit  = "cm")
     ### Remove values
-    rm("driverInput", "refYearSLR")
+    rm(driverInput, refYearSLR)
   } ### End if(checkSLR0)
   else if(checkSLR1){
     msg2 |> message("Creating SLR scenario from temperature scenario...")
-    drivers_df <- c_scenarios |> lapply(function(
-    scenario_i, data_x = drivers_df
+    drivers_df <- c_scenarios |> map(function(
+    scenario_i,
+    data_x = drivers_df
     ){
       data_i <- data_x |> filter(scenario==scenario_i)
       data_i <- data_i |> mutate(temp_C = driverValue |> convertTemps(from="conus"))
@@ -522,13 +529,13 @@ run_fredi_sv <- function(
       data_i <- data_i |> rename(driverValue=slr_cm)
       data_i <- data_i |> mutate(scenario=scenario_i)
       return(data_i)
-    }) |> (function(scenarios_i){do.call(rbind, scenarios_i)})()
+    }) |> bind_rows()
     ### Add driver unit
     drivers_df <- drivers_df |> mutate(driverUnit  = "cm")
   } ### End else if(checkSLR0)
   # drivers_df |> names() |> print()
   ### Remove intermediate objects
-  rm("checkSLR0", "checkSLR1")
+  rm(checkSLR0, checkSLR1)
 
   ###### ** Standardize Driver Scenarios ######
   ### Subset to desired years
@@ -541,7 +548,7 @@ run_fredi_sv <- function(
   ### Population inputs
   if(has_popInput) {
     msg2 |> message("Creating population scenario from user inputs...")
-    pop_df    <- popInput |> select(c(all_of(popCols)))
+    pop_df    <- popInput |> select(all_of(popCols))
     pop_df    <- pop_df   |> interpolate_annual(years= list_years_by5, column = "reg_pop", rule = 2:2)
     pop_df    <- pop_df   |> rename(region_pop = reg_pop)
     rm("popInput")
@@ -566,12 +573,14 @@ run_fredi_sv <- function(
 
   ###### Calculate Impacts ######
   ### Iterate over adaptations/variants
-  df_results  <- 1:nrow(df_sectorInfo) |> lapply(function(
-    row_i, info_x = df_sectorInfo, scenarios_x = c_scenarios
+  df_results  <- 1:nrow(df_sectorInfo) |> map(function(
+    row_i,
+    info_x      = df_sectorInfo,
+    scenarios_x = c_scenarios
   ){
     # scenarios_x |> print()
     ### Which SV data to use
-    svName_i       <- ifelse(c_sector=="Coastal Properties", "svDataCoastal", "svData"); # svName_i |> print()
+    svName_i       <- (c_sector=="Coastal Properties") |> ifelse("svDataCoastal", "svData"); # svName_i |> print()
     # svDataList[[svName_i]] |> names() |> print(); # return()
     ### Sector info
     info_i         <- info_x[row_i,]
@@ -584,14 +593,16 @@ run_fredi_sv <- function(
     ### Which impacts list to use
     impactsName_i  <- "impactsList" |>
       paste(sectorAbbr_i, sep="_") |>
-      paste0(ifelse(is.na(variantAbbr_i), "", "_")) |>
-      paste0(ifelse(is.na(variantAbbr_i), "", variantAbbr_i))
+      paste0(is.na(variantAbbr_i) |> ifelse("", "_")) |>
+      paste0(is.na(variantAbbr_i) |> ifelse("", variantAbbr_i))
     impactsPath_i  <- impactsPath |> file.path(impactsName_i) |> paste0(".", rDataType)
 
     ###### Iterate Over Scenarios ######
-    results_i <- scenarios_x |> lapply(function(scenario_j){
-      paste0("\n", msg1) |> message("Calculating impacts for sector='", c_sector, "', variant='",
-                                     variantLabel_i, "', scenario='", scenario_j, "'...")
+    results_i <- scenarios_x |> map(function(scenario_j){
+      paste0("\n", msg1) |> message(
+        "Calculating impacts for sector='", c_sector, "', variant='",
+        variantLabel_i, "', scenario='", scenario_j, "'..."
+      ) ### End message
       ###### Scaled Impacts ######
       drivers_j <- drivers_df |> filter(scenario == scenario_j) |> select(-c("scenario"))
       # drivers_j |> glimpse()
@@ -603,7 +614,7 @@ run_fredi_sv <- function(
         driverValues = drivers_j,
         silent       = silent,
         .msg0        = msg2
-      )
+      ) ### End calc_tractScaledImpacts
       if(exists("impactsList_j")){remove(list=c("impactsList_j"), inherits = T)}
 
       ###### Total Impacts ######
@@ -621,7 +632,7 @@ run_fredi_sv <- function(
         silent    = silent,
         .msg0     = msg2,
         .testing  = .testing
-      )
+      ) ### End calc_tractImpacts
       impacts_j <- impacts_j |> mutate(scenario = scenario_j)
 
       # (impacts_j$impPop_ref != 0) |> which() |> length() |> print()
@@ -630,7 +641,7 @@ run_fredi_sv <- function(
     })
     ###### Bind Results ######
     ### Bind results and add variant level
-    results_i <- results_i|> (function(y){do.call(rbind, y)})()
+    results_i <- results_i|> bind_rows()
     results_i <- results_i |> mutate(variant = variantLabel_i)
 
     ###### Adjust SV Group Values ######
@@ -638,153 +649,39 @@ run_fredi_sv <- function(
       valSuff0  <- c("ref", "sv")
       ### Join and adjust results valueAdj
       valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-      valCols1  <- valCols0  |> lapply(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
+      valCols1  <- valCols0  |> map(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
       drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
       ### Adjust results
       # df_validGroups |> glimpse(); results_i |> glimpse()
       results_i <- results_i |> left_join(df_validGroups, by = c("svGroupType"))
-      results_i <- results_i |> mutate_at(.vars=c(all_of(valCols1)), function(col_j){col_j * results_i$valueAdj})
-      results_i <- results_i |> select(-c(all_of(drop0))); rm("drop0")
+      results_i <- results_i |> mutate_at(vars(valCols1), function(col_j){col_j * results_i$valueAdj})
+      results_i <- results_i |> select(-all_of(drop0))
+      rm(drop0)
       # (results_i$impPop_ref != 0) |> which() |> length() |> print()
       # results_i |> names() |> print()
-      rm("valCols1")
+
       ###### Replace Driver Values ######
       valCols0  <- valCols0[!(valCols0 %in% c("impPop"))]
-      valCols1  <- valCols0  |> lapply(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
+      valCols1  <- valCols0 |> map(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
       # valCols1 |> print()
       # driverRange |> print(); results_i$driverValue |> range() |> print()
       which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
       # results_i |> glimpse()
       results_i[which0_i, valCols1] <- NA
-      rm("valCols0", "valSuff0")
-    }
+      rm(valCols0, valSuff0)
+    } ### End if(!.testing)
     ### Return
     return(results_i)
   })
   ###### Format Results ######
   ### Bind results and ungroup
-  df_results <- df_results  (function(x){do.call(rbind, x)})()
-  df_results <- df_results |> ungroup() |> as.data.frame()
+  df_results <- df_results |> bind_rows()
+  df_results <- df_results |> ungroup()
 
-  ###### Save Results ######
-  if(save){
-    msg1 |> paste0("Saving results to Excel...") |> message()
-    ###### File Info ######
-    ###### Template Info
-    inFilePath      <- system.file(package="FrEDI") |> file.path("extdata", "sv")
-    inFileName      <- "FrEDI SV Graphics Template.xlsx"
-    ###### Workbook Info
-    excel_wb_path   <- inFilePath   |> file.path(inFileName)
-    excel_wb_exists <- excel_wb_path |> file.exists(); #excel_wb_exists |> print()
-    excel_wb_sheets <- c("FrEDI Outputs 1", "FrEDI Outputs 2")
-    ###### Outfile Info and add date if specified
-    outFileBase     <- "FrEDI" |> paste("SV", "Outputs", c_sector, sep="_") #; outFileBase |> print()
-    outFileName     <- outFileBase |> paste0(".xlsx"); #outFileName |> print()
-    if(addDate){
-      today         <- Sys.Date() |> format("%Y%m%d")
-      outFileName   <- paste(today, outFileName, sep="_")
-    }
-
-    outFilePath     <- outpath |> file.path(outFileName)
-    ###### Workbook Info
-    df_readme1      <- data.frame(x=c(c_sector, as.character(Sys.Date())))
-
-    if(nrow(df_sectorInfo)==1){
-      # c_variantLabels <- paste(c_sector, "All Impacts", sep=", ")
-      c_variantLabels <- c("All Impacts", "--")
-      # df_readme2    <- data.frame(x=c(c_variantLabels, "--"))
-    } else{
-      c_variantLabels <- df_sectorInfo$variant_label
-      # df_readme2    <- data.frame(x=c_variantLabels)
-    }
-    df_readme2    <- data.frame(x=c_variantLabels)
-
-    ###### Check Directory and File ######
-    outDirExists    <- outFilePath |> dirname() |> dir.exists()
-    outFileExists   <- outFilePath |> file.exists()
-    if(!excel_wb_exists){
-      msg2 |> paste0("Warning: Excel template '", inFileName, "' not found in '", inFilePath, "'...") |> message()
-      msg2 |> paste0("Exiting without saving...") |> message()
-    }
-    ### What to do if the directory doesn't exist
-    if(!outDirExists){
-      msg2 |> paste0("Warning: `outpath='", outpath, "' does not exist...", "\n") |> message()
-      msg2 |> paste0("Exiting without saving...") |> message()
-    }
-    ### What to do if the directory exists
-    if(outFileExists & !overwrite){
-      msg2 |> paste0("Warning: Excel file '", outFileName,"' already exists!") |> message()
-      overwritePrompt <- paste0("Overwrite existing file (y/n)?")
-      overwriteInput  <- readline(prompt = overwritePrompt) |> tolower(); #rm("overwritePrompt")
-      overwrite       <- ifelse(overwriteInput == "y", T, overwrite)
-    }
-
-    ###### If not overwrite, then return and exit
-    writeFile <- (outFileExists & overwrite) | (!outFileExists)
-    if(!writeFile){
-      msg2 |> paste0("Exiting without saving...") |> message()
-    } ### End if(!writeFile)
-    else{
-      ### Open the workbook and write  ReadMe info
-      if(msgUser){ msg2 |> paste0("Formatting workbook...") |> message()}
-      excel_wb      <- excel_wb_path |> loadWorkbook()
-      ### Write sector, date/time, and variant info to workbook
-      ### sector & date/time info
-      excel_wb |> writeData(
-        x = df_readme1, sheet = "ReadMe", startCol = 3, startRow = 3, colNames = F
-      )
-      ####### Write variant info
-      excel_wb |> writeData(
-        x = df_readme2, sheet = "ReadMe", startCol = 3, startRow = 7, colNames = F
-      )
-      ###### Add Styles
-      # https://rdrr.io/cran/openxlsx/man/addStyle.html
-      for(i in 1:nrow(co_formatting)){
-        df_info_i <-  co_formatting[i,] |> as.data.frame()
-        format_i  <-  df_info_i$styleName[1]
-        sheet_i   <-  df_info_i$worksheet[1] #; sheet_i |> print()
-        rows_i    <- (df_info_i$first_row[1]):(df_info_i$end_row[1])
-        cols_i    <- (df_info_i$first_col[1]):(df_info_i$end_col[1])
-        ### Style
-        style_i   <- format_styles[[format_i]]
-        ### Add the style to the workbook
-        excel_wb |> addStyle(
-          style = style_i, sheet = sheet_i,
-          rows  = rows_i, cols = cols_i,
-          gridExpand = T, stack = T
-        )
-        ### Remove styles
-        rm("df_info_i", "format_i", "sheet_i", "rows_i", "cols_i", "style_i")
-      }
-
-      ###### Write results
-      if(msgUser){ msg2 |> paste0("Writing results...") |> message()}
-      for(i in 1:nrow(df_sectorInfo)){
-        variant_i     <- df_sectorInfo$variant_label[i]
-        sheet_i       <- excel_wb_sheets[i]
-        label_i       <- c_variantLabels[i]
-        ### Filter results and rename
-        results_i     <- df_results |> filter(variant == variant_i)
-        results_i     <- results_i  |> mutate(variant = label_i)
-        ### Save results
-        excel_wb |> writeData(
-          x        = results_i, sheet = sheet_i,
-          startCol = 1, startRow = 2, colNames = F, na.string = ""
-        )
-        rm("i", "variant_i", "sheet_i", "label_i", "results_i")
-      }
-      ### Save object
-      excel_wb |> saveWorkbook(file=outFilePath, overwrite = overwrite)
-      rm("excel_wb")
-    } ### End if overwrite
-    ### System time
-    # sysTime4 <- Sys.time(); (sysTime4 - sysTime3) |> print()
-  } ### End if save
   ###### Return Object ######
   msg1 |> paste0("Finished.") |> message()
-  df_results   <- df_results |> ungroup() |> as.data.frame()
-
   returnList <- df_results
+  rm(df_results)
   # if(.testing) {returnList <- list(results = df_results, county_pop = df_popProj)}
   # else         {returnList <- df_results}
   return(returnList)

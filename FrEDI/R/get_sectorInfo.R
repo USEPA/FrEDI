@@ -41,15 +41,16 @@
 ###
 ###
 get_sectorInfo <- function(
-  description=F,
-  gcmOnly=F,
-  slrOnly=F
-  ){
-  if(is.null(description)){description<-F}
-  if(is.null(gcmOnly    )){gcmOnly    <-F}
-  if(is.null(slrOnly    )){slrOnly    <-F}
+    description=F,
+    gcmOnly=F,
+    slrOnly=F
+){
+  if((description |> is.null())){description<-F}
+  if((gcmOnly     |> is.null())){gcmOnly    <-F}
+  if((slrOnly     |> is.null())){slrOnly    <-F}
   # co_sectorsRef$sector_label
-  assign("co_sectorsRef", rDataList[["co_sectors"]])
+  # assign("co_sectorsRef", rDataList[["co_sectors"]])
+  co_sectorsRef  <- "co_sectorsRef" |> get_frediDataObj("frediData")
 
   co_sectorsRef <- co_sectorsRef |>
     select(-c("sector_id")) |>
@@ -64,14 +65,14 @@ get_sectorInfo <- function(
     co_sectorsRef <- co_sectorsRef |> filter(model_type==gcm_string)
   } else if(slrOnly){
     co_sectorsRef <- co_sectorsRef |> filter(model_type!=gcm_string)
-  }
+  } ### End if(gcmOnly)
 
   ### If not description, return names only
   if(!description){
     return_obj <- co_sectorsRef$sector
   } else{
     return_obj <- co_sectorsRef |> as.data.frame()
-  }
+  } ### End if(!description)
 
   return(return_obj)
 }
