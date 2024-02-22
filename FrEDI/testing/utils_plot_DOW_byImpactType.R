@@ -222,9 +222,10 @@ plot_DOW_byImpactType <- function(
   shapeVals <- c(1:numShapes)
   # shapeLvls |> print()
   # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
-  plot0     <- plot0 + scale_shape_manual(lgdLbl, breaks=shapeLvls, values=shapeVals)
-  plot0     <- plot0 + scale_color_discrete(lgdLbl)
-  # plot0     <- plot0 + scale_shape_discrete(lgdLbl)
+  # plot0     <- plot0 + scale_shape_manual(lgdLbl, breaks=shapeLvls, values=shapeVals)
+  # plot0     <- plot0 + scale_color_discrete(lgdLbl)
+  colorVals <- fun_manual_colors()
+  plot0     <- plot0 + scale_color_manual(lgdLbl, values=colorVals)
 
   ###### Adjust legend title ######
   # if(hasLgdPos){plot0  <- plot0  + guides(color = guide_legend(title.position = lgdPos))}

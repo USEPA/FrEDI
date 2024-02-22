@@ -1,3 +1,9 @@
+### Function to get manual colors for regions, states in a region, or models
+fun_manual_colors <- function(x=1){
+  colorVals <- c("D81B60", "FF792D", "4E94E4", "735EA0", "67032F", "49D4F5", "D082CD", "68A796")
+  colorVals <- "#" |> paste0(colorVals)
+  return(colorVals)
+}
 ### Get column values from a tibble
 get_column_values <- function(
     df0,    ### Tibble

@@ -134,14 +134,16 @@ plot_DOW_bySector <- function(
   } ### End if(do_gcm)
 
   ### Add Scales
-  plot0       <- plot0 + scale_color_discrete(lgdTitle0)
+  # plot0       <- plot0 + scale_color_discrete(lgdTitle0)
   # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
   shapeLvls   <- df0[["model"]] |> unique() |> sort()
   numShapes   <- shapeLvls |> length()
   shapeVals   <- c(1:numShapes)
   # shapeLvls |> print()
   # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
-  plot0       <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
+  # plot0       <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
+  colorVals <- fun_manual_colors()
+  plot0       <- plot0 + scale_color_manual(lgdTitle0, values=colorVals)
   plot0       <- plot0 + scale_x_continuous(xTitle0, limits = x_limits, breaks = x_breaks)
   plot0       <- plot0 + scale_y_continuous(yTitle0, limits = y_limits, breaks = y_breaks)
 
