@@ -3,29 +3,30 @@
 \docType{data}
 \name{defaultResults}
 \alias{defaultResults}
-\title{Default outputs of \code{\link[=run_fredi]{run_fredi()}}}
+\title{Default outputs of \code{\link[=run_fredi]{run_fredi()}}
+A dataframe containing the default outputs of \code{\link[=run_fredi]{run_fredi()}}}
 \format{
-A data frame with 173 016 rows and 18 columns:
+A data frame with 775,179 rows and 20 columns:
 \describe{
-\item{sector}{Name of the sector}
-\item{variant}{Name of the adaptation or variant (values are sector-specific)}
-\item{impactYear}{Name of the impact year ("2010", "2090", "N/A", or "Interpolation")}
-\item{impactType}{Name of the impact type ("all" or sector-specific values)}
-\item{region}{Name of the associated region ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", "Southwest", or "National Total")}
+\item{sector}{Name of the associated sector.}
+\item{variant}{Name of the associated variant or adaptation (values are sector-specific).}
+\item{impactYear}{Name of the impact year ("2010", "2090", "N/A", or "Interpolation").}
+\item{impactType}{Name of the impact type ("all" or sector-specific values).}
+\item{region}{Name of the associated region ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", "Southwest", or "National Total").}
+\item{state}{Name of the associated state (or District of Columbia): "Alabama", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",  "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",  "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma",  "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",  "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming". For the "National Total" region, \code{state = "All"}. For sectors with only has region-level data, \code{state = "N/A"}.}
+\item{postal}{Postal code abbreviation of the associated state (e.g., \code{postal="AL"} for \code{state="Alabama"}). The postal code abbreviation for the District of Columbia is \code{"DC"}. For the "National Total" region, \code{postal = "US"}. For sectors with only has region-level data, \code{postal = "N/A"}.}
 \item{model_type}{Type of model used to calculate impacts --- either "GCM" (for "Global Climate Model") or "SLR" for ("Sea Level Rise")}
 \item{model}{Name of the GCM ("Average", "CanESM2", "CCSM4", "GCM Ensemble", "GFDL-CM3", "GISS-E2-R", "HadGEM2-ES", "MIROC5", "MRI-CGCM3") or SLR model ("Interpolation")}
-\item{year}{Year of the output}
-\item{driverValue}{Value for the associated driver type (in "degrees Celsius" for temperature and in "cm" for sea level rise)}
-\item{driverUnit}{Unit for the associated driver type ("degrees Celsius" for temperature and "cm" for sea level rise)}
-\item{driverType}{Associated driver type ("Temperature" or "GMSL (SLR)")}
-\item{includeaggregate}{A \code{0} or \code{1} value indicating whether the variant is included in aggregation}
-\item{sectorprimary}{A \code{0} or \code{1} value indicating whether the sector is a primary CIRA sector}
-\item{gdp_usd}{National gross domestic product (GDP) for associated year in 2015 USD (U.S. dollars)}
-\item{national_pop}{National population for associated year}
-\item{gdp_per_cap}{National GDP per capita for associated year in 2015 USD (U.S. dollars) per capita}
-\item{reg_pop}{Regional population for associated year}
-\item{annual_impacts}{Annual impacts for associated year, region, sector, variant, impact year, impact type, and model}
-\item{...}{...}
+\item{sectorprimary}{A \code{0} or \code{1} value indicating whether the sector is a primary CIRA sector (and whether it should be included when summing across sectors). \code{sectorprimary=1} if a primary sector and \code{sectorprimary=0} if not.}
+\item{includeaggregate}{A \code{0} or \code{1} value indicating whether the variant is the primary variant for the sector (and whether it should be included when summing across sectors). \code{includeaggregate=1} if the variant is a primary variant and \code{includeaggregate=0} if not).}
+\item{driverType}{Associated driver type ("Temperature" or "GMSL (SLR)").}
+\item{driverUnit}{Unit for the associated driver type ("degrees Celsius" for temperature and "cm" for sea level rise).}
+\item{driverValue}{Value for the associated driver type (in "degrees Celsius" for temperature and in "cm" for sea level rise).}
+\item{gdp_usd}{National gross domestic product (GDP) for associated year in 2015 USD (U.S. dollars).}
+\item{national_pop}{National population for associated year.}
+\item{gdp_per_cap}{National GDP per capita for associated year in 2015 USD (U.S. dollars) per capita.}
+\item{state_pop}{Population for the associated state (for state-level data) or region (for region-only data).}
+\item{annual_impacts}{Annual impacts for associated sector, variant, impact type, impact year, region, state, model type, model, and year.}
 }
 }
 \source{
@@ -35,6 +36,7 @@ A data frame with 173 016 rows and 18 columns:
 defaultResults
 }
 \description{
+Default outputs of \code{\link[=run_fredi]{run_fredi()}}
 A dataframe containing the default outputs of \code{\link[=run_fredi]{run_fredi()}}
 }
 \keyword{datasets}
