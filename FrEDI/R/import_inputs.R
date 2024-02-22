@@ -56,22 +56,17 @@
 #' ### View example scenario names
 #' scenariosPath |> list.files()
 #'
-#' ### Temperature Scenario File Name
-#' tempInputFile <- scenariosPath |> file.path("GCAM_scenario.csv")
-#'
 #' ### SLR Scenario File Name
 #' slrInputFile  <- scenariosPath |> file.path("slr_from_gcam.csv")
 #'
 #' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath |> file.path("pop_scenario.csv")
+#' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
 #' example_inputsList <- import_inputs(
-#'   tempfile = tempInputFile,
 #'   slrfile  = slrInputFile,
 #'   popfile  = popInputFile,
-#'   temptype = "global",
-#'   popform  = "wide"
+#'   temptype = "global"
 #' )
 #'
 #' ### Use imports with FREDI:
@@ -84,9 +79,6 @@
 #' @md
 #'
 #'
-# #' @param popform A character string indicating whether the populations in the population input file specified by `popfile` are spread across multiple columns (i.e., `popform="wide"`) or are combined in a single column (i.e., `popform="long"`). By default, the model assumes `popform="wide"`. For both formats (`popform="wide"` or `popform="long"`), the first column contains years. If `popform="wide"` (default), the second through eighth columns of `popfile ` must contain population values for each NCA region, with the associated NCA region as the column name. If `popform="long"`, the second column must contain NCA region names and the third column must contain values for the associated region population.
-# #' Users can specify whether the temperature input is for the contiguous U.S. (CONUS) or global using `temptype` and specify the format of the population scenario using `popform`.
-# #' If the population input is spread across multiple columns (i.e., `popform="wide"`), columns must be named according to the NCA regions. If the population input is in the long format, the region value must be in the second column. The NCA region names for population inputs must match the following values: `"Midwest"`, `"Northeast"`, `"Northern.Plains"`, `"Northwest"`, `"Southeast"`, `"Southern.Plains"`, `"Southwest"`. All regions must be present in the population input file.
 
 ###### import_inputs ######
 ### Created 2021.02.08. Last updated 2021.02.08
@@ -96,37 +88,31 @@ import_inputs <- function(
   slrfile  = NULL,
   popfile  = NULL,
   gdpfile  = NULL,
-  temptype = "conus", ### "global", or "conus" (default)
-  popform  = "wide", ### "wide" or "long" ### Previously: "gather", "spread"
-  byState  = FALSE
+  temptype = "conus" ### "global", or "conus" (default)
 ){
   ###### Messaging ######
-  hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile) |>
-    lapply(function(x){!is.null(x)}) |>
-    unlist() |> any()
+  namesInputs  <- c("tempfile", "slrfile", "popfile", "gdpfile")
+  hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile)
+  hasAnyInputs <- namesInputs  |> map(function(x, list0=hasAnyInputs){!(list0[[x]] |> is.null())})
+  hasAnyInputs <- hasAnyInputs |> unlist() |> any()
   silent  <- TRUE
-  msgUser <- ifelse(silent, FALSE, TRUE)
+  msgUser <- !silent
   msg0    <- ""
   msg1    <- msg0 |> paste0("\t")
   msg2    <- msg1 |> paste0("\t")
   msg3    <- msg2 |> paste0("\t")
-  if(hasAnyInputs){
+  if(hasAnyInputs) {
     "\n" |> paste0(msg0) |> paste0("In import_inputs():") |> message()
-  }
+  } ### End if(hasAnyInputs)
 
   ###### Defaults ######
-  ### Set popform default to "wide" (previously "spread")
-  ### Set popform to "wide" if none is specified
-  popform_default  <- "wide"
-  popform          <- ifelse(is.null(popform), popform_default, tolower(popform))
-  wide_pop         <- popform=="wide"
-  if(byState){geo_msg <- " state..."} else{geo_msg <- " region..."}
+  geo_msg <- " state..."
 
   ### Set temperature type default and set temperature type to default if none
   ### is declared. Check whether inputs temperatures are already in CONUS degrees
   temptype_default <- "conus"
-  temptype         <- ifelse(is.null(temptype), temptype_default, temptype)
-  conus            <- (tolower(temptype) == "conus"); #conus |> print()
+  temptype         <- (temptype |> is.null()) |> ifelse(temptype_default, temptype)
+  conus            <- ((temptype |> tolower()) == "conus"); #conus |> print()
 
   ###### Initialize Inputs List ######
   ### Get input scenario info: co_inputScenarioInfo
@@ -157,19 +143,20 @@ import_inputs <- function(
     ###### Column Info ######
     region_i    <- inputInfo_i$region |> unique()
     valueCol_i  <- inputInfo_i$valueCol |> unique()
+    valueCol_i  <- (input_i == "pop") |> ifelse("state_pop", valueCol_i)
     ### Initialize column names
-    numCols_i   <- colNames_i <- c("year", valueCol_i)
-    cols0       <- c("region")
+    numCols_i   <- colNames_i <- c("year") |> c(valueCol_i)
+    # cols0       <- c("region")
     statecols0  <- c("region", "state", "postal")
-    if(byState){
-      cols0      <- statecols0
-      colNames_i <- numCols_i <- c("year", "state_pop")
-    }
-
-    ### Add state/region columns as needed
-    if(region_i == 1){
-      colNames_i  <- c(colNames_i[1], cols0, colNames_i[2])
-    }
+    if(input_i == "pop") {colNames_i <- statecols0 |> c(colNames_i)}
+    # if(byState){
+    #   cols0      <- statecols0
+    #   colNames_i <- numCols_i <- c("year", "state_pop")
+    # }
+    # ### Add state/region columns as needed
+    # if(region_i == 1){
+    #   colNames_i  <- c(colNames_i[1], cols0, colNames_i[2])
+    # }
 
     ###### Initialize Results List Element ######
     ### Initialize input in list
@@ -198,44 +185,32 @@ import_inputs <- function(
       ### If the load is a success, add results to the input list
       if(fileStatus_i=="loaded"){
         msg2 |> paste0("Formatting ", msgName_i, " inputs...") |> message()
-        ###### Gather population inputs ######
-        if(input_i=="pop" & wide_pop){
-          msg3 |> paste0("User specified `popform='wide'`...") |>
-            paste0("Gathering population by", geo_msg) |>
-            message()
 
-          names(df_input_i)[1] <- colNames_i[1]
-          if(byState){
-            df_input_i <- df_input_i |> gather(key = "state", value="state_pop", -year)
-          } else{
-            df_input_i <- df_input_i |> gather(key = "region", value="reg_pop", -year)
-          }
-        }
 
         ###### Standardize All Columns ######
         ### Rename Inputs and Convert all columns to numeric
         ### Rename Inputs and Convert all columns to numeric
-        if(byState){
-          df_input_i <- df_input_i |>
-            left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
-            select(colNames_i)
-        }
+        # if(byState){
+        #   df_input_i <- df_input_i |>
+        #     left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
+        #     select(colNames_i)
+        # }
 
         df_input_i  <- df_input_i |>
           rename_inputs(colNames_i) |>
           mutate_all(as.character) |>
-          mutate_at(vars(all_of(numCols_i)), as.numeric)
+          mutate_at(.vars=c(numCols_i), as.numeric)
 
         ###### Convert Global Temps to CONUS ######
         ### Convert Global Temps to CONUS if there are temperature inputs and they
         ### aren't already in CONUS degrees
-        if((input_i=="temp") & (!conus)){
+        if(input_i=="temp" & !conus){
           ### Message user
           msg3 |> paste0("User specified `temptype='global'`...") |> message()
           msg3 |> paste0("Converting global temperatures to CONUS temperatures...") |> message()
           ### Convert temps
           df_input_i <- df_input_i |> mutate(temp_C = temp_C |> convertTemps(from="global"))
-        }
+        } ### End if(input_i=="temp" & !conus)
 
         # ###### Check Input ######
         # msg2 |> paste0("Checking values...") |> message()
