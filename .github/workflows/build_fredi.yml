@@ -46,12 +46,12 @@ jobs:
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
             pPath0   <- rPath0 |> file.path("FrEDI")
-            # oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
+            oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
             ###### Create Default Results ######
-            # pPath0 |> devtools::load_all()
-            # defaultResults <- run_fredi()
-            # save(defaultResults, file=oPath0)
+            pPath0 |> devtools::load_all()
+            defaultResults <- run_fredi()
+            save(defaultResults, file=oPath0)
 
             ###### Update Documentation ######
             ###### - Build Manual
@@ -65,8 +65,6 @@ jobs:
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
             # devtools::build(pkg=pPath0, path=rPath0)
-            # pPath0 |> print()
-            devtools::build(pkg=pPath0)
 
           '
 
@@ -77,8 +75,8 @@ jobs:
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name  "${{ github.actor }}"
           git add FrEDI/data/defaultResults.rda
-          git add *.tar.gz
+          git add FrEDI/man/*.Rd
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
-          git commit -a -m "New package build"
+          git commit -am "Updated documentation & default results"
           git push
 
