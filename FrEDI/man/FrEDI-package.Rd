@@ -107,7 +107,7 @@ Other contributors:
 \itemize{
   \item Tony Gardella (\href{https://orcid.org/0000-0003-4380-3412}{ORCID}) (tonygard-indecon) [contributor]
   \item Will Maddock (\href{https://orcid.org/0000-0002-6107-0315}{ORCID}) (maddockw) [contributor]
-  \item Hugh Easton (heaston-indecon) [contributor]
+  \item Hugh Easton (\href{https://orcid.org/0009-0008-0104-6891}{ORCID}) (heaston-indecon) [contributor]
 }
 
 }
