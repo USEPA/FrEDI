@@ -424,6 +424,7 @@ run_fredi <- function(
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["tempInput"]] <- has_tempUpdate |> ifelse("Custom", "Default")
+    # argsList  [["inputsList"]][["tempInput"]] <- inputsList[["tempInput"]]
     argsList  [["inputsList"]][["tempInput"]] <- tempInput
   } ### End if(outputList)
   rm(tempInput, co_defaultTemps, has_tempUpdate)
@@ -469,6 +470,7 @@ run_fredi <- function(
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["slrInput"]] <- has_slrUpdate |> ifelse("Custom", "Default")
+    # argsList  [["inputsList"]][["slrInput"]] <- inputsList[["slrInput"]]
     argsList  [["inputsList"]][["slrInput"]] <- slrInput
   } ### End if(outputList)
   rm(slrInput, has_slrUpdate)
@@ -520,6 +522,7 @@ run_fredi <- function(
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["gdpInput"]] <- has_gdpUpdate |> ifelse("Custom", "Default")
+    # argsList  [["inputsList"]][["gdpInput"]] <- inputsList[["gdpInput"]]
     argsList  [["inputsList"]][["gdpInput"]] <- gdpInput
   } ### End if(outputList)
   rm(gdpInput, gdp_default, has_gdpUpdate)
@@ -549,6 +552,7 @@ run_fredi <- function(
   if(outputList){
     statusList[["inputsList"]][["popInput"]] <- has_popUpdate |> ifelse("Custom", "Default")
     argsList  [["inputsList"]][["popInput"]] <- popInput
+    # argsList  [["inputsList"]][["popInput"]] <- inputsList[["popInput"]]
   } ### End if(outputList)
   rm(popInput, pop_default, national_pop_default, has_popUpdate)
 
