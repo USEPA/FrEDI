@@ -35,10 +35,6 @@ jobs:
             any::openxlsx
             any::devtools
 
-      - name: Remove existing build
-        run: |
-          rm *.tar.gz
-
 
       - name: Build Package
         run: |
