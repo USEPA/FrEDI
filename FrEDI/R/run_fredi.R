@@ -201,7 +201,7 @@ run_fredi <- function(
   do_npd    <- maxYear0 > refYear
 
 
-  ###### Return List ######
+  ###### ** Return List ######
   ### Initialize list to return
   returnList <- list() ### List to return args, scenarios, and statuses
   argsList   <- list() ### List of arguments
@@ -214,14 +214,12 @@ run_fredi <- function(
 
   ### Initialize status list
   ### Add statuses:
-  ### - inputsList items assessed further below
-  aggLevels0 <- c("national", "modelaverage", "impactyear", "impacttype")
-  aggLevels  <- aggLevels |> tolower()
+  ### - inputsList items and aggLevels assessed further below
   ### Add to list
   if(outputList){
     statusList[["inputsList"]] <- inputsList
     statusList[["sectorList"]] <- (!(sectorList |> is.null())) |> ifelse("Default", "Custom")
-    statusList[["aggLevels" ]] <- ("all" %in% aggLevels | (aggLevels %in% aggLevels0) |> all()) |> ifelse("Default", "Custom")
+    statusList[["aggLevels" ]] <- "placeholder"
     statusList[["elasticity"]] <- (elasticity == 1) |> ifelse("Default", "Custom")
     statusList[["maxYear"   ]] <- (maxYear == refYear & !thru2300) |> ifelse("Default", "Custom")
     statusList[["thru2300"  ]] <- (!thru2300  ) |> ifelse("Default", "Custom")
@@ -235,6 +233,8 @@ run_fredi <- function(
   ### - inputsList items, sectorList, and aggLevels assessed further below
   if(outputList){
     argsList[["inputsList"]] <- inputsList
+    argsList[["sectorList"]] <- "placeholder"
+    argsList[["aggLevels" ]] <- "placeholder"
     argsList[["elasticity"]] <- elasticity
     argsList[["maxYear"   ]] <- maxYear0
     argsList[["thru2300"  ]] <- thru2300
@@ -244,7 +244,7 @@ run_fredi <- function(
   } ### End if(outputList)
 
 
-  ###### Create file paths ######
+  ###### ** Load Objects ######
   ### Assign data objects to objects in this namespace
   for(list_i in rDataList){
     ### Assign list elements to name space
@@ -260,26 +260,45 @@ run_fredi <- function(
   ### Assign FrEDI config
   for(name_i in fredi_config |> names()){assign(name_i, fredi_config[[name_i]]); rm(name_i)}
 
+
   ### Years
   maxYear    <- maxYear0
   list_years <- minYear:maxYear
   # maxYear    |> print(); list_years |> max() |> print()
 
-  ###### Aggregation level  ######
+
+  ###### ** Aggregation Levels  ######
   ### Types of summarization to do: default
   ### Aggregation levels
-  aggList1   <- aggList0  |> c("all", "none") |> tolower()
+  aggList0   <- aggList0  |> tolower()
+  aggLevels  <- aggLevels |> tolower()
+  ### Update status list
+  statusList[["aggLevels" ]] <- ("all" %in% aggLevels | (aggLevels %in% aggList0) |> all()) |> ifelse("Default", "Custom")
+  # aggList0   <- c("national", "modelaverage", "impactyear", "impacttype")
+  aggList1   <- aggList0  |> c("all", "none")
   aggLevels  <- aggLevels |> (function(y, z=aggList1){y[y %in% z]})()
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
   if     ("none" %in% aggLevels) {aggLevels <- c()}
   else if("all"  %in% aggLevels) {aggLevels <- aggList0}
   doAgg <- (aggLevels |> length()) > 0
+  # doAgg |> print(); aggLevels |> print(); aggList1 |> print()
   ### Add to list
   if(outputList) {argsList[["aggLevels" ]] <- aggLevels}
-  rm(aggList0, aggList1, aggLevels0)
+  rm(aggList0, aggList1)
 
-  ###### Sectors List ######
+  ###### ** Elasticity ######
+  ### Message user about elasticity
+  has_elasticity <- elasticity |> is.numeric()
+  elasticity     <- has_elasticity |> ifelse(elasticity, elasticity0)
+  if(!has_elasticity){
+    paste0("\t", "Incorrect value type provided for argument 'elasticity'...") |> message()
+    paste0("\t\t", "Using default elasticity values.") |> message()
+  } ### End if
+  rm(has_elasticity, elasticity0)
+
+
+  ###### ** Sectors List ######
   ### Sector names & labels
   sectorIds    <- co_sectors[["sector_id"   ]]
   sectorLbls   <- co_sectors[["sector_label"]]
@@ -287,12 +306,10 @@ run_fredi <- function(
   if(sectorList |> is.null()){
     sectorList    <- sectorIds
   } else{
-    # sectorIds |> print()
     ### Get lower case versions
     sectors0   <- sectorIds  |> tolower()
     sectors1   <- sectorLbls |> tolower()
     sectors2   <- sectorList |> tolower()
-    # sectors0 |> print(); sectors1 |> print(); sectors2 |> print()
     ### Compare inputs to names and labels in the data
     ### Subset to sector list in sector names
     which0     <- (sectors0 %in% sectors2) | (sectors1 %in% sectors2)
@@ -317,22 +334,21 @@ run_fredi <- function(
       ) |> message() ### End message
     } ### End if(length(missing_sectors)>=1)
   } ### End else(is.null(sectorList))
-  ### Add to list
+  ### Update in list
   if(outputList) {argsList[["sectorList"]] <- sectorLbls}
   ### Number of sectors
-  # sectorList |> print()
   num_sectors  <- sectorList |> length()
 
   ### Filter to sectors
   co_slrScalars  <- co_slrScalars  |> filter(sector %in% sectorIds)
   df_sectorsInfo <- df_sectorsInfo |> filter(sector %in% sectorIds)
 
-  ###### By State ######
+  ###### ** By State ######
   byState    <- TRUE
   popCol0    <- "state_pop"
   stateCols0 <- c("state", "postal")
 
-  ###### Inputs ######
+  ###### ** Inputs ######
   ###### ** Load Inputs ######
   ### Create logicals and initialize inputs list
   list_inputs    <- co_inputScenarioInfo[["inputName"]]
@@ -368,16 +384,6 @@ run_fredi <- function(
     rm(colNames_i, numCols_i, has_i, df_input_i, has_update_i) |> try(silent=T)
   } ### End iterate over inputs
   rm(list_inputs, num_inputNames)
-
-  ### Message user about elasticity
-  has_elasticity <- elasticity |> is.numeric()
-  elasticity0    <- 1
-  elasticity     <- has_elasticity |> ifelse(elasticity, elasticity0)
-  if(!has_elasticity){
-    paste0("\t", "Incorrect value type provided for argument 'elasticity'...") |> message()
-    paste0("\t\t", "Using default elasticity values.") |> message()
-  } ### End if
-  rm(has_elasticity, elasticity0)
 
   ###### ** Temperature Scenario ######
   ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
