@@ -11,7 +11,7 @@
 #' For more information on the Framework and the CIRA project, visit <https://epa.gov/cira/>, especially <https://epa.gov/cira/FrEDI/>.
 #'
 #' @section Overview of Functions:
-#' The function [FrEDI::run_fredi()] provided in this package is the primary function implementing `FrEDI` The main inputs to [FrEDI::run_fredi()] are climate scenarios (temperature in degrees Celsius, global mean sea level rise in centimeters) and socioeconomic scenarios (gross domestic product, regional population). [FrEDI::run_fredi()] projects climate impacts for these scenarios using the temperature binning framework. Users can also specify the levels at which to aggregate the climate impacts.
+#' The function [FrEDI::run_fredi()] provided in this package is the primary function implementing the [`FrEDI`](https://epa.gov/cira/FrEDI/) developed by the U.S. EPA for projecting annual climate impacts. The main inputs to [FrEDI::run_fredi()] are climate scenarios (temperature in degrees Celsius, global mean sea level rise in centimeters) and socioeconomic scenarios (U.S. gross domestic product, state population).
 #'
 #' [FrEDI] also contains functions to assist in the pre-processing of input scenarios and the post-processing of outputs.
 #'
@@ -23,7 +23,7 @@
 #'
 #' [FrEDI::aggregate_impacts()] is a post-processing helper function that helps users to aggregate and summarize the outputs of [FrEDI]. [FrEDI::aggregate_impacts()] can be used to calculate national totals, model averages, sum over impact types, and interpolate between multiple impact years (note that [FrEDI::run_fredi()] will automatically run [FrEDI::aggregate_impacts()] before returning outputs if the `aggLevels` argument is not `"none"`).
 #'
-#' Versions 2.3.0 and above include the `FrEDI` Social Vulnerability (SV) module for estimating impacts on socially vulnerable populations for select sectors. [FrEDI::get_sv_sectorInfo()] allows users to access a list of sectors within the FrEDI SV module and related sector information. The function [FrEDI::run_fredi_sv()] is the main function for the `FrEDI` SV module. [FrEDI::run_fredi_sv()] is designed to calculate impacts for a single sector at a time for a custom population scenario or one or more custom temperature or sea level rise scenarios. When running [FrEDI::run_fredi_sv()], users have the option to save results to an Excel file that provides basic data visualization for the module outputs. For more information on the data underlying the `FrEDI` SV module, visit <https://www.epa.gov/cira/social-vulnerability-report/>.
+#' Versions 2.3.0 and above include the `FrEDI` Social Vulnerability (SV) module for estimating impacts on socially vulnerable populations for select sectors. [FrEDI::get_sv_sectorInfo()] allows users to access a list of sectors within the FrEDI SV module and related sector information. The function [FrEDI::run_fredi_sv()] is the main function for the `FrEDI` SV module. [FrEDI::run_fredi_sv()] is designed to calculate impacts for a single sector at a time for a custom population scenario or one or more custom temperature or sea level rise scenarios. For more information on the data underlying the `FrEDI` SV module, see <https://www.epa.gov/cira/social-vulnerability-report/>.
 #'
 #'  @section Overview of Package Contents:
 #' [FrEDI] consists of files in the following directories:
