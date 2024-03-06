@@ -34,7 +34,9 @@
 #'
 #' A dataframe containing six driver scenarios that can be passed as inputs to [FrEDI::run_fredi_sv()].
 #'
-#' The scenarios in this dataframe were created using Hector, a reduced-form global carbon-cycle climate model (Hartin et al., 2015) to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM). The Global Change Analysis Model v5.3 (GCAM) is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019). For more information on Hector and GCAM, see Appendix C of the FrEDI documentation.
+#' The scenarios in this dataframe were created using [Hector](https://jgcri.github.io/hector/), an open-source, reduced-form global carbon-cycle climate model (Hartin et al., 2015) to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM). The Global Change Analysis Model v5.3 ([GCAM](https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model)) is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019).
+#'
+#' Note that these temperature scenarios have been converted from the original global temperatures to CONUS temperatures using the [FrEDI::convertTemps] (with argument `from="global"`). The scenarios can therefore be passed directly to [FrEDI::run_fredi()] or [FrEDI::run_fredi_sv()]. *Please note that the `gcamScenarios` should be subset to any of the individual scenarios specified in the `scenario` column before passing to [FrEDI::run_fredi()] (e.g., `gcamScenarios |> dplyr::filter(scenario=="ECS_3.0_ref_0")` for the reference scenario).
 #'
 #' Calvin, K., Patel, P., Clarke, L., et al. 2019. GCAM v5.1: representing the linkages between energy, water, land, climate, and economic systems, Geosci. Model Dev., 12:677–698. https://doi.org/10.5194/gmd-12-677-2019.
 #'
