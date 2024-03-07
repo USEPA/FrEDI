@@ -24,34 +24,14 @@ general_fredi_test <- function(
 
   #### Sector NA Check ####
   #### Check if each sector has at least one non-NA-value
-
-  # Get names of sector "group-names" consistent with dplyr
-  # sect_names <- newOutputs |> pull(sector) |> unique()
-
-  # For each sector group, check if each sector has nonNA values
-  # sect_na_check <- newOutputs |>
-  #   group_by_at(c("sector")) |>
-  #   group_map(~ has_nonNA_values_df(., col0="annual_impacts")) |>
-  #   set_names(sect_names$sector)
+  ### For each sector group, check if each sector has nonNA values
   sect_na_check <- newOutputs |> has_nonNA_values_df(groups0="sector", col0="annual_impacts")
 
-
-  # If there are any sector groups with all NA values, filter to that sector and save to output list
-  # sect_na_check$`ATS Extreme Temperature` <- 1
+  ### If there are any sector groups with all NA values, filter to that sector and save to output list
   has_no_nonNA_values <- (sect_na_check |> nrow()) > 0
   if(has_no_nonNA_values) {
     save_list[[c_sectorNA0]] <- sectorNA
   } else {
-  # if((sect_na_check > 0) |> any()){
-  #
-  #   sectorNA_names <- (sect_na_check > 0) |>
-  #     names()
-  #   sectorNA <-  newOutputs |>
-  #     filter(
-  #       sector %in% sectorNA_names )
-  #   save_list[[c_sectorNA0]] <- sectorNA
-  # } else {
-
     save_list[[c_sectorNA0]] <- tibble("All Sectors have some non-missing and non-zero values")
   } ### End else
 
@@ -86,9 +66,12 @@ general_fredi_test <- function(
   ### Get anti-join between the two tables: Join using all names
   ### Add table to save_list
   # join0     <- newOutputs %>% names
-  join0     <- newOutputs |> names() %>% (function(y, z=refOutputs){y[(y %in% names(z))]})
-  df_diffs  <- newOutputs |> anti_join(refOutputs, by=c(all_of(join0)))
+  join0     <- newOutputs |> names() |> (function(y, z=refOutputs){y[(y %in% (z |> names()))]})()
+  df_diffs1 <- newOutputs |> anti_join(refOutputs, by=c(join0)) |> mutate(antiJoin = "New to Ref")
+  df_diffs2 <- refOutputs |> anti_join(newOutputs, by=c(join0)) |> mutate(antiJoin = "Ref to New")
+  df_diffs  <- df_diffs1 |> rbind(df_diffs2)
   save_list[[c_diff0]] <- df_diffs
+  rm(join0, df_diffs1, df_diffs2)
 
   ###### Create Excel Workbook ######
   ### Create workbook if save=T
@@ -115,11 +98,11 @@ general_fredi_test <- function(
     ### Check if outDir exists and, if not, create one
     odExists  <- outDir  |> dir.exists()
     if(!odExists){outDir |> dir.create(showWarnings = F)}
-    rm("odExists")
+    rm(odExists)
     ### Save the workbook
     wbook0 |> saveWorkbook(file=outFile, overwrite=overwrite)
     ### Remove workbook
-    rm("wbook0")
+    rm(wbook0)
   } ### End if(save)
 
 

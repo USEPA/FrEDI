@@ -1,7 +1,11 @@
 # FrEDI
 The Framework for Evaluating Damages and Impacts (FrEDI)
 
-Estimates economic damages and impacts from climate change to the US through the 21st century
+FrEDI estimates the annual physical and economic impacts of future climate change to the US, through the 21st century.
+
+***
+<em>Starting in February 2024, the 2024 FrEDI Technical Documentation and v4.0 of the FrEDI R package will be subject to an independent, external peer review and public comment period. All comments received will be carefully reviewed, considered, and responded to. The final 2024 Technical Documentation and v4.0 R package are expected in late spring 2024.</em> 
+***
 
 ## Installation
 
@@ -51,4 +55,4 @@ by contributing to this project, you agree to abide to our [Contributor
 Code of Conduct](FrEDI/CODE_OF_CONDUCT.md)
 
  ----------------------------------------------------------------------------------
- For more information, refer to the documentation at https://usepa.github.io/FrEDI.
+ For more information, refer to the documentation at https://www.epa.gov/cira/about-fredi and https://usepa.github.io/FrEDI.

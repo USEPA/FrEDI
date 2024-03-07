@@ -31,14 +31,19 @@ run_fredi(
 
 \item{outputList=FALSE}{A \code{ TRUE/FALSE} value indicating whether to output results as a data frame object (\code{outputList = FALSE}, default) or to return a list of objects (\code{outputList = TRUE}) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.}
 
+\item{allCols=FALSE}{A \code{TRUE/FALSE} value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to \code{aggLevels="none"} to properly return the intermediate columns. Defaults to \code{allCols=FALSE}).}
+
 \item{silent=TRUE}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
 }
 \value{
-If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a data frame object containing annual average impacts over the analysis period, for each sector, variant, model (GCM or SLR scenario), impact type, impact year, and region. If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing the following:
+If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a dataframe object (described above) containing annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, and model (GCM name for temperature-driven sectors and "Interpolation" for SLR-driven sectors).
+
+If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list object containing the following:
 \itemize{
-\item \strong{\code{arguments}}, containing a list with values for the arguments passed to \code{\link[=run_fredi]{run_fredi()}} (with the exception of scenarios passed to the \code{inputsList} argument, which are provided in the \code{driverScenarios} list element).
-\item \strong{\code{driverScenarios}}, a list object containing elements with the driver scenarios for temperature, SLR, population, and GDP used in the model
-\item \code{results}, containing a data frame of annual average impacts.
+\item \strong{\code{statusList}}. A list with values for the arguments passed to \code{\link[=run_fredi]{run_fredi()}} (including defaults if unspecified).
+\item \strong{\code{argsList}}. A list with elements named after \code{\link[=run_fredi]{run_fredi()}} arguments, containing the values of the arguments passed to \code{\link[=run_fredi]{run_fredi()}} (or default values if unspecified).
+\item \strong{\code{scenarios}}. A list with named elements \code{"temp"}, \code{"slr"}, \code{"gdp"}, and \code{"pop"} -- each containing the scenarios for temperature, SLR, GDP, and population as used by the model in calculating impacts.
+\item \strong{\code{results}}. Containing a data frame of annual impacts (i.e., the same data frame returned if \code{outputList=FALSE}).
 }
 }
 \description{

@@ -25,7 +25,7 @@ Authors@R: c(person("Corinne", "Hartin",
                                  github = "maddockw")),
              person("Hugh","Easton",
                      role    = "ctb",
-                     comment = c(
+                     comment = c(ORCID = "0009-0008-0104-6891",
                                  github = "heaston-indecon"))
              )
 URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
