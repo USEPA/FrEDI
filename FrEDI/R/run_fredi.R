@@ -519,7 +519,7 @@ run_fredi <- function(
     "\t" |> message("Creating GDP scenario from user inputs...")
     gdpInput <- gdpInput |> filter(!(gdp_usd |> is.na()) & !(year |> is.na()))
     gdpInput <- gdpInput |> filter(gdp_usd >= 0)
-    gdp_df   <- gdp_df   |> interpolate_annual(years=list_years, column="gdp_usd", rule = 2) |> select(-c("region"))
+    gdp_df   <- gdpInput |> interpolate_annual(years=list_years, column="gdp_usd", rule = 2) |> select(-c("region"))
   } else{
     "\t" |> message("No GDP scenario provided...Using default GDP scenario...")
     gdpInput <- gdp_default |> select(all_of(gdpCols0))
