@@ -21,7 +21,7 @@ check_and_create_path <- function(
 ###### save_data ######
 ### Utility function to help save a data object
 save_data <- function(
-    obj0, ### Data object
+    obj0,     ### Data object
     fpath     = ".", ### File path
     fname     = "data",
     ftype     = "csv", ### CSV or RData

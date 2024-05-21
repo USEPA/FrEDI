@@ -3,6 +3,7 @@
 ###### Load Packages ######
 require(tidyverse)
 require(ggpubr)
+# require(arrow)
 # require(cowplot)
 # require(FrEDI)
 
@@ -11,13 +12,14 @@ create_DoW_results <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
     gcmYears = c(2090),   ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
-    byState  = TRUE,       ### Whether values are by state or just by region
+    byState  = TRUE,      ### Whether values are by state or just by region
+    # totals   = FALSE,     ### Whether to do totals
     silent   = TRUE,      ### Degree of messaging
     testing  = FALSE,     ### Whether to print out extra diagnostic values
     aggOnly  = TRUE,      ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     loadCode = "project", ### Whether to load code as source or devtools
     fpath    = "." ,      ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
-    saveFile = FALSE,     ### Save file
+    saveFile = TRUE,      ### Save file
     outPath  = "." |> file.path("report_figures"),  ### Path to save results if saveFile == TRUE
     img_dev  = "pdf",     ### Image device if saveFile == TRUE
     return   = TRUE       ### Whether to return list object
@@ -31,7 +33,7 @@ create_DoW_results <- function(
   # aggOnly  = TRUE    ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
   # loadCode = "project" ### Whether to load code as source or devtools
   # fpath    = "."     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
-  # saveFile = FALSE   ### Save file
+  # saveFile = TRUE   ### Save file
   # outPath  = "." |> file.path("report_figures")  ### Path to save results if saveFile == TRUE
   # img_dev  = "pdf"   ### Image device if saveFile == TRUE
   # return   = TRUE    ### Whether to return list object
@@ -53,15 +55,32 @@ create_DoW_results <- function(
   codePath        <- projectPath |> file.path("R")
   # projectPath |> list.files() |> print()
   # codePath |> list.files() |> print()
+
   ### Output Paths
-  dowResultsPath  <- outPath |> file.path("DoW")
-  fig7ResultsPath <- outPath |> file.path("fig7")
-  appxResultsPath <- outPath |> file.path("appendix_figures")
+  dowPath  <- outPath |> file.path("DoW")
+  fig7Path <- outPath |> file.path("fig7")
+  appxPath <- outPath |> file.path("appendix_figures")
   # ### Check and create paths
   # outPath |> check_and_create_path()
-  # dowResultsPath  |> check_and_create_path()
-  # fig7ResultsPath |> check_and_create_path()
-  # appxResultsPath |> check_and_create_path()
+  # dowPath  |> check_and_create_path()
+  # fig7Path |> check_and_create_path()
+  # appxPath |> check_and_create_path()
+
+  ### Output file names
+  rda_byType    <- "integer_results_byType"
+  rda_totals    <- "integer_results_totals"
+
+  ### Plots by type
+  csv_appx_gcm  <- "gcm_results_byDoW_byType"
+  csv_appx_slr  <- "slr_results_byDoW_byType"
+  rda_appx_gcm  <- "gcm_appendix_plots"
+  rda_appx_slr  <- "slr_appendix_plots"
+
+  ### Plots for totals
+  csv_fig7_gcm  <- "gcm_results_byDoW_totals"
+  csv_fig7_slr  <- "slr_results_byDoW_totals"
+  rda_fig7_gcm  <- "gcm_fig7_plots"
+  rda_fig7_slr  <- "slr_fig7_plots"
 
   ###### ** Load Code ######
   ### Custom function to load code from a specified path
@@ -111,7 +130,8 @@ create_DoW_results <- function(
   if(return0) resultsList[["sectorNames"]] <- c_sectorNames
   if(testing) c_sectorNames |> print(); newSectorNames |> print()
 
-  ###### ** Constants ######
+  ###### Scenarios ######
+  ###### ** Scenario Info ######
   ### Numeric columns: Specify so that we can print out the associated data
   ### Number of digits to format
   c_popCol       <- byState |> ifelse("state_pop", "reg_pop")
@@ -129,6 +149,7 @@ create_DoW_results <- function(
   n_globalTemps  <- c_globalTemps |> length()
   ### Labels
   c_globTempLabs <- c(1.5, 2)
+
   ### Data frame of scenarios
   df_scenarios   <- tibble(temp_C=c_conusTemps |> c(c_globalTemps)) |>
     mutate(tempType  = c("conus" |> rep(n_conusTemps), "global" |> rep(n_globalTemps))) |>
@@ -139,13 +160,16 @@ create_DoW_results <- function(
   if(testing) "Creating tibble of integer scenario information..." |> message()
   if(return0) resultsList[["df_scenarios"]] <- df_scenarios
   if(testing) df_scenarios |> glimpse()
+  ### Number of scenarios
+  cScenarios     <- df_scenarios |> pull(scenario) |> unique()
+  nScenarios     <- cScenarios   |> length()
   ### Vector of scenarios
-  c_scen_con     <- df_scenarios |> filter(tempType == "conus" ) |> get_column_values(col0="scenario")
-  c_scen_glo     <- df_scenarios |> filter(tempType == "global") |> get_column_values(col0="scenario")
+  c_scen_con     <- df_scenarios |> filter(tempType == "conus" ) |> pull(scenario) |> unique()
+  c_scen_glo     <- df_scenarios |> filter(tempType == "global") |> pull(scenario) |> unique()
   # c_scen_con |> print(); c_scen_glo |> print(); df_scenarios[["scenario"]] |> print()
   # return(list(x=c_scen_con, y=c_scen_glo, z=df_scenarios))
 
-  ###### Load Scenario Inputs ######
+  ###### ** Inputs List ######
   ### Message
   if(testing|do_msg) "Creating tibble of integer scenarios..." |> print()
   ### Load scenario inputs
@@ -161,130 +185,50 @@ create_DoW_results <- function(
       type0   = y,
       prefix0 = z ### Prefix for scenario
     )
-  }) %>% (function(x){do.call(rbind, x)})
+  }) |> bind_rows()
   ### Glimpse, message, & save
   if(return0) resultsList[["df_inputs"]] <- inputs_df_int
   if(testing) inputs_df_int |> glimpse()
   # return(list(x=c_scen_con, y=c_scen_glo, z=inputs_df_int))
 
-  ###### Run Scenarios ######
-  ###### Run scenarios
-  ###### ** Results By Type ######
+  ###### GCM Scenarios #####
+  ###### ** Run Scenarios and get results by type ######
+  ###### Run scenarios to get results by type
   ### Run scenarios in FrEDI. Get model averages and national totals
   if(testing|do_msg) "Running integer scenarios..." |> message()
   df_int_byType  <- inputs_df_int |> run_scenarios(
     col0      = "scenario",
     fredi     = TRUE,
     sectors   = sectors,
-    # sectors   = FrEDI::get_sectorInfo(),
     aggLevels = c("modelaverage", "national"),
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
-    joinCols  = c("year")
+    joinCols  = c("year"),
+    return    = TRUE,
+    save      = FALSE,
+    outPath   = dowPath
   )
 
   ### Glimpse results
-  if(return0) resultsList[["df_int_byType"]] <- df_int_byType
+  # if(return0) resultsList[["df_int_byType"]] <- df_int_byType
   if(testing) df_int_byType |> glimpse()
   ### Save results
-  if(saveFile){
-    ### Save to RData
-    if(do_msg) paste0("Saving integer scenario results by type...") |> message()
-    df_int_byType |>
-      save_data(fpath = dowResultsPath, fname = "integer_results_byType", ftype = "rda")
-
-    ### Save to CSV
-    # df_int_byType |>
-    #   filter_years(years=c_years) |>
-    #   format_values(cols0=c_numVars, digits=c_digits) |>
-    #   save_data(fpath = dowResultsPath, fname = "integer_results_byType", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
-
-  ###### ** Result Totals ######
-  if(testing|do_msg) "Aggregating integer scenario results..." |> message()
-  #### Aggregate Impact Types, Impact Years
-  df_int_totals  <- df_int_byType |> run_scenarios(
-    col0      = "scenario",
-    fredi     = FALSE,
-    aggLevels = c("impactyear", "impacttype"),
-    scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
-    joinCols  = c("year")
-  )
-  ### Glimpse results
-  if(return0) resultsList[["df_int_totals"]] <- df_int_totals
-  if(testing) df_int_totals |> glimpse()
-  ### Save results
-  if(saveFile){
-    ### Save to RData
-    if(do_msg) paste0("Saving aggregated integer scenario results...") |> message()
-    df_int_totals |>
-      save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "rda")
-
-    ### Save to CSV
-    # df_int_totals |>
-    #   filter_years(years=c_years) |>
-    #   format_values(cols0=c_numVars, digits=c_digits) |>
-    #   save_data(fpath = dowResultsPath, fname = "integer_results_totals", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
-  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals))
-
-  ###### GCM Results & Figures ######
-  ###### ** Figure 7: DoW by Sector ######
-  ###### ** -- Data
-  ###### Summarize GCM sectors for degrees of warming
-  # codePath  |> loadCustomFunctions()
-  if(testing|do_msg) "Summarizing GCM results by sector, degree of warming (DOW)..." |> message()
-  sum_gcm_totals <- df_int_totals |> sum_impacts_byDoW_years(
-    scenarios   = c_scen_con,
-    bySector    = FALSE,
-    sumCol      = "annual_impacts",
-    impactYears = c("Interpolation"),
-    models      = c("GCM"),
-    aggOnly     = aggOnly,
-    years       = gcmYears,
-    adjVal      = 1/10**9, ### Factor to multiply by
-    adjCol      = "impact_billions"
-  )
-  ### Glimpse
-  if(return0) resultsList[["sum_gcm_totals"]] <- sum_gcm_totals
-  if(testing) sum_gcm_totals |> glimpse()
-  ### Save 2090 summary table
-  if(saveFile){
-    if(do_msg) paste0("Saving summary of GCM results by sector, degree of warming...") |> message()
-    sum_gcm_totals |>
-      save_data(fpath = fig7ResultsPath, fname = "gcm_results_byDoW_totals", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
-  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals, w=sum_gcm_totals))
-
-  ###### ** -- Plots
-  #### Create plots
-  ### Scale isn't the same across sectors
-  # codePath  |> loadCustomFunctions()
-  if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
-  plots_dow_gcm  <- sum_gcm_totals |> plot_DoW(
-    types0  = c("GCM"), ### Model type: GCM or SLR
-    years   = gcmYears,
-    xCol    = "driverValue",
-    yCol    = "annual_impacts",
-    thresh0 = breakChars
-  )
-  ### Glimpse
-  if(testing) plots_dow_gcm[["GCM_2090"]] |> print()
-  if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
-  ### Save
-  # codePath  |> loadCustomFunctions()
-  if(saveFile){
-    if(do_msg) paste0("Saving plots of GCM results by sector, degree of warming...") |> message()
-    ### Save plots as Rdata
-    plots_dow_gcm |> save_data(fpath = fig7ResultsPath, fname = "gcm_fig7_plots", ftype = "rda")
-
-    ### Save plots as image files
-    saved0 <- plots_dow_gcm |> save_fig7_images(
-      modelType = "GCM",
-      fpath     = fig7ResultsPath,
-      device    = img_dev,
-      units     = imgUnits
-    )
-  } ### End if(saveFile)
+  if(do_msg & saveFile) paste0("Saving integer scenario results by type...") |> message()
+  if(saveFile) df_int_byType |> save_data(fpath=dowPath, fname=rda_byType, ftype="rda")
+  # for(scenario_i in cScenarios){
+  #   ### Run scenario
+  #   df_i <- scenario_i |> run_scenario(
+  #     df0       = df_scenarios,
+  #     fredi     = TRUE,
+  #     sectors   = sectors,
+  #     aggLevels = c("modelaverage", "national"),
+  #     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
+  #     joinCols  = c("year"),
+  #     save      = TRUE,
+  #     return    = FALSE,
+  #     outPath   = "." |> file.path("report_figures")
+  #   ) ### End run_scenario(scenario_i)
+  #   rm(scenario_i, df_i)
+  # } ### End for(row_i in df_scenarios |> nrow() |> seq_len())
 
   ###### ** Appendix Figs: DoW By Type ######
   # codePath  |> loadCustomFunctions()
@@ -300,14 +244,13 @@ create_DoW_results <- function(
     silent      = TRUE
   )
   ### Glimpse
+  # if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
   if(testing) sum_gcm_byType |> glimpse()
-  if(return0) resultsList[["sum_gcm_byType"]] <- sum_gcm_byType
+
   ### Save summary table
-  if(saveFile){
-    if(do_msg) paste0("Saving summary of GCM results by sector, impact type, degree of warming...") |> message()
-    sum_gcm_byType |>
-      save_data(fpath = appxResultsPath, fname = "gcm_results_byDoW_byType", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
+  if(do_msg & saveFile) paste0("Saving summary of GCM results by sector, impact type, degree of warming...") |> message()
+  if(saveFile) sum_gcm_byType |> save_data(fpath=appxPath, fname=csv_appx_gcm, ftype="csv", row.names=F)
+
 
   ### Create Plots
   # codePath  |> loadCustomFunctions()
@@ -320,37 +263,115 @@ create_DoW_results <- function(
       yCol    = "annual_impacts"
     )
   ### Glimpse
+  # if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
   if(testing) plots_gcm_byType$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
-  if(return0) resultsList[["plots_gcm_byType"]] <- plots_gcm_byType
+
   ### Save
+  if(do_msg & saveFile) paste0("Saving plots of GCM results by sector, impact type, degree of warming...") |> message()
   if(saveFile){
-    if(do_msg) paste0("Saving plots of GCM results by  sector, impact type, degree of warming...") |> message()
     ### Save plots as a data object
-    plots_gcm_byType |> save_data(fpath = appxResultsPath, fname = "gcm_appendix_plots", ftype = "rda")
+    plots_gcm_byType |> save_data(fpath=appxPath, fname=rda_appx_gcm, ftype="rda")
 
     ### Save plots as image files
     saved0 <- plots_gcm_byType |> save_appendix_figures(
       df0       = sum_gcm_byType,
       modelType = "GCM", ### Or SLR
-      fpath     = appxResultsPath,
+      fpath     = appxPath,
       device    = img_dev,
       res       = imgRes,
       units     = imgUnits
     ) ### End save_appendix_figures
   } ### End if(saveFile)
+  rm(sum_gcm_byType, plots_gcm_byType)
 
+  ###### ** GCM Totals ######
+  if(testing|do_msg) "Aggregating integer scenario results..." |> message()
+  #### Aggregate Impact Types, Impact Years
+  df_int_totals  <- df_int_byType |> run_scenarios(
+    col0      = "scenario",
+    fredi     = FALSE,
+    aggLevels = c("impactyear", "impacttype"),
+    scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
+    joinCols  = c("year")
+  )
+  # rm(df_int_byType)
+  ### Glimpse results
+  # if(return0) resultsList[["df_int_totals"]] <- df_int_totals
+  if(testing) df_int_totals |> glimpse()
+  ### Save results
+  if(do_msg & saveFile) paste0("Saving aggregated integer scenario results...") |> message()
+  if(saveFile) df_int_totals |> save_data(fpath=dowPath, fname=rda_totals, ftype="rda")
+  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals))
 
+  ###### ** Fig 7 ######
+  ###### ** -- Figure 7: DoW by Sector
+  ###### ** -- -- Data
+  ###### Summarize GCM sectors for degrees of warming
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Summarizing GCM results by sector, degree of warming (DOW)..." |> message()
+  sum_gcm_totals <- df_int_totals |> sum_impacts_byDoW_years(
+    scenarios   = c_scen_con,
+    bySector    = FALSE,
+    sumCol      = "annual_impacts",
+    impactYears = c("Interpolation"),
+    models      = c("GCM"),
+    aggOnly     = aggOnly,
+    years       = gcmYears,
+    adjVal      = 1/10**9, ### Factor to multiply by
+    adjCol      = "impact_billions"
+  )
+  rm(df_int_totals)
+  ### Glimpse
+  # if(return0) resultsList[["sum_gcm_totals"]] <- sum_gcm_totals
+  if(testing) sum_gcm_totals |> glimpse()
+  if(do_msg & saveFile) paste0("Saving summary of GCM results by sector, degree of warming...") |> message()
+  ### Save 2090 summary table
+  if(saveFile) sum_gcm_totals |> save_data(fpath=fig7Path, fname=csv_fig7_gcm, ftype="csv", row.names=F)
+  # return(list(x=c_scen_con, y=c_scen_glo, z=df_int_totals, w=sum_gcm_totals))
+
+  ###### ** -- -- Plots
+  #### Create plots
+  ### Scale isn't the same across sectors
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
+  plots_dow_gcm  <- sum_gcm_totals |> plot_DoW(
+    types0  = c("GCM"), ### Model type: GCM or SLR
+    years   = gcmYears,
+    xCol    = "driverValue",
+    yCol    = "annual_impacts",
+    thresh0 = breakChars
+  )
+  rm(sum_gcm_totals)
+  ### Glimpse
+  # if(return0) resultsList[["plots_dow_gcm"]] <- plots_dow_gcm
+  if(testing) plots_dow_gcm[["GCM_2090"]] |> print()
+  ### Save
+  # codePath  |> loadCustomFunctions()
+  if(do_msg & saveFile) paste0("Saving plots of GCM results by sector, degree of warming...") |> message()
+  if(saveFile){
+    ### Save plots as Rdata
+    plots_dow_gcm |> save_data(fpath=fig7Path, fname=rda_fig7_gcm, ftype="rda")
+
+    ### Save plots as image files
+    saved0 <- plots_dow_gcm |> save_fig7_images(
+      modelType = "GCM",
+      fpath     = fig7Path,
+      device    = img_dev,
+      units     = imgUnits
+    )
+  } ### End if(saveFile)
+  rm(plots_dow_gcm)
 
   ###### SLR Results & Figures ######
-  ###### ** Format SLR Data ######
-  ###### ** -- Data
+  ###### ** -- Format SLR Data ######
+  ###### ** -- -- Data
   ### Read in and format the impacts
   ### Note that the SLR sectors have no multipliers or impact types
   # codePath  |> loadCustomFunctions()
   if(testing|do_msg) "Formatting SLR scenario model data..." |> message()
   ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T)
   ### Glimpse
-  if(return0) resultsList[["ciraSLRData"]] <- ciraSLRData
+  # if(return0) resultsList[["ciraSLRData"]] <- ciraSLRData
   if(testing) ciraSLRData[["slrImp"]] |> glimpse()
   if(testing) ciraSLRData[["slrCm" ]] |> glimpse()
 
@@ -381,7 +402,7 @@ create_DoW_results <- function(
     scale_color_discrete("SLR Scenario")
   if(testing) plot_slr2 |> print()
 
-  ##### ** Plot Trajectories #####
+  ##### ** -- Plot Trajectories #####
   ### Plot the SLR trajectories
   # codePath  |> loadCustomFunctions()
   if(testing|do_msg) "Plotting SLR scenarios..." |> message()
@@ -392,11 +413,11 @@ create_DoW_results <- function(
     lgdTitle0 = "Sweet et al. SLR Scenario"
   )
   ### Glimpse
+  # if(return0) resultsList[["p_slrScenarios"]] <- p_slrScenarios
   if(testing) p_slrScenarios |> print()
-  if(return0) resultsList[["p_slrScenarios"]] <- p_slrScenarios
   ### Save file
+  if(do_msg & saveFile) paste0("Saving plot of SLR scenarios...") |> message()
   if(saveFile){
-    if(do_msg) paste0("Saving plot of SLR scenarios...") |> message()
     p_slrScenarios |> save_image(
       fpath     = outPath, ### File path
       fname     = "slrScenarios",
@@ -410,7 +431,53 @@ create_DoW_results <- function(
     )  ### End save_image
   } ### End if(saveFile)
 
-  ###### ** Figure 7: DoW by Sector ######
+  ###### ** -- Appendix Figs: DoW By Type ######
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
+  sum_slr_byType <- get_fig7_slrImpacts(
+    slrDrivers  = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
+    slrImpacts  = ciraSLRData[["slrImp"]] |> filter(year >= 2010, year <= 2090),
+    bySector    = TRUE,
+    sumCol      = "annual_impacts",
+    adjVal      = 1/10**9, ### Factor to multiply by
+    adjCol      = "impact_billions"
+  )
+  ### Glimpse
+  # if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
+  if(testing) sum_slr_byType |> glimpse()
+  ### Save
+  if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by year...") |> message()
+  if(saveFile) sum_slr_byType |> save_data(fpath=appxPath, fname=csv_appx_slr, ftype="csv", row.names=F)
+
+  ### Create SLR plots
+  # codePath  |> loadCustomFunctions()
+  if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
+  plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
+    models  = c("SLR"),
+    xCol    = "year",
+    yCol    = "annual_impacts"
+  )
+  ### Glimpse
+  # if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
+  if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
+  ### Save
+  if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
+  if(saveFile) {
+    ### Save plots as a data object
+    plots_slr_byType |> save_data(fpath=appxPath, fname=rda_appx_slr, ftype="rda")
+
+    ### Save plots as image files
+    saved0 <- plots_slr_byType |> save_appendix_figures(
+      df0       = sum_slr_byType,
+      modelType = "SLR", ### Or SLR
+      fpath     = appxPath,
+      device    = img_dev,
+      res       = imgRes,
+      units     = imgUnits
+    ) ### End save_appendix_figures
+  } ### End if(saveFile)
+
+  ###### ** -- Figure 7: DoW by Sector ######
   ### SLR sectors separately:
   ### - Filter to 2090 and 2050 values
   ### - Calculate national totals
@@ -427,15 +494,12 @@ create_DoW_results <- function(
     adjCol     = "impact_billions"
   )
   ### Glimpse
-  if(return0) resultsList[["sum_slr_totals"]] <- sum_slr_totals
+  # if(return0) resultsList[["sum_slr_totals"]] <- sum_slr_totals
   if(testing) sum_slr_totals |> glimpse()
   # sum_gcm_totals |> glimpse()
   ### Save
-  if(saveFile){
-    if(do_msg) paste0("Saving summary of SLR results by sector, year, GMSL (cm)...") |> message()
-    sum_slr_totals |>
-      save_data(fpath = fig7ResultsPath, fname = "slr_results_byDoW_totals", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
+  if(do_msg & saveFile) paste0("Saving summary of SLR results by sector, year, GMSL (cm)...") |> message()
+  if(saveFile) sum_slr_totals |> save_data(fpath=fig7Path, fname=csv_fig7_slr, ftype="csv", row.names=F)
 
   ###### ** -- Plots
   ### Create the plots
@@ -448,71 +512,24 @@ create_DoW_results <- function(
     thresh0    = breakChars
   )
   ### Glimpse
-  if(return0) resultsList[["plots_dow_slr"]] <- plots_dow_slr
+  # if(return0) resultsList[["plots_dow_slr"]] <- plots_dow_slr
   if(testing) plots_dow_slr[["SLR_all"]] |> print()
   ### Save
-  if(saveFile){
-    if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
+  if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
+  if(saveFile & saveFile){
     ### Save plots as a data object
-    plots_dow_slr |> save_data(fpath = fig7ResultsPath, fname = "slr_fig7_plots", ftype = "rda")
+    plots_dow_slr |> save_data(fpath=fig7Path, fname=rda_fig7_slr, ftype="rda")
 
     ### Save plots as image files
     plots_dow_slr |> save_fig7_images(
       modelType = "SLR", ### Or SLR
-      fpath     = fig7ResultsPath,
+      fpath     = fig7Path,
       device    = img_dev,
       units     = imgUnits
     )
   } ### End if(saveFile)
 
-  ###### ** Appendix Figs: DoW By Type ######
-  # codePath  |> loadCustomFunctions()
-  if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
-  sum_slr_byType <- get_fig7_slrImpacts(
-    slrDrivers  = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
-    slrImpacts  = ciraSLRData[["slrImp"]] |> filter(year >= 2010, year <= 2090),
-    bySector    = TRUE,
-    sumCol      = "annual_impacts",
-    adjVal      = 1/10**9, ### Factor to multiply by
-    adjCol      = "impact_billions"
-  )
-  ### Glimpse
-  if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
-  if(testing) sum_slr_byType |> glimpse()
-  ### Save
-  if(saveFile){
-    if(do_msg) paste0("Saving plot of SLR scenarios by year...") |> message()
-    sum_slr_byType |>
-      save_data(fpath = appxResultsPath, fname = "slr_results_byDoW_byType", ftype = "csv", row.names = F)
-  } ### End if(saveFile)
 
-  ### Create SLR plots
-  # codePath  |> loadCustomFunctions()
-  if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
-  plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
-    models  = c("SLR"),
-    xCol    = "year",
-    yCol    = "annual_impacts"
-  )
-  ### Glimpse
-  if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
-  if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
-  ### Save
-  if(saveFile){
-    if(do_msg) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
-    ### Save plots as a data object
-    plots_slr_byType |> save_data(fpath = appxResultsPath, fname = "slr_appendix_plots", ftype = "rda")
-
-    ### Save plots as image files
-    saved0 <- plots_slr_byType |> save_appendix_figures(
-      df0       = sum_slr_byType,
-      modelType = "SLR", ### Or SLR
-      fpath     = appxResultsPath,
-      device    = img_dev,
-      res       = imgRes,
-      units     = imgUnits
-    ) ### End save_appendix_figures
-  } ### End if(saveFile)
 
   ###### Return ######
   return(resultsList)
