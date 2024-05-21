@@ -1,4 +1,4 @@
-name: Update Base System Data
+name: 1. Update Base System Data
 
 on:
   workflow_dispatch:
