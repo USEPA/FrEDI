@@ -19,6 +19,13 @@ on:
         options:
         - no
         - yes
+      figH_results:
+        type: choice
+        description: Fig H results?
+        required: true
+        options:
+        - no
+        - yes
       make_figures:
         type: choice
         description: Create report figures?
@@ -40,7 +47,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "${{ inputs.run_tests }} ${{ inputs.make_figures }}"
+          echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_figures }}"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -141,7 +148,59 @@ jobs:
             ./FrEDI/data_tests/general/defaultScenarioTotals.rda
             ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
 
+      - name: Get FigH results
+        run: |
+          Rscript -e '
+          ### Create report results
+          if(do_figH){
+          ### Figure H results
+          results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
+          results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
+          save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
 
+          ### Remove reslts
+          rm(results0, save0)
+          }
+          '
+
+      - name: Upload Report Figures
+        if: |
+          inputs.figH_results == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: Fig H results
+          path: |
+            ./FrEDI/data_tests/report_figures/
+
+      - name: Run create_DoW_results
+        run: |
+          Rscript -e '
+          ### Create report results
+          if(do_figs){
+            ### Load source
+            sPath0 |> file.path("create_DoW_results.R") |> source()
+
+            ### Create report figures
+            reports0 <- create_DoW_results(
+              outPath  = oPath2,
+              saveFile = TRUE,
+              loadCode = "project",
+              silent   = FALSE,
+              testing  = TRUE,
+              return   = FALSE,
+              fpath    = pPath0
+            )
+          }
+          '
+
+      - name: Upload Report Figures
+        if: |
+          inputs.make_figures == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: Report Data
+          path: |
+            ./FrEDI/data_tests/report_figures/
 #            ./FrEDI/data_tests/general/FigH_results.csv
 # #
 #       - name: Commit results
