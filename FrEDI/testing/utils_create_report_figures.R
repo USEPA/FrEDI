@@ -115,45 +115,45 @@ format_values <- function(
 ### Run CONUS scenarios
 create_constant_temp_scenario <- function(
     temp0,
-    type0   = "conus",
-    prefix0 = "Other_Integer" ### Prefix for scenario
+    type0 = "conus",
+    scen0 = "Other_Integer" |> paste(temp0 |> round(1), sep="_") ### Prefix for scenario
 ){
   ### Temperature Type
   isConus <- "conus" %in% (type0 |> tolower())
   ### Format scenario label
-  # pre0  <- (type0=="conus") |> ifelse("Other_Integer", "preI_global")
-  pre0  <- prefix0
-  lab0  <- temp0 |> round(1)
-  scen0 <- pre0  |> paste(lab0, sep="_")
+  # pre0    <- prefix0
+  # lab0    <- temp0 |> round(1)
+  # scen0   <- pre0  |> paste(lab0, sep="_")
+  lab0    <- scen0 |> str_extract("(\\d+)(\\.)(\\d+)")
   ### Get annual values 1995 - 2010: starting with zero in 1995
-  xIn0  <- c(1995, 2010)
-  yIn0  <- c(0, temp0)
-  xOut0 <- seq(xIn0[1], xIn0[2])
-  df0   <- approx(x = xIn0, y = yIn0, xout=xOut0) |>
+  xIn0    <- c(1995, 2010)
+  yIn0    <- c(0, temp0)
+  xOut0   <- seq(xIn0[1], xIn0[2])
+  df0     <- approx(x=xIn0, y=yIn0, xout=xOut0) |>
     as_tibble() |>
     rename(year=x, temp_C=y)
   ### Extend values
-  df1   <- tibble(year = seq(2011, 2090, by=1))
-  df1   <- df1 |> mutate(temp_C  = temp0)
-  df0   <- df0 |> rbind(df1)
-  rm("df1")
+  df1     <- tibble(year = seq(2011, 2090, by=1))
+  df1     <- df1 |> mutate(temp_C = temp0)
+  df0     <- df0 |> rbind(df1)
+  rm(df1)
 
   ### Get other temp types and rename
   if(isConus){
-    df0   <- df0 |> mutate(temp_C_global = temp_C |> FrEDI::convertTemps(from="conus"))
-    df0   <- df0 |> mutate(temp_C_conus  = temp_C)
+    df0 <- df0 |> mutate(temp_C_global = temp_C |> FrEDI::convertTemps(from="conus"))
+    df0 <- df0 |> mutate(temp_C_conus  = temp_C)
   } ### End if(isConus)
   else       {
-    df0   <- df0 |> mutate(temp_C_conus  = temp_C |> FrEDI::convertTemps(from="global"))
-    df0   <- df0 |> mutate(temp_C_global = temp_C)
+    df0 <- df0 |> mutate(temp_C_conus  = temp_C |> FrEDI::convertTemps(from="global"))
+    df0 <- df0 |> mutate(temp_C_global = temp_C)
   } ### End else(isConus)
   ### Drop temp_C
-  df0   <- df0 |> select(-c("temp_C"))
+  df0     <- df0 |> select(-c("temp_C"))
   ### Get SLR
-  ySlr0 <- FrEDI::temps2slr(temps = df0[["temp_C_global"]], years = df0[["year"]])
-  df0   <- df0 |> left_join(ySlr0, by="year")
-  df0   <- df0 |> mutate(temp_lab = lab0)
-  df0   <- df0 |> mutate(scenario = scen0)
+  ySlr0   <- FrEDI::temps2slr(temps = df0[["temp_C_global"]], years = df0[["year"]])
+  df0     <- df0 |> left_join(ySlr0, by="year")
+  df0     <- df0 |> mutate(temp_lab = lab0)
+  df0     <- df0 |> mutate(scenario = scen0)
   ### Return
   return(df0)
 } ### End create_constant_temp_scenario
@@ -198,25 +198,25 @@ get_scenario_inputsList <- function(
       temp0 <- temp0 |> rename_at(vars("temp_C_conus"), ~c("temp_C"))
     } ### End if(doTemp0)
     list0[["tempInput"]] <- temp0
-    rm("temp0")
+    rm(temp0)
   } ### End if(doTemp)
 
   if(doSlr){
     slr0   <- df0 |> select(all_of(cSlr))
     list0[["slrInput"]] <- slr0
-    rm("slr0")
+    rm(slr0)
   } ### End if(doSlr)
 
   if(doGdp){
     gdp0   <- df0 |> select(all_of(cGdp))
     list0[["gdpInput"]] <- gdp0
-    rm("gdp0")
+    rm(gdp0)
   } ### End if(doGdp)
 
   if(doPop){
     pop0   <- df0 |> select(all_of(cPop))
     list0[["popInput"]] <- pop0
-    rm("pop0")
+    rm(pop0)
   } ### End if(doPop)
 
   ### Return
@@ -231,10 +231,10 @@ run_fredi_scenario <- function(
     joinCols = c("year")
 ){
   ### Filter to scenario
-  df1     <- df0 |> select(c(all_of(scenCols))); rm("df0")
+  df1     <- df0 |> select(c(all_of(scenCols))); rm(df0)
   list1   <- df1 |> get_scenario_inputsList()
   ### Run FrEDI
-  df2     <- FrEDI::run_fredi(inputsList = list1, sectorList=sectors, aggLevels = "none")
+  df2     <- FrEDI::run_fredi(inputsList=list1, sectorList=sectors, aggLevels="none")
   ### Join scenarios
   # df1 |> names() |> print();  df2 |> names() |> print();
   df2     <- df2 |> left_join(df1, by=c(joinCols))
@@ -308,7 +308,7 @@ run_scenario <- function(
   # "got here1" |> print(); df0 |> glimpse()
 
   ### Aggregate FrEDI
-  if(agg0) df0 <- df0 |> agg_fredi_scenario(scenCols=scenCols, joinCols=joinCols, aggLevels=aggLevels)
+  if(agg0 ) df0 <- df0 |> agg_fredi_scenario(scenCols=scenCols, joinCols=joinCols, aggLevels=aggLevels)
   # "got here2" |> print(); df0 |> glimpse()
 
   ### Format other values

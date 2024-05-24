@@ -13,7 +13,7 @@ create_DoW_results <- function(
     gcmYears = c(2090),   ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     byState  = TRUE,      ### Whether values are by state or just by region
-    # totals   = FALSE,     ### Whether to do totals
+    totals   = FALSE,     ### Whether to do totals
     silent   = TRUE,      ### Degree of messaging
     testing  = FALSE,     ### Whether to print out extra diagnostic values
     aggOnly  = TRUE,      ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
@@ -39,27 +39,27 @@ create_DoW_results <- function(
   # return   = TRUE    ### Whether to return list object
   ###### Initial values ######
   ### Messaging
-  do_msg          <- !silent
+  do_msg        <- !silent
   ### Initialize Return List
-  return0         <- return; rm(return)
-  resultsList     <- list()
+  return0       <- return; rm(return)
+  resultsList   <- list()
   ### How to load code
-  loadProject     <- "project" %in% (loadCode |> tolower())
-  loadPackage     <- "package" %in% (loadCode |> tolower())
-  loadSource      <- !loadProject & !loadPackage
+  loadProject   <- "project" %in% (loadCode |> tolower())
+  loadPackage   <- "package" %in% (loadCode |> tolower())
+  loadSource    <- !loadProject & !loadPackage
 
   ###### Set Up Environment ######
   ###### ** Set Paths ######
-  # projectPath      <- getwd()     |> file.path("FrEDI")
-  projectPath     <- fpath; rm(fpath)
-  codePath        <- projectPath |> file.path("R")
+  # projectPath    <- getwd()     |> file.path("FrEDI")
+  projectPath   <- fpath; rm(fpath)
+  codePath      <- projectPath |> file.path("R")
   # projectPath |> list.files() |> print()
   # codePath |> list.files() |> print()
 
   ### Output Paths
-  dowPath  <- outPath |> file.path("DoW")
-  fig7Path <- outPath |> file.path("fig7")
-  appxPath <- outPath |> file.path("appendix_figures")
+  dowPath       <- outPath |> file.path("DoW")
+  fig7Path      <- outPath |> file.path("fig7")
+  appxPath      <- outPath |> file.path("appendix_figures")
   # ### Check and create paths
   # outPath |> check_and_create_path()
   # dowPath  |> check_and_create_path()
@@ -172,18 +172,26 @@ create_DoW_results <- function(
   ###### ** Inputs List ######
   ### Message
   if(testing|do_msg) "Creating tibble of integer scenarios..." |> print()
-  ### Load scenario inputs
-  inputs_df_int  <- list(
-    x = df_scenarios[["temp_C"  ]],
-    y = df_scenarios[["tempType"]],
-    z = df_scenarios[["prefix"  ]]
-  )
+  # ### Load scenario inputs
+  # inputs_df_int  <- list(
+  #   x = df_scenarios[["temp_C"  ]],
+  #   y = df_scenarios[["tempType"]],
+  #   z = df_scenarios[["prefix"  ]]
+  # )
+  # ### Create constant temp scenarios
+  # inputs_df_int  <- inputs_df_int |> pmap(function(x, y, z){
+  #   create_constant_temp_scenario(
+  #     temp0   = x,
+  #     type0   = y,
+  #     prefix0 = z ### Prefix for scenario
+  #   )
+  # }) |> bind_rows()
   ### Create constant temp scenarios
-  inputs_df_int  <- inputs_df_int |> pmap(function(x, y, z){
+  inputs_df_int  <- df_scenarios |> nrow() |> seq_len() |> map(function(.i, df_i=df_scenarios[.i,]){
     create_constant_temp_scenario(
-      temp0   = x,
-      type0   = y,
-      prefix0 = z ### Prefix for scenario
+      temp0 = df_i[["temp_C"  ]],
+      type0 = df_i[["tempType"]],
+      scen0 = df_i[["scenario"]]
     )
   }) |> bind_rows()
   ### Glimpse, message, & save
@@ -287,13 +295,31 @@ create_DoW_results <- function(
   ###### ** GCM Totals ######
   if(testing|do_msg) "Aggregating integer scenario results..." |> message()
   #### Aggregate Impact Types, Impact Years
-  df_int_totals  <- df_int_byType |> run_scenarios(
-    col0      = "scenario",
-    fredi     = FALSE,
-    aggLevels = c("impactyear", "impacttype"),
-    scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
-    joinCols  = c("year")
-  )
+  # df_int_totals  <- df_int_byType |> run_scenarios(
+  #   col0      = "scenario",
+  #   fredi     = FALSE,
+  #   aggLevels = c("impactyear", "impacttype"),
+  #   scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
+  #   joinCols  = c("year")
+  # )
+  group_totals  <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal") |>
+    c("model_type", "model") |>
+    c("sectorprimary", "includeaggregate") |>
+    c("scenario", "temp_C_conus", "temp_C_global", "slr_cm")
+  agg_totals    <- c("impactyear", "impacttype")
+  df_int_totals <- tibble()
+  for(scenario_i in cScenarios){
+    ### Message user
+    "\n" |> paste0("Running scenario ", (cScenarios == scenario_i) |> which(), "/" , nScenarios, "...") |> message()
+    ### Get scenario by itself and drop scenario
+    df_i          <- df_int_byType |> filter(scenario == scenario_i)
+    df_int_byType <- df_int_byType |> filter(scenario != scenario_i)
+    ### Aggregate scenario and add to dataframe
+    df_i          <- df_i |> aggregate_impacts(aggLevels=agg_totals, groupByCols=group_totals)
+    df_int_totals <- df_int_totals |> rbind(df_i)
+    rm(df_i, scenario_i)
+  } ### End for(scenario_i in cScenarios)
+  rm(agg_totals, group_totals)
   # rm(df_int_byType)
   ### Glimpse results
   # if(return0) resultsList[["df_int_totals"]] <- df_int_totals

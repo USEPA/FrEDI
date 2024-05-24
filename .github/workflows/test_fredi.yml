@@ -14,14 +14,21 @@ on:
     inputs:
       run_tests:
         type: choice
-        description: Run general tests
+        description: Run general tests?
+        required: true
+        options:
+        - no
+        - yes
+      figH_results:
+        type: choice
+        description: Fig H results?
         required: true
         options:
         - no
         - yes
       make_figures:
         type: choice
-        description: Create report figures
+        description: Create report figures?
         required: true
         options:
         - no
@@ -69,13 +76,9 @@ jobs:
               type    = "source"
             )'
 
-      - name: Run create_DoW_results
+      - name: Set paths and load FrEDI
         run: |
           Rscript -e '
-          ### Which tests to do
-          do_tests <- "${{ inputs.run_tests    }}" == "true"
-          do_figs  <- "${{ inputs.make_figures }}" == "true"
-
           ### Main repo path, FrEDI project path, scripts path
           rPath0   <- ".";
           pPath0   <- rPath0 |> file.path("FrEDI")
@@ -89,19 +92,35 @@ jobs:
           tFiles0 <- tPath0 |> list.files(full.names=TRUE)
           for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
+          ### Which tests to do
+          do_tests <- "${{ inputs.run_tests    }}" == "true"
+          do_figH  <- "${{ inputs.figH_results }}" == "true"
+          do_figs  <- "${{ inputs.make_figures }}" == "true"
+
           ### Where to save results
           oPath0   <- pPath0 |> file.path("data_tests")
           oPath1   <- oPath0 |> file.path("general")
           oPath2   <- oPath0 |> file.path("report_figures")
 
+          ### Whether paths exist
+          exists0  <- oPath0 |> dir.exists()
+          exists1  <- oPath1 |> dir.exists()
+          exists2  <- oPath2 |> dir.exists()
+
+          ### Check if path exists and, if not, create it
+          if(!exists0) oPath0 |> dir.create(recursive = TRUE)
+          if(!exists1) oPath1 |> dir.create(recursive = TRUE)
+          if(!exists2) oPath2 |> dir.create(recursive = TRUE)
+          '
+
+      - name: Run tests
+        run: |
+          Rscript -e '
           ### Test results
           if(do_tests){
-            ### Check if path exists and, if not, create it
-            exists0 <- oPath1 |> dir.exists()
-            if(!exists0){oPath1 |> dir.create(recursive = TRUE)}
-
             ### Run FrEDI
             results0 <- run_fredi()
+
             ### Run tests
             tests0   <- results0 |> general_fredi_test(
               outPath   = oPath1,
@@ -115,35 +134,8 @@ jobs:
             save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
 
             ### Remove results
-            rm(results0, tests0, listResults)
-          }
-
-          ### Create report results
-          if(do_figs){
-            ### Load source
-            sPath0 |> file.path("create_DoW_results.R") |> source()
-
-            ### Check if path exists and, if not, create it
-            exists0 <- oPath2 |> dir.exists()
-            if(!exists0){oPath2 |> dir.create(recursive = TRUE)}
-
-
-            ### Create report figures
-            reports0 <- create_DoW_results(
-              outPath  = oPath2,
-              saveFile = TRUE,
-              loadCode = "project",
-              silent   = FALSE,
-              testing  = TRUE,
-              return   = FALSE,
-              fpath    = pPath0
-            )
-
-            ### Figure H results
-            results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
-            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
-            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
-          }
+            rm(exists0, results0, tests0, listResults, save0)
+          } ### End if(do_tests)
           '
 
       - name: Upload Tests
@@ -155,6 +147,51 @@ jobs:
           path: |
             ./FrEDI/data_tests/general/defaultScenarioTotals.rda
             ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
+
+       - name: Get FigH results
+         run: |
+           Rscript -e '
+           ### Create report results
+           if(do_figH){
+            ### Figure H results
+            results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
+            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
+            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
+
+            ### Remove reslts
+            rm(results0, save0)
+          }
+          '
+
+      - name: Upload Report Figures
+        if: |
+          inputs.figH_results == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: Fig H results
+          path: |
+            ./FrEDI/data_tests/report_figures/
+
+      - name: Run create_DoW_results
+        run: |
+          Rscript -e '
+          ### Create report results
+          if(do_figs){
+            ### Load source
+            sPath0 |> file.path("create_DoW_results.R") |> source()
+
+            ### Create report figures
+            reports0 <- create_DoW_results(
+              outPath  = oPath2,
+              saveFile = TRUE,
+              loadCode = "project",
+              silent   = FALSE,
+              testing  = TRUE,
+              return   = FALSE,
+              fpath    = pPath0
+            )
+          }
+          '
 
       - name: Upload Report Figures
         if: |
