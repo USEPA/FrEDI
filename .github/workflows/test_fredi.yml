@@ -197,12 +197,21 @@ jobs:
             ./FrEDI/data_tests/report_figures/
 
 
-      - name: Upload Other Report Figures
+      - name: Upload Report Appendix Figures
         if: |
-          inputs.make_figures == 'true'
+          inputs.make_appx_figs == 'true'
         uses: actions/upload-artifact@v3
         with:
-          name: Other Report Figures & Data
+          name: Report appendix figures & data
+          path: |
+            ./FrEDI/data_tests/report_figures/
+
+      - name: Upload Report Fig7 Figures
+        if: |
+          inputs.make_tots_figs == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: Fig7 report figures & data
           path: |
             ./FrEDI/data_tests/report_figures/
 #            ./FrEDI/data_tests/general/FigH_results.csv
