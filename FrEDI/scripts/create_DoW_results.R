@@ -204,8 +204,8 @@ create_DoW_results <- function(
   ###### Run scenarios to get results by type
   ### Run scenarios in FrEDI. Get model averages and national totals
   if(testing|do_msg) "Running integer scenarios..." |> message()
-  aggLvls0       <- c("modelaverage", "national") |> c("impactyear", "impacttype")
-  if(totals) aggLvls0 <- aggLvls0 |> c()
+  aggLvls0       <- c("modelaverage", "national")
+  if(totals) aggLvls0 <- aggLvls0 |> c("impactyear", "impacttype")
   df_int_byType  <- inputs_df_int |> run_scenarios(
     col0      = "scenario",
     fredi     = TRUE,
