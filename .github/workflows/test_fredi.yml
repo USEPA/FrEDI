@@ -26,9 +26,16 @@ on:
         options:
         - no
         - yes
-      make_figures:
+      make_appx_figs:
         type: choice
-        description: Create report figures?
+        description: Create appendix figures for report?
+        required: true
+        options:
+        - no
+        - yes
+      make_tots_figs:
+        type: choice
+        description: Make figures for impact type totals?
         required: true
         options:
         - no
@@ -47,7 +54,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_figures }}"
+          echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_appx_figs }} ${{ inputs.make_tots_figs }}"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -97,9 +104,11 @@ jobs:
           sPath0 |> file.path("create_DoW_results.R") |> source()
 
           ### Which tests to do
-          do_tests <- "${{ inputs.run_tests    }}" == "true"
-          do_figH  <- "${{ inputs.figH_results }}" == "true"
-          do_figs  <- "${{ inputs.make_figures }}" == "true"
+          do_tests <- "${{ inputs.run_tests      }}" == "true"
+          do_figH  <- "${{ inputs.figH_results   }}" == "true"
+          do_appx  <- "${{ inputs.make_appx_figs }}" == "true"
+          do_tots  <- "${{ inputs.make_tots_figs }}" == "true"
+          do_figs  <- do_appx | do_tots
 
           ### Where to save results
           oPath0   <- pPath0 |> file.path("data_tests")
@@ -158,6 +167,7 @@ jobs:
               outPath  = oPath2,
               saveFile = TRUE,
               loadCode = "project",
+              totals   = do_tots,
               silent   = FALSE,
               testing  = TRUE,
               return   = FALSE,
