@@ -19,13 +19,6 @@ on:
         options:
         - no
         - yes
-      figH_results:
-        type: choice
-        description: Fig H results?
-        required: true
-        options:
-        - no
-        - yes
       make_figures:
         type: choice
         description: Create report figures?
@@ -47,7 +40,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_figures }}"
+          echo "${{ inputs.run_tests }} ${{ inputs.make_figures }}"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
