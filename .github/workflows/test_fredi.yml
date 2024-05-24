@@ -74,9 +74,10 @@ jobs:
               upgrade = "never",
               force   = TRUE,
               type    = "source"
-            )'
+            )
+            '
 
-      - name: Set paths and load FrEDI
+      - name: Run tests & create figures
         run: |
           Rscript -e '
           ### Main repo path, FrEDI project path, scripts path
@@ -91,6 +92,9 @@ jobs:
           ### Load test code
           tFiles0 <- tPath0 |> list.files(full.names=TRUE)
           for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+
+          ### Load source
+          sPath0 |> file.path("create_DoW_results.R") |> source()
 
           ### Which tests to do
           do_tests <- "${{ inputs.run_tests    }}" == "true"
@@ -111,11 +115,7 @@ jobs:
           if(!exists0){ oPath0 |> dir.create(recursive = TRUE)}
           if(!exists1){ oPath1 |> dir.create(recursive = TRUE)}
           if(!exists2){ oPath2 |> dir.create(recursive = TRUE)}
-          '
 
-      - name: Run tests
-        run: |
-          Rscript -e '
           ### Test results
           if(do_tests){
             ### Run FrEDI
@@ -136,46 +136,19 @@ jobs:
             ### Remove results
             rm(exists0, results0, tests0, listResults, save0)
           } ### End if(do_tests)
-          '
 
-      - name: Upload Tests
-        if: |
-          inputs.run_tests == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: Test Data
-          path: |
-            ./FrEDI/data_tests/general/defaultScenarioTotals.rda
-            ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
-
-      - name: Get FigH results
-        run: |
-          Rscript -e '
-          ### Create report results
+          ### Create Fig H results
           if(do_figH){
-          ### Figure H results
-          results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
-          results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
-          save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
+            ### Figure H results
+            results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
+            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
+            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
 
-          ### Remove reslts
-          rm(results0, save0)
-          }
-          '
+            ### Remove reslts
+            rm(results0, save0)
+          } ### End if(do_figH)
 
-      - name: Upload Report Figures
-        if: |
-          inputs.figH_results == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: Fig H results
-          path: |
-            ./FrEDI/data_tests/report_figures/
-
-      - name: Run create_DoW_results
-        run: |
-          Rscript -e '
-          ### Create report results
+          ### Create report figures
           if(do_figs){
             ### Load source
             sPath0 |> file.path("create_DoW_results.R") |> source()
@@ -190,15 +163,36 @@ jobs:
               return   = FALSE,
               fpath    = pPath0
             )
-          }
+          } ### End if(do_figs)
           '
 
-      - name: Upload Report Figures
+      - name: Upload Tests
+        if: |
+          inputs.run_tests == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test Data
+          path: |
+            ./FrEDI/data_tests/general/defaultScenarioTotals.rda
+            ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
+
+
+      - name: Upload FigH Results
+        if: |
+          inputs.figH_results == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: FigH results
+          path: |
+            ./FrEDI/data_tests/report_figures/
+
+
+      - name: Upload Other Report Figures
         if: |
           inputs.make_figures == 'true'
         uses: actions/upload-artifact@v3
         with:
-          name: Report Data
+          name: Other Report Figures & Data
           path: |
             ./FrEDI/data_tests/report_figures/
 #            ./FrEDI/data_tests/general/FigH_results.csv
