@@ -88,7 +88,8 @@ import_inputs <- function(
   slrfile  = NULL,
   popfile  = NULL,
   gdpfile  = NULL,
-  temptype = "conus" ### "global", or "conus" (default)
+  temptype = "conus", ### "global", or "conus" (default)
+  popArea  = "state"  ### "national", "conus", "regional", or "state" (default)
 ){
   ###### Messaging ######
   namesInputs  <- c("tempfile", "slrfile", "popfile", "gdpfile")
@@ -113,6 +114,8 @@ import_inputs <- function(
   temptype_default <- "conus"
   temptype         <- (temptype |> is.null()) |> ifelse(temptype_default, temptype)
   conus            <- ((temptype |> tolower()) == "conus"); #conus |> print()
+  
+  popArea <- tolower(popArea)
 
   ###### Initialize Inputs List ######
   ### Get input scenario info: co_inputScenarioInfo
@@ -143,12 +146,19 @@ import_inputs <- function(
     ###### Column Info ######
     region_i    <- inputInfo_i$region |> unique()
     valueCol_i  <- inputInfo_i$valueCol |> unique()
-    valueCol_i  <- (input_i == "pop") |> ifelse("state_pop", valueCol_i)
+    #valueCol_i  <- (input_i == "pop") |> ifelse("state_pop", valueCol_i)
     ### Initialize column names
     numCols_i   <- colNames_i <- c("year") |> c(valueCol_i)
     # cols0       <- c("region")
-    statecols0  <- c("region", "state", "postal")
-    if(input_i == "pop") {colNames_i <- statecols0 |> c(colNames_i)}
+    #statecols0  <- c("region", "state", "postal")
+    if(popArea == "regional"){
+      popcols0 <- c("region")
+    }
+    if(popArea == "state"){
+      popcols0 <- c("state", "postal")
+    }
+    if(input_i == "pop" & (popArea == "regional"|popArea == "state")) {colNames_i <- popcols0 |> c(colNames_i)}
+    
     # if(byState){
     #   cols0      <- statecols0
     #   colNames_i <- numCols_i <- c("year", "state_pop")
@@ -171,7 +181,7 @@ import_inputs <- function(
 
     ###### Format Data Frame ######
     if(!isNullFile_i){
-      msg1 |> paste0("User supplied ", msgName_i, " input...") |> message()
+      msg1 |> paste0("User supplied ", msgName_i, " inputs...") |> message()
       msg2 |> paste0("Importing data from ", inputFile_i, "...") |> message()
       ### Try to import the file and initialize the list value
       fileInput_i   <- inputFile_i |> fun_tryInput(silent=T)
@@ -247,6 +257,51 @@ import_inputs <- function(
         #   ### Return list and not an inputs list if an error occurred
         #   return(returnList)
         # } ### End if flagged
+        
+        ##### Calculate State Populations #####
+        if(input_i == "pop" & popArea != "state"){
+          ### Message user
+          msg3 |> paste0("User specified `popArea = '", popArea, "'`...") |> message()
+          msg3 |> paste0("Converting ", popArea, " populations to state populations") |> message()
+
+          ### Convert populations
+          df_popRatios    <- rDataList[["stateData"]][["data"]][["df_popRatios"]]
+          state_ratios    <- df_popRatios |> select(state, postal, region, year, region_to_state) |> distinct()
+          reg_ratios      <- df_popRatios |> select(region, year, conus_to_region) |> distinct()
+          conus_ratios    <- rDataList[["stateData"]][["data"]][["df_conusRatios"]] ## set to appropriate name
+
+          if(popArea == "national"){# input file should have cols year, pop
+            df_input_i <- df_input_i |>
+              group_by(year) |>
+              summarize(pop = sum(pop)) |>
+              left_join(conus_ratios, by = "year") |>
+              left_join(reg_ratios, by = "year") |>
+              left_join(state_ratios, by = c("year", "region")) |>
+              mutate(state_pop = pop * nation_to_conus * conus_to_region * region_to_state)
+          }
+          if(popArea == "conus"){# input file should have cols year, pop
+            df_input_i <- df_input_i |>
+              group_by(year) |>
+              summarize(pop = sum(pop)) |>
+              left_join(reg_ratios, by = c("year")) |>
+              left_join(state_ratios, by = c("year", "region")) |>
+              mutate(state_pop = pop * conus_to_region * region_to_state)
+          }
+          if(popArea == "regional"){# input file should have cols region, year, pop, region must be in dot form (e.g. Southern.Plains)
+            df_input_i <- df_input_i |>
+              group_by(year, region) |>
+              summarize(pop = sum(pop)) |>
+              left_join(state_ratios, by = c("year", "region")) |>
+              mutate(state_pop = pop * region_to_state)
+            print(head(df_input_i))
+          }
+          df_input_i <- df_input_i |>
+            select(state, postal, year, state_pop) # do we also need region here?
+        } else if(input_i == "pop" & popArea == "state"){
+          df_input_i <- df_input_i |>
+            rename(state_pop = pop) |>
+            select(state, postal, year, state_pop) # need region?
+        }
 
         ###### Update Results List Element ######
         ### Add results to the file
