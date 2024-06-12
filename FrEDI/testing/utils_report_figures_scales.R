@@ -279,22 +279,29 @@ fun_limitsByGroup <- function(
   if(print_msg){msg1 |> paste0("Grouping by columns ", paste(groupCols, collapse=", "), "...") |> message()}
   ### Summarize values by sector
   lim_bySector <- data |>
-    group_by_at(c(groupCols)) |>
-    summarise_at(.vars = c(sumCols), .funs = c(type), na.rm=T) |>
-    gather(key = "summary_type", value = "summary_value", -c(all_of(groupCols))) |>
-    ungroup()
+    group_by_at (c(groupCols)) |>
+    summarise_at(c(sumCols), .funs=c(type), na.rm=T) |> ungroup()
+  rm(data)
+  ### Pivot longer
+  # lim_bySector <- lim_bySector |> gather(key = "summary_type", value = "summary_value", -c(all_of(groupCols)))
+  lim_bySector <- lim_bySector |> pivot_longer(
+    cols      = -all_of(groupCols),
+    names_to  = "summary_type",
+    values_to = "summary_value"
+  ) ### pivot_longer
   # df_limBySector |> print()
 
   ###### Spread ######
   ### Spread & calculate the spread
-  lim_bySector <- lim_bySector |> spread(key="summary_type", value="summary_value")
+  # lim_bySector <- lim_bySector |> spread(key="summary_type", value="summary_value")
+  lim_bySector <- lim_bySector |> pivot_wider(names_from="summary_type", values_from="summary_value")
   lim_bySector <- lim_bySector |> mutate(spread=max - min)
 
   ###### Arrange ######
   ### Arrange the sectors & get their order
   # arrange0     <- groupCols    |> c("max", "spread")
   arrange0     <- c("max", "spread")
-  lim_bySector <- lim_bySector |> arrange_at(.vars = c(arrange0), desc)
+  lim_bySector <- lim_bySector |> arrange_at(c(arrange0), desc)
   # lim_bySector |> print()
 
   ###### Get Group Orders ######
@@ -312,7 +319,7 @@ fun_limitsByGroup <- function(
   ### Arrange the sectors & get their order
   # arrange0     <- groupCols    |> c("max", "spread")
   arrange0     <- "order" |> paste0("_", groupCols)
-  lim_bySector <- lim_bySector |> arrange_at(.vars = c(arrange0))
+  lim_bySector <- lim_bySector |> arrange_at(c(arrange0))
   lim_bySector <- lim_bySector |> mutate(order = row_number())
   # lim_bySector |> print()
 

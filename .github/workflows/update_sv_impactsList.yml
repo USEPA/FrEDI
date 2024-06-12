@@ -1,4 +1,4 @@
-name: Update SV ImpactsList Data
+name: 2. Update SV ImpactsList Data (as needed)
 
 on:
   workflow_dispatch:

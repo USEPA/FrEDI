@@ -101,6 +101,7 @@ plot_DOW_byImpactTypes <- function(
   )
 
   ###### Get Sector Info ######
+  # df0 |> glimpse()
   infoList0     <- df0 |> get_sector_plotInfo(yCol=yCol, byType=TRUE, silent=silent)
   df_info       <- infoList0[["sectorInfo"]]
   df_minMax     <- infoList0[["minMax"    ]]
