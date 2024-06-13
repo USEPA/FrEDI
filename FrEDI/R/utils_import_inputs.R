@@ -4,14 +4,13 @@
 fun_tryInput <- function(
   filename = NULL,
   silent   = FALSE, ### Whether to message
-  msg0      = "" ### Message prefix
+  msg0     = ""     ### Message prefix
 ){
   ###### Messaging ######
-  msgUser <- ifelse(silent, FALSE, TRUE)
-  msg0 <- ifelse(is.null(msg0), "", msg0)
-  msg1 <- msg0 |> paste0("\t")
-  msg2 <- msg1 |> paste0("\t")
-  msg3 <- msg2 |> paste0("\t")
+  msgUser <- !silent
+  msg1    <- msg0 |> paste0("\t")
+  msg2    <- msg1 |> paste0("\t")
+  msg3    <- msg2 |> paste0("\t")
 
   ###### Initialize results ######
   return_list <- list()
@@ -19,7 +18,7 @@ fun_tryInput <- function(
   ###### Defaults ######
   ### Check if the file exists and try to load the file
   ### Set input to null if it doesn't exist
-  if(!is.null(filename)){
+  if(!(filename |> is.null())){
     fileExists  <- filename |> file.exists()
     ### If the file exists, try loading the file and then check the class of the result
     if(fileExists){
@@ -29,24 +28,24 @@ fun_tryInput <- function(
 
       ### If loading the inputs was successful
       if(inputExists){
-        return_list[["fileInput"]]  <- fileInput
+        return_list[["fileInput" ]] <- fileInput
         return_list[["fileStatus"]] <- "loaded"
-        return_list[["fileMsg"]]    <- "Inputs loaded."
+        return_list[["fileMsg"   ]] <- "Data loaded."
       } else{
+        return_list[["fileInput" ]] <- NULL
         return_list[["fileStatus"]] <- "other-error"
-        return_list[["fileMsg"]]    <- "File exists but could not load the input file."
-      }
-
-
+        return_list[["fileMsg"   ]] <- "Not able to read CSV data."
+      } ### End if(inputExists)
     }  else{
+      return_list[["fileInput" ]] <- NULL
       return_list[["fileStatus"]] <- "no-file"
-      return_list[["fileMsg"]]    <- "Input file does not exist."
-    }
+      return_list[["fileMsg"   ]] <- "Input file does not exist."
+    } ### End if(fileExists)
 
     ### Message the user
     # message("\t", return_list[["fileMsg"]])
     if(msgUser){ msg0 |> paste0(return_list[["fileMsg"]]) |> message() }
-  }
+  } ### End if(!(filename |> is.null()))
 
   ###### Return ######
   return(return_list)
