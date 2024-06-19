@@ -110,7 +110,7 @@ import_inputs <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_inputScenarioInfo
   ### Get state info: co_states
-  fListNames <- c("co_inputScenarioInfo", "co_states", "df_popRatios")
+  fListNames <- c("co_inputScenarioInfo", "co_states")
   sListNames <- c("df_popRatios")
   for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
   for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
@@ -148,34 +148,15 @@ import_inputs <- function(
 
 
   ###### Other Values ######
-  ### Create a list with expected name of column containing values
-  valCols    <- list()
-  valCols[["temp"]] <- c("temp_C")
-  valCols[["slr" ]] <- c("slr_cm")
-  valCols[["gdp" ]] <- c("gdp_usd")
-  valCols[["pop" ]] <- list()
-  valCols[["pop" ]][["national"]] <- c("national_pop")
-  valCols[["pop" ]][["conus"   ]] <- c("area_pop")
-  valCols[["pop" ]][["regional"]] <- c("reg_pop")
-  valCols[["pop" ]][["state"   ]] <- c("state_pop")
-  valCols[["pop" ]] <- valCols[["pop"]][[popArea]]
-
-  ### Create a list with expected name of columns used for unique ids
-  idCols     <- list()
-  idCols[["temp"]] <- c()
-  idCols[["slr" ]] <- c()
-  idCols[["gdp" ]] <- c()
-  idCols[["pop" ]] <- list()
-  idCols[["pop" ]][["national"]] <- c()
-  idCols[["pop" ]][["conus"   ]] <- c()
-  idCols[["pop" ]][["regional"]] <- c("region")
-  idCols[["pop" ]][["state"   ]] <- c("state")
-  idCols[["pop" ]] <- idCols[["pop"]][[popArea]]
+  ### Get list with expected name of column containing values
+  ### Get list with expected name of columns used for unique ids
+  valCols    <- get_import_inputs_valCols(popArea=popArea)
+  idCols     <- get_import_inputs_idCols (popArea=popArea)
+  # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
 
   ###### Initialize Input File Names List ######
   ### Initialize list of file names and
-  fList      <- list()
-  for(name_i in inNames){fList[[name_i]] <- parse(text=name_i |> paste0("file")) |> eval(); rm(name_i)}
+  fList      <- inNames |> map(function(x){parse(text=x |> paste0("file")) |> eval()}) |> set_names(inNames)
 
   ###### Initialize Inputs List ######
   ### Initialize a list for loaded data
@@ -189,216 +170,43 @@ import_inputs <- function(
 
   ### If some file names supplied, iterate over list, trying to read in file names
   inputsList <- list(
-    name_i = inputNames,
-    file_i = inputsList
-  ) |> pmap(function(name_i, file_i){
-    ### Messages
-    msg_i1 <- paste0("User specified ", name_i |> paste0("file"), "...")
-    msg_i2 <- paste0("File does not exist! Returning a null data frame for", name_i |> paste0("Input", "."))
-    msg_i3 <- paste0("Importing data from ", file_i, "...")
-
-    ### Initialize data frame as a null value
-    df_i   <- NULL
-
-    ### Check if a file name was supplied
-    ### - If no file supplied, return NULL
-    ### - Otherwise, continue
-    has_i  <- file_i |> length()
-    if(!has_i) return(df_i)
-
-    ### If a file name was supplied, message user
-    ### Get info about the input
-    ### Then check if the file exists
-    msg1 |> paste0(msg_i1) |> message()
-    has_i  <- file_i |> file.exists()
-
-    ### If file does not exist, message user and return NULL
-    ### If the file exists, try to load the file
-    if(!has_i) {
-      msg2 |> paste0(msg_i2) |> message()
-      return(df_i)
-    } else {
-      msg2 |> paste0(msg_i3) |> message()
-      try_i  <- file_i |> fun_tryInput(silent=T)
-      msg_i4 <- try_i[["fileMsg"]]
-      has_i  <- "loaded" %in% data_i[["fileStatus"]]
-    } ### End if(!has_i)
-
-    ### Message user, then check if file import was successful
-    msg3 |> paste0(msg_i4) |> message()
-    if(!has_i) {
-      return(df_i)
-    } else{
-      df_i   <- try_i[["fileInput"]]
-    } ### End if(!has_i)
-
-    ### Return df_i
-    return(df_i)
-  }) |> set_names(inputNames)
-
+    inputName = inNames,
+    fileName  = inputsList
+  ) |>
+    pmap(run_fun_tryInput) |>
+    set_names(inNames)
+  # inputsList |> print()
 
   ###### Check the Inputs ######
   ### Message the user
-  if(hasInputs) msg1 |> paste0("Checking input values...") |> message()
   ### Use the input info to check the values make sense
+  if(hasInputs) msgN |> paste0(msg1, "Checking input values...") |> message()
   inputsList <- list(
-    name_i   = inputNames,
-    df_i     = inputsList,
-    valCol_i = valCols,
-    idCol_i  = idCols
-  ) |> pmap(function(
-    name_i, df_i, valCol_i, idCol_i,
-    df0      = co_inputScenarioInfo
-  ){
-    ### Messages
-    msg_i1    <- paste0("\n", "Checking input values for ", name_i, " inputs...")
-    msg_i2    <- paste0("Dropping ", name_i, " inputs from outputs.")
-    msg_i3    <- paste0("Data is missing the following required columns: " )
-    msg_i4    <- paste0("Data for column ", valCol_i, " is not numeric!")
-    msg_i5    <- paste0("Some values for column ", valCol_i, " are outside the range!")
-
-    ### Get info for input i
-    info_i    <- co_inputScenarioInfo |> filter(inputName == name_i)
-    ### Min and Max Values
-    min_i     <- info_i |> pull(inputMin) |> unique()
-    max_i     <- info_i |> pull(inputMax) |> unique()
-    hasMin_i  <- !(min_i |> is.na())
-    hasMax_i  <- !(max_i |> is.na())
-    msgRange  <- case_when(hasMin_i ~ ">=" |> paste(min_i), .default="") |>
-      paste0(case_when(hasMin_i & hasMax_i ~ " and "), .default="") |>
-      paste0(case_when(hasMax_i ~ "<=" |> paste(max_i), .default=""))
-    ### Column names
-    yearCol_i <- "year"
-    # idCol_i   <- case_when("pop" %in% name_i ~ idCol_i[[popArea]], .default=idCol_i)
-    cols_i    <- idCol_i |> c(valCol_i) |> c(yearCol_i) |> unique()
-
-    ### Check that data exists
-    ### If it does, message user; otherwise, return NULL
-    has_i     <- NULL |> nrow() |> length()
-    if(has_i) {msg2 |> paste0(msg_i1) |> message()} else {return(NULL)}
-
-    ### If data exists, check for required columns
-    dNames_i  <- df_i |> names()
-    whichCols <- cols_i %in% dNames_i
-    checkCols <- whichCols |> all()
-    ### If columns don't pass, message user and return NULL
-    ### Otherwise, continue
-    if(!checkCols) {
-      msg3 |> paste0(msg_i3) |> paste0(dNames_i[whichCols] |> paste(collapse=", "), "!") |> message()
-      msg3 |> paste0(msg_i2) |> message()
-      return(NULL)
-    } ### End if(!checkCols)
-
-    ### If data has required columns, check the value column:
-    ### - Check that it is numeric
-    ### - If it is numeric, check min and max values
-    dataVals  <- df_i |> pull(all_of(valCol_i))
-
-    checkNum  <- dataVals |> is.numeric()
-    if(!checkNum) {
-      msg3 |> paste0(msg_i4) |> message()
-      msg3 |> paste0(msg_i2) |> message()
-      return(NULL)
-    } ### End if(!checkNum)
-
-    checkYear  <- df_i |> pull(all_of(yearCol_i)) |> is.numeric()
-    if(!checkYear) {
-      msg3 |> paste0("Data for column year is not numeric!") |> message()
-      msg3 |> paste0(msg_i2) |> message()
-      return(NULL)
-    } ### End if(!checkNum)
-
-    rangeVals <- dataVals |> range(na.rm=T)
-    checkVals <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)  &
-      case_when(hasMax_i ~ (dataVals >= max_i) |> all(), .default = T)
-    if(!checkVals) {
-      msg3 |> paste0(msg_i5) |> message()
-      msg3 |> paste0("Values for column ", valCol_i, " must be ", msgRange, ".") |> message()
-      msg3 |> paste0(msg_i2) |> message()
-      return(NULL)
-    } ### End if(!checkNum)
-
-    ### If checks pass, convert all id columns to character
-    mutate0   <- idCol_i |> (function(x, y="year"){x[!(x %in% y)]})()
-    df_i      <- df_i |> mutate_at(c(idCol_i), as.character)
-
-    ### Check regions, states, postal for correct values if pop input present
-    doPop      <- "pop" %in% name_i
-    if(doPop) {
-      df_pop     <- inputsList[["pop"]] |> filter_at(c(valCols), function(x){!(x |> is.na())})
-      namesPop   <- df_pop |> names()
-      namesState <- co_states |> names()
-      checkNames <- namesPop |> (function(x, y=namesState){x[x %in% y]})()
-      ### Message user
-      msgPop     <- paste0("Checking pop inputs for columns: ") |> paste0(checkNames |> paste(collapse=", "))
-      msg1 |> paste0(msgN, msgPop) |> message()
-      ### Which levels to check
-      doRegions  <- "region" %in% checkNames
-      doStates   <- "state"  %in% checkNames
-      ### Unique values
-      refRegions <- co_states |> pull(region) |> unique()
-      refStates  <- co_states |> pull(state ) |> unique()
-      ### Select columns
-      popData    <- df_pop    |> select(all_of(checkNames)) |> unique()
-      popData    <- popData   |> mutate(test = 1)
-      ### Join values to check
-      co_states  <- co_states |> left_join(popData, by=c(checkNames), relationship="many-to-many")
-      newRegions <- co_states |> filter(region |> is.na()) |> pull(region) |> unique()
-      newStates  <- co_states |> filter(state  |> is.na()) |> pull(state ) |> unique()
-      ### Figure out which regions and states are missing
-      naRegions  <- refRegions |> (function(x, y=newRegions){x[!(x %in% y)]})()
-      naStates   <- refStates  |> (function(x, y=newStates ){x[!(x %in% y)]})()
-      ### Messages
-      msgRegions <- paste0("Missing population data for the following regions: ") |> paste0(naRegions |> paste(collapse=", "))
-      msgStates  <- paste0("Missing population data for the following states: ") |> paste0(naStates |> paste(collapse=", "))
-      ### Check values
-      checkReg   <- !(naRegions |> length())
-      checkState <- !(naStates  |> length())
-      if(!checkReg){
-        msg2 |> paste0(msgN, msgRegions) |> message()
-        msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
-        df_i <- NULL
-      } else if(!checkState){
-        msg2 |> paste0(msgN, msgStates) |> message()
-        msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
-        df_i <- NULL
-      } ### End if(!checkReg)
-    } ### End if(hasPop)
-
-    ### Return
-    return(df_i)
-  }) |> set_names(inputNames)
+    inputName = inNames,
+    inputDf   = inputsList,
+    valCol    = valCols,
+    idCol     = idCols
+  ) |>
+    pmap(check_input_data) |>
+    set_names(inNames)
 
 
   ###### Calculate State Population ######
   ### Calculate state population if pop input present and popArea != "state"
-  hasPop     <- inputsList[["pop"]] |> length()
-  calcPop    <- hasPop & !("state" %in% popArea)
-  if(calcPop) {
-    df_pop   <- inputsList[["pop"]]
-    namesPop <- df_pop |> names()
-    ### Info on popArea
-    doArea   <- (namesPop %in% c("national_pop")) |> any()
-    doReg    <- (namesPop %in% c("national_pop", "area_pop")) |> any()
-    ### Join data with pop ratios
-    join0    <- namesPop |> (function(x, y=df_popRatios |> names()){x[x %in% y]})()
-    df_pop   <- df_pop   |> left_join(df_popRatios, by=c(join0))
-    ### If do area: Calculate area pop from national
-    ### If do reg: Calculate region pop from national
-    if(doArea){df_pop <- df_pop |> mutate(area_pop = national_pop * area2nat)}
-    if(doReg ){df_pop <- df_pop |> mutate(reg_pop  = area_pop     * reg2area)}
-    ### Calculate state population
-    df_pop   <- df_pop |> mutate(reg_pop  = reg_pop * state2reg)
+  ### Then check values
+  # if(hasInputs) msgN |> paste0(msg1, "Checking population values...") |> message()
+  df_pop     <- inputsList[["pop"]]
+  hasPop     <- df_pop |> length()
+  if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
+  inputsList[["pop"]] <- df_pop
 
-    ### Select state columns
-    select0  <- c("state", "year", "state_pop")
-    df_pop   <- df_pop |> select(all_of(select0))
-  } ### End if(calcPop)
+  ###### Rename List ######
+  inputsList <- inputsList |> set_names(outNames)
 
 
-
-  ###### Return input list ######
-  msg0 |> paste0("Finished.") |> message()
+  ###### Return ######
+  ### Return input list
+  msgN |> paste0(msg0, "Finished.") |> message()
   return(inputsList)
 }
 
