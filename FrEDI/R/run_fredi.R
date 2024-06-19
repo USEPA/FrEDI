@@ -536,11 +536,17 @@ run_fredi <- function(
   if(has_popUpdate){
     "\t" |> message("Creating population scenario from user inputs...")
     ### Standardize region and then interpolate
-    popInput     <- popInput |> filter(!(year |> is.na()))
-    popInput     <- popInput |> (function(y, col0=popCol0){y[!(y[[popCol0]] |> is.na()),]})()
-    popInput     <- popInput |> (function(y, col0=popCol0){y[!(y[[popCol0]] <= 0),]})()
-    pop_df       <- popInput |> mutate(region = gsub(" ", ".", region))
-    pop_df       <- pop_df   |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
+    popInput     <- popInput  |> filter(!(year |> is.na()))
+    popInput     <- popInput  |> (function(y, col0=popCol0){y[!(y[[popCol0]] |> is.na()),]})()
+    popInput     <- popInput  |> (function(y, col0=popCol0){y[!(y[[popCol0]] <= 0),]})()
+    ### Join with region info
+    join0        <- "state"
+    popInput     <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
+    popInput     <- popInput  |> filter_at(c(popCol0), function(x){x[!(x |> is.na())]})
+    rm(join0)
+    ### Mutate region, interpolate annual
+    pop_df       <- popInput  |> mutate(region = gsub(" ", ".", region))
+    pop_df       <- pop_df    |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
     # pop_df |> glimpse()
     ### Calculate national population
     national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()

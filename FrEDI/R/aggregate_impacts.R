@@ -133,7 +133,7 @@ aggregate_impacts <- function(
   co_sectors  <- co_sectors |> select(all_of(rename0))
   co_sectors  <- co_sectors |> rename_at(c(rename0), ~rename1)
   co_sectors  <- co_sectors |> mutate_at(c("model_type"), toupper)
-  rm("rename0", "rename1")
+  rm(rename0, rename1)
 
   ###### - Format Variant Info ######
   ### Format variants
@@ -142,7 +142,7 @@ aggregate_impacts <- function(
   select0     <- c(rename1) #|> c("sectorprimary", "includeaggregate")
   co_variants <- co_variants |> rename_at(c(rename0), ~rename1)
   co_variants <- co_variants |> select(all_of(select0))
-  rm("rename0", "rename1", "select0")
+  rm(rename0, rename1, select0)
   ### Combine sector and variant info
   join0          <- "sector_id"
   co_sectorVars  <- co_sectors |> left_join(co_variants, by =join0)

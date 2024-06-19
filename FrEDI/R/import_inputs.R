@@ -3,11 +3,12 @@
 #' @description
 #' This function enables users to import data on custom scenarios for use with [FrEDI::run_fredi()]. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and state population scenarios. [FrEDI::import_inputs()] reads in and format any specified files as data frames and returns a list of data frames for imported scenarios.
 #'
-#' @param tempfile A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years; second column contains temperatures, in degrees Celsius, above the 1995 baseline year). The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param slrfile A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years; second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline). The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param popfile A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column contains years in the interval 2010 to 2300. The second column should contain the NCA Region label associated with the state. The third column should contain state names. The fourth column should contain the state postal code abbreviation (e.g., `postal = "ME"` for `state = "Maine"`. The fifth column should contain the state population values. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param gdpfile A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years; second column contains values for GDP, in total 2015$). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param temptype A character string indicating whether the temperature values in the temperature input file (specified by `tempfile` represent global temperature change (`temptype = "global"`) or temperature change for the contiguous U.S. (`temptype = "conus"`) in degrees Celsius. By default, the model assumes temperatures are CONUS temperatures (i.e., `temptype = "conus"`).
+#' @param tempfile=NULL A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years; second column contains temperatures, in degrees Celsius, above the 1995 baseline year). The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#' @param slrfile=NULL A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years; second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline). The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#' @param popfile=NULL A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column contains years in the interval 2010 to 2300. The second column should contain the NCA Region label associated with the state. The third column should contain state names. The fourth column should contain the state postal code abbreviation (e.g., `postal = "ME"` for `state = "Maine"`. The fifth column should contain the state population values. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#' @param gdpfile=NULL A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years; second column contains values for GDP, in total 2015$). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#' @param temptype="conus" A character string indicating whether the temperature values in the temperature input file (as specified by `tempfile`) represent temperature changes, in degrees Celsius, at the global level (`temptype = "global"`) or for the contiguous U.S. (CONUS) only (`temptype = "conus"`, default).
+#' @param popArea="state" A character string indicating the geographical scale of population inputs (as specified by `popfile`). Specify one of: `"national"`, for national totals (including Alaska and Hawaii); `"conus"`, for the contiguous U.S. (CONUS) only (i.e., national totals, but excluding Alaska and Hawaii); `"regional"`, for totals at the levels of NCA regions (i.e., ); or `"state"`, for state-level population (default).
 #'
 #'
 #'
@@ -45,7 +46,7 @@
 #' `tempInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `tempfile`, with missing values removed. `tempInput` has two columns with names `"year"` and `"temp_C"`, containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
 #' `slrInput` \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by `slrfile`, with missing values removed. `slrInput` has two columns with names `"year"`, and `"slr_cm"`, containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
 #' `gdpInput` \tab Data frame containing a custom GDP scenario imported from the CSV file specified by `gdpfile`, with missing values removed. `gdpInput` has two columns with names `"year"`, and `"gdp_usd"`, containing the year and the national GDP, respectively. \cr
-#' `popInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `popfile`, with missing values removed. `popInput` has three columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"reg_pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.. \cr
+#' `popInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `popfile`, with missing values removed. `popInput` has three columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"reg_pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively. \cr
 #' }
 #'
 #'
@@ -92,226 +93,120 @@ import_inputs <- function(
   popArea  = "state"  ### "national", "conus", "regional", or "state" (default)
 ){
   ###### Messaging ######
-  namesInputs  <- c("tempfile", "slrfile", "popfile", "gdpfile")
-  hasAnyInputs <- list(tempfile, slrfile, popfile, gdpfile)
-  hasAnyInputs <- namesInputs  |> map(function(x, list0=hasAnyInputs){!(list0[[x]] |> is.null())})
-  hasAnyInputs <- hasAnyInputs |> unlist() |> any()
   silent  <- TRUE
   msgUser <- !silent
+  msgN    <- "\n"
   msg0    <- ""
   msg1    <- msg0 |> paste0("\t")
   msg2    <- msg1 |> paste0("\t")
   msg3    <- msg2 |> paste0("\t")
-  if(hasAnyInputs) {
-    "\n" |> paste0(msg0) |> paste0("In import_inputs():") |> message()
-  } ### End if(hasAnyInputs)
-
-  ###### Defaults ######
   geo_msg <- " state..."
 
-  ### Set temperature type default and set temperature type to default if none
-  ### is declared. Check whether inputs temperatures are already in CONUS degrees
-  temptype_default <- "conus"
-  temptype         <- (temptype |> is.null()) |> ifelse(temptype_default, temptype)
-  conus            <- ((temptype |> tolower()) == "conus"); #conus |> print()
-  
-  popArea <- tolower(popArea)
+  ### Message the user
+  msgN |> paste0(msg0) |> paste0("In import_inputs():") |> message()
+
+
+  ###### Load Data from FrEDI ######
+  ### Get objects from FrEDI name space
+  ### Get input scenario info: co_inputScenarioInfo
+  ### Get state info: co_states
+  fListNames <- c("co_inputScenarioInfo", "co_states")
+  sListNames <- c("df_popRatios")
+  for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
+  for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+
+
+  ###### Defaults ######
+  ### Input names, output names
+  inNames    <- c("temp", "slr", "gdp", "pop")
+  outNames   <- inNames |> paste0("Input")
+  ### Valid values
+  tempTypes  <- c("global", "conus")
+  popAreas   <- c("national", "conus", "regional", "state")
+  ### Convert string inputs to lower case
+  tempType   <- temptype |> tolower()
+  popArea    <- popArea  |> tolower()
+  ### Check whether inputs temperatures are already in CONUS degrees
+  conus      <- "conus" %in% tempType
+  # conus |> print()
+  ### Check for validity
+  tempValid  <- tempType %in% tempTypes
+  popValid   <- popArea %in% popAreas
+  ### Error messages
+  msgTemp    <- paste0("`tempType` must be either \"global\" or \"conus\", not \"", tempType, "\"!")
+  msgPop     <- paste0("`popArea` must be in \"", popAreas |> paste(collapse="\", \""), ", not \"", popArea, "\", !")
+  ### If not valid, message and drop those from outputs
+  if(!tempValid) {
+    fListNames[["temp"]] <- NULL
+    msg1 |> paste0(msgTemp) |> message()
+    msg2 |> paste0("Dropping temp inputs from outputs.") |> message()
+  } else if(!popValid){
+    fListNames[["pop"]] <- NULL
+    msg1 |> paste0(msgPop)
+    msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
+  } ### End if(!tempValid)
+
+
+  ###### Other Values ######
+  ### Get list with expected name of column containing values
+  ### Get list with expected name of columns used for unique ids
+  valCols    <- get_import_inputs_valCols(popArea=popArea)
+  idCols     <- get_import_inputs_idCols (popArea=popArea)
+  # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
+
+  ###### Initialize Input File Names List ######
+  ### Initialize list of file names and
+  fList      <- inNames |> map(function(x){parse(text=x |> paste0("file")) |> eval()}) |> set_names(inNames)
 
   ###### Initialize Inputs List ######
-  ### Get input scenario info: co_inputScenarioInfo
-  name_dfScenarioInfo <- "co_inputScenarioInfo"
-  assign(name_dfScenarioInfo, rDataList[["frediData"]][["data"]][[name_dfScenarioInfo]])
-  name_stateInfo <- "co_states"
-  assign(name_stateInfo, rDataList[["frediData"]][["data"]][[name_stateInfo]])
-  input_names_vector  <- co_inputScenarioInfo$inputName
-  num_inputNames      <- co_inputScenarioInfo |> nrow()
+  ### Initialize a list for loaded data
+  ### Check if any file names supplied
+  inputsList <- fList
+  hasInputs  <- fList |> map(function(item_i){!(item_i |> is.null())}) |> unlist() |> any()
 
-  ###### Initialize Results List ######
-  inputsList <- list()
+  ### Message user
+  if(hasInputs) {msg1 |> paste0("Loading data...", "\n") |> message()}
+  else          {msg1 |> paste0("No inputs specified! Returning an empty list.") |> message()}
 
-  ###### Iterate Over Inputs List ######
-  for(i in 1:num_inputNames){
-    ###### Input Info ######
-    inputInfo_i <- co_inputScenarioInfo[i,]
+  ### If some file names supplied, iterate over list, trying to read in file names
+  inputsList <- list(
+    inputName = inNames,
+    fileName  = inputsList
+  ) |>
+    pmap(run_fun_tryInput) |>
+    set_names(inNames)
+  # inputsList |> print()
 
-    ### Input name and label
-    input_i     <- inputInfo_i$inputName |> unique()
-    msgName_i   <- inputInfo_i$inputType |> unique()
-    ### Input argument and run_fredi argument
-    inputArg_i  <- inputInfo_i$importArgName |> unique()
-    inputName_i <- inputInfo_i$tempBinListName |> unique()
-    ### Min and Max Values
-    min_i       <- inputInfo_i$inputMin |> unique()
-    max_i       <- inputInfo_i$inputMax |> unique()
-    ###### Column Info ######
-    region_i    <- inputInfo_i$region |> unique()
-    valueCol_i  <- inputInfo_i$valueCol |> unique()
-    #valueCol_i  <- (input_i == "pop") |> ifelse("state_pop", valueCol_i)
-    ### Initialize column names
-    numCols_i   <- colNames_i <- c("year") |> c(valueCol_i)
-    # cols0       <- c("region")
-    #statecols0  <- c("region", "state", "postal")
-    if(popArea == "regional"){
-      popcols0 <- c("region")
-    }
-    if(popArea == "state"){
-      popcols0 <- c("state", "postal")
-    }
-    if(input_i == "pop" & (popArea == "regional"|popArea == "state")) {colNames_i <- popcols0 |> c(colNames_i)}
-    
-    # if(byState){
-    #   cols0      <- statecols0
-    #   colNames_i <- numCols_i <- c("year", "state_pop")
-    # }
-    # ### Add state/region columns as needed
-    # if(region_i == 1){
-    #   colNames_i  <- c(colNames_i[1], cols0, colNames_i[2])
-    # }
-
-    ###### Initialize Results List Element ######
-    ### Initialize input in list
-    inputsList[[inputName_i]] <- NULL
-
-    ###### Parse File ######
-    ### Parse inputArg_i and add to the list, then check if it is null
-    inputFile_i  <- parse(text=inputArg_i) |> eval()
-    isNullFile_i <- inputFile_i |> is.null()
-    # list_i[["inputFile"]] <- inputFile_i
-    # isNullFile_i <- list_i[["inputFile"]] |> is.null()
-
-    ###### Format Data Frame ######
-    if(!isNullFile_i){
-      msg1 |> paste0("User supplied ", msgName_i, " inputs...") |> message()
-      msg2 |> paste0("Importing data from ", inputFile_i, "...") |> message()
-      ### Try to import the file and initialize the list value
-      fileInput_i   <- inputFile_i |> fun_tryInput(silent=T)
-      fileStatus_i  <- fileInput_i[["fileStatus"]]
-      df_input_i    <- fileInput_i[["fileInput"]]
-
-      ### Message the user
-      if(msgUser){ msg2 |> paste0(fileInput_i[["fileMsg"]]) |> message() }
-
-      ######## For loaded data ######
-      ### If the load is a success, add results to the input list
-      if(fileStatus_i=="loaded"){
-        msg2 |> paste0("Formatting ", msgName_i, " inputs...") |> message()
+  ###### Check the Inputs ######
+  ### Message the user
+  ### Use the input info to check the values make sense
+  if(hasInputs) msgN |> paste0(msg1, "Checking input values...") |> message()
+  inputsList <- list(
+    inputName = inNames,
+    inputDf   = inputsList,
+    valCol    = valCols,
+    idCol     = idCols
+  ) |>
+    pmap(check_input_data) |>
+    set_names(inNames)
 
 
-        ###### Standardize All Columns ######
-        ### Rename Inputs and Convert all columns to numeric
-        ### Rename Inputs and Convert all columns to numeric
-        # if(byState){
-        #   df_input_i <- df_input_i |>
-        #     left_join(co_states, by = c("state" = "state"), suffix = c("", ".y")) |>
-        #     select(colNames_i)
-        # }
+  ###### Calculate State Population ######
+  ### Calculate state population if pop input present and popArea != "state"
+  ### Then check values
+  # if(hasInputs) msgN |> paste0(msg1, "Checking population values...") |> message()
+  df_pop     <- inputsList[["pop"]]
+  hasPop     <- df_pop |> length()
+  if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
+  inputsList[["pop"]] <- df_pop
 
-        df_input_i  <- df_input_i |>
-          rename_inputs(colNames_i) |>
-          mutate_all(as.character) |>
-          mutate_at(.vars=c(numCols_i), as.numeric)
+  ###### Rename List ######
+  inputsList <- inputsList |> set_names(outNames)
 
-        ###### Convert Global Temps to CONUS ######
-        ### Convert Global Temps to CONUS if there are temperature inputs and they
-        ### aren't already in CONUS degrees
-        if(input_i=="temp" & !conus){
-          ### Message user
-          msg3 |> paste0("User specified `temptype='global'`...") |> message()
-          msg3 |> paste0("Converting global temperatures to CONUS temperatures...") |> message()
-          ### Convert temps
-          df_input_i <- df_input_i |> mutate(temp_C = temp_C |> convertTemps(from="global"))
-        } ### End if(input_i=="temp" & !conus)
 
-        # ###### Check Input ######
-        # msg2 |> paste0("Checking values...") |> message()
-        # ### Values
-        # values_i <- df_input_i[,valueCol_i]
-        # ### Substitute NULL for missing values for min and max
-        # if(is.na(min_i)) min_i <- NULL; if(is.na(max_i)) max_i <- NULL
-        # ### Check the status
-        # flag_i <- values_i |> check_inputs(xmin = min_i, xmax = max_i)
-        # ### Return and message the user if there is a flag:
-        # flagStatus_i <- flag_i$flagged
-        # flagRows_i   <- flag_i$rows
-        # ### If flag, message user and return flagStatus_i
-        # if(flagStatus_i){
-        #   ### Message labels
-        #   numrows_i    <- flagRows_i |> length()
-        #   years_i      <- df_input_i$year[flagRows_i]; yearsLabel_i <- paste(years_i, collapse=",")
-        #   rangeLabel_i <- paste0("c(", min_i , ",", max_i, ")")
-        #   ### Create message and message user
-        #   msg1_i       <- msg2 |> paste("Error in importing inputs for", msgName_i) |> paste0("!")
-        #   msg2_i       <- msg3 |> paste(inputName_i, "has", numrows_i,  "values outside of defined range", rangeLabel_i)
-        #   msg3_i       <- msg3 |> paste("Please correct values", msgName_i, "values for years", yearsLabel_i) |> paste0("...")
-        #   ### Message user
-        #   "\n" |> paste0(msg0) |> paste0("Warning:") |> message()
-        #   msg1_i |> message(); msg2_i |> message(); msg3_i |> message()
-        #   "\n" |> paste0(msg0) |> paste0("Exiting...") |> message()
-        #
-        #   ### Return list with error and flagged rows
-        #   returnList <- list(
-        #     error_msg    = paste0("Error in ", inputName_i, ". Values outside range."),
-        #     flagged_rows = flagRows_i
-        #     )
-        #
-        #   ### Return list and not an inputs list if an error occurred
-        #   return(returnList)
-        # } ### End if flagged
-        
-        ##### Calculate State Populations #####
-        if(input_i == "pop" & popArea != "state"){
-          ### Message user
-          msg3 |> paste0("User specified `popArea = '", popArea, "'`...") |> message()
-          msg3 |> paste0("Converting ", popArea, " populations to state populations") |> message()
-
-          ### Convert populations
-          df_popRatios    <- rDataList[["stateData"]][["data"]][["df_popRatios"]]
-          state_ratios    <- df_popRatios |> select(state, postal, region, year, region_to_state) |> distinct()
-          reg_ratios      <- df_popRatios |> select(region, year, conus_to_region) |> distinct()
-          conus_ratios    <- rDataList[["stateData"]][["data"]][["df_conusRatios"]] ## set to appropriate name
-
-          if(popArea == "national"){# input file should have cols year, pop
-            df_input_i <- df_input_i |>
-              group_by(year) |>
-              summarize(pop = sum(pop)) |>
-              left_join(conus_ratios, by = "year") |>
-              left_join(reg_ratios, by = "year") |>
-              left_join(state_ratios, by = c("year", "region")) |>
-              mutate(state_pop = pop * nation_to_conus * conus_to_region * region_to_state)
-          }
-          if(popArea == "conus"){# input file should have cols year, pop
-            df_input_i <- df_input_i |>
-              group_by(year) |>
-              summarize(pop = sum(pop)) |>
-              left_join(reg_ratios, by = c("year")) |>
-              left_join(state_ratios, by = c("year", "region")) |>
-              mutate(state_pop = pop * conus_to_region * region_to_state)
-          }
-          if(popArea == "regional"){# input file should have cols region, year, pop, region must be in dot form (e.g. Southern.Plains)
-            df_input_i <- df_input_i |>
-              group_by(year, region) |>
-              summarize(pop = sum(pop)) |>
-              left_join(state_ratios, by = c("year", "region")) |>
-              mutate(state_pop = pop * region_to_state)
-            print(head(df_input_i))
-          }
-          df_input_i <- df_input_i |>
-            select(state, postal, year, state_pop) # do we also need region here?
-        } else if(input_i == "pop" & popArea == "state"){
-          df_input_i <- df_input_i |>
-            rename(state_pop = pop) |>
-            select(state, postal, year, state_pop) # need region?
-        }
-
-        ###### Update Results List Element ######
-        ### Add results to the file
-        inputsList[[inputName_i]] <- df_input_i
-      } ### End if status == loaded
-    } ### End if !isNullFile
-  }  ### End iterate on i
-
-  ###### Return input list ######
-  msg0 |> paste0("Finished.") |> message()
+  ###### Return ######
+  ### Return input list
+  msgN |> paste0(msg0, "Finished.") |> message()
   return(inputsList)
 }
 
