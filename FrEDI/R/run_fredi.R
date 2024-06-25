@@ -4,7 +4,7 @@
 #'
 #'
 #' @description
-#' This function allows users to project annual average climate change impacts through 2090 (2010-2090) for available sectors, with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
+#' This function allows users to project annual average climate change impacts through 2100 (2010-2100) for available sectors, with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
 #'
 #' As of FrEDI Version 4.1.0, [FrEDI::run_fredi()] calculates impacts at the state-level for all available sectors.
 #'
@@ -16,7 +16,7 @@
 #'
 #' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity = 1`). Applicable sectors and impacts are: **Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality** (`impactType = "N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType = "All Mortality"`), **Valley Fever** (`impactType = "Mortality"`), **Vibriosis** (`impactType = "N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
 #'
-#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]`. Defaults to `maxYear = 2090`.
+#' @param maxYear=2100 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]`. Defaults to `maxYear = 2100`.
 #'
 #' @param thru2300=FALSE A ` TRUE/FALSE` shortcut that overrides the `maxYear` argument to run the model to 2300. Defaults to `thru2300 = FALSE`.
 #'
@@ -60,7 +60,7 @@
 #'
 #' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList = NULL` (default), all sectors are included.
 #'
-#' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2090. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2090` and minimum and maximum values of `2011` and `2300`, respectively. Alternatively, users can set argument `thru2300 = TRUE` to override the `maxYear` argument and set `maxYear = 2300`. Note that the default scenarios included within [FrEDI] stop in the year 2090; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear >= 2090` (and `maxYear <= 2300`) in order to return non-missing values for years after 2090.
+#' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2100. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2100` and minimum and maximum values of `2011` and `2300`, respectively. Alternatively, users can set argument `thru2300 = TRUE` to override the `maxYear` argument and set `maxYear = 2300`. Note that the default scenarios included within [FrEDI] stop in the year 2100; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear >= 2100` (and `maxYear <= 2300`) in order to return non-missing values for years after 2100.
 #'
 #' Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. [FrEDI::run_fredi()] uses a default value of `elasticity = 1`to adjust VSL for applicable sectors and impacts (the default value of `elasticity = 1` keeps VSL constant over time). A custom elasticity can be passed to the `elasticity` argument. Applicable sectors and impacts are ***Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality**  (`impactType = "N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType = "All Mortality"`), **Valley Fever** (`impactType = "Mortality"`), **Vibriosis** (`impactType = "N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
 #'
@@ -156,10 +156,10 @@
 #' ### Run for a single sector, with default inputs, no aggregation, and elasticity=1:
 #' run4 <- run_fredi(sectorList="ATS Temperature-Related Mortality", aggLevels="none", elasticity=1)
 #'
-#' ### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+#' ### Set end year for analysis to 2110 -- messages user and returns a null value since default scenarios only have values out to 2100
 #' run5 <- run_fredi(maxYear=2100)
 #'
-#' ### Set end year for analysis to 2300 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+#' ### Set end year for analysis to 2300 -- messages user and returns a null value since default scenarios only have values out to 2100)
 #' run6 <- run_fredi(thru2300=TRUE)
 #'
 #'
@@ -182,7 +182,7 @@ run_fredi <- function(
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
     elasticity = 1, ### Override value for elasticity for economic values
-    maxYear    = 2090,
+    maxYear    = 2100,
     thru2300   = FALSE,
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
@@ -193,8 +193,8 @@ run_fredi <- function(
   msgUser   <- !silent
   ### Uncomment for allCols
   doPrimary <- F  ### whether to filter to primary impacts
-  ### Model years and NPD (FrEDI past 2090)
-  refYear   <- 2090
+  ### Model years and NPD (FrEDI past 2100)
+  refYear   <- 2100
   npdYear   <- 2300
   maxYear0  <- thru2300 |> ifelse(npdYear, maxYear)
   do_npd    <- maxYear0 > refYear
@@ -398,7 +398,7 @@ run_fredi <- function(
     ### Remove missing values of years, temperatures
     ### Zero out series at the temperature reference year
     tempInput <- tempInput |> select(c("year", "temp_C"))
-    tempInput <- tempInput |> filter(!(temp_C |> is.na()) & !(year |> is.na()))
+    tempInput <- tempInput |> filter_all(all_vars(!(. |> is.na())))
     tempInput <- tempInput |> filter(year > refYear_temp)
     tempInput <- tibble(year= refYear_temp, temp_C = 0) |> rbind(tempInput)
 
@@ -424,8 +424,22 @@ run_fredi <- function(
     tempInput <- tempInput       |> select(c("year", "temp_C"))
     temp_df   <- co_defaultTemps |> as_tibble()
   } ### End else(has_tempUpdate)
+
   ### Filter to appropriate years
-  temp_df <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
+  temp_df    <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs2 <- "\n" |> paste0("Exiting...")
+  msg_temp   <- "Temperature" |> paste0(msgInputs1)
+  check_temp <- temp_df |> filter(year == maxYear) |> nrow()
+  if(!check_temp) {
+    "\t" |> message(msg_temp)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_temp)
+  rm(msg_temp, check_temp)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["tempInput"]] <- has_tempUpdate |> ifelse("Custom", "Default")
@@ -447,7 +461,7 @@ run_fredi <- function(
   if(has_slrUpdate){
     "\t" |> message("Creating SLR scenario from user inputs...")
     slrInput  <- slrInput |> select(c("year", "slr_cm"))
-    slrInput  <- slrInput |> filter(!(slr_cm |> is.na()) & !(year |> is.na()))
+    slrInput  <- slrInput |> filter_all(all_vars(!(. |> is.na())))
     slrInput  <- slrInput |> filter(year >  refYear_slr)
     slrInput  <- tibble(year= refYear_slr, slr_cm = 0) |> rbind(slrInput)
     ### Interpolate values
@@ -470,8 +484,21 @@ run_fredi <- function(
     slrInput <- temps2slr(temps = temp_df$temp_C_global, years = temp_df$year)
     slr_df   <- slrInput
   } ### End else(has_slrUpdate)
+
   ### Filter to appropriate years
   slr_df  <- slr_df |> filter(year >= refYear_slr) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_slr   <- "SLR" |> paste0(msgInputs1)
+  check_slr <- slr_df |> filter(year == maxYear) |> nrow()
+  if(!check_slr) {
+    "\t" |> message(msg_slr)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_slr)
+  rm(msg_slr, check_slr)
+
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["slrInput"]] <- has_slrUpdate |> ifelse("Custom", "Default")
@@ -516,14 +543,28 @@ run_fredi <- function(
   popCols0 <- c("year", "region") |> c(stateCols0, popCol0)
   if(has_gdpUpdate){
     "\t" |> message("Creating GDP scenario from user inputs...")
-    gdpInput <- gdpInput |> filter(!(gdp_usd |> is.na()) & !(year |> is.na()))
+    gdpInput <- gdpInput |> filter_all(all_vars(!(. |> is.na())))
     gdpInput <- gdpInput |> filter(gdp_usd >= 0)
-    gdp_df   <- gdpInput |> interpolate_annual(years=list_years, column="gdp_usd", rule = 2) |> select(-c("region"))
+    gdp_df   <- gdpInput |> interpolate_annual(years=list_years, column="gdp_usd", rule=2) |> select(-c("region"))
   } else{
     "\t" |> message("No GDP scenario provided...Using default GDP scenario...")
     gdpInput <- gdp_default |> select(all_of(gdpCols0))
     gdp_df   <- gdpInput
   } ### End else(has_gdpUpdate)
+
+  ### Filter to appropriate years
+  gdp_df  <- gdp_df |> filter(year >= minYear) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_gdp   <- "GDP" |> paste0(msgInputs1)
+  check_gdp <- gdp_df |> filter(year == maxYear) |> nrow()
+  if(!check_gdp) {
+    "\t" |> message(msg_gdp)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_gdp)
+  rm(msg_gdp, check_gdp)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["gdpInput"]] <- has_gdpUpdate |> ifelse("Custom", "Default")
@@ -536,13 +577,13 @@ run_fredi <- function(
   if(has_popUpdate){
     "\t" |> message("Creating population scenario from user inputs...")
     ### Standardize region and then interpolate
-    popInput     <- popInput  |> filter(!(year |> is.na()))
-    popInput     <- popInput  |> (function(y, col0=popCol0){y[!(y[[popCol0]] |> is.na()),]})()
-    popInput     <- popInput  |> (function(y, col0=popCol0){y[!(y[[popCol0]] <= 0),]})()
+    popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
+    popInput     <- popInput  |> filter_at(c(popCol0), function(y){y >= 0})
     ### Join with region info
-    join0        <- "state"
+    # join0        <- "state"
+    join0        <- popInput  |> names() |> (function(y, z=co_states |> names()){y[y %in% z]})()
     popInput     <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
-    popInput     <- popInput  |> filter_at(c(popCol0), function(x){x[!(x |> is.na())]})
+    popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
     rm(join0)
     ### Mutate region, interpolate annual
     pop_df       <- popInput  |> mutate(region = gsub(" ", ".", region))
@@ -559,6 +600,21 @@ run_fredi <- function(
     pop_df       <- popInput
     national_pop <- national_pop_default |> select("year", "national_pop")
   } ### End else(has_popUpdate)
+
+  ### Filter to appropriate years
+  pop_df       <- pop_df       |> filter(year >= minYear) |> filter(year <= maxYear)
+  national_pop <- national_pop |> filter(year >= minYear) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_pop   <- "Population" |> paste0(msgInputs1)
+  check_pop <- pop_df |> filter(year == maxYear) |> nrow()
+  if(!check_pop) {
+    "\t" |> message(msg_pop)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_pop)
+  rm(msg_pop, check_pop)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["popInput"]] <- has_popUpdate |> ifelse("Custom", "Default")
