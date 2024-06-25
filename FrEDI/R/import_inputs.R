@@ -198,7 +198,11 @@ import_inputs <- function(
   df_pop     <- inputsList[["pop"]]
   hasPop     <- df_pop |> length()
   if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
-  inputsList[["pop"]] <- df_pop
+  if(!(df_pop |> is.null())) {
+    inputsList[["pop"]] <- df_pop
+  } else {
+    inputsList["pop"] <- list(NULL)
+  }
 
   ###### Rename List ######
   inputsList <- inputsList |> set_names(outNames)

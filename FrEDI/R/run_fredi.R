@@ -541,8 +541,7 @@ run_fredi <- function(
     popInput     <- popInput  |> (function(y, col0=popCol0){y[!(y[[popCol0]] <= 0),]})()
     ### Join with region info
     join0        <- "state"
-    popInput     <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
-    popInput     <- popInput  |> filter_at(c(popCol0), function(x){x[!(x |> is.na())]})
+    popInput     <- popInput  |> filter_at(c(popCol0), function(x){!(x |> is.na())})
     rm(join0)
     ### Mutate region, interpolate annual
     pop_df       <- popInput  |> mutate(region = gsub(" ", ".", region))
