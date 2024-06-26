@@ -20,18 +20,12 @@ get_import_inputs_valCols <- function(
   list0[["temp"]] <- c("temp_C")
   list0[["slr" ]] <- c("slr_cm")
   list0[["gdp" ]] <- c("gdp_usd")
-  list0[["pop" ]] <- list()
-  list0[["pop" ]][["national"]] <- c("national_pop")
-  list0[["pop" ]][["conus"   ]] <- c("area_pop")
-  list0[["pop" ]][["regional"]] <- c("reg_pop")
-  list0[["pop" ]][["state"   ]] <- c("state_pop")
-  ### Update population value column based on pop area
-  list0[["pop" ]] <- list0[["pop"]][[popArea]]
+  list0[["pop" ]] <- c("pop")
   ### Return
   return(list0)
 }
 
-###### get_import_inputs_valCols ######
+###### get_import_inputs_idCols ######
 ### 2024.06.18: eventually move to FrEDI Data
 ### Info about which column contains info on region
 get_import_inputs_idCols <- function(
@@ -291,7 +285,7 @@ check_pop_regions <- function(
         msgVals <- paste0("All ", col_i, "s present...")
         msg1_i |> paste0(msgVals) |> message()
       } else{
-        msgVals <- paste0(msg_i2, col_i, "(s):") |> paste0(naVals |> paste(collapse=", "))
+        msgVals <- paste0(msg_i2, col_i, "(s): ") |> paste0(naVals |> paste(collapse=", "))
         msg1_i |> paste0(msgVals) |> message()
         msg1_i |> paste0(msg_i3) |> message()
         return(NULL)
@@ -452,7 +446,7 @@ check_input_data <- function(
 ### Function to calculate state population from inputs
 calc_import_pop <- function(
     df0      = NULL,    ### Population data
-    popArea  = "state", ### One of: c("state", "regional", "area", "national")
+    popArea  = "state", ### One of: c("state", "regional", "conus", "national")
     msgLevel = 1        ### Level of messaging
 ){
   ###### Messages ######
@@ -491,13 +485,13 @@ calc_import_pop <- function(
     msgN |> paste0(msg0_i, msg_i1) |> message()
     ### Check pop area info
     hasNat   <- "national" %in% popArea
-    hasArea  <- "area"     %in% popArea
+    hasArea  <- "conus"    %in% popArea
     hasReg   <- "regional" %in% popArea
 
     ### Check other columns present
-    hasNat   <- (hasNat   & "national_pop" %in% namesPop)
-    hasArea  <- (hasArea  & "area_pop"     %in% namesPop) | hasNat
-    hasReg   <- (hasReg   & "reg_pop"      %in% namesPop) | hasNat | hasArea
+    hasNat   <- (hasNat   & "pop" %in% namesPop)
+    hasArea  <- (hasArea  & "pop" %in% namesPop) | hasNat
+    hasReg   <- (hasReg   & "pop" %in% namesPop) | hasNat | hasArea
     # hasNat |> c(hasArea, hasReg) |> print()
 
     ### Info on popArea
@@ -506,13 +500,16 @@ calc_import_pop <- function(
     doState  <- hasReg
     # doArea |> c(doReg, doState) |> print()
 
-    ### If do area:  Calculate area pop from national
+    ### If do area:  Calculate conus pop from national
     ### If do reg:   Calculate region pop from national
     ### If do state: Calculate region pop from national
-    if(doArea ) {df0 <- df0 |> mutate(area_pop  = national_pop * area2nat)}
-    if(doReg  ) {df0 <- df0 |> mutate(reg_pop   = area_pop     * reg2area)}
-    if(doState) {df0 <- df0 |> mutate(state_pop = reg_pop      * state2reg)}
-  } ### End if(calcPop)
+    if(doArea ) {df0 <- df0 |> mutate(pop = pop * area2nat)}
+    if(doReg  ) {df0 <- df0 |> mutate(pop = pop * reg2area)}
+    if(doState) {df0 <- df0 |> mutate(pop = pop * state2reg)}
+  }
+  df0 <- df0 |> rename(state_pop = pop)
+    
+    ### End if(calcPop)
 
   ###### Format Data ######
   ### Join data with region info, then check for columns, regions
@@ -521,12 +518,15 @@ calc_import_pop <- function(
   df0      <- co_states |> left_join(df0, by=c(join0))
   df0      <- df0 |> filter_all(all_vars(!(. |> is.na())))
   df0      <- df0 |> check_pop_regions(msgLevel = msgLevel)
+  popPass  <- !(df0 |> is.null())
 
   ### Select columns
   select0  <- c("region", "state", "postal", "year", "state_pop")
-  df0      <- df0 |> select(all_of(select0))
-  df0      <- df0 |> arrange_at(c(select0))
-
+  if(popPass){
+    df0      <- df0 |> select(all_of(select0))
+    df0      <- df0 |> arrange_at(c(select0))
+  }
+  
   ###### Return ######
   return(df0)
 }
