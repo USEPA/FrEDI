@@ -116,7 +116,7 @@ run_fredi_sv <- function(
   c_svGroupTypes <- svDataList$c_svGroupTypes
   ### Update years,
   minYear <- 2010
-  maxYear <- 2090
+  maxYear <- 2100
   list_years_by5 <- seq(minYear, maxYear, by=5)
 
   ### Testing
