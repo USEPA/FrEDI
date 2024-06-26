@@ -44,7 +44,7 @@
 #'    * SLR inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for SLR (i.e., `inputsList = list(slrInput = NULL)`, [FrEDI::run_fredi()] first converts the input or default CONUS temperature scenario to global temperatures (using [FrEDI::convertTemps()]) and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters (using [FrEDI::temps2slr()]).
 #' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
-#'    * `gdpInput` requires a data frame object with five columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
+#'    * `gdpInput` requires a data frame object with two columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdpInput = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
@@ -578,18 +578,22 @@ run_fredi <- function(
     ### Standardize region and then interpolate
     popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
     popInput     <- popInput  |> filter_at(c(popCol0), function(y){y >= 0})
+    ### Rename pop col
+    # rename0      <- c()
     ### Join with region info
-    # join0        <- "state"
+    # select0      <- c(region, state, postal)
+    drop0        <- c("fips")
     join0        <- popInput  |> names() |> (function(y, z=co_states |> names()){y[y %in% z]})()
     popInput     <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
     popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
-    rm(join0)
+    popInput     <- popInput  |> select(-any_of(drop0))
+    rm(join0, drop0)
     ### Mutate region, interpolate annual
     pop_df       <- popInput  |> mutate(region = gsub(" ", ".", region))
     pop_df       <- pop_df    |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
     # pop_df |> glimpse()
     ### Calculate national population
-    national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()
+    national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
     national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
     # national_pop |> glimpse()
   } else{
