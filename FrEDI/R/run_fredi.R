@@ -125,7 +125,9 @@
 #' popScenario |> glimpse()
 #'
 #' ### Subset climate scenario
-#' temps1 <- gcamScenarios |> filter(scenario=="ECS_3.0_ref_0") |> select(year, temp_C)
+#' temps1 <- gcamScenarios |> filter(scenario=="Hector_GCAM_v5.3_ECS_3.0_ref")
+#' temps1 <- temps1 |> mutate(temp_C = temp_C_global |> convertTemps(from="global"))
+#' temps1 <- temps1 |> select(year, temp_C)
 #'
 #' ### Run custom scenario
 #' run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
@@ -142,10 +144,7 @@
 #' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
-#' x_inputs <- import_inputs(
-#'   slrfile  = slrInputFile,
-#'   popfile  = popInputFile
-#' )
+#' x_inputs <- import_inputs(slrfile=slrInputFile, popfile=popInputFile, popArea="state")
 #'
 #' ### Run custom scenarios
 #' run3 <- run_fredi(inputsList=x_inputs)
@@ -157,7 +156,7 @@
 #' run4 <- run_fredi(sectorList="ATS Temperature-Related Mortality", aggLevels="none", elasticity=1)
 #'
 #' ### Set end year for analysis to 2110 -- messages user and returns a null value since default scenarios only have values out to 2100
-#' run5 <- run_fredi(maxYear=2100)
+#' run5 <- run_fredi(maxYear=2110)
 #'
 #' ### Set end year for analysis to 2300 -- messages user and returns a null value since default scenarios only have values out to 2100)
 #' run6 <- run_fredi(thru2300=TRUE)

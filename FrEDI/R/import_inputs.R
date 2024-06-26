@@ -79,17 +79,20 @@
 #' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
-#' example_inputsList <- import_inputs(
-#'   slrfile  = slrInputFile,
-#'   popfile  = popInputFile,
-#'   temptype = "global"
-#' )
+#' example_inputsList <- import_inputs(slrfile=slrInputFile, popfile=popInputFile, popArea="state")
 #'
 #' ### Use imports with FREDI:
 #' df_x <- run_fredi(inputsList=example_inputsList)
 #'
 #' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
 #'
+#' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
+#'
+#' U.S. Census Bureau. 2021. State Population Totals and Components of Change: 2010--2019. Available at <https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html>.
+#'
+#' U.S. Census Bureau. 2023. State Population Totals and Components of Change: 2020--2023. Available at <https://www.census.gov/data/tables/time-series/demo/popest/2020s-state-total.html>.
+#'
+#' U.S. Census Bureau. 2023. 2023 National Population Projections Tables: Main Series. Available at <https://www.census.gov/data/tables/2023/demo/popproj/2023-summary-tables.html>.
 #'
 #' @export
 #' @md
