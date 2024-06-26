@@ -236,37 +236,55 @@ calc_tractScaledImpacts <- function(
 
   ### Names of functions
   c_tracts <- funList |> names()
-  years_x  <- driverValues$year |> as.vector()
-  values_x <- driverValues[,xCol] |> pull() |> as.vector()
+  years_x  <- driverValues |> pull(year)
+  values_x <- driverValues |> pull(all_of(xCol))
   funcs_x  <- funList |> names()
 
   ###### Iterate over Tracts
-  data_x   <- c_tracts |> map(function(tract_i){
+  list_x   <- list()
+  for(tract_i in c_tracts) {
     ### Initialize data
-    df_i      <- tibble(year = years_x, fips = tract_i)
-    y_i       <- NA
+    df_i <- driverValues
+    df_i <- df_i |> mutate(fips      = tract_i)
+    df_i <- df_i |> mutate(sv_impact = NA)
     ### Function for tract i and whether the function exists
-    which_i   <- (funcs_x %in% c(tract_i)) |> which()
-    fun_i     <- funList[[which_i]]
+    # which_i   <- (funcs_x %in% c(tract_i)) |> which()
+    # fun_i     <- funList[[which_i]]
+    fun_i     <- funList[[tract_i]]
     has_fun_i <- !(fun_i |> is.null())
+    if(has_fun_i){ df_i <- df_i |> mutate(sv_impact = values_x |> fun_i()) }
+    list_x[[tract_i]] <- df_i
+    rm(tract_i, df_i, fun_i, has_fun_i)
+  } ### for(tract_i in c_tracts)
 
-    ### Calculate values if the function is not missing
-    ### Add values to the dataframe
-    if(has_fun_i){y_i <- fun_i(values_x)}
-    ### Add values
-    df_i      <- df_i |> mutate(sv_impact = y_i)
-    ### Sleep and return
-    return(df_i)
-  })
+  # data_x   <- c_tracts |> map(function(tract_i){
+  #   ### Initialize data
+  #   df_i      <- tibble(year = years_x, fips = tract_i)
+  #   y_i       <- NA
+  #   ### Function for tract i and whether the function exists
+  #   which_i   <- (funcs_x %in% c(tract_i)) |> which()
+  #   fun_i     <- funList[[which_i]]
+  #   has_fun_i <- !(fun_i |> is.null())
+  #
+  #   ### Calculate values if the function is not missing
+  #   ### Add values to the dataframe
+  #   if(has_fun_i){y_i <- fun_i(values_x)}
+  #   ### Add values
+  #   df_i      <- df_i |> mutate(sv_impact = y_i)
+  #   ### Sleep and return
+  #   return(df_i)
+  # })
   ### Bind and join with driver values
-  data_x <- data_x |> bind_rows()
-  data_x <- data_x |> left_join(driverValues, by = c("year"))
+  # data_x <- data_x |> bind_rows()
+  # data_x <- data_x |> left_join(driverValues, by = c("year"))
+  list_x <- list_x |> set_names(c_tracts) |> bind_rows()
 
   ### Final time
   msg1 |> paste0("Finished calculating tract-level impacts.") |> message()
 
   ### Return
-  return(data_x)
+  # return(data_x)
+  return(list_x)
 }
 
 ###### calc_terciles ######
@@ -426,14 +444,14 @@ calc_tractImpacts <- function(
   if(.testing){quants_regional |> filter(year==2050) |> glimpse()}
   ### Join with regional quantiles
   if(msgUser){msg2 |> paste0("Joining regional terciles to tract-level data...") |> message()}
-  else       {msg3 |> paste0(msg1, "...") |> message()}
+  # else       {msg3 |> paste0(msg1, "...") |> message()}
   x_impacts <- x_impacts |> left_join(quants_regional, by = c(groupsReg0));
   rm(quants_regional);
   ### Regional High Risk Tracts
   ### Figure out which tracts are high risk
   ### Calculate high risk populations
   if(msgUser) {msg2 |> paste0("Calculating regional high risk populations...") |> message()}
-  else        {msg3 |> paste0("...") |> message()}
+  # else        {msg3 |> paste0("...") |> message()}
   x_impacts[[tractReg0]] <- (x_impacts[[scaledImpact0]] > x_impacts[[cutoffReg0]]) * 1
   x_impacts <- x_impacts |> select(-all_of(cutoffReg0))
   rm(cutoffReg0)
