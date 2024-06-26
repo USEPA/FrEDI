@@ -78,25 +78,3 @@
 "popScenario"
 
 
-###### popScenario_sv ######
-#' Population scenario to use as an input to [FrEDI::run_fredi_sv()]
-#'
-#' A dataframe containing a population scenario to be passed as an input to [FrEDI::run_fredi_sv()].
-#'
-#' This dataframe contains population projections at the regional level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).
-#'
-#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
-#'
-#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
-#'
-#' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
-#'
-#' @format A data frame with 133 rows and 3 columns:
-#' \describe{
-#'   \item{year}{Year}
-#'   \item{region}{Region of U.S. ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", and "Southwest")}
-#'   \item{reg_pop}{Regional population for associated region and year}
-#' }
-#'
-#' @source \url{https://epa.gov/cira/FrEDI/}
-"popScenario_sv"
