@@ -8,13 +8,17 @@
 #'
 #' @param driverInput A data frame of up to four custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a data frame with columns of `"year"` and `"scenario"`. The data frame must also include a third column: `"temp_C"` for temperature-driven sectors (containing temperature values in degrees Celsius of warming for the contiguous U.S.) or `"slr_cm"` for sea level rise (SLR)-driven sectors (containing values for global mean sea level rise in centimeters). Run `get_sv_sectorInfo(gcmOnly=TRUE)` to see temperature-driven sectors in the SV module and `get_sv_sectorInfo(slrOnly=TRUE)` to see SLR-driven scenarios. Users can also pass a data frame with all four columns (`"year"`, `"scenario"`, `"temp_C"`, and `"slr_cm"`), in which case [FrEDI::run_fredi_sv()] determines whether to use the `"temp_C"` or `"slr_cm"` column as the driver trajectory based on the specified sector. Driver inputs for all scenarios should start in the year 2000 or earlier. All scenarios must include at least two non-missing values  (especially values before or at 2000 and at or after 2090). If any required columns are missing, [FrEDI::run_fredi_sv()] will use the default temperature or sea level rise scenario from [FrEDI::run_fredi()]. If the data frame passed to `driverInput` has more than four unique scenarios, [FrEDI::run_fredi_sv()] will only run the first four scenarios.
 #'
-#' @param popInput A data frame containing regional population trajectories for each of the seven regions for the contiguous U.S. (`"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, `"Southwest"`) as defined by the [National Climate Assessment (NCA)](https://scenarios.globalchange.gov/regions_nca4). The data frame passed to `popInput` should have columns `"year"`, `"region"`, and `"reg_pop"`, which respectively contain values for year, NCA region name, and regional population. `popInput` only accepts a data frame with a single scenario; [FrEDI::run_fredi_sv()] uses the same population scenario for any and all driver scenarios in the data frame passed to `driverInput`. If `popInput=NULL` (default), [FrEDI::run_fredi_sv()] will use the default regional population trajectories.
+#' @param popInput The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
+#'    * The population scenario must be a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, the state name, the postal code abbreviation (e.g., "ME" for "Maine") for the state, and the state population, respectively.
+#'    * `popInput` only accepts a data frame with a single scenario; [FrEDI::run_fredi_sv()] uses the same population scenario for any and all driver scenarios in the data frame passed to `driverInput`.
+#'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (2100).
+#'    * If the user does not specify an input scenario for population (i.e., `popInput = NULL`, [FrEDI::run_fredi_sv()] uses a default population scenario.
 #' @param silent A logical (`TRUE/FALSE`) value indicating the level of messaging desired by the user (defaults to `silent=TRUE`).
 # @param return=TRUE A `TRUE/FALSE` value indicating whether to return the results as a data frame (default=`TRUE`).
 
 #' @param save A logical (`TRUE/FALSE`) value indicating whether to save the results to an Excel file (defaults to `save=FALSE`).
 #'
-#' @param outpath A character string indicating a file directory to save the Excel file. Defaults to the working directory, i.e. `outpath=getwd()`. If the directory specified by `outpath` does not exist, [FrEDI::run_fredi_sv()] will attempt to create the specified directory.
+#' @param outpath A character string indicating a file directory to save the Excel file. Defaults to the working directory (i.e., `outpath=getwd()`). If the directory specified by `outpath` does not exist, [FrEDI::run_fredi_sv()] will attempt to create the specified directory.
 #'
 #' @param overwrite A logical (`TRUE/FALSE`) value indicating whether to overwrite an existing Excel file if `save=TRUE` (defaults to `overwrite=FALSE`). If `overwrite=FALSE`, [FrEDI::run_fredi_sv()] will not automatically overwrite an existing Excel file; however, if a file exists and `overwrite=FALSE`, [FrEDI::run_fredi_sv()] will message the user and the user will have the option to overwrite the existing file. If `overwrite=TRUE` and the Excel file exists in the output directory, [FrEDI::run_fredi_sv()] will overwrite the existing file without messaging the user.
 #'
@@ -105,19 +109,23 @@ run_fredi_sv <- function(
   pkgPath     <- NULL
   pkgPath     <- (pkgPath |> is.null()) |> ifelse(system.file(package="FrEDI"), pkgPath);
   rDataType   <- "rds"
-  #pkgPath |> print()
   impactsPath <- pkgPath |> file.path("extdata", "sv", "impactLists")
-  # impactsPath <- libPath |> file.path("FrEDI", "extdata", "sv", "impactLists")
 
-  ### Assign previous configuration objects
-  fredi_config <- "fredi_config" |> get_frediDataObj("frediData")
-  for(name_i in names(fredi_config)){ assign(name_i, fredi_config[[name_i]])}
+  ### Get FrEDI data objects
+  fredi_config  <- "fredi_config"  |> get_frediDataObj("frediData")
+  co_modelTypes <- "co_modelTypes" |> get_frediDataObj("frediData")
+  pop_default   <- "pop_default"   |> get_frediDataObj("stateData")
+  co_states     <- "co_states"     |> get_frediDataObj("stateData")
+
+  ### Assign config files
+  fredi_config |> list2env(envir = environment())
+  # for(name_i in names(fredi_config)){ name_i |> assign(fredi_config[[name_i]])}
+
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
-  ### Update years,
-  minYear <- 2010
-  maxYear <- 2100
-  list_years_by5 <- seq(minYear, maxYear, by=5)
+  # minYear <- 2010
+  maxYear  <- 2100
+  yearsBy5 <- minYear |> seq(maxYear, by=5)
 
   ### Testing
   save    <- .testing |> ifelse(FALSE, save)
@@ -129,6 +137,12 @@ run_fredi_sv <- function(
   msg1    <- msg0 |> paste0("\t")
   msg2    <- msg1 |> paste0("\t")
   msg3    <- msg2 |> paste0("\t")
+
+  ###### By State ######
+  byState    <- TRUE
+  popCol0    <- "state_pop"
+  stateCols0 <- c("state", "postal")
+
 
   ###### Sector Info ######
   ### Objects <-
@@ -173,23 +187,29 @@ run_fredi_sv <- function(
 
   ###### Check Driver Inputs ######
   ### Initialize whether to check for inputs
-  check_slrInput  <- (c_modelType=="slr") |> ifelse(T, F)
+  check_slrInput  <- c_modelType == "slr"
   # check_tempInput <- TRUE
-  check_tempInput <- (c_modelType=="gcm") |> ifelse(T, F)
-  check_popInput  <- (popInput |> is.null()) |> ifelse(F, T)
+  check_tempInput <- c_modelType == "gcm"
+  check_popInput  <- !(popInput |> is.null())
   ### Initialize whether inputs exist
-  has_driverInput <- (driverInput |> is.null()) |> ifelse(F, T)
+  has_driverInput <- !(driverInput |> is.null())
   has_slrInput    <- FALSE
   has_tempInput   <- FALSE
   has_popInput    <- FALSE
   ### Scenario columns
-  tempCols        <- c("year", "temp_C", "scenario")
-  slrCols         <- c("year", "slr_cm", "scenario")
-  popCols         <- c("year", "reg_pop", "region")
+  # tempCols        <- c("year", "temp_C", "scenario")
+  # slrCols         <- c("year", "slr_cm", "scenario")
+  # popCols         <- c("year", "reg_pop", "region")
+  tempCols        <- c("scenario", "year", "temp_C")
+  slrCols         <- c("scenario", "year", "slr_cm")
+  popCols         <- c("region"  , "state", "postal", "year") |> c(popCol0)
   ### Scenario ranges
-  tempRange       <- c(0, 6)
-  slrRange        <- c(0, 200)
-  driverRange     <- c(0) |> c((c_modelType=="slr") |> ifelse(slrRange[2], tempRange[2]))
+  # tempRange       <- c(0, 6)
+  # slrRange        <- c(0, 200)
+  # driverRange     <- c(0) |> c((c_modelType=="slr") |> ifelse(slrRange[2], tempRange[2]))
+  driverMax       <- co_modelTypes |> filter(modelType_id == c_modelType) |> pull(modelMaxOutput)
+  driverRange     <- 0 |> c(driverMax)
+
 
   ### Check inputs
   if(has_driverInput){
@@ -241,12 +261,12 @@ run_fredi_sv <- function(
       if(slrCols_inInput |> all()){
         msg2 |> message("All SLR scenario columns present in `driverInput`...")
         ### Filter to non-missing data
-        driverInput   <- driverInput |> filter(!is.na(year) & !is.na(slr_cm) & !is.na(scenario))
+        driverInput   <- driverInput |> filter_all(all_vars(!(. |> is.na())))
         ### Check non-missing values
         if(driverInput |> nrow()){
           df_nonNA    <- driverInput |>
-            group_by_at(.vars=c("scenario")) |>
-            summarize(n=n(), .groups="keep") |> ungroup()
+            group_by_at(c("scenario")) |>
+            summarize(n=n(), .groups="drop")
           naIssues    <- !all(df_nonNA$n >= 2)
           rm(df_nonNA)
         } else{ ### End if(driverInput |> nrow())
@@ -284,13 +304,13 @@ run_fredi_sv <- function(
       if(tempCols_inInput |> all()){
         check_slrInput |> ifelse(msg3, msg2) |> message("All temperature scenario columns present...")
         ### Filter to non-missing data
-        driverInput <- driverInput |> filter(!is.na(year) & !is.na(temp_C))
+        driverInput <- driverInput |> filter_all(all_vars(!(. |> is.na())))
         ### Check non-missing values
         if(driverInput |> nrow()){
-          df_nonNA <- driverInput |> filter(!is.na(year) & !is.na(temp_C))
+          df_nonNA <- driverInput |> filter_all(all_vars(!(. |> is.na())))
           df_nonNA <- df_nonNA |>
-            group_by_at(.vars=c("scenario")) |>
-            summarize(n=n(), .groups="keep") |> ungroup()
+            group_by_at(c("scenario")) |>
+            summarize(n=n(), .groups="drop")
           naIssues <- !all(df_nonNA$n >= 2)
           rm(df_nonNA)
         } ### End if(driverInput |> nrow())
@@ -321,10 +341,7 @@ run_fredi_sv <- function(
     } ### end else(has_driverInput & check_tempInput)
     rm(class_driverInput, driverInputCols)
   } ### End if(has_driverInput)
-  # ### Check input SLR heights
-  # checkIssues <- (driverInput$slr_cm < slrRange[1]) | (driverInput$slr_cm > slrRange[2])
-  # ### Check input temperatures
-  # checkIssues <- (driverInput$temp_C < tempRange[1]) | (driverInput$temp_C > tempRange[2])
+
 
   ###### Check Population Inputs ######
   ### Check that the input is a data frame
@@ -343,13 +360,13 @@ run_fredi_sv <- function(
     if(popCols_inInput |> all()){
       msg2 |> message("All population scenario columns present in `popInput`...")
       ### Filter to non-missing data
-      popInput     <- popInput |> filter(!is.na(year) & !is.na(region) & !is.na(reg_pop))
+      popInput     <- popInput |> filter_all(all_vars(!(. |> is.na())))
 
       ### Check input Population values: no repeating years
       if(popInput |> nrow()){
         df_dups       <- popInput |>
-          group_by_at(.vars=c("year", "region")) |>
-          summarize(n=n(), .groups="keep") |> ungroup()
+          group_by_at(c("year", "region", "state")) |>
+          summarize(n=n(), .groups="drop")
         checkIssues  <- any(df_dups$n > 1)
         rm(df_dups)
       } else{ ### if(popInput |> nrow())
@@ -456,12 +473,25 @@ run_fredi_sv <- function(
       return(input_i)
     }) |> bind_rows()
     ### Add driver unit
-    drivers_df <- drivers_df |> mutate(driverUnit  = "degrees Celsius")
+    drivers_df <- drivers_df |> mutate(driverUnit = "degrees Celsius")
     ### Remove values
-    rm("driverInput", "refYearTemp")
+    rm(driverInput, refYearTemp)
   } ### End if(checkTemp0 | checkTemp1 | checkTemp2 | checkTemp3)
   ### Remove intermediate objects
-  rm("checkTemp0", "checkTemp1", "checkTemp2")
+  rm(checkTemp0, checkTemp1, checkTemp2)
+
+  ### Check if there are any years after the max year
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs2 <- "\n" |> paste0("Exiting...")
+  msg_temp   <- "Temperature" |> paste0(msgInputs1)
+  check_temp <- drivers_df |> filter(year == maxYear) |> nrow()
+  if(!check_temp) {
+    "\t" |> message(msg_temp)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_temp)
+  rm(msg_temp, check_temp)
+
 
 
   ###### ** SLR Scenario ######
@@ -537,51 +567,93 @@ run_fredi_sv <- function(
   ### Remove intermediate objects
   rm(checkSLR0, checkSLR1)
 
+  ### Check if there are any years after the max year
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs2 <- "\n" |> paste0("Exiting...")
+  msg_slr    <- "SLR" |> paste0(msgInputs1)
+  check_slr  <- drivers_df |> filter(year == maxYear) |> nrow()
+  if(!check_slr) {
+    "\t" |> message(msg_slr)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_slr)
+  rm(msg_slr, check_slr)
+
+
   ###### ** Standardize Driver Scenarios ######
   ### Subset to desired years
-  drivers_df <- drivers_df |> filter(year %in% list_years_by5)
+  drivers_df <- drivers_df |> filter(year %in% yearsBy5)
 
   ###### Population Scenario ######
   paste0("\n", msg1) |> message("Preparing population scenario...")
 
-  ###### Region Population Scenario ######
+  ###### ** Region Population Scenario ######
   ### Population inputs
   if(has_popInput) {
     msg2 |> message("Creating population scenario from user inputs...")
-    pop_df    <- popInput |> select(all_of(popCols))
-    pop_df    <- pop_df   |> interpolate_annual(years= list_years_by5, column = "reg_pop", rule = 2:2)
-    pop_df    <- pop_df   |> rename(region_pop = reg_pop)
-    rm("popInput")
+    ### Join with region info
+    drop0     <- c("fips")
+    join0     <- popInput  |> names() |> (function(y, z=co_states |> names()){y[y %in% z]})()
+    popInput  <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
+    popInput  <- popInput  |> filter_all(all_vars(!(. |> is.na())))
+    # popInput  <- popInput  |> select(any_of(drop0))
+    popInput  <- popInput  |> select(all_of(popCols))
+    rm(join0, drop0)
+
+    ### Mutate region
+    pop_df    <- popInput |> mutate(region = gsub(" ", ".", region))
+    rm(popInput)
+
+    ### Interpolate annual
+    pop_df    <- pop_df   |> interpolate_annual(years=yearsBy5, column=popCol0, rule=2:2, byState=byState) |> ungroup()
+    # pop_df    <- pop_df   |> interpolate_annual(years= yearsBy5, column = "reg_pop", rule = 2:2)
+    # pop_df    <- pop_df   |> rename(region_pop = reg_pop)
   } ### End if(has_popInput)
   else              {
     # msg1 |> message("No population scenario provided...")
     msg2 |> message("Using default population scenario...")
-    pop_df <- svPopList$iclus_region_pop
+    # pop_df <- svPopList$iclus_region_pop
+    pop_df <- pop_default
   } ### End else(has_popInput)
   ### Standardize population data
+  # c(minYear, maxYear) |> print()
+  # yearsBy5 |> range() |> print()
   pop_df <- pop_df |> filter(year >= minYear) |> filter(year <= maxYear)
   pop_df <- pop_df |> mutate(region = gsub("\\.", " ", region))
 
-  ###### County Population Scenario ######
-  msg2 |> message("Calculating county population from regional population...")
-  df_popProj <- calc_countyPop(
-    regPop  = pop_df,
-    funList = svPopList$popProjList,
-    years   = list_years_by5
-  ) #rm("popProjList")
 
+  ### Check if there are any years after the max year
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs2 <- "\n" |> paste0("Exiting...")
+  msg_pop    <- "Population" |> paste0(msgInputs1)
+  check_pop  <- pop_df |> filter(year == maxYear) |> nrow()
+  if(!check_pop) {
+    "\t" |> message(msg_pop)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_pop)
+  rm(msg_pop, check_pop)
+
+
+  ###### ** County Population Scenario ######
+  msg2 |> message("Calculating county population from regional population...")
+  df_popProj <- pop_df |> get_countyPop(
+    years   = yearsBy5,
+    xCol0   = "year",       ### X column in df0
+    yCol0   = "state_pop",  ### Y column in df0
+    years   = yearsBy5
+  ) ### End get_countyPop
 
   ###### Calculate Impacts ######
   ### Iterate over adaptations/variants
-  df_results  <- 1:nrow(df_sectorInfo) |> map(function(
+  df_results  <- df_sectorInfo |> nrow() |> seq_len() |> map(function(
     row_i,
     info_x      = df_sectorInfo,
     scenarios_x = c_scenarios
   ){
-    # scenarios_x |> print()
     ### Which SV data to use
-    svName_i       <- (c_sector=="Coastal Properties") |> ifelse("svDataCoastal", "svData"); # svName_i |> print()
-    # svDataList[[svName_i]] |> names() |> print(); # return()
+    svName_i       <- (c_sector=="Coastal Properties") |> ifelse("svDataCoastal", "svData");
+    # scenarios_x |> print(); # svName_i |> print()
     ### Sector info
     info_i         <- info_x[row_i,]
     sectorAbbr_i   <- info_i$impactList_fileExt[1]
@@ -593,8 +665,8 @@ run_fredi_sv <- function(
     ### Which impacts list to use
     impactsName_i  <- "impactsList" |>
       paste(sectorAbbr_i, sep="_") |>
-      paste0(is.na(variantAbbr_i) |> ifelse("", "_")) |>
-      paste0(is.na(variantAbbr_i) |> ifelse("", variantAbbr_i))
+      paste0((variantAbbr_i |> is.na()) |> ifelse("", "_")) |>
+      paste0((variantAbbr_i |> is.na()) |> ifelse("", variantAbbr_i))
     impactsPath_i  <- impactsPath |> file.path(impactsName_i) |> paste0(".", rDataType)
 
     ###### Iterate Over Scenarios ######
@@ -628,7 +700,7 @@ run_fredi_sv <- function(
         svInfo    = svDataList[[svName_i]],
         svGroups  = c_svGroupTypes,
         weightCol = weightsCol_i,
-        years     = list_years_by5,
+        years     = yearsBy5,
         silent    = silent,
         .msg0     = msg2,
         .testing  = .testing
@@ -639,6 +711,7 @@ run_fredi_sv <- function(
       ###### Return Impacts ######
       return(impacts_j)
     })
+
     ###### Bind Results ######
     ### Bind results and add variant level
     results_i <- results_i|> bind_rows()
@@ -661,14 +734,14 @@ run_fredi_sv <- function(
       # results_i |> names() |> print()
 
       ###### Replace Driver Values ######
-      valCols0  <- valCols0[!(valCols0 %in% c("impPop"))]
-      valCols1  <- valCols0 |> map(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
-      # valCols1 |> print()
-      # driverRange |> print(); results_i$driverValue |> range() |> print()
-      which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
-      # results_i |> glimpse()
-      results_i[which0_i, valCols1] <- NA
-      rm(valCols0, valSuff0)
+      # valCols0  <- valCols0[!(valCols0 %in% c("impPop"))]
+      # valCols1  <- valCols0 |> map(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
+      # # valCols1 |> print()
+      # # driverRange |> print(); results_i$driverValue |> range() |> print()
+      # which0_i  <- (results_i$driverValue < driverRange[1]) | (results_i$driverValue > driverRange[2])
+      # # results_i |> glimpse()
+      # results_i[which0_i, valCols1] <- NA
+      # rm(valCols0, valSuff0)
     } ### End if(!.testing)
     ### Return
     return(results_i)
