@@ -633,11 +633,12 @@ run_fredi_sv <- function(
     weightsCol_i <- df_sectorInfo[["popWeightCol"      ]][row_i]
 
     ### Which impacts list to use
-    varAbbr_i     <- varAbbr_i |> (function(y){y |> is.na() |> ifelse(NULL, y)})()
+    # varAbbr_i     <- varAbbr_i |> (function(y){y |> is.na() |> ifelse(NULL, y)})()
+    if(varAbbr_i |> is.na()){varAbbr_i <- NULL}
     msgVar_i      <- "variant=\"" |> paste0(varLabel_i, "\"")
 
     ### Read in the file
-    impactsName_i <- "impactsList" |> paste(sectorAbbr_i, varAbbr_i, sep="_")
+    impactsName_i <- "impactsList" |> c(sectorAbbr_i, varAbbr_i) |> paste(collapse="_")
     impactsPath_i <- impactsPath   |> file.path(impactsName_i) |> paste0(".", rDataType)
     impactsList   <- impactsPath_i |> readRDS()
     exists_i      <- "impactsList" |> exists()
@@ -721,9 +722,11 @@ run_fredi_sv <- function(
 
 
   ###### Format Results ######
-  ### Bind results and ungroup
+  ### Bind results and relocate columns
+  move0       <- c("sector", "variant", "scenario")
   listResults <- listResults |> bind_rows()
-  listResults <- listResults |> ungroup()
+  listResults <- listResults |> mutate(sector = c_sector)
+  listResults <- listResults |> relocate(all_of(move0))
 
   ###### Return Object ######
   msg1 |> paste0("Finished.") |> message()
