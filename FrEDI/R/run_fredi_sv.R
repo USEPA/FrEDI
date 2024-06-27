@@ -639,8 +639,6 @@ run_fredi_sv <- function(
     ### Read in the file
     impactsName_i <- "impactsList" |> paste(sectorAbbr_i, varAbbr_i, sep="_")
     impactsPath_i <- impactsPath   |> file.path(impactsName_i) |> paste0(".", rDataType)
-    # impactsList <- impactsPath_i |> readRDS()
-    # exists_i      <- "impactsList" |> exists()
     impactsList   <- impactsPath_i |> readRDS()
     exists_i      <- "impactsList" |> exists()
 
