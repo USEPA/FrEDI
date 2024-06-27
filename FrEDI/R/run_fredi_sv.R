@@ -112,8 +112,9 @@ run_fredi_sv <- function(
   ### Get FrEDI data objects
   fredi_config  <- "fredi_config"  |> get_frediDataObj("frediData")
   co_modelTypes <- "co_modelTypes" |> get_frediDataObj("frediData")
+  co_states     <- "co_states"     |> get_frediDataObj("frediData")
+  temp_default  <- "temp_default"  |> get_frediDataObj("frediData")
   pop_default   <- "pop_default"   |> get_frediDataObj("stateData")
-  co_states     <- "co_states"     |> get_frediDataObj("stateData")
 
   ### Assign config files
   fredi_config |> list2env(envir = environment())
@@ -338,45 +339,13 @@ run_fredi_sv <- function(
       msg2 |> message("Exiting...")
       return()
     } ### End if(!("data.frame" %in% class_popInput))
+
     ### Check for popInput columns
     ### Info about popInputs
     popInputCols    <-  popInput |> names()
     popCols_inInput <- (popCols %in% popInputCols)
-    if(popCols_inInput |> all()){
-      msg2 |> message("All population scenario columns present in `popInput`...")
-      ### Filter to non-missing data
-      popInput     <- popInput |> filter_all(all_vars(!(. |> is.na())))
-
-      ### Check input Population values: no repeating years
-      if(popInput |> nrow()){
-        df_dups       <- popInput |>
-          group_by_at(c("year", "region", "state")) |>
-          summarize(n=n(), .groups="drop")
-        checkIssues  <- any(df_dups$n > 1)
-        rm(df_dups)
-      } else{ ### if(popInput |> nrow())
-        checkIssues <- TRUE
-      } ### End else(popInput |> nrow())
-      ### If there are issues with years:
-      if(checkIssues){
-        msg2 |> message("Error: duplicate years present in `popInput`!")
-        msg2 |> message("Exiting...")
-        return()
-      } ### End if(checkIssues)
-      rm(checkIssues)
-
-      ### Check input Population values: population >= 0
-      checkIssues <- (popInput$reg_pop < 0)
-      anyIssues   <- checkIssues |> any()
-      if(anyIssues){
-        msg2 |> message("Error: Values for 'reg_pop' in `popInput` must be greater than zero!")
-        msg2 |> message("Exiting...")
-        return()
-      } ### End if(checkIssues)
-      has_popInput <- TRUE
-      rm(checkIssues, anyIssues)
-    } ### End if(all(popCols_inInput))
-    else{
+    allPopCols      <- popCols_inInput |> all()
+    if(!allPopCols) {
       ### Exit and message the user
       # msg1 |> message("Using default regional population scenario", "...", "\n")
       # has_popInput    <- FALSE
@@ -384,9 +353,47 @@ run_fredi_sv <- function(
       msg3 |> message("'", paste(popCols[!popCols_inInput], collapse="', '"),"'...", "\n")
       msg2 |> message("Exiting...")
       return()
-    } ### End else(all(popCols_inInput))
+    } ### End if(!allPopCols)
+
+    ### Otherwise message user
+    msg2 |> message("All population scenario columns present in `popInput`...")
+    ### Filter to non-missing data
+    popInput     <- popInput |> filter_all(all_vars(!(. |> is.na())))
+    popInput     <- popInput |> unique()
+
+    ### Check input Population values: no repeating rows
+    if(popInput |> nrow()){
+      df_dups       <- popInput |>
+        group_by_at(c("year", "region", "state")) |>
+        summarize(n=n(), .groups="drop")
+      checkIssues  <- (df_dups$n > 1) |> any()
+      rm(df_dups)
+    } else{ ### if(popInput |> nrow())
+      checkIssues <- FALSE
+    } ### End else(popInput |> nrow())
+
+    ### If there are issues with years:
+    if(checkIssues){
+      msg2 |> message("Error: duplicate rows present in `popInput`!")
+      msg2 |> message("Exiting...")
+      return()
+    } ### End if(checkIssues)
+    rm(checkIssues)
+
+    ### Check input Population values: population >= 0
+    checkIssues <- (popInput |> pull(state_pop)) < 0
+    anyIssues   <- checkIssues |> any()
+    if(anyIssues){
+      msg2 |> message("Error: Values for 'reg_pop' in `popInput` must be greater than zero!")
+      msg2 |> message("Exiting...")
+      return()
+    } ### End if(checkIssues)
+    has_popInput <- TRUE
+    rm(checkIssues, anyIssues)
     rm(class_popInput, popInputCols, popCols_inInput)
   } ### End if(check_popInput)
+
+
 
   ###### Driver Scenario ######
   paste0("\n", msg1) |> message("Preparing driver scenario...")
@@ -412,22 +419,20 @@ run_fredi_sv <- function(
   else if(checkTemp2 | checkTemp3){
     ### Otherwise use default scenario and add scenario column
     msg2 |> message("Using default temperature scenario...")
-    # rDataList$co_defaultTemps |> names() |> print()
-    driverInput <- rDataList$frediData$data$co_defaultTemps |>
-      mutate(temp_C = temp_C_global |> convertTemps(from="global")) |>
-      mutate(scenario="FrEDI Default")
+    driverInput <- temp_default
+    driverInput <- driverInput |> mutate(temp_C = temp_C_conus)
+    driverInput <- driverInput |> mutate(scenario = "FrEDI Default")
     ### Select columns
-    driverInput    <- driverInput |> select(all_of(tempCols)) |> rename(driverValue = temp_C)
+    driverInput <- driverInput |> select(all_of(tempCols)) |> rename(driverValue = temp_C)
   } ### End else if(checkTemp2 | checkTemp3)
-
 
   ### Interpolate temperatures over scenarios:
   if(checkTemp0 | checkTemp1 | checkTemp2 | checkTemp3){
     ### Scenarios
-    c_scenarios <- driverInput$scenario |> unique()
+    c_scenarios <- driverInput |> pull(scenario) |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearTemp <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear[1]
+    refYearTemp <- co_modelTypes |> filter(modelUnitType=="temperature") |> pull(modelRefYear)
     ### Drivers
     drivers_df  <- c_scenarios |> map(function(
     scenario_i,
@@ -448,11 +453,9 @@ run_fredi_sv <- function(
       ### - Add a dummy region for National Total for interpolate_annual
       ### - Interpolate, drop dummy region, and add scenario back in
       years_i <- refYear_x:maxYear_x
-      input_i <- input_i |>
-        mutate(region="National Total") |>
-        interpolate_annual(years = years_i, column = "driverValue", rule = 1:2) |>
-        select(-c("region"))
-      ### Add scenario
+      input_i <- input_i |> mutate(region="National Total")
+      input_i <- input_i |> interpolate_annual(years=years_i, column="driverValue", rule=1:1)
+      input_i <- input_i |> select(-c("region"))
       input_i <- input_i |> mutate(scenario = scenario_i)
       ### Return
       return(input_i)
@@ -464,18 +467,6 @@ run_fredi_sv <- function(
   } ### End if(checkTemp0 | checkTemp1 | checkTemp2 | checkTemp3)
   ### Remove intermediate objects
   rm(checkTemp0, checkTemp1, checkTemp2)
-
-  ### Check if there are any years after the max year
-  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
-  msgInputs2 <- "\n" |> paste0("Exiting...")
-  msg_temp   <- "Temperature" |> paste0(msgInputs1)
-  check_temp <- drivers_df |> filter(year == maxYear) |> nrow()
-  if(!check_temp) {
-    "\t" |> message(msg_temp)
-    msgInputs2 |> message()
-    return()
-  } ### if(!check_temp)
-  rm(msg_temp, check_temp)
 
 
 
@@ -495,10 +486,10 @@ run_fredi_sv <- function(
     msg2 |> message("Using SLR scenario from user inputs...")
     driverInput <- driverInput |> select(all_of(slrCols))
     ### Scenarios
-    c_scenarios <- driverInput$scenario |> unique()
+    c_scenarios <- driverInput |> pull(scenario) |> unique()
     n_scenarios <- c_scenarios |> length()
     ### Ref year
-    refYearSLR  <- (rDataList$frediData$data$co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear[1]
+    refYearSLR  <- co_modelTypes |> filter(modelUnitType=="slr") |> pull(modelRefYear)
     ### Drivers
     drivers_df  <- c_scenarios |> map(function(
     scenario_i,
@@ -520,9 +511,8 @@ run_fredi_sv <- function(
       ### - Interpolate, drop dummy region, and add scenario back in
       years_i <- refYear_x:maxYear_x
       input_i <- input_i |> mutate(region="National Total")
-      input_i <- input_i |> interpolate_annual(years = years_i, column = "driverValue", rule = 1:2)
+      input_i <- input_i |> interpolate_annual(years=years_i, column="driverValue", rule=1:1)
       input_i <- input_i |> select(-c("region"))
-      ### Add scenario
       input_i <- input_i |> mutate(scenario = scenario_i)
       ### Return
       return(input_i)
@@ -531,8 +521,7 @@ run_fredi_sv <- function(
     drivers_df <- drivers_df |> mutate(driverUnit  = "cm")
     ### Remove values
     rm(driverInput, refYearSLR)
-  } ### End if(checkSLR0)
-  else if(checkSLR1){
+  } else if(checkSLR1){
     msg2 |> message("Creating SLR scenario from temperature scenario...")
     drivers_df <- c_scenarios |> map(function(
     scenario_i,
@@ -546,23 +535,27 @@ run_fredi_sv <- function(
       return(data_i)
     }) |> bind_rows()
     ### Add driver unit
-    drivers_df <- drivers_df |> mutate(driverUnit  = "cm")
+    drivers_df <- drivers_df |> mutate(driverUnit = "cm")
   } ### End else if(checkSLR0)
   # drivers_df |> names() |> print()
   ### Remove intermediate objects
   rm(checkSLR0, checkSLR1)
 
+  ### Standardize years
+  drivers_df <- drivers_df |> filter(year >= minYear) |> filter(year <= maxYear)
+  drivers_df <- drivers_df |> filter_all(all_vars(!(. |> is.na())))
+
   ### Check if there are any years after the max year
-  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "!")
   msgInputs2 <- "\n" |> paste0("Exiting...")
-  msg_slr    <- "SLR" |> paste0(msgInputs1)
-  check_slr  <- drivers_df |> filter(year == maxYear) |> nrow()
-  if(!check_slr) {
-    "\t" |> message(msg_slr)
+  msg_driver <- "Driver" |> paste0(msgInputs1)
+  checkDrive <- drivers_df |> filter(year == maxYear) |> nrow()
+  if(!checkDrive) {
+    "\n" |> paste0(msg1, "Warning! ", msg_driver) |> message()
     msgInputs2 |> message()
     return()
-  } ### if(!check_slr)
-  rm(msg_slr, check_slr)
+  } ### if(!check_temp)
+  rm(msg_driver, checkDrive)
 
 
   ###### ** Standardize Driver Scenarios ######
@@ -581,7 +574,6 @@ run_fredi_sv <- function(
     join0     <- popInput  |> names() |> (function(y, z=co_states |> names()){y[y %in% z]})()
     popInput  <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
     popInput  <- popInput  |> filter_all(all_vars(!(. |> is.na())))
-    # popInput  <- popInput  |> select(any_of(drop0))
     popInput  <- popInput  |> select(all_of(popCols))
     rm(join0, drop0)
 
@@ -590,27 +582,25 @@ run_fredi_sv <- function(
     rm(popInput)
 
     ### Interpolate annual
-    pop_df    <- pop_df   |> interpolate_annual(years=yearsBy5, column=popCol0, rule=2:2, byState=byState) |> ungroup()
-  } ### End if(has_popInput)
-  else              {
+    pop_df    <- pop_df   |> interpolate_annual(years=yearsBy5, column=popCol0, rule=1:1, byState=byState) |> ungroup()
+  } else {
     # msg1 |> message("No population scenario provided...")
     msg2 |> message("Using default population scenario...")
-    # pop_df <- svPopList$iclus_region_pop
     pop_df <- pop_default
-  } ### End else(has_popInput)
+  } ### End if(has_popInput)
+
+
   ### Standardize population data
   # c(minYear, maxYear) |> print(); yearsBy5 |> range() |> print()
-  pop_df <- pop_df |> filter(year >= minYear) |> filter(year <= maxYear)
   pop_df <- pop_df |> mutate(region = gsub("\\.", " ", region))
 
-
   ### Check if there are any years after the max year
-  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
-  msgInputs2 <- "\n" |> paste0("Exiting...")
+  pop_df <- pop_df |> filter(year >= minYear) |> filter(year <= maxYear)
+  pop_df <- pop_df |> filter_all(all_vars(!(. |> is.na())))
   msg_pop    <- "Population" |> paste0(msgInputs1)
   check_pop  <- pop_df |> filter(year == maxYear) |> nrow()
   if(!check_pop) {
-    "\t" |> message(msg_pop)
+    "\n" |> paste0(msg1, "Warning! ", msg_pop) |> message()
     msgInputs2 |> message()
     return()
   } ### if(!check_pop)
