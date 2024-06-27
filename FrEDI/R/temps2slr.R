@@ -109,7 +109,7 @@ temps2slr <- function(
   df_x0   <- df_x0 |> mutate_at(c(mutate0), as.character)
   df_x0   <- df_x0 |> mutate_at(c(mutate0), as.numeric)
   df_x0   <- df_x0 |> filter_all(all_vars(!(. |> is.na())))
-  df_x0   <- df_x0 |> arrange_at(.vars=c("year"))
+  df_x0   <- df_x0 |> arrange_at(c("year"))
   rm(mutate0)
 
   ### Filter missing values, then get unique years
@@ -150,7 +150,7 @@ temps2slr <- function(
   ### Filter to years of interest 2000-2100
   # max_year     <- 2100
   # new_years    <- seq(ref_year0, max_year)
-  new_years <- min0:max0
+  new_years <- ref_year0:max0
   num_x     <- new_years |> length()
   ind_x     <- 1:num_x
 
@@ -170,6 +170,7 @@ temps2slr <- function(
   df_x1 <- df_x1 |> select(c("year", "temp_C", "equilTemp", "slr_mm"))
   df_x1 <- df_x1 |> mutate(yearFrom0 = year - ref_year0)
   df_x1 <- df_x1 |> mutate(phi = phi0 * exp(-yearFrom0 / tau2))
+  # df_x1 |> glimpse(); ind_x |> length() |> print()
 
   ###### Series ######
   ### Calculate base values
