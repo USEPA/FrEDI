@@ -192,7 +192,7 @@ calc_tractScaledImpacts <- function(
     df_i <- df_i |> mutate(sv_impact = NA)
     ### Function for tract i and whether the function exists
     fun_i     <- funList[[tract_i]]
-    has_fun_i <- !(fun_i |> is.null()) & "data.frame" %in% (NULL |> class())
+    has_fun_i <- !(fun_i |> is.null()) & "function" %in% (fun_i |> class())
     # if(has_fun_i){tract_i |> print()}
     # if(tract_i == "12009980100") fun_i |> print()
     # if(has_fun_i){ df_i <- df_i |> mutate(sv_impact = values_x |> fun_i()) |> try(silent=T) }
