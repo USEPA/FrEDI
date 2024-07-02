@@ -168,7 +168,8 @@ run_fredi_sv <- function(
   c_variantLabels <- df_sectorInfo |> pull(variant_label)
   c_popWtCol      <- sectorInfo |> filter(sector == c_sector) |> pull(popWeightCol) |> tolower()
   c_modelType     <- sectorInfo |> filter(sector == c_sector) |> pull(modelType) |> tolower()
-  df_validGroups  <- svDemoInfo |> get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
+  # df_validGroups  <- svDemoInfo |> get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
+  df_validGroups  <- c_popWtCol |> get_validGroups()
 
   ###### Check Driver Inputs ######
   ### Initialize whether to check for inputs
