@@ -6,7 +6,7 @@
 \title{Default outputs of \code{\link[=run_fredi]{run_fredi()}}
 A dataframe containing the default outputs of \code{\link[=run_fredi]{run_fredi()}}}
 \format{
-A data frame with 775,179 rows and 20 columns:
+A data frame with 1,501,500 rows and 20 columns:
 \describe{
 \item{sector}{Name of the associated sector.}
 \item{variant}{Name of the associated variant or adaptation (values are sector-specific).}
