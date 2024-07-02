@@ -7,21 +7,29 @@
 import_inputs(
   tempfile = NULL,
   slrfile = NULL,
-  popfile = NULL,
   gdpfile = NULL,
-  temptype = "conus"
+  popfile = NULL,
+  temptype = "conus",
+  popArea = "state"
 )
 }
 \arguments{
-\item{tempfile}{A character string indicating the location of a CSV file containing a custom temperature scenario (first column contains years; second column contains temperatures, in degrees Celsius, above the 1995 baseline year). The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
+\item{tempfile=NULL}{A character string indicating the location of a CSV file containing a custom temperature scenario. The first column in the CSV should be named \code{"year"} and contain years associated with the temperature estimates; the second column (named \code{"temp_C"}) should contain values for temperatures (i.e., degrees of warming relative to a baseline year of 1995), in degrees Celsius. The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{slrfile}{A character string indicating the location of a CSV file containing a custom sea level rise scenario (first column contains years; second column contains values for global mean sea level rise (GMSL), in centimeters, above the 2000 baseline). The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
+\item{slrfile=NULL}{A character string indicating the location of a CSV file containing a custom sea level rise scenario. The first column in the CSV should be named \code{"year"} and contain years associated with the sea level rise estimates; second column should be named "\verb{slr_cm"} and contain values for global mean sea level rise (GMSL), in centimeters, above a baseline year of 2000. The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{popfile}{A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column contains years in the interval 2010 to 2300. The second column should contain the NCA Region label associated with the state. The third column should contain state names. The fourth column should contain the state postal code abbreviation. The fifth column should contain the population values. The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
+\item{gdpfile=NULL}{A character string indicating the location of a CSV file containing a custom scenario for U.S. gross domestic product (GDP). The first column in the CSV should be named \code{"year"} and contains years associated with the GDP estimates; the second column (named \code{"gdp_usd"}) should contain values for U.S. GDP in 2015 U.S. dollars  (2015$ USD). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
 
-\item{gdpfile}{A character string indicating the location of a CSV file containing a custom scenario for gross domestic product (GDP) (first column contains years; second column contains values for GDP, in total 2015$). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).}
+\item{popfile=NULL}{A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column should be named \code{"year"} and contain years in the interval 2010 to 2300. The second column should be called \code{"pop"} and contain population values. Whether a third column is required depends on the geographical scale of the data, as specified by the \code{popArea} argument.
+\itemize{
+\item If \code{popArea = "state"}, the third column should be called \code{"state"} and contain the name of the state associated with each population estimate in a given year. If \code{popArea = "regional"}, the third column should be called \code{"region"} and contain the NCA Region label associated with each population estimate in a given year. If \code{popArea = "national"} or \code{popArea = "area"}, only the \code{year} and \code{pop} columns are required.
+\item If \code{popArea = "state"}, the file must contain estimates for all CONUS states (all states except Alaska and Hawaii) must be present. If \code{popArea = "regional"}, the file must contain estimates for all seven NCA regions.
+\item The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).
+}}
 
-\item{temptype}{A character string indicating whether the temperature values in the temperature input file (specified by \code{tempfile} represent global temperature change (\code{temptype="global"}) or temperature change for the contiguous U.S. (\code{temptype="conus"}) in degrees Celsius. By default, the model assumes temperatures are CONUS temperatures (i.e., \code{temptype="conus"}).}
+\item{temptype="conus"}{A character string indicating whether the temperature values in the temperature input file (as specified by \code{tempfile}) represent temperature changes, in degrees Celsius, at the global level (\code{temptype = "global"}) or for the contiguous U.S. (CONUS) only (\code{temptype = "conus"}, default).}
+
+\item{popArea="state"}{A character string indicating the geographical scale of population inputs (as specified by \code{popfile}). Specify one of: \code{"national"}, for national totals (including Alaska and Hawaii); \code{"conus"}, for the contiguous U.S. (CONUS) only (i.e., national totals, but excluding Alaska and Hawaii); \code{"regional"}, for totals at the levels of NCA regions (i.e., ); or \code{"state"}, for state-level population (default).}
 }
 \value{
 \code{\link[=import_inputs]{import_inputs()}} returns a list of named elements containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively:
@@ -31,40 +39,55 @@ import_inputs(
 \code{tempInput} \tab Data frame containing a custom temperature scenario imported from the CSV file specified by \code{tempfile}, with missing values removed. \code{tempInput} has two columns with names \code{"year"} and \code{"temp_C"}, containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
 \code{slrInput} \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by \code{slrfile}, with missing values removed. \code{slrInput} has two columns with names \code{"year"}, and \code{"slr_cm"}, containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
 \code{gdpInput} \tab Data frame containing a custom GDP scenario imported from the CSV file specified by \code{gdpfile}, with missing values removed. \code{gdpInput} has two columns with names \code{"year"}, and \code{"gdp_usd"}, containing the year and the national GDP, respectively. \cr
-\code{popInput} \tab Data frame containing a custom temperature scenario imported from the CSV file specified by \code{popfile}, with missing values removed. \code{popInput} has three columns with names \code{"year"}, \code{"region"}, \code{"state"}, \code{"postal"}, and \code{"reg_pop"}, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.. \cr
+\code{popInput} \tab Data frame containing a custom temperature scenario imported from the CSV file specified by \code{popfile}, with missing values removed. \code{popInput} has three columns with names \code{"year"}, \code{"region"}, \code{"state"}, \code{"postal"}, and \code{"state_pop"}, containing the year, the NCA region name, and the state, the postal code abbreviation (e.g., \code{postal = "ME"} for \code{state = "Maine"}), and the state population, respectively. \cr
 }
 }
 \description{
-This function enables users to import data on custom scenarios for use with \link{FREDI} (supplied as inputs to \code{\link[=run_fredi]{run_fredi()}}). Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and population scenarios. \code{\link[=import_inputs]{import_inputs()}} reads in and format any specified files as data frames and returns a list of data frames for imported scenarios.
+This function enables users to import data on custom scenarios for use with \code{\link[=run_fredi]{run_fredi()}}. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and state population scenarios. \code{\link[=import_inputs]{import_inputs()}} reads in and format any specified files as data frames and returns a list of data frames for imported scenarios.
 }
 \details{
-This function enables users to import data on custom scenarios for use with temperature binning. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), population, and gross domestic product (GDP) scenarios (\code{tempfile}, \code{slrfile}, \code{gdpfile}, and \code{popfile}, respectively). \code{\link[=import_inputs]{import_inputs()}} reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios. Users can specify whether the temperature input is for the contiguous U.S. (CONUS) or global using \code{temptype}.
+This function enables users to import data on custom scenarios for use with temperature binning. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), population, and gross domestic product (GDP) scenarios (\code{tempfile}, \code{slrfile}, \code{gdpfile}, and \code{popfile}, respectively). \code{\link[=import_inputs]{import_inputs()}} reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios.
+
+The CSV files should contain estimates aligned with the requirements of the \code{run_fredi()} or ``
 \itemize{
-\item \strong{Temperature Inputs.} The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
+\item \strong{Temperature Scenario.} The file specified by \code{tempfile} must have two columns -- \code{"year"} and \code{"temp_C"} -- respectively containing the years associated with the temperature estimates and the temperatures (i.e., degrees of warming) in degrees Celsius relative to a baseline year of 1995 (i.e., the central year of a 1986-2005 reference period).
 \itemize{
-\item Users can convert global temperatures to CONUS temperatures using \link{convertTemps}\code{(from="global")} (or by specifying \link{import_inputs}\code{(temptype="global")} when using \code{\link[=import_inputs]{import_inputs()}} to import a temperature scenario from a CSV file).
-\item Temperature inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
+\item If expressed as CONUS temperatures, values in the \code{"temp_C"} column must be greater than or equal to zero degrees Celsius.
+\item If values in \code{"temp_C"} have global rather than CONUS-specific temperatures, users should specify \code{temptype = "global"} when running \code{import_inputs()}, and \code{import_inputs()} will convert the temperatures to CONUS using \link{convertTemps} (with argument \code{from = "global"}).
+\item Temperature inputs to \code{\link[=run_fredi]{run_fredi()}} must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
 }
-\item \strong{SLR Inputs.} The input SLR scenario requires values for changes in global mean sea level rise (GMSL) heights in centimeters (cm). GMSL heights must be greater than or equal to zero.
+\item \strong{SLR Scenario.} The file specified by \code{slrfile} must have two columns -- \code{"year"} and \code{"slr_cm"} -- respectively containing the years associated with the GMSL estimates and GMSL estimates, in centimeters, above a 2000 baseline year.
 \itemize{
-\item \code{slrInput} requires a data frame object with two columns containing the year and global mean sea level rise (GMSL) in centimeters, respectively.
-\item SLR inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
+\item GMSL heights must be greater than or equal to zero.
+\item The SLR scenario must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
 }
-\item \strong{GDP Inputs.} The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
+\item \strong{GDP Scenario.} The file specified by \code{gdpfile} must have two columns -- \code{"year"} and \code{"gdp_usd"} -- respectively containing the years associated with the GDP estimates and the estimates for U.S. GDP, in 2015$.
 \itemize{
-\item \code{gdpInput} requires a data frame object with five columns with names \code{"year"}, and \code{"gdp_usd"}, containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
-\item GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
+\item GDP values must be greater than or equal to zero.
+\item The GDP scenario must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
 }
-\item \strong{Population Inputs.} The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
+\item \strong{Population Scenario.} The file specified by \code{popfile} population must have at least two columns -- \code{"year"} and \code{"pop"} -- respectively containing the years associated with the population estimates and the population estimates. requires state-level population values. Whether a third column is required depends on the geographical scale of the data, as specified by the \code{popArea} argument.
 \itemize{
-\item \code{popInput} requires a data frame object with five columns with names \code{"year"}, \code{"region"}, \code{"state"}, \code{"postal"}, and \code{"reg_pop"}, containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.
-\item Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
+\item If \code{popArea = "state"}, the third column should be called \code{"state"} and contain the name of the state associated with each population estimate in a given year. If \code{popArea = "regional"}, the third column should be called \code{"region"} and contain the NCA Region label associated with each population estimate in a given year. If \code{popArea = "national"} or \code{popArea = "area"}, only the \code{year} and \code{pop} columns are required.
+\item If \code{popArea = "state"}, the file must contain estimates for all CONUS states (all states except Alaska and Hawaii) must be present. If \code{popArea = "regional"}, the file must contain estimates for all seven NCA regions.
+\item The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the \code{maxYear} argument to \code{\link[=run_fredi]{run_fredi()}}).
+\item Population values must be greater than or equal to zero.
+\item Population estimates must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the \code{\link[=run_fredi]{run_fredi()}} \code{maxYear} argument).
 }
 }
 
-\code{\link[=import_inputs]{import_inputs()}} outputs a list of data frames that can be passed to the main FREDI function \code{\link[=run_fredi]{run_fredi()}} using the \code{inputList} argument. For example, specify \code{run_fredi(inputsList=x)} to generate impacts for a custom scenario \code{x} (where \code{x} is a list of data frames such as that output from \code{\link[=import_inputs]{import_inputs()}}) (see \code{\link[=run_fredi]{run_fredi()}}).
+\code{\link[=run_fredi]{run_fredi()}} requires a population scenario at the state level. If the population scenario is supplied to \code{\link[=import_inputs]{import_inputs()}} at a geographical scale above the state level (i.e., if \code{popArea = "national"}, \code{popArea = "area"}, or \code{popArea = "regional"}), \code{\link[=import_inputs]{import_inputs()}} will calculate state-level estimates from the provided data:
+\itemize{
+\item If \code{popArea = "national"}, \code{\link[=import_inputs]{import_inputs()}} will use historical U.S. Census data for the period 2010--2023 to allocate total national population to CONUS and non-CONUS regions (i.e., Alaska and Hawaii); U.S. Census values from 2023 are applied in allocations for years after 2023.
+\item If \code{popArea = "national"} or or \code{popArea = "area"}, \code{\link[=import_inputs]{import_inputs()}} uses ICLUS data and projections for the period 2010--2100 to allocate CONUS population to specific NCA regions; ICLUS values from 2100 are applied in allocations for years after 2100.
+\item If \code{popArea = "national"}, \code{popArea = "area"}, or \code{popArea = "regional"}, \code{\link[=import_inputs]{import_inputs()}} uses ICLUS data and projections for the period 2010--2100 to allocate NCA regional population to specific states; ICLUS values from 2100 are applied in allocations for years after 2100.
+}
 
-All inputs to \code{\link[=import_inputs]{import_inputs()}} are optional. If the user does not specify a file path for \code{tempfile}, \code{slrfile}, \code{gdpfile}, or \code{popfile} (or if there is an error reading in inputs from those file paths), \code{\link[=import_inputs]{import_inputs()}} outputs a list with a \code{NULL} value for the associated list element. \code{\link[=run_fredi]{run_fredi()}} defaults back to the default scenarios for any elements of the inputs list that are \code{NULL} or missing. In other words, running \code{run_fredi(inputsList=list())} returns the same outputs as running \code{\link[=run_fredi]{run_fredi()}} (see \code{\link[=run_fredi]{run_fredi()}}).
+\code{\link[=import_inputs]{import_inputs()}} outputs a list of data frame objects that can be passed to the main FREDI function \code{\link[=run_fredi]{run_fredi()}} using the \code{inputList} argument. For example, specify \code{run_fredi(inputsList = x)} to generate impacts for a custom scenario \code{x} (where \code{x} is a list of data frames such as that output from \code{\link[=import_inputs]{import_inputs()}}) (see \code{\link[=run_fredi]{run_fredi()}}).
+
+All inputs to \code{\link[=import_inputs]{import_inputs()}} are optional. If the user does not specify a file path for \code{tempfile}, \code{slrfile}, \code{gdpfile}, or \code{popfile} (or if there is are any errors reading in inputs from a file path), \code{\link[=import_inputs]{import_inputs()}} outputs a list with a \code{NULL} value for the associated list element. After reading in data from the specified CSV files, \code{\link[=import_inputs]{import_inputs()}} performs basic checks and will also return a \code{NULL} value for a particular list element if any of the checks fail.
+
+When using \code{\link[=import_inputs]{import_inputs()}} with \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=run_fredi]{run_fredi()}} defaults back to the default scenarios for any elements of the inputs list that are \code{NULL} or missing. In other words, running \code{run_fredi(inputsList = list())} returns the same outputs as running \code{\link[=run_fredi]{run_fredi()}} (see \code{\link[=run_fredi]{run_fredi()}}).
 }
 \examples{
 ### Path to example scenarios
@@ -80,11 +103,7 @@ slrInputFile  <- scenariosPath |> file.path("slr_from_gcam.csv")
 popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 
 ### Import inputs
-example_inputsList <- import_inputs(
-  slrfile  = slrInputFile,
-  popfile  = popInputFile,
-  temptype = "global"
-)
+example_inputsList <- import_inputs(slrfile=slrInputFile, popfile=popInputFile, popArea="state")
 
 ### Use imports with FREDI:
 df_x <- run_fredi(inputsList=example_inputsList)
@@ -92,4 +111,12 @@ df_x <- run_fredi(inputsList=example_inputsList)
 }
 \references{
 Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at \url{https://epa.gov/cira/FrEDI/}.
+
+United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
+
+U.S. Census Bureau. 2021. State Population Totals and Components of Change: 2010--2019. Available at \url{https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html}.
+
+U.S. Census Bureau. 2023. State Population Totals and Components of Change: 2020--2023. Available at \url{https://www.census.gov/data/tables/time-series/demo/popest/2020s-state-total.html}.
+
+U.S. Census Bureau. 2023. 2023 National Population Projections Tables: Main Series. Available at \url{https://www.census.gov/data/tables/2023/demo/popproj/2023-summary-tables.html}.
 }
