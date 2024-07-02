@@ -662,6 +662,8 @@ run_fredi_sv <- function(
     ### Add list names
     impacts_i     <- impacts_i |> set_names(c_scenarios)
     if(exists_i){remove(list=c("impactsList"), inherits=T)}
+    exists_i      <- "impactsList" |> exists()
+    if(exists_i){rm(impactsList)}
 
     ### Iterate over scenarios, calculate tract impacts
     for(scenario_j in c_scenarios) {
