@@ -307,6 +307,8 @@ check_input_data <- function(
     valCol    = NULL,     ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
     popArea   = "state",  ### One of: c("state", "regional", "area", "national")
+    yearMin   = NULL,     ### Check min year
+    yearMax   = NULL,     ### Check max year
     msgLevel  = 2         ### Level of messaging
 ){
   ###### Load Data from FrEDI ######
@@ -408,6 +410,31 @@ check_input_data <- function(
     return(NULL)
   } ### End if(!checkNum)
 
+  ### Check that appropriate years are present
+  rangeYrs  <- c(yearMin, yearMax)
+  hasMinYr  <- !(yearMin |> is.null())
+  hasMaxYr  <- !(yearMax |> is.null())
+  hasYears  <- hasMinYr | hasMaxYr
+
+  if(hasYears) {
+    ### Check
+    whichYrs  <- c()
+    if(hasMinYr) whichYrs <- inputDf  |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMin)
+    if(hasMaxYr) whichYrs <- whichYrs |> c(inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMax))
+    naYears   <- rangeYrs |> get_matches(y=whichYrs)
+    checkYrs  <- (rangeYrs |> length()) == (naYears |> length())
+    ### Messages
+    if(!checkYrs) {
+      msg_yrs <- "Data must have at least one non-missing value "
+      msg_min <- "in or before the year " |> paste0(yearMin)
+      msg_and <- (hasMinYr & hasMaxYr) |> ifelse("and at least one non-missing value ", "")
+      msg_min <- "in or after the year " |> paste0(yearMax)
+      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_min, "!") |> message()
+      return(NULL)
+    } ### End if(!checkYrs)
+  } ### End if(hasYears)
+
+
   ### Check that values are in range
   rangeVals <- dataVals |> range(na.rm=T)
   checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)
@@ -420,6 +447,7 @@ check_input_data <- function(
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkNum)
+
 
   ###### Format Columns ######
   ### If checks pass, convert all id columns to character
@@ -508,7 +536,7 @@ calc_import_pop <- function(
     if(doState) {df0 <- df0 |> mutate(pop = pop * state2reg)}
   }
   df0 <- df0 |> rename(state_pop = pop)
-    
+
     ### End if(calcPop)
 
   ###### Format Data ######
@@ -526,7 +554,7 @@ calc_import_pop <- function(
     df0      <- df0 |> select(all_of(select0))
     df0      <- df0 |> arrange_at(c(select0))
   }
-  
+
   ###### Return ######
   return(df0)
 }

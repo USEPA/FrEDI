@@ -1,41 +1,80 @@
 ###### Helpers ######
 ### Get column as vector
-get_vector <- function(
-    data, column = NULL
-){
-  ### Select column and get values as vector
-  col0  <- column |> is.null() |> ifelse(c(), column)
-  vals0 <- data[[column]] |> as.vector()
-  ### Return
-  return(vals0)
-}
+# get_vector <- function(
+#     data, column = NULL
+# ){
+#   ### Select column and get values as vector
+#   col0  <- column |> is.null() |> ifelse(c(), column)
+#   vals0 <- data[[column]] |> as.vector()
+#   ### Return
+#   return(vals0)
+# }
 
-### Get unique values from a dataframe column
-get_uniqueValues <- function(
-    data, column = NULL, sort=TRUE
-){
-  ### Select column and get values as vector
-  vals0 <- data  |> get_vector(column)
-  vals0 <- vals0 |> unique()
-  # vals0 |> print()
-  ### Sort
-  if(sort){vals0 <- vals0 |> sort()}
-  ### Return
-  return(vals0)
-}
+# ### Get unique values from a dataframe column
+# get_uniqueValues <- function(
+#     data, column = NULL, sort=TRUE
+# ){
+#   ### Select column and get values as vector
+#   vals0 <- data  |> get_vector(column)
+#   vals0 <- vals0 |> unique()
+#   # vals0 |> print()
+#   ### Sort
+#   if(sort){vals0 <- vals0 |> sort()}
+#   ### Return
+#   return(vals0)
+# }
 
 ### Get message prefix
-get_msgPrefix <- function(level=1){
-  ### Other vals
-  mnl0   <- "\n" ### Message new line
-  msg0   <- "\t" ### Message indent level 0
-  mcom   <- ", " ### Comma for collapsing lists
-  mqu0   <- "\'" ### Message quote
-  mqu1   <- mqu0 |> paste0(mcom, mqu0, collapse="")
-  mend0  <- "..."
-  msg_x  <- msg0
-  return(msg_x)
+get_msgPrefix <- function(level=1, newline=FALSE){
+  ### Message new line
+  msgN0  <- newline |> ifelse("\n", "")
+  ### Message indents
+  msgX0  <- "\t" |> rep(level)
+  ### Message prefix
+  msg0   <- msgN0 |> paste0(msgX0)
+  ### Return
+  return(msg0)
 }
+
+### Determine whether something is default or custom
+get_returnListStatus <- function(cond0=TRUE){
+  cond0 |> ifelse("Default", "Custom")
+}
+
+### Function to make it easier to subset a vector
+get_matches <- function(
+    x, ### Vector to subset
+    y, ### Vector to check x against
+    matches = TRUE,    ### Whether to subset to matches (TRUE) or non-matches (FALSE)
+    type    = "values" ### c("values", "matches", "which")
+){
+  ### Check which type to return
+  type      <- type |> tolower()
+  doValues  <- "values"  %in% type
+  doMatches <- "matches" %in% type
+  doWhich   <- "which"   %in% type
+
+  ### Get matches
+  set0      <- x %in% y
+
+  ### Get anti-match if matches = FALSE
+  if(!matches) set0 <- !set0
+
+  ### Get which values to return
+  which0    <- set0 |> which()
+
+  ### Get subset
+  x0        <- x[set0]
+
+  ### If doValues, return values
+  ### If doMatches, return matches
+  ### If doWhich, return which
+  if     (doValues) return(x0)
+  else if(doWhich ) return(which0)
+  else              return(set0)
+  ### End function
+}
+
 
 ### This function makes it easier to get data objects from the sysdata.rda file
 get_frediDataObj <- function(
@@ -139,7 +178,7 @@ interpolate_annual <- function(
   ### Iterate over states if byState=T
   ### Otherwise, iterate over regions
   if (byState) {
-    states0   <- data |> get_uniqueValues("state" )
+    states0   <- data |> pull(state) |> unique()
     df_interp <- states0 |> map(function(state_i){
       ### Values
       df_i     <- data |> filter(state==state_i)
@@ -155,7 +194,7 @@ interpolate_annual <- function(
       return(new_i)
     }) |> bind_rows()
   } else { ### By state
-    regions0  <- data |> get_uniqueValues("region")
+    regions0  <- data |> pull(region) |> unique()
     df_interp <- regions0 |> map(function(region_i){
       ### Values
       df_i     <- data |> filter(region==region_i)
@@ -237,6 +276,77 @@ get_scenario_id <- function(
   data_x <- data_x |> mutate(scenario_id = scen_x)
   ### Return
   return(data_x)
+}
+
+###### format_inputScenarios ######
+### This function helps format input scenarios
+format_inputScenarios <- function(
+    df0,       ### Scenario input data frame to format
+    name0,     ### Name of input c("temp, "slr", "gdp", "pop")
+    hasInput0, ### Whether the user provided an input
+    idCols0,   ### ID columns
+    minYear,   ### Minimum year
+    maxYear,   ### Maximum year
+    info0      ### Other info
+){
+  ### Message user
+  label0  <- info |> filter(inputName == name0) |> pull(inputType)
+  msg_i1  <- "Creating " |> paste0(label0, " scenario from user inputs...")
+  msg_i2  <- "No "       |> paste0(label0, " scenario provided...using default scenario...")
+  msg_i   <- hasInput0 |> ifelse(msg_i1, msg_i2)
+  1 |> get_msgPrefix() |> paste0(msg_i) |> message()
+
+  ### Info (need different info if calculating SLR from temperatures)
+  doSlr   <- name0 %in% c("slr") & "temp_C" %in% (df0 |> names())
+  name1   <- doSlr  |> ifelse("temp", name0)
+  infoSlr <- info0  |> filter(inputName == "slr")
+  info1   <- info0  |> filter(inputName == name1)
+  valCol0 <- info1  |> pull(valueCol)
+  yrRef0  <- info1  |> pull(ref_year)
+
+  ### Format data
+  select0 <- idCols0 |> c(valCol) |> c("year")
+  df0     <- df0 |> select(all_of(select0))
+  df0     <- df0 |> filter_all(all_vars(!(. |> is.na())))
+
+  ### Interpolate user inputs
+  if(hasInput0) {
+    ### Zero out values if temp or slr
+    doZero0 <- name0 %in% c("temp", "slr")
+    if(doZero0) {
+      df0 <- df0 |> filter(year > yrRef0)
+      df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      df0 <- df0 |> rbind(df1)
+      rm(df1)
+    } ### if(doZero0)
+
+    ### Calculate values
+    yrs0 <- yrRef0:maxYear
+    df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2)
+    df0  <- df0 |> select(-c("region"))
+
+    ### If SLR, calculate SLR values from temperatures
+    if(doSlr) {
+      ### - Get new info
+      valCol0 <- infoSlr |> pull(valueCol)
+      yrRef0  <- infoSlr |> pull(ref_year)
+      ### - First, calculate global temps
+      df0     <- df0 |> mutate(temp_C_global = temp_C |> convertTemps(from="conus"))
+      ### - Then, zero out again
+      df0     <- df0 |> filter(year > yrRef0)
+      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      df0     <- df0 |> rbind(df1)
+      rm(df1)
+      ### Then, calculate SLR heights
+      df0     <- temps2slr(temps = df0$temp_C_global, years = df0$year)
+    } ### End if(doSlr)
+  } ### End if(hasInput0)
+
+  ### Filter to appropriate years
+  df0     <- df0 |> filter(year >= minYear) |> filter(year <= maxYear)
+
+  ### Return
+  return(df0)
 }
 
 ###### summarize_seScenario ######
@@ -999,7 +1109,7 @@ get_slrScaledImpacts <- function(
   ###### Scaled Impacts >= Max #######
   ### Filter to appropriate years
   df_max0     <- df_max0 |> filter(modelUnitValue >= driverValue_ref)
-  maxYrs0     <- df_max0 |> get_uniqueValues(column="year")
+  maxYrs0     <- df_max0 |> pull(year) |> unique()
   nrow_max    <- maxYrs0 |> length()
 
   ## Calculate scaled impacts for values > slrMax0
