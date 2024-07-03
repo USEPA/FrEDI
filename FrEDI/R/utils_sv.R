@@ -284,8 +284,8 @@ calc_tractImpacts <- function(
 
   ###### Tract Population ######
   ### Calculate total tract population and drop columns
-  # c_dropCols1   <- c("state", "county", "geoid10", "region_pop", "state_pop", "county_pop")
-  drop0       <- c("region_pop", "state_pop", "county_pop")
+  drop0       <- c("state", "county", "geoid10", "region_pop", "state_pop", "county_pop")
+  # drop0       <- c("region_pop", "state_pop", "county_pop")
   x_impacts   <- x_impacts |> mutate(tract_totPop = county_pop * ratioTract2CountyPop)
   x_impacts   <- x_impacts |> select(-any_of(drop0))
   rm(drop0)
@@ -414,8 +414,8 @@ calc_tractImpacts <- function(
   if(!.testing){
     if(msgUser){msg1 |> paste0( "Calculating state summaries...") |> message()}
     sumCols0     <- c(c_impPop1, c_impact1) |> c(popNat1, popReg1)
-    # groupCols0   <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
-    groupCols0   <- c("region", "state", "postal", "svGroupType", "driverUnit", "driverValue", "year")
+    groupCols0   <- c("region", "svGroupType", "driverUnit", "driverValue", "year")
+    # groupCols0   <- c("region", "state", "postal", "svGroupType", "driverUnit", "driverValue", "year")
     ### Group by the grouping columns and summarize the summary columns
     x_impacts    <- x_impacts |>
       group_by_at (vars(groupCols0)) |>

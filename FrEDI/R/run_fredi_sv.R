@@ -39,12 +39,12 @@
 #'    * Population values must be greater than or equal to zero.
 #'    The default regional population scenario is drawn from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Note that the FrEDI SV default population scenario differs from the default population scenario used by [FrEDI::run_fredi()].
 #'
-#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing state-level annual physical impacts for socially vulnerable groups at five-year increments between 2010 and 2100.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
 #'
 #'
 #'
 #' @return
-#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing state-level annual physical impacts for socially vulnerable groups at five-year increments between 2010 and 2100.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
 #'
 #' @examples
 #' ### Run SV Module with defaults without specifying sector
