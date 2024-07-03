@@ -324,8 +324,12 @@ format_inputScenarios <- function(
 
     ### Calculate values
     yrs0 <- yrRef0:maxYear |> unique()
-    df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2)
-    if(!(name0 %in% "pop")) df0  <- df0 |> select(-c("region"))
+    if(!(name0 %in% "pop")) {
+      df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2) |> ungroup()
+      df0  <- df0 |> select(-c("region"))
+    } else{
+      df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
+    } ### End if(!(name0 %in% "pop"))
 
 
     ### If SLR, calculate SLR values from temperatures

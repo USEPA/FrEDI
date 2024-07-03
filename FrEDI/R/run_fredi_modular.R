@@ -443,6 +443,7 @@ run_fredi_modular <- function(
     ### Join info
     join0    <- c("driverName")
     join1    <- c("modelUnit_label")
+    df0 |>
     df0      <- df0 |> left_join(info0, by=c(join0))
     df0      <- df0 |> left_join(info1, by=c(join1))
 
@@ -453,8 +454,9 @@ run_fredi_modular <- function(
   ###### National Scenario ######
   ### Create national scenario
   ### Calculate national population
-  pop_df       <- inputsList[["pop"]]
+  pop_df       <- inputsList[["pop"]] |> mutate(region = gsub(" ", ".", region))
   gdp_df       <- inputsList[["gdp"]]
+  rm(pop_df, gdp_df)
   national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
   national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
   # gdp_df |> glimpse(); national_pop |> glimpse();
