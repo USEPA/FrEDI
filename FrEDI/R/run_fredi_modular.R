@@ -284,15 +284,18 @@ run_fredi_modular <- function(
 
 
   ###### ** Sectors List ######
-  ### Sector names & labels
-  sectorIds    <- co_sectors[["sector_id"   ]]
-  sectorLbls   <- co_sectors[["sector_label"]]
   ### Initialize sector list if the sectors list is null
-  if(sectorList |> is.null()) sectorList <- sectorIds
+  if(sectorList |> is.null()) sectorList <- co_sectors |> pull(sector_label)
+  ### Sector names & labels
+  dfSectors    <- co_sectors |> filter((sector_label |> tolower()) %in% (sectorList |> tolower()))
+  sectorIds    <- dfSectors  |> pull(sector_id)
+  sectorLbls   <- dfSectors  |> pull(sector_label)
+
   ### Check sectors
+  # sectorList |> print(); sectorLbls |> print()
   naSectors0   <- sectorList |> get_matches(y=sectorLbls, matches=F, type="values")
   ### Message the user
-  if(na_sectors |> length()){
+  if(naSectors0 |> length()){
     naSectors0  <- "\"" |> paste0(paste(naSectors0, collapse= "\", \""), "\"")
     msgSectors0 <- "\"" |> paste0(paste(sectorLbls, collapse= "\", \""), "\"")
     1 |> get_msgPrefix(newline=T) |> paste0("Warning! Error in `sectorList`:") |> message()
@@ -314,14 +317,14 @@ run_fredi_modular <- function(
   df_inputInfo <- co_inputScenarioInfo
   df_inputInfo <- df_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
   df_inputInfo <- df_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
-  df_inputInfo <- df_inputInfo |> mutate(max_year = maxYear |> rep(inNames |> length()))
+  df_inputInfo <- df_inputInfo |> mutate(max_year = maxYear |> rep(df_inputInfo |> nrow()))
 
   ### Input defaults
   inputDefs    <- list()
-  inputsDefs[["temp"]] <- co_defaultTemps |> rename_at(c("temp_C_conus"), ~"temp_C") |> select(c("year", "temp_C"))
-  inputsDefs[["slr" ]] <- slr_default
-  inputsDefs[["gdp" ]] <- gdp_default
-  inputsDefs[["pop" ]] <- pop_default
+  inputDefs[["temp"]] <- co_defaultTemps |> rename_at(c("temp_C_conus"), ~"temp_C") |> select(c("year", "temp_C"))
+  inputDefs[["slr" ]] <- slr_default
+  inputDefs[["gdp" ]] <- gdp_default
+  inputDefs[["pop" ]] <- pop_default
 
   ### Input info
   # inNames      <- c("temp", "slr", "gdp", "pop")
@@ -347,14 +350,13 @@ run_fredi_modular <- function(
   })()
 
   ### Make sure all inputs are present
-  inputsList0  <- inputsList
-  for(name_i in inNames) {inputsList[[name_i]] <- inputsList0[[name_i]]; rm_name_i}
-  rm(inputsList0)
+  inputsList   <- inNames |> map(function(name_i){inputsList[[name_i]]}) |> set_names(inNames)
 
   ### Check whether inputs are present
   hasInputs    <- inNames     |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
   whichInputs  <- hasInputs   |> unlist()
   hasAnyInputs <- whichInputs |> length()
+  # whichInputs |> print()
 
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
@@ -385,153 +387,41 @@ run_fredi_modular <- function(
     name0     = inNames,
     df0       = inputsList,
     hasInput0 = hasInputs,
-    idCols0   = inIDCols
-  ) |> pmap(function(df0, name0, hasInput0, idCols0){
-    df0 |> format_inputScenarios(name0=name0, hasInput0=hasInput0, idCols0=idCols0, minYear=minYear, maxYear=maxYear)
+    idCols0   = inIDCols,
+    valCols0  = inValCols
+  ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
+    df0 |> format_inputScenarios(
+      name0     = name0,
+      hasInput0 = hasInput0,
+      idCols0   = idCols0,
+      valCols0  = valCols0,
+      minYear   = minYear,
+      maxYear   = maxYear,
+      info0     = df_inputInfo
+    )
   }) |> set_names(inNames)
 
   ### For each input, update in status list
   if(outputList){    for(name_i in inNames) {
     name_i1  <- name_i |> paste0("Input")
-    statusList[["inputsList"]][[name_i1]] <- hasInputs[[name_i]] |> get_returnListStatus("Custom", "Default")
+    statusList[["inputsList"]][[name_i1]] <- hasInputs[[name_i]] |> get_returnListStatus()
     argsList  [["inputsList"]][[name_i1]] <- inputsList[[name_i]]
     returnList[["scenarios" ]][[name_i ]] <- inputsList[[name_i]]
     rm(name_i)
   } } ### End if(outputList)
 
 
-  ###### ** Temperature Scenario ######
-  ### User inputs: temperatures have already been converted to CONUS temperatures. Filter to desired range.
-  ### Name the reference year temperature
-  ### Add the point where impacts are zero
-  # refYear_temp <- (co_modelTypes |> filter(modelUnitType=="temperature"))$modelRefYear |> unique()
-  # # co_modelTypes |> names() |> print()
-  #
-  # ### If no user input (default): Use temperature scenario for one region
-  # if(has_tempUpdate){
-  #   "\t" |> message("Creating temperature scenario from user inputs...")
-  #   ### Select appropriate columns
-  #   ### Remove missing values of years, temperatures
-  #   ### Zero out series at the temperature reference year
-  #   tempInput <- tempInput |> select(c("year", "temp_C"))
-  #   tempInput <- tempInput |> filter_all(all_vars(!(. |> is.na())))
-  #   tempInput <- tempInput |> filter(year > refYear_temp)
-  #   tempInput <- tibble(year= refYear_temp, temp_C = 0) |> rbind(tempInput)
-  #
-  #   ### Interpolate annual values and then drop region
-  #   temp_df   <- tempInput |> (function(x){
-  #     minYear_x <- x$year |> min()
-  #     interpYrs <- refYear_temp:maxYear
-  #     ### Interpolate
-  #     x_interp  <- x |> interpolate_annual(
-  #       years  = interpYrs,
-  #       column = "temp_C",
-  #       rule   = 1:2
-  #     ) |> select(-c("region"))
-  #     return(x_interp)
-  #   })()
-  #   temp_df  <- temp_df |> rename(temp_C_conus  = temp_C)
-  #   temp_df  <- temp_df |> mutate(temp_C_global = temp_C_conus |> convertTemps(from="conus"))
-  # } else{
-  #   ### Load default temperature scenario
-  #   "\t" |> message("No temperature scenario provided...using default temperature scenario...")
-  #   # co_defaultTemps |> glimpse()
-  #   tempInput <- co_defaultTemps |> rename_at(c("temp_C_conus"), ~"temp_C")
-  #   tempInput <- tempInput       |> select(c("year", "temp_C"))
-  #   temp_df   <- co_defaultTemps |> as_tibble()
-  # } ### End else(has_tempUpdate)
-  #
-  # ### Filter to appropriate years
-  # temp_df    <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
-  #
-  # ### Check if there are any years after the max year
-  # msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
-  # msgInputs2 <- "\n" |> paste0("Exiting...")
-  # msg_temp   <- "Temperature" |> paste0(msgInputs1)
-  # check_temp <- temp_df |> filter(year == maxYear) |> nrow()
-  # if(!check_temp) {
-  #   "\t" |> message(msg_temp)
-  #   msgInputs2 |> message()
-  #   return()
-  # } ### if(!check_temp)
-  # rm(msg_temp, check_temp)
-  #
-  # ### Add to list
-  # if(outputList){
-  #   statusList[["inputsList"]][["tempInput"]] <- has_tempUpdate |> ifelse("Custom", "Default")
-  #   # argsList  [["inputsList"]][["tempInput"]] <- inputsList[["tempInput"]]
-  #   argsList  [["inputsList"]][["tempInput"]] <- tempInput
-  # } ### End if(outputList)
-  # rm(tempInput, co_defaultTemps, has_tempUpdate)
-  # # temp_df |> nrow() |> print()
-
-  ###### ** SLR Scenario ######
-  # ### Year where SLR impacts are zero
-  # refYear_slr <- (co_modelTypes |> filter(modelUnitType=="slr"))$modelRefYear |> unique()
-  # # co_modelTypes |> names() |> print()
-  #
-  # ### Follow similar procedure to temperatures
-  # ### Select appropriate columns
-  # ### Select out NA values and filter to appropriate years
-  # ### Zero out series at the temperature reference year
-  # if(has_slrUpdate){
-  #   "\t" |> message("Creating SLR scenario from user inputs...")
-  #   slrInput  <- slrInput |> select(c("year", "slr_cm"))
-  #   slrInput  <- slrInput |> filter_all(all_vars(!(. |> is.na())))
-  #   slrInput  <- slrInput |> filter(year >  refYear_slr)
-  #   slrInput  <- tibble(year= refYear_slr, slr_cm = 0) |> rbind(slrInput)
-  #   ### Interpolate values
-  #   slr_df    <- slrInput |> (function(x){
-  #     minYear_x <- x$year |> min()
-  #     interpYrs <- refYear_slr:maxYear
-  #     ### Interpolate annual values
-  #     x_interp  <- x |> interpolate_annual(#wm same as temps above, I think fine to leave
-  #       years  = interpYrs,
-  #       column = "slr_cm",
-  #       rule   = 1:2
-  #     ) |> select(-c("region"))
-  #     return(x_interp)
-  #   })()
-  # } else{
-  #   ### If there is no SLR scenario, calculate from temperatures
-  #   ### First convert temperatures to global temperatures
-  #   ### Then convert global temps to SLR
-  #   "\t" |> message("Creating SLR scenario from temperature scenario...")
-  #   slrInput <- temps2slr(temps = temp_df$temp_C_global, years = temp_df$year)
-  #   slr_df   <- slrInput
-  # } ### End else(has_slrUpdate)
-  #
-  # ### Filter to appropriate years
-  # slr_df  <- slr_df |> filter(year >= refYear_slr) |> filter(year <= maxYear)
-  #
-  # ### Check if there are any years after the max year
-  # msg_slr   <- "SLR" |> paste0(msgInputs1)
-  # check_slr <- slr_df |> filter(year == maxYear) |> nrow()
-  # if(!check_slr) {
-  #   "\t" |> message(msg_slr)
-  #   msgInputs2 |> message()
-  #   return()
-  # } ### if(!check_slr)
-  # rm(msg_slr, check_slr)
-  #
-  #
-  # ### Add to list
-  # if(outputList){
-  #   statusList[["inputsList"]][["slrInput"]] <- has_slrUpdate |> ifelse("Custom", "Default")
-  #   # argsList  [["inputsList"]][["slrInput"]] <- inputsList[["slrInput"]]
-  #   argsList  [["inputsList"]][["slrInput"]] <- slrInput
-  # } ### End if(outputList)
-  # rm(slrInput, has_slrUpdate)
 
   ###### ** Driver Scenario  ######
   ### Select columns
-  select0    <- c(inputName)
+  select0    <- c("inputName")
   filter0    <- c("temp", "slr")
   df_drivers <- inputsList[filter0] |> (function(list0, info0=df_inputInfo, info1=co_modelTypes){
     ### Rename columns
     names0   <- list0 |> names()
     info0    <- df_inputInfo |> filter(inputName %in% names0)
     cols0    <- info0 |> pull(valueCol)
+
     df0      <- list(df_i=list0, col_i=cols0) |> pmap(function(df_i, col_i){
       df_i |> rename_at(c(col_i), ~"modelUnitValue")
     }) |> bind_rows(.id="driverName")
@@ -542,13 +432,13 @@ run_fredi_modular <- function(
     renameTo <- c("driverName", "modelUnit_label")
     info0    <- info0 |> rename_at(c(rename0), ~renameTo)
     info0    <- info0 |> select(all_of(renameTo))
-    rm(rename0, rename1)
+    rm(rename0, renameTo)
 
     ### Select model info
     rename0  <- c("modelType_id")
     renameTo <- c("modelType")
     info1    <- info1 |> rename_at(c(rename0), ~renameTo)
-    rm(rename0, rename1)
+    rm(rename0, renameTo)
 
     ### Join info
     join0    <- c("driverName")
@@ -563,6 +453,8 @@ run_fredi_modular <- function(
   ###### National Scenario ######
   ### Create national scenario
   ### Calculate national population
+  pop_df       <- inputsList[["pop"]]
+  gdp_df       <- inputsList[["gdp"]]
   national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
   national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
   # gdp_df |> glimpse(); national_pop |> glimpse();
@@ -575,6 +467,7 @@ run_fredi_modular <- function(
   arrange0        <- "region" |> c(stateCols0) |> c(join0)
   updatedScenario <- natScenario     |> left_join(pop_df, by=join0)
   updatedScenario <- updatedScenario |> arrange_at(c(arrange0))
+  # updatedScenario |> glimpse()
   rm(join0, arrange0, pop_df, natScenario)
 
   ###### Update Scalars ######

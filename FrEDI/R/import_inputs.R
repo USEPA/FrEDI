@@ -219,7 +219,7 @@ import_inputs <- function(
   if(!(df_pop |> is.null())) {
     inputsList[["pop"]] <- df_pop
   } else {
-    inputsList["pop"] <- list(NULL)
+    inputsList[["pop"]] <- list(NULL)
   }
 
   ###### Rename List ######

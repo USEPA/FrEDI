@@ -285,12 +285,13 @@ format_inputScenarios <- function(
     name0,     ### Name of input c("temp, "slr", "gdp", "pop")
     hasInput0, ### Whether the user provided an input
     idCols0,   ### ID columns
+    valCols0,  ### Value columns
     minYear,   ### Minimum year
     maxYear,   ### Maximum year
     info0      ### Other info
 ){
   ### Message user
-  label0  <- info |> filter(inputName == name0) |> pull(inputType)
+  label0  <- info0 |> filter(inputName == name0) |> pull(inputType)
   msg_i1  <- "Creating " |> paste0(label0, " scenario from user inputs...")
   msg_i2  <- "No "       |> paste0(label0, " scenario provided...using default scenario...")
   msg_i   <- hasInput0 |> ifelse(msg_i1, msg_i2)
@@ -301,15 +302,16 @@ format_inputScenarios <- function(
   name1   <- doSlr  |> ifelse("temp", name0)
   infoSlr <- info0  |> filter(inputName == "slr")
   info1   <- info0  |> filter(inputName == name1)
-  valCol0 <- info1  |> pull(valueCol)
+  if(doSlr) {valCol0 <- info1  |> pull(valueCol)} else{valCol0 <- valCols0}
   yrRef0  <- info1  |> pull(ref_year)
 
   ### Format data
-  select0 <- idCols0 |> c(valCol) |> c("year")
+  select0 <- idCols0 |> c(valCol0) |> c("year")
   df0     <- df0 |> select(all_of(select0))
   df0     <- df0 |> filter_all(all_vars(!(. |> is.na())))
 
   ### Interpolate user inputs
+  hasInput0 <- !(df0 |> is.null())
   if(hasInput0) {
     ### Zero out values if temp or slr
     doZero0 <- name0 %in% c("temp", "slr")
@@ -321,24 +323,31 @@ format_inputScenarios <- function(
     } ### if(doZero0)
 
     ### Calculate values
-    yrs0 <- yrRef0:maxYear
+    yrs0 <- yrRef0:maxYear |> unique()
     df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2)
-    df0  <- df0 |> select(-c("region"))
+    if(!(name0 %in% "pop")) df0  <- df0 |> select(-c("region"))
+
 
     ### If SLR, calculate SLR values from temperatures
     if(doSlr) {
+      # "got here" |> print()
       ### - Get new info
       valCol0 <- infoSlr |> pull(valueCol)
       yrRef0  <- infoSlr |> pull(ref_year)
       ### - First, calculate global temps
-      df0     <- df0 |> mutate(temp_C_global = temp_C |> convertTemps(from="conus"))
+      df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
       ### - Then, zero out again
       df0     <- df0 |> filter(year > yrRef0)
-      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~"temp_C")
       df0     <- df0 |> rbind(df1)
       rm(df1)
       ### Then, calculate SLR heights
-      df0     <- temps2slr(temps = df0$temp_C_global, years = df0$year)
+      df0     <- temps2slr(temps = df0$temp_C, years = df0$year)
+      # ### - Then, zero out again
+      # df0     <- df0 |> filter(year > yrRef0)
+      # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      # df0     <- df0 |> rbind(df1)
+      # rm(df1)
     } ### End if(doSlr)
   } ### End if(hasInput0)
 
