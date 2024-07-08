@@ -48,7 +48,6 @@ get_import_inputs_idCols <- function(
 }
 
 ###### fun_tryInput ######
-### Created 2021.02.08. Last updated 2022.05.09
 ### This function attempts to load a user-specified input file
 fun_tryInput <- function(
     filename = NULL,
@@ -158,7 +157,6 @@ run_fun_tryInput <- function(
 
 
 ###### rename_inputs ######
-# ### Created 2021.02.08. Last updated 2021.02.08
 # rename_inputs <- function(
 #     data,
 #     new_names

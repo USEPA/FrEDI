@@ -32,7 +32,7 @@
 #'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with elements `tempInput`, `slrInput`, `gdpInput`, and `popInput`, with each containing a data frame with a custom scenario for temperature, GMSL, GDP, and state-level population, respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' If `inputsList = NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
+#' If `inputsList = NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and state population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
 #'
 #' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
 #'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from = "global")` (or by specifying [FrEDI::import_inputs]`(temptype = "global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
@@ -48,7 +48,7 @@
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdpInput = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
+#'    * `popInput` requires a data frame object with five columns with names `"region"`, `"state"`, `"postal"`, `"year"`, and `"state"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
 #'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(popInput = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
@@ -567,7 +567,6 @@ run_fredi <- function(
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["gdpInput"]] <- has_gdpUpdate |> ifelse("Custom", "Default")
-    # argsList  [["inputsList"]][["gdpInput"]] <- inputsList[["gdpInput"]]
     argsList  [["inputsList"]][["gdpInput"]] <- gdpInput
   } ### End if(outputList)
   rm(gdpInput, gdp_default, has_gdpUpdate)
@@ -575,6 +574,17 @@ run_fredi <- function(
   ### Population inputs
   if(has_popUpdate){
     "\t" |> message("Creating population scenario from user inputs...")
+    ### Rename any columns
+    # rename0   <- "state_pop"
+    # renameTo  <- popCol0
+    rename0   <- "pop"
+    renameTo  <- popCol0
+    doRename0 <- rename0 %in% (popInput |> names())
+    if(doRename0) {
+      popInput <- popInput |> rename_at(c(rename0), ~renameTo)
+    } ### End if(doRename0)
+    rm(rename0, renameTo, doRename0)
+
     ### Standardize region and then interpolate
     popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
     popInput     <- popInput  |> filter_at(c(popCol0), function(y){y >= 0})

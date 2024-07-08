@@ -3,7 +3,7 @@
 \docType{data}
 \name{popScenario}
 \alias{popScenario}
-\title{Population scenario to use as an input to \code{\link[=run_fredi]{run_fredi()}}}
+\title{Population scenario to use as an input to \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}}
 \format{
 A data frame with 14,259 rows and 5 columns:
 \describe{
@@ -21,7 +21,7 @@ A data frame with 14,259 rows and 5 columns:
 popScenario
 }
 \description{
-A dataframe containing a population scenario to be passed as an input to \code{\link[=run_fredi]{run_fredi()}}.
+A dataframe containing a population scenario to be passed as an input to \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}.
 }
 \details{
 This dataframe contains population projections at the state level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).

@@ -19,10 +19,10 @@ the United States, 2023, Earth System Dynamics, in discussion,
 
 </center>
 
-FrEDI Technical Documentation (last updated March 2023):
+FrEDI Technical Documentation:
 <https://www.epa.gov/system/files/documents/2021-10/technical-documentation-on-the-framework-for-evaluating-damages-and-impacts_maintext.pdf>
 
-Technical Documentation Appendix (last updated March 2023):
+Technical Documentation Appendix:
 <https://www.epa.gov/system/files/documents/2021-10/technical-documentation-on-the-framework-for-evaluating-damages-and-impacts_appendices.pdf>
 
 Sarofim, M.C., Martinich, J., Neumann, J.E. et al. A temperature binning
