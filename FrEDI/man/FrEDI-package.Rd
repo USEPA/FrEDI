@@ -7,14 +7,10 @@
 \title{README
 FrEDI: The Framework for Evaluating Damages and Impacts}
 \description{
-FrEDI is an R package being developed by the U.S. Environmental Protection Agency (EPA). The functions and data provided by this package can be used to estimate climate change impacts for the contiguous United States (CONUS) using the \href{https://epa.gov/cira/FrEDI/}{Framework for Evaluating Damages and Impacts (FrEDI)}, developed as part of EPA's \href{https://epa.gov/cira/}{Climate Change Impacts and Risk Analysis} (CIRA) project. FrEDI contains R code that implement FrEDI and allow users to project impacts from climate change and sea level rise for a selected set of sectors.
+FrEDI is an R package that is developed and maintained by the U.S. Environmental Protection Agency (EPA). The functions and data provided in this package can be used to project impacts of climate change within the contiguous United States (CONUS), under any custom temperature or socioeconomic trajectory, using the \href{https://epa.gov/cira/FrEDI/}{Framework for Evaluating Damages and Impacts (FrEDI)} that was developed as part of EPA's \href{https://epa.gov/cira/}{Climate Change Impacts and Risk Analysis} (CIRA) project. The FrEDI package contains R code that implements FrEDI and allows users to project annual impacts from climate change and sea level rise across over 20 impact sectors, geographic regions, and populations through the end of the 21st century (and optionally through 2300). While this framework does not currently account for all ways in which the American public may be impacted by future climate change, this type of detailed information helps EPA to better understand and communicate the types of potential impacts and risks from future climate change in the United States, as well as the potential benefits of greenhouse gas mitigation and adaptation.
 }
 \details{
-For help getting started with FrEDI, visit \url{https://usepa.github.io/FrEDI/articles/manual.html}.
-
-For additional package documentation, see \url{https://usepa.github.io/FrEDI/index.html}.
-
-For more information on the Framework and the CIRA project, visit \url{https://epa.gov/cira/}, especially \url{https://epa.gov/cira/FrEDI/}.
+See the \href{https://epa.gov/cira/about-fredi/}{FrEDI Technical Documentation} for additional information about the underlying theory, design, structure, components, and capabilities of FrEDI, as well as examples of some of its intended uses and applications. For help getting started with FrEDI, visit \url{https://usepa.github.io/FrEDI/articles/manual.html}. For additional package documentation, see \url{https://usepa.github.io/FrEDI/index.html}.
 }
 \section{Overview of Functions}{
 
@@ -48,14 +44,14 @@ FrEDI consists of files in the following directories:
 \item \strong{Meta}. Contains RDS files (ending in \code{".rds"}) with information about the package contents.
 \item \strong{extdata}. \strong{extdata/scenarios} Contains four CSV files for users to test the function for importing data. For more information on importing scenarios for use with \code{\link[=run_fredi]{run_fredi()}}, refer to documentation for the function \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
-\item \code{"GCAM_scenario.csv"} contains a set of temperature scenarios that can be used with FrEDI, including the default temperature scenario used by both \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}} (labeled \verb{"description="Hector_GCAM_v5.3_ECS_3.0_REF"} in \code{"slr_from_GCAM.csv"} and \code{"ECS_3.0_ref_0"} in the \link{gcamScenarios} dataset)). Also see the documentation for the \link{gcamScenarios} dataset for more information.
-\item \code{"State ICLUS Population.csv"} and \code{"Region ICLUS Population.csv"} contain the default population scenarios used by \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}, respectively (see \link{popScenario} and \link{popScenario_sv}).
+\item \code{"GCAM_scenario.csv"} contains a set of temperature scenarios that can be used with FrEDI, including the default temperature scenario used by both \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}. Also see documentation for the \link{gcamScenarios} dataset for more information.
+\item \code{"State ICLUS Population.csv"} contains the default state population scenario used by \code{\link[=run_fredi]{run_fredi()}} (see \link{popScenario} and \link{popScenario_sv}).
 \item \code{"slr_from_GCAM.csv"} contains global mean sea level rise heights in centimeters (created from the reference temperature scenario).
 }
 \item \strong{extdata/sv} Contains files used by the \code{FrEDI} SV module to calculate impacts.
 }
 
-The \code{FrEDI} package contains a loadable dataset with default results \code{defaultResults}, which contains annual impacts produced by \code{\link[=run_fredi]{run_fredi()}} for the with the default options and default scenarios (i.e., default temperature, GDP, and state population trajectories). Other loadable datasets provided by FrEDI are a set of driver scenarios (\link{gcamScenarios}), a state population scenario (\link{popScenario}) for use with \code{\link[=run_fredi]{run_fredi()}} or \code{\link[=import_inputs]{import_inputs()}}, and a regional population scenario (\code{popScenario_sv}) for use with \code{\link[=run_fredi_sv]{run_fredi_sv()}}. These data can be loaded into the workspace using the \code{data()} function.
+The \code{FrEDI} package contains a loadable dataset with default results \code{defaultResults}, which contains annual impacts produced by \code{\link[=run_fredi]{run_fredi()}} for the with the default options and default scenarios (i.e., default temperature, GDP, and state population trajectories). Other loadable datasets provided by FrEDI are a set of driver scenarios (\link{gcamScenarios}) and a state population scenario (\link{popScenario}) for use with \code{\link[=run_fredi]{run_fredi()}} or \code{\link[=run_fredi_sv]{run_fredi_sv()}}, which can be loaded into the workspace using the \code{data()} function (e.g., \code{data(gcamScenarios)}).
 
 Typical use will involve \code{library(FrEDI)} or \code{require(FrEDI)}.
 }
