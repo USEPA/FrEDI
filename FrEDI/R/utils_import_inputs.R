@@ -156,26 +156,6 @@ run_fun_tryInput <- function(
 }
 
 
-###### rename_inputs ######
-# rename_inputs <- function(
-#     data,
-#     new_names
-# ){
-#   ### Get the length of the new names
-#   data_names   <- data |> names()
-#   num_names    <- new_names |> length()
-#   num_dataCols <- data |> ncol()
-#
-#   if(num_dataCols>num_names){
-#     data <- data[,1:num_names]
-#   }
-#
-#   names(data) <- new_names
-#
-#   return(data)
-#
-# }
-
 
 ###### check_inputs ######
 ### Check Input Ranges
