@@ -48,7 +48,7 @@
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdpInput = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
+#'    * `popInput` requires a data frame object with five columns with names `"region"`, `"state"`, `"postal"`, `"year"`, and `"state"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
 #'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(popInput = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
@@ -567,7 +567,6 @@ run_fredi <- function(
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["gdpInput"]] <- has_gdpUpdate |> ifelse("Custom", "Default")
-    # argsList  [["inputsList"]][["gdpInput"]] <- inputsList[["gdpInput"]]
     argsList  [["inputsList"]][["gdpInput"]] <- gdpInput
   } ### End if(outputList)
   rm(gdpInput, gdp_default, has_gdpUpdate)
@@ -575,6 +574,17 @@ run_fredi <- function(
   ### Population inputs
   if(has_popUpdate){
     "\t" |> message("Creating population scenario from user inputs...")
+    ### Rename any columns
+    # rename0   <- "state_pop"
+    # renameTo  <- popCol0
+    rename0   <- "pop"
+    renameTo  <- popCol0
+    doRename0 <- rename0 %in% (popInput |> names())
+    if(doRename0) {
+      popInput <- popInput |> rename_at(c(rename0), ~renameTo)
+    } ### End if(doRename0)
+    rm(rename0, renameTo, doRename0)
+
     ### Standardize region and then interpolate
     popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
     popInput     <- popInput  |> filter_at(c(popCol0), function(y){y >= 0})
