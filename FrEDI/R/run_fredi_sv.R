@@ -2,7 +2,7 @@
 #' Calculate climate change impacts on socially vulnerable (SV) populations throughout the 21st century for available sectors
 #'
 #' @description
-#' `run_fredi_sv` allows users to project annual average climate change impacts throughout the 21st century (2010-2100) for socially vulnerable (SV) populations for available sectors. Users can run [FrEDI::run_fredi_sv()] for individual sectors to generate annual physical impacts for SV populations. [FrEDI::run_fredi_sv()] can be run with default population and climate (temperature and sea level rise trajectories) or provide custom trajectories. The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. Users have the option to write outputs to Excel files that provide additional visualization of SV outputs.
+#' `run_fredi_sv` allows users to project annual average climate change impacts throughout the 21st century (2010-2100) for socially vulnerable (SV) populations for available sectors. Users can run [FrEDI::run_fredi_sv()] for individual sectors to generate annual physical impacts for SV populations. [FrEDI::run_fredi_sv()] can be run with default population and climate (temperature and sea level rise trajectories) or using custom trajectories. The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. The basic structure, specific methodology, and underlying data supporting FrEDI-SV are derived from EPA’s independently peer-reviewed September 2021 report, [Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts](https://epa.gov/cira/social-vulnerability-report)
 #'
 #'
 #'
