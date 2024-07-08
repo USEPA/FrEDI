@@ -98,7 +98,6 @@
 #'
 
 ###### import_inputs ######
-### Created 2021.02.08. Last updated 2021.02.08
 ### This function imports data from user-specified file names.
 import_inputs <- function(
   tempfile = NULL, ### File path of CSV with temperature inputs
