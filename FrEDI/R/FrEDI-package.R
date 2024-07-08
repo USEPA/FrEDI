@@ -3,15 +3,10 @@
 #' FrEDI: The Framework for Evaluating Damages and Impacts
 #'
 #'
-#' FrEDI is an R package being developed by the U.S. Environmental Protection Agency (EPA). The functions and data provided by this package can be used to estimate climate change impacts for the contiguous United States (CONUS) using the [Framework for Evaluating Damages and Impacts (FrEDI)](https://epa.gov/cira/FrEDI/), developed as part of EPA's [Climate Change Impacts and Risk Analysis](https://epa.gov/cira/) (CIRA) project. FrEDI contains R code that implement FrEDI and allow users to project impacts from climate change and sea level rise for a selected set of sectors.
+#' FrEDI is an R package that is developed and maintained by the U.S. Environmental Protection Agency (EPA). The functions and data provided in this package can be used to project impacts of climate change within the contiguous United States (CONUS), under any custom temperature or socioeconomic trajectory, using the [Framework for Evaluating Damages and Impacts (FrEDI)](https://epa.gov/cira/FrEDI/) that was developed as part of EPA's [Climate Change Impacts and Risk Analysis](https://epa.gov/cira/) (CIRA) project. The FrEDI package contains R code that implements FrEDI and allows users to project annual impacts from climate change and sea level rise across over 20 impact sectors, geographic regions, and populations through the end of the 21st century (and optionally through 2300). While this framework does not currently account for all ways in which the American public may be impacted by future climate change, this type of detailed information helps EPA to better understand and communicate the types of potential impacts and risks from future climate change in the United States, as well as the potential benefits of greenhouse gas mitigation and adaptation.
 #'
+#' See the [FrEDI Technical Documentation](https://epa.gov/cira/about-fredi/) for additional information about the underlying theory, design, structure, components, and capabilities of FrEDI, as well as examples of some of its intended uses and applications. For help getting started with FrEDI, visit <https://usepa.github.io/FrEDI/articles/manual.html>. For additional package documentation, see <https://usepa.github.io/FrEDI/index.html>.
 #'
-#'
-#' For help getting started with FrEDI, visit <https://usepa.github.io/FrEDI/articles/manual.html>.
-#'
-#' For additional package documentation, see <https://usepa.github.io/FrEDI/index.html>.
-#'
-#' For more information on the Framework and the CIRA project, visit <https://epa.gov/cira/>, especially <https://epa.gov/cira/FrEDI/>.
 #'
 #'
 #'
