@@ -48,7 +48,6 @@ get_import_inputs_idCols <- function(
 }
 
 ###### fun_tryInput ######
-### Created 2021.02.08. Last updated 2022.05.09
 ### This function attempts to load a user-specified input file
 fun_tryInput <- function(
     filename = NULL,
@@ -158,7 +157,6 @@ run_fun_tryInput <- function(
 
 
 ###### rename_inputs ######
-# ### Created 2021.02.08. Last updated 2021.02.08
 # rename_inputs <- function(
 #     data,
 #     new_names
@@ -508,7 +506,7 @@ calc_import_pop <- function(
     if(doState) {df0 <- df0 |> mutate(pop = pop * state2reg)}
   }
   df0 <- df0 |> rename(state_pop = pop)
-    
+
     ### End if(calcPop)
 
   ###### Format Data ######
@@ -526,7 +524,7 @@ calc_import_pop <- function(
     df0      <- df0 |> select(all_of(select0))
     df0      <- df0 |> arrange_at(c(select0))
   }
-  
+
   ###### Return ######
   return(df0)
 }
