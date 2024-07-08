@@ -29,7 +29,7 @@ run_fredi_sv(
 \item{silent}{A logical (\code{TRUE/FALSE}) value indicating the level of messaging desired by the user (defaults to \code{silent=TRUE}).}
 }
 \value{
-The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing state-level annual physical impacts for socially vulnerable groups at five-year increments between 2010 and 2100.
+The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
 }
 \description{
 \code{run_fredi_sv} allows users to project annual average climate change impacts throughout the 21st century (2010-2100) for socially vulnerable (SV) populations for available sectors. Users can run \code{\link[=run_fredi_sv]{run_fredi_sv()}} for individual sectors to generate annual physical impacts for SV populations. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population and climate (temperature and sea level rise trajectories) or provide custom trajectories. The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. Users have the option to write outputs to Excel files that provide additional visualization of SV outputs.
@@ -57,7 +57,7 @@ The default regional population scenario is drawn from the Integrated Climate an
 }
 }
 
-The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing state-level annual physical impacts for socially vulnerable groups at five-year increments between 2010 and 2100.
+The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
 }
 \examples{
 ### Run SV Module with defaults without specifying sector
