@@ -123,18 +123,22 @@ import_inputs <- function(
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
-  ### Get input scenario info: co_inputScenarioInfo
+  ### Get input scenario info: co_info
   ### Get state info: co_states
-  fListNames <- c("co_inputScenarioInfo", "co_states")
-  sListNames <- c("df_popRatios")
-  for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+  co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
+  co_states <- "co_states"    |> get_frediDataObj("frediData")
+  df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
+  # fListNames <- c("co_info", "co_states")
+  # sListNames <- c("df_ratios")
+  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
+  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
 
 
   ###### Defaults ######
   ### Input names, output names
   inNames    <- c("temp", "slr", "gdp", "pop")
   outNames   <- inNames |> paste0("Input")
+  nInputs    <- inNames |> length()
   ### Valid values
   tempTypes  <- c("global", "conus")
   popAreas   <- c("national", "conus", "regional", "state")
@@ -200,7 +204,9 @@ import_inputs <- function(
     inputName = inNames,
     inputDf   = inputsList,
     valCol    = valCols,
-    idCol     = idCols
+    idCol     = idCols,
+    tempType  = tempType |> rep(nInputs),
+    popArea   = popArea |> rep(nInputs)
   ) |>
     pmap(check_input_data) |>
     set_names(inNames)
@@ -210,22 +216,24 @@ import_inputs <- function(
   ### Calculate state population if pop input present and popArea != "state"
   ### Then check values
   # if(hasInputs) msgN |> paste0(msg1, "Checking population values...") |> message()
-  df_pop     <- inputsList[["pop"]]
-  hasPop     <- df_pop |> length()
-  if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
-  if(!(df_pop |> is.null())) {
-    ### Rename state_pop columne
-    doRename <- "state_pop" %in% (data1 |> names())
-    if(doRename) {
-      rename0  <- c("state_pop")
-      renameTo <- c("pop")
-      df_pop   <- df_pop |> rename_at(c(rename0), ~renameTo)
-    } ### End if(doRename)
-    ### Update in output
-    inputsList[["pop"]] <- df_pop
-  } else {
-    inputsList["pop"] <- list(NULL)
-  } ### End if(!(df_pop |> is.null()))
+  # df_pop     <- inputsList[["pop"]]
+  # hasPop     <- df_pop |> length()
+  # if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
+  # if(!(df_pop |> is.null())) {
+  #   ### Rename state_pop columne
+  #   doRename <- "state_pop" %in% (data1 |> names())
+  #   if(doRename) {
+  #     rename0  <- c("state_pop")
+  #     renameTo <- c("pop")
+  #     df_pop   <- df_pop |> rename_at(c(rename0), ~renameTo)
+  #   } ### End if(doRename)
+  #   ### Update in output
+  #   inputsList[["pop"]] <- df_pop
+  # } else {
+  #   inputsList["pop"] <- list(NULL)
+  # } ### End if(!(df_pop |> is.null()))
+
+
 
   ###### Rename List ######
   inputsList <- inputsList |> set_names(outNames)
