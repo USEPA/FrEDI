@@ -433,7 +433,6 @@ check_input_data <- function(
     inputDf   = NULL,     ### Tibble of inputs (e.g., as output from run_fun_tryInput)
     valCol    = NULL,     ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
-    popArea   = "state",  ### One of: c("state", "regional", "area", "national")
     yearMin   = NULL,     ### Check min year
     yearMax   = NULL,     ### Check max year
     tempType  = "conus",  ### One of: c("conus", "global")
