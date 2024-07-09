@@ -212,29 +212,6 @@ import_inputs <- function(
     set_names(inNames)
 
 
-  ###### Calculate State Population ######
-  ### Calculate state population if pop input present and popArea != "state"
-  ### Then check values
-  # if(hasInputs) msgN |> paste0(msg1, "Checking population values...") |> message()
-  # df_pop     <- inputsList[["pop"]]
-  # hasPop     <- df_pop |> length()
-  # if(hasPop) df_pop <- df_pop |> calc_import_pop(popArea=popArea)
-  # if(!(df_pop |> is.null())) {
-  #   ### Rename state_pop columne
-  #   doRename <- "state_pop" %in% (data1 |> names())
-  #   if(doRename) {
-  #     rename0  <- c("state_pop")
-  #     renameTo <- c("pop")
-  #     df_pop   <- df_pop |> rename_at(c(rename0), ~renameTo)
-  #   } ### End if(doRename)
-  #   ### Update in output
-  #   inputsList[["pop"]] <- df_pop
-  # } else {
-  #   inputsList["pop"] <- list(NULL)
-  # } ### End if(!(df_pop |> is.null()))
-
-
-
   ###### Rename List ######
   inputsList <- inputsList |> set_names(outNames)
 

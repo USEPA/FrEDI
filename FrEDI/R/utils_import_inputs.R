@@ -620,7 +620,7 @@ check_input_data <- function(
     doCalc  <- !("state" %in% popArea )
     if(doCalc) {
       msg_pop <- paste0("Calculating state population from ", popArea, " values...")
-      msgN |> paste0(msg2_i, msg_pop) |> message()
+      paste0(msg1_i, msg_pop) |> message()
       inputDf <- inputDf |> calc_import_pop(popArea=popArea)
     } ### End if(doCalc)
     ### Rename state population column
