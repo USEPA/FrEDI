@@ -478,11 +478,12 @@ run_fredi_modular <- function(
   ### Filter to years and calculate impacts
   df_results0    <- df_results0 |> filter(year >= minYear & year <= maxYear)
   df_results0    <- df_results0 |> calc_impacts_fredi(df1 = df_drivers)
-  df_results0 |> nrow() |> print()
+  # df_results0 |> glimpse()
+  # return(df_results0)
   df_results     <- df_results0 |> filter(year >= minYear & year <= maxYear)
-  df_results |> nrow() |> print()
   rm(df_results0)
-
+  # return(df_results)
+  # "got here" |> print()
 
 
   ###### Format Results ######
@@ -526,23 +527,22 @@ run_fredi_modular <- function(
   rm(rename0, renameTo, join0, select0, drop0, df_impTypes)
 
   ### Get impact years
-  rename0     <- c("impactYear_label")
-  renameTo    <- c("impactYear")
   join0       <- c("sector_id", "impactYear_id")
-  select0     <- c(join0) |> c(rename0)
   drop0       <- c("impactYear_id")
-  df_impYears <- "co_impactYears" |> get_frediDataObj("frediData") |> select(any_of(select0))
-  df_impYears <- df_impYears      |> rename_at(c(rename0), ~renameTo)
+  df_impYears <- "co_impactYears" |> get_frediDataObj("frediData")
   df_results  <- df_results       |> left_join(df_impYears, by=c(join0))
-  df_results  <- df_results       |> select(-any_of(drop0))
-  rm(rename0, renameTo, join0, select0, drop0, df_impYears)
+  # rename0     <- c("impactYear_label")
+  rename0     <- c("impactYear_id")
+  renameTo    <- c("impactYear")
+  df_results  <- df_results |> rename_at(c(rename0), ~renameTo)
+  df_results  <- df_results |> select(-any_of(drop0))
+  rm(rename0, renameTo, join0, drop0, df_impYears)
 
   ### Drop model columns and add drivers
   drop0       <- "model" |> paste0(c("_id", "_dot", "_underscore", "UnitType", "RefYear", "MaxOutput", "MaxExtrap", "UnitScale")) |> c("maxUnitValue") |> c("sector_id")
   df_results  <- df_results |> select(-any_of(drop0))
   rm(drop0)
-  df_results |> nrow() |> print()
-  # df_results |> names() |> print()
+
 
 
   ###### ** Columns List ######

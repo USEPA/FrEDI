@@ -337,7 +337,7 @@ format_inputScenarios <- function(
       # "got here" |> print()
       ### - Get new info
       valCol0 <- infoSlr |> pull(valueCol)
-      yrRef0  <- infoSlr |> pull(ref_year)
+      # yrRef0  <- infoSlr |> pull(ref_year)
       ### - First, calculate global temps
       df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
       ### - Then, zero out again
@@ -1045,7 +1045,7 @@ get_gcmScaledImpacts <- function(
 get_slrScaledImpacts <- function(
     df0, ### Initial results for SLR sectors
     df1  ### Driver data frames
-    ){
+){
   ####### By State
   ### By state
   byState     <- "state" %in% (df0 |> names())
@@ -1059,31 +1059,35 @@ get_slrScaledImpacts <- function(
 
   ###### Values #######
   slr0        <- "slr"
-  co_modTypes <- co_modTypes |> rename(modelType = modelType_id)
-  slrMax0     <- (co_modTypes |> filter(modelType==slr0))[["modelMaxOutput"]][1]
+  # co_modTypes <- co_modTypes |> rename(modelType = modelType_id)
+  # slrMax0     <- (co_modTypes |> filter(modelType==slr0))[["modelMaxOutput"]][1]
+  # slrMax0     <- df1 |> pull(modelMaxOutput) |> unique()
 
   ###### Format Data #######
   ### Filter to appropriate driver values
-  df1         <- df1  |> filter(modelType |> tolower() == slr0) #|> rename(model_type=modelType)
+  df1         <- df1 |> filter(modelType |> tolower() == slr0) #|> rename(model_type=modelType)
+  slrMax0     <- df1 |> pull(modelMaxOutput) |> unique()
 
   ### Filter to appropriate years
-  maxYear0    <- df1[["year"]] |> max()
-  maxYear0 |> print()
+  maxYear0    <- df1 |> pull(year) |> max()
   df_ext0     <- df_ext0 |> filter(year <= maxYear0)
   df_imp0     <- df_imp0 |> filter(year <= maxYear0)
 
   ### Filter to appropriate sectors
-  sectors0    <- df0[["sector"]] |> unique()
+  sectors0    <- df0 |> pull(sector) |> unique()
   df_ext0     <- df_ext0 |> filter(sector %in% sectors0)
   df_imp0     <- df_imp0 |> filter(sector %in% sectors0)
 
   ###### Get scenario_id #######
   ### Join with df0 to get scenario_id
-  join0       <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("byState") |> c("year")
+  # join0       <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("byState") |> c("year")
+  join0       <- df0   |> names() |> get_matches(df_ext0 |> names(), matches=TRUE) |> get_matches(c("scenario_id"), matches=FALSE)
   select0     <- join0 |> c("scenario_id")
-  drop0       <- join0 |> (function(x){x[!(x %in% c("year"))]})()
-  df0         <- df0 |> select(all_of(select0))
+  # drop0       <- join0 |> (function(x){x[!(x %in% c("year"))]})()
+  drop0       <- join0 |> get_matches(c("year"), matches=FALSE)
+  df0         <- df0   |> select(all_of(select0))
   ### Join
+  # return(list(df_ext0=df_ext0, df0=df0))
   df_ext0     <- df_ext0 |> left_join(df0, by=c(join0))
   df_imp0     <- df_imp0 |> left_join(df0, by=c(join0))
   ### Drop
@@ -1096,6 +1100,7 @@ get_slrScaledImpacts <- function(
   join0       <- c("year")
   select0     <- c("scenario_id")
   drop0       <- c("model_type")
+  # df1 |> glimpse(); df_ext0 |> glimpse(); df_imp0 |> glimpse()
   df_max0     <- df1     |> left_join(df_ext0, by=c(join0))
   df_slr0     <- df1     |> left_join(df_imp0, by=c(join0))
   ### Drop columns
@@ -1104,8 +1109,7 @@ get_slrScaledImpacts <- function(
   ### Relocate columns
   df_max0     <- df_max0 |> relocate(all_of(select0))
   df_slr0     <- df_slr0 |> relocate(all_of(select0))
-  rm(df_ext0, df_imp0);
-  rm(join0, select0, drop0)
+  rm(df_ext0, df_imp0); rm(join0, select0, drop0)
 
   ###### Scaled Impacts >= Max #######
   ### Filter to appropriate years
@@ -1134,7 +1138,7 @@ get_slrScaledImpacts <- function(
   slr_names   <- df_slr0 |> names()
   select0     <- c("scenario_id")
   # group0      <- select0 |> (function(x){x[x %in% (df_slr0 |> names())]})()
-  group0      <- select0 |> get_matches(y=df_slr0 |> names())
+  group0      <- select0 |> get_matches(y=df_slr0 |> names(), matches=TRUE)
   group0      <- group0  |> c(cols1)
 
   ### Calculate impacts for values not above the maximum value
@@ -1176,6 +1180,98 @@ get_slrScaledImpacts <- function(
   ###### Return ######
   return(df_slr0)
 }
+
+####### calc_impacts_fredi ######
+calc_impacts_fredi <- function(
+    df0, ### Data frame with initialized results
+    df1  ### Data frame with driver scenarios
+){
+  ### Column names
+  popCol0    <- "state_pop"
+  stateCols0 <- c("state", "postal")
+
+  ###### ** Get Scenario IDs ######
+  ### Mutate model for SLR sectors
+  co_models0 <- "co_models" |> get_frediDataObj("frediData")
+  ### Change model to interpolation for SLR models
+  modelCols0 <- c("model_id", "model_dot", "model_underscore", "model_label")
+  group0     <- co_models0 |> names()
+  which_slr  <- (co_models0[["modelType"]] |> tolower() == "slr") |> which()
+  co_models0[which_slr, modelCols0] <- "Interpolation"
+  co_models0 <- co_models0 |>
+    group_by_at(c(group0)) |>
+    summarize(n=n(), .groups="keep") |> ungroup() |>
+    select(-c("n"))
+  rm(group0, which_slr, modelCols0)
+
+  ### Join with initial results
+  join0      <- c("modelType")
+  df0        <- df0 |> left_join(co_models0, by=c(join0), relationship="many-to-many")
+  # df0 |> nrow() |> print()
+  rm(join0)
+
+  ### Create scenario ID and separate by model type
+  include0   <- c("region") |> c(stateCols0) |> c("model_label")
+  df0        <- df0 |> get_scenario_id(include = include0)
+  # df0 |> filter(modelType=="slr") |> pull(scenario_id) |> unique() |> head()
+  # return(df0)
+
+  ###### ** Calculate Scaled Impacts  ######
+  ### Initialize and empty data frame df_results
+  df_initial <- tibble()
+  df0_gcm    <- df0 |> filter(modelType!="slr")
+  df0_slr    <- df0 |> filter(modelType=="slr")
+  rm(df0)
+
+  ### Number of GCM and SLR rows
+  nrow_gcm   <- df0_gcm |> nrow()
+  nrow_slr   <- df0_slr |> nrow()
+
+  ###### ** -- GCM Scaled Impacts
+  if(nrow_gcm){
+    df_gcm0    <- df0_gcm    |> get_gcmScaledImpacts(df1=df1)
+    df_initial <- df_initial |> rbind(df_gcm0)
+    rm(df_gcm0)
+  } ### End if(nrow_gcm)
+
+  ###### ** -- SLR Scaled Impacts
+  if(nrow_slr){
+    df_slr0    <- df0_slr    |> get_slrScaledImpacts(df1=df1)
+    # return(df_slr0)
+    df_initial <- df_initial |> rbind(df_slr0)
+    # df_slr0 |> filter(!(scaled_impacts |> is.na())) |> glimpse()
+    rm(df_slr0)
+  } ### End if(nrow_slr)
+
+  ### Join results with initialized results and update missing observations with NA
+  ### Drop columns, then join with scenario results
+  # join0       <- c("scenario_id", "year")
+  join0       <- df_initial |> names() |> get_matches(y=df0_gcm |> names())
+  df0         <- df0_gcm |> rbind(df0_slr)
+  # return(list(df0=df0_slr, df_initial=df_initial))
+  df0         <- df0     |> left_join(df_initial, by=c(join0))
+  # df0 |> filter(modelUnitValue |> is.na()) |> glimpse()
+  rm(df0_gcm, df0_slr, df_initial, join0)
+
+  ### Then, join with drivers
+  join0       <- c("modelType", "year")
+  drop0       <- df1 |> names() |> get_matches(y=df0 |> names(), matches=T) |> get_matches(y=join0, matches=F)
+  # drop0 |> print()
+  df0         <- df0 |> select(-all_of(drop0))
+  df0         <- df0 |> left_join(df1, by=c(join0))
+  # df0 |> filter(modelUnitValue |> is.na()) |> glimpse()
+  rm(join0, drop0)
+
+  ### Physical impacts = physScalar * scaled_impacts
+  ### Annual impacts = phys-econ scalar value by the scaled impacts
+  df0         <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
+  df0         <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
+  # df0 |> nrow() |> print()
+
+  ### Return
+  return(df0)
+}
+
 
 
 ###### interpolate_impacts ######
@@ -1789,81 +1885,4 @@ combine_driverScenarios <- function(
 
 
 
-
-####### calc_impacts_fredi ######
-calc_impacts_fredi <- function(
-    df0, ### Data frame with initialized results
-    df1  ### Data frame with driver scenarios
-){
-  ### Column names
-  popCol0    <- "state_pop"
-  stateCols0 <- c("state", "postal")
-
-  ###### ** Get Scenario IDs ######
-  ### Mutate model for SLR sectors
-  co_models0 <- "co_models" |> get_frediDataObj("frediData")
-  ### Change model to interpolation for SLR models
-  modelCols0 <- c("model_id", "model_dot", "model_underscore", "model_label")
-  group0     <- co_models0 |> names()
-  which_slr  <- (co_models0[["modelType"]] |> tolower() == "slr") |> which()
-  co_models0[which_slr, modelCols0] <- "Interpolation"
-  co_models0 <- co_models0 |>
-    group_by_at(c(group0)) |>
-    summarize(n=n(), .groups="keep") |> ungroup() |>
-    select(-c("n"))
-  rm(group0, which_slr, modelCols0)
-
-  ### Join with initial results
-  join0      <- c("modelType")
-  df0        <- df0 |> left_join(co_models0, by=c(join0), relationship="many-to-many")
-  df0 |> nrow() |> print()
-  rm(join0)
-
-  ### Create scenario ID and separate by model type
-  include0   <- c("region") |> c(stateCols0) |> c("model_label")
-  df0        <- df0 |> get_scenario_id(include = include0)
-  # df0 |> filter(modelType=="slr") |> pull(scenario_id) |> unique() |> head()
-
-  ###### ** Calculate Scaled Impacts  ######
-  ### Initialize and empty data frame df_scenarioResults
-  df_scenarioResults  <- tibble()
-  df0_gcm    <- df0 |> filter(modelType!="slr")
-  df0_slr    <- df0 |> filter(modelType=="slr")
-  rm(df0)
-
-  ### Number of GCM and SLR rows
-  nrow_gcm   <- df0_gcm |> nrow()
-  nrow_slr   <- df0_slr |> nrow()
-
-  ###### ** -- GCM Scaled Impacts
-  if(nrow_gcm){
-    df_gcm0            <- df0_gcm |> get_gcmScaledImpacts(df1=df1)
-    df_scenarioResults <- df_scenarioResults |> rbind(df_gcm0)
-    rm(df_gcm0)
-  } ### End if(nrow_gcm)
-
-  ###### ** -- SLR Scaled Impacts
-  if(nrow_slr){
-    df_slr0            <- df0_slr |> get_slrScaledImpacts(df1=df1)
-    # df_slr0 |> filter(!(scaled_impacts |> is.na())) |> glimpse()
-    df_scenarioResults <- df_scenarioResults |> rbind(df_slr0)
-    rm(df_slr0)
-  } ### End if(nrow_slr)
-
-  ### Join results with initialized results and update missing observations with NA
-  ### Drop columns, then join with scenario results
-  join0       <- c("scenario_id", "year")
-  df0         <- df0_gcm |> rbind(df0_slr)
-  df_impacts  <- df0     |> left_join(df_scenarioResults, by=c(join0));
-  rm(df0, df0_gcm, df0_slr, df_scenarioResults, join0)
-
-  ### Physical impacts = physScalar * scaled_impacts
-  ### Annual impacts = phys-econ scalar value by the scaled impacts
-  df_impacts  <- df_impacts |> mutate(physical_impacts = scaled_impacts * physScalar)
-  df_impacts  <- df_impacts |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
-  df_impacts |> nrow() |> print()
-
-  ### Return
-  return(df_impacts)
-}
 
