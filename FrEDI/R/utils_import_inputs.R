@@ -432,7 +432,8 @@ check_valCols <- function(
       return()
     } ### End if(nMatches)
     ### Message user
-    msg_vcol2 <- paste0("Using column ", "\"", vColMatch, "\"", ", and renaming to ", "\"", valCol, "\"", "...")
+    renameVal <- doPop |> ifelse("state_", "") |> paste0(valCol)
+    msg_vcol2 <- paste0("Using column ", "\"", vColMatch, "\"", ", and renaming to ", "\"", renameVal, "\"", "...")
     msg1_i |> paste0(msg_vcol2) |> message()
   } ### End if(hasValCol) (no else)
 
