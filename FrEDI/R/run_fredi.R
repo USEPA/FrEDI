@@ -528,11 +528,11 @@ run_fredi <- function(
 
   ### Get impact years
   join0       <- c("sector_id", "impactYear_id")
-  drop0       <- c("impactYear_id")
+  drop0       <- c("sector_id", "impactYear_id", "impactYear_excel")
   df_impYears <- "co_impactYears" |> get_frediDataObj("frediData")
   df_results  <- df_results       |> left_join(df_impYears, by=c(join0))
-  # rename0     <- c("impactYear_label")
-  rename0     <- c("impactYear_id")
+  rename0     <- c("impactYear_label")
+  # rename0     <- c("impactYear_id")
   renameTo    <- c("impactYear")
   df_results  <- df_results |> rename_at(c(rename0), ~renameTo)
   df_results  <- df_results |> select(-any_of(drop0))
