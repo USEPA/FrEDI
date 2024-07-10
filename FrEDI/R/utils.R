@@ -337,7 +337,7 @@ format_inputScenarios <- function(
       # "got here" |> print()
       ### - Get new info
       valCol0 <- infoSlr |> pull(valueCol)
-      # yrRef0  <- infoSlr |> pull(ref_year)
+      yrRef0  <- infoSlr |> pull(ref_year)
       ### - First, calculate global temps
       df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
       ### - Then, zero out again
@@ -347,11 +347,11 @@ format_inputScenarios <- function(
       rm(df1)
       ### Then, calculate SLR heights
       df0     <- temps2slr(temps = df0$temp_C, years = df0$year)
-      # ### - Then, zero out again
-      # df0     <- df0 |> filter(year > yrRef0)
-      # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
-      # df0     <- df0 |> rbind(df1)
-      # rm(df1)
+      ### - Then, zero out again
+      df0     <- df0 |> filter(year > yrRef0)
+      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      df0     <- df0 |> rbind(df1)
+      rm(df1)
     } ### End if(doSlr)
   } ### End if(hasInput0)
 
