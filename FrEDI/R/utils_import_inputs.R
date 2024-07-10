@@ -153,26 +153,6 @@ run_fun_tryInput <- function(
 }
 
 
-###### rename_inputs ######
-# rename_inputs <- function(
-    #     data,
-#     new_names
-# ){
-#   ### Get the length of the new names
-#   data_names   <- data |> names()
-#   num_names    <- new_names |> length()
-#   num_dataCols <- data |> ncol()
-#
-#   if(num_dataCols>num_names){
-#     data <- data[,1:num_names]
-#   }
-#
-#   names(data) <- new_names
-#
-#   return(data)
-#
-# }
-
 
 ###### check_inputs ######
 ### Check Input Ranges
@@ -456,6 +436,8 @@ check_input_data <- function(
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
     tempType  = "conus",  ### One of: c("conus", "global")
     popArea   = "state",  ### One of: c("state", "regional", "conus", "national")
+    yearMin   = NULL,     ### Check min year
+    yearMax   = NULL,     ### Check max year
     msgLevel  = 2         ### Level of messaging
 ){
   ###### Load Data from FrEDI ######
@@ -583,6 +565,31 @@ check_input_data <- function(
     return(NULL)
   } ### End if(!checkNum)
 
+  ### Check that appropriate years are present
+  rangeYrs  <- c(yearMin, yearMax)
+  hasMinYr  <- !(yearMin |> is.null())
+  hasMaxYr  <- !(yearMax |> is.null())
+  hasYears  <- hasMinYr | hasMaxYr
+
+  if(hasYears) {
+    ### Check
+    whichYrs  <- c()
+    if(hasMinYr) whichYrs <- inputDf  |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMin)
+    if(hasMaxYr) whichYrs <- whichYrs |> c(inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMax))
+    naYears   <- rangeYrs |> get_matches(y=whichYrs)
+    checkYrs  <- (rangeYrs |> length()) == (naYears |> length())
+    ### Messages
+    if(!checkYrs) {
+      msg_yrs <- "Data must have at least one non-missing value "
+      msg_min <- "in or before the year " |> paste0(yearMin)
+      msg_and <- (hasMinYr & hasMaxYr) |> ifelse("and at least one non-missing value ", "")
+      msg_min <- "in or after the year " |> paste0(yearMax)
+      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_min, "!") |> message()
+      return(NULL)
+    } ### End if(!checkYrs)
+  } ### End if(hasYears)
+
+
   ### Check that values are in range
   rangeVals <- dataVals |> range(na.rm=T)
   checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)
@@ -595,6 +602,7 @@ check_input_data <- function(
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkNum)
+
 
   ###### Format Columns ######
   ### If checks pass, convert all id columns to character
