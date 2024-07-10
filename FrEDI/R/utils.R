@@ -479,8 +479,6 @@ extend_slrScalars <- function(
 }
 
 ###### match_scalarValues ######
-### Last updated 2023.11.15
-### Match Scalar Values
 ### This function matches interpolated scalar values for each scalar type to the time series scenario information
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
 ### Function "match_scalarValues" replaces "get_popWts", "get_physMultipliers", and "get_econScalars"
@@ -605,7 +603,6 @@ match_scalarValues <- function(
 
 
 ###### get_econAdjValues ######
-### Last updated 2023.11.30
 ### Get Economic Adjustment/Multiplier
 ### This function matches interpolated scalar values for each scalar type to the time series scenario information
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
@@ -796,7 +793,6 @@ initialize_resultsDf <- function(
 
 
 ###### calcScalars ######
-### Last updated 2021.02.05
 ### Calculate Scalars
 ### This function calculates the physical scalar value, the economic scalar value, and their product
 ### The physical and economic scalars refer to the time series column from which the Annual Sectors tab
@@ -1081,8 +1077,6 @@ get_slrScaledImpacts <- function(
 
 
 ###### interpolate_impacts ######
-### Created 2021.02.05. Last updated 2021.02.11.
-### 2021.02.11: Changed name from interpolate_temps to interpolate_impacts and added SLR.
 ### Calculate impacts (binning)
 ### This function uses the dplyr group_map capabilities to interpolate scaled impacts by temperature or sea level rise (SLR) relationships
 interpolate_impacts <- function(
@@ -1113,7 +1107,6 @@ interpolate_impacts <- function(
 }
 
 ###### get_annual_model_stats  ######
-### Created 2021.01.11. Last updated 2021.02.26:
 ### Updated method for calculating model statistics and dealing with NA values.
 ### This function returns a table with gcm averages, minimums, and maximums
 get_annual_model_stats <- function(

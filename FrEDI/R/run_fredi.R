@@ -4,25 +4,25 @@
 #'
 #'
 #' @description
-#' This function allows users to project annual average climate change impacts through 2090 (2010-2090) for available sectors (see [FrEDI::get_sectorInfo()]), with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
+#' This function allows users to project annual average climate change impacts through 2100 (2010-2100) for available sectors, with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
 #'
-#' As of FrEDI Version 4.0.1, [FrEDI::run_fredi()] calculates impacts at the state-level for the following sectors: **ATS Temperature-Related Mortality**, **Asphalt Roads**, **Climate-Driven Changes in Air Quality**, **Electricity Transmission and Distribution**, **Labor**, **Suicide**, **Transportation Impacts from High Tide Flooding**, **Urban Drainage**, **Wildfire**, **Wind Damage**. Eventually, all sectors will be converted to state-level. Sectors that have only region-level impacts will have values in the `"state"` and `"postal"` columns of the outputs data frame set to `"N/A"`.
+#' As of FrEDI Version 4.1.0, [FrEDI::run_fredi()] calculates impacts at the state-level for all available sectors.
 #'
-#' @param inputsList=NULL A list of named elements named elements (`names(inputsList) = c( "tempInput", "slrInput", "gdpInput", "popInput" )`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or population scenarios, respectively, over a continuous period in the range 2010 to 2300. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
+#' @param inputsList=NULL A list of named elements named elements (`names(inputsList) = c("tempInput", "slrInput", "gdpInput", "popInput")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or state-level population trajectories, respectively, over a continuous period in the range 2010 to 2300. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #'
-#' @param sectorList=NULL A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included (i.e., `sectorList=get_sectorInfo()`).
+#' @param sectorList=NULL A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included (i.e., `sectorList = get_sectorInfo()`).
 #'
-#' @param aggLevels="all" Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels= "all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()]. Note that, if `"impacttype"` is in `aggLevels` (e.g., `aggLevels= "all"`), columns `"physical_measure"` and `"physical_impacts"` will be dropped from the results data frame. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.
+#' @param aggLevels="all" Levels of aggregation at which to summarize data: one or more of `c("national"`, `"modelaverage"`, `"impactyear"`, `"impacttype"`, `"all"`, `"none")`. Defaults to all levels (i.e., `aggLevels = "all"`). Uses the same aggregation levels as [FrEDI::aggregate_impacts()]. Note that, if `"impacttype"` is in `aggLevels` (e.g., `aggLevels = "all"`), columns `"physical_measure"` and `"physical_impacts"` will be dropped from the results data frame. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.
 #'
-#' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity=1`). Applicable sectors and impacts are: **Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality**  (`impactType="N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType= "All Mortality"`), **Valley Fever** (`impactType= "Mortality"`), **Vibriosis** (`impactType="N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
+#' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to `elasticity = 1`). Applicable sectors and impacts are: **Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality** (`impactType = "N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType = "All Mortality"`), **Valley Fever** (`impactType = "Mortality"`), **Vibriosis** (`impactType = "N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
 #'
-#' @param maxYear=2090 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]. `Defaults to `maxYear=2090`.
+#' @param maxYear=2100 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]`. Defaults to `maxYear = 2100`.
 #'
-#' @param thru2300=FALSE A ` TRUE/FALSE` shortcut that overrides the maxYear argument to run the model to 2300. Defaults to `thru2300=FALSE`.
+#' @param thru2300=FALSE A ` TRUE/FALSE` shortcut that overrides the `maxYear` argument to run the model to 2300. Defaults to `thru2300 = FALSE`.
 #'
 #' @param outputList=FALSE A ` TRUE/FALSE` value indicating whether to output results as a data frame object (`outputList = FALSE`, default) or to return a list of objects (`outputList = TRUE`) that includes information about model provenance (including input arguments and input scenarios) along with the data frame of results.
 #'
-#' @param allCols=FALSE A `TRUE/FALSE` value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to `aggLevels="none"` to properly return the intermediate columns. Defaults to `allCols=FALSE`).
+#' @param allCols=FALSE A `TRUE/FALSE` value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to `aggLevels = "none"` to properly return the intermediate columns. Defaults to `allCols = FALSE`).
 #'
 #' @param silent=TRUE A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
 #'
@@ -30,83 +30,82 @@
 #'
 #' @details This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
 #'
-#'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with elements `tempInput`, `slrInput`, `gdpInput`, and `popInput`, with each containing a data frame with a custom scenario for temperature, GMSL, GDP, and state-level population, respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' If `inputsList=NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi( inputsList = list() )` returns the same outputs as running [FrEDI::run_fredi()]).
+#' If `inputsList = NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `tempInput`, `slrInput`, `gdpInput`, and `popInput` containing data frames with custom scenarios for temperature, GMSL, GDP, and state population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
 #'
 #' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
-#'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from="global")` (or by specifying [FrEDI::import_inputs]`( temptype = "global" )` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
+#'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from = "global")` (or by specifying [FrEDI::import_inputs]`(temptype = "global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
 #'    * `tempInput` requires a data frame object with two columns with names `"year"`, and `"temp_C"` containing the year and CONUS temperatures in degrees Celsius, respectively.
 #'    * Temperature inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for temperature (i.e., `inputsList=list(tempInput=NULL)`, [FrEDI::run_fredi()] uses a default temperature scenario.
+#'    * If the user does not specify an input scenario for temperature (i.e., `inputsList = list(tempInput = NULL)`, [FrEDI::run_fredi()] uses a default temperature scenario.
 #' * __SLR Inputs.__ The input SLR scenario requires values for changes in global mean sea level rise (GMSL) heights in centimeters (cm). GMSL heights must be greater than or equal to zero.
 #'    * `slrInput` requires a data frame object with two columns with names `"year"`, `"slr_cm"` containing the year and global mean sea level rise (GMSL) in centimeters, respectively.
 #'    * SLR inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for SLR (i.e., `inputsList=list(slrInput=NULL)`, [FrEDI::run_fredi()] first converts the input or default CONUS temperature scenario to global temperatures (using [FrEDI::convertTemps()]) and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters (using [FrEDI::temps2slr()]).
+#'    * If the user does not specify an input scenario for SLR (i.e., `inputsList = list(slrInput = NULL)`, [FrEDI::run_fredi()] first converts the input or default CONUS temperature scenario to global temperatures (using [FrEDI::convertTemps()]) and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters (using [FrEDI::temps2slr()]).
 #' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
-#'    * `gdpInput` requires a data frame object with five columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
+#'    * `gdpInput` requires a data frame object with two columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList=list(gdpInput=NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
+#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdpInput = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, and the state, the postal code abbreviation, and the state population, respectively.
+#'    * `popInput` requires a data frame object with five columns with names `"region"`, `"state"`, `"postal"`, `"year"`, and `"state"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
 #'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for population (i.e., `inputsList=list(popInput=NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
+#'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(popInput = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
 #'
 #' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, [FrEDI::run_fredi()] subsets the input scenarios to values within the analysis period.
 #'
-#' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit= "degrees Celsius"` and `driverUnit= "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type="GCM"` and `model_type="SLR"` for temperature- and SLR-driven sectors, respectively
+#' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit = "degrees Celsius"` and `driverUnit = "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type = "GCM"` and `model_type = "SLR"` for temperature- and SLR-driven sectors, respectively
 #' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"state_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
 #'
-#' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList= NULL` (default), all sectors are included.
+#' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList = NULL` (default), all sectors are included.
 #'
-#' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2090. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2090` and minimum and maximum values of `2011` and `2300`, respectively. Alternatively, users can set argument `thru2300=TRUE` to override the `maxYear` argument and set `maxYear=2300`. Note that the default scenarios included within [FrEDI] stop in the year 2090; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear>=2090` (and `maxYear<=2300`) in order to return non-missing values for years after 2090.
+#' By default, [FrEDI::run_fredi()] calculates impacts starting in the year 2010 and ending in 2100. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2100` and minimum and maximum values of `2011` and `2300`, respectively. Alternatively, users can set argument `thru2300 = TRUE` to override the `maxYear` argument and set `maxYear = 2300`. Note that the default scenarios included within [FrEDI] stop in the year 2100; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear >= 2100` (and `maxYear <= 2300`) in order to return non-missing values for years after 2100.
 #'
-#' Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. [FrEDI::run_fredi()] uses a default value of `elasticity=1`to adjust VSL for applicable sectors and impacts (the default value of `elasticity=1` keeps VSL constant over time). A custom elasticity can be passed to the `elasticity` argument.Applicable sectors and impacts are ***Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality**  (`impactType="N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType= "All Mortality"`), **Valley Fever** (`impactType= "Mortality"`), **Vibriosis** (`impactType="N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
+#' Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. [FrEDI::run_fredi()] uses a default value of `elasticity = 1`to adjust VSL for applicable sectors and impacts (the default value of `elasticity = 1` keeps VSL constant over time). A custom elasticity can be passed to the `elasticity` argument. Applicable sectors and impacts are ***Climate-Driven Changes in Air Quality** (all impact types), **ATS Temperature-Related Mortality**  (`impactType = "N/A"`; i.e., all impact types), **CIL Temperature-Related Mortality**, **Extreme Temperature** (all impact types), **Suicide** (`impactType = "N/A"`; i.e., all impact types), **Southwest Dust** (`impactType = "All Mortality"`), **Valley Fever** (`impactType = "Mortality"`), **Vibriosis** (`impactType = "N/A"`; i.e., all impact types), and **Wildfire** (`impactType = "Mortality"`).
 #'
-#' [FrEDI::run_fredi()] aggregates or summarizes results to level(s) of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify all aggregation levels at once by specifying `aggLevels= "all"` (default) or no aggregation levels (`aggLevels= "none"`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels= "national"`), averaging across model types and models (`aggLevels= "modelaverage"`), summing over all impact types (`aggLevels= "impacttype"`), and interpolating between impact year estimates (`aggLevels= "impactYear"`).
+#' [FrEDI::run_fredi()] aggregates or summarizes results to level(s) of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify all aggregation levels at once by specifying `aggLevels = "all"` (default) or no aggregation levels (`aggLevels = "none"`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels = "national"`), averaging across model types and models (`aggLevels = "modelaverage"`), summing over all impact types (`aggLevels = "impacttype"`), and interpolating between impact year estimates (`aggLevels = "impactYear"`).
 #'
-#' If the user specifies `aggLevels= "none"`, [FrEDI::run_fredi()] returns a data frame with columns: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, `"state_pop"`, `"year"`, `"physical_impacts"`, and `"annual_impacts"`.
+#' If the user specifies `aggLevels = "none"`, [FrEDI::run_fredi()] returns a data frame with columns: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, `"state_pop"`, `"year"`, `"physical_impacts"`, and `"annual_impacts"`.
 #'
 #'
-#' * Columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, and `"model"` all contain observation identifiers (sector name, variant (i.e., sector variant or adaptation name), impact type, impact year, region, state, state postal code, model type, and model, respectively).
-#' * Column `"sectorprimary"` contains values indicating which variant (i.e., sector variant or adaptation name) is the primary one for the sector (`sectorprimary=1`for primary variants and `sectorprimary=0` for non-primary variants). This column can be used to filter the outputs of [FrEDI::run_fredi()] (e.g., as might be done before aggregating impacts over sectors).
-#' * Column `"includeaggregate"` contains values indicating which sectors should be included when aggregating over sectors (`includeaggregate=1`for primary sectors and `includeaggregate=0` for non-primary sectors). For instance, sectors __ATS Temperature-Related Mortality__, __CIL Temperature-Related Mortality__, and __Extreme Temperature__ have values for temperature-related mortality. To avoid double counting, outputs of [FrEDI::run_fredi()] should be filtered to values for which `sectorprimary==1` and `includeaggregate=1`.
+#' * Columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, and `"model"` all contain observation identifiers (sector name, variant (i.e., sector variant or adaptation name), impact type, impact year, region, state, state postal code abbreviation, model type, and model, respectively).
+#' * Column `"sectorprimary"` contains values indicating which variant (i.e., sector variant or adaptation name) is the primary one for the sector (`sectorprimary = 1`for primary variants and `sectorprimary = 0` for non-primary variants). This column can be used to filter the outputs of [FrEDI::run_fredi()] (e.g., as might be done before aggregating impacts over sectors).
+#' * Column `"includeaggregate"` contains values indicating which sectors should be included when aggregating over sectors (`includeaggregate = 1`for primary sectors and `includeaggregate = 0` for non-primary sectors). For instance, sectors __ATS Temperature-Related Mortality__, __CIL Temperature-Related Mortality__, and __Extreme Temperature__ have values for temperature-related mortality. To avoid double counting, outputs of [FrEDI::run_fredi()] should be filtered to values for which `sectorprimary = 1` and `includeaggregate = 1`.
 #' * Columns `"driverType"`, `"driverUnit"`, and `"driverValue"` contain information about the temperature and SLR scenarios.
 #' * Columns `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"state_pop"` contain information about the GDP and population scenarios.
 #' * Columns `"physicalmeasure"` and `"physical_impacts"` contain information about physical impacts.
 #' * Column `"annual_impacts"` contains information on the economic value associated with annual impacts.
 #'
 #'
-#' If the user specifies `aggLevels= "all"` or other combinations of aggregation levels, [FrEDI::run_fredi()] passes the results data frame and the `aggLevels` argument to the [FrEDI::aggregate_impacts()] function. [FrEDI::aggregate_impacts()] then performs the following calculations, using the default grouping columns for the [FrEDI::aggregate_impacts()]: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, and `"year"` (note that the `"variant"` column referred to below contains information about the variant name (or `“N/A”`), as applicable).
+#' If the user specifies `aggLevels = "all"` or other combinations of aggregation levels, [FrEDI::run_fredi()] passes the results data frame and the `aggLevels` argument to the [FrEDI::aggregate_impacts()] function. [FrEDI::aggregate_impacts()] then performs the following calculations, using the default grouping columns for the [FrEDI::aggregate_impacts()]: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, and `"year"` (note that the `"variant"` column referred to below contains information about the variant name (or `“N/A”`), as applicable).
 #'
 #' \tabular{ll}{
 #' \strong{Aggregation Level} \tab \strong{Description} \cr
-#' *`impactyear`* \tab To aggregate over impact years, [FrEDI::aggregate_impacts()] first separates results for sectors with only one impact year estimate (i.e., `impactYear= "N/A"`) from from observations with multiple impact year estimates (i.e., sectors with results for both `impactYear= "2010"` and `impactYear= "2090"`). For these sectors with multiple impact years, physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`) are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are then row-bound to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear= "Interpolation"` for all values. If `"impactyear"` is included in `aggLevels` (e.g., `aggLevels= "all"`), [FrEDI::aggregate_impacts()] aggregates over impact years before performing other types of aggregation. \cr
+#' *`impactyear`* \tab To aggregate over impact years, [FrEDI::aggregate_impacts()] first separates results for sectors with only one impact year estimate (i.e., `impactYear = "N/A"`) from from observations with multiple impact year estimates (i.e., sectors with results for both `impactYear = "2010"` and `impactYear = "2090"`). For these sectors with multiple impact years, physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`) are linearly interpolated between impact year estimates. For any model run years above 2090, annual results for sectors with multiple impact years return the 2090 estimate. The interpolated values are then row-bound to the results for sectors with a single impact year estimate, and column `impactYear` set to `impactYear = "Interpolation"` for all values. If `"impactyear"` is included in `aggLevels` (e.g., `aggLevels = "all"`), [FrEDI::aggregate_impacts()] aggregates over impact years before performing other types of aggregation. \cr
 #'
-#' *`modelaverage`* \tab To aggregate over models for temperature-driven sectors, [FrEDI::aggregate_impacts()] averages physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`, respectively) across all GCM models present in the data. [FrEDI::aggregate_impacts()] drops the column `"model"` from the grouping columns when averaging over models. Averages exclude observations with missing values. However, If all values within a grouping are missing, the model average is set to `NA`. The values in column `"model"` are set to `"Average"` for model averages and the model averages data frame is then row-bound to the main results data frame. For SLR-driven sectors, there is no need for additional model aggregation; these values already have `model="Interpolation"`. If `"modelaverage"` is included in `aggLevels` (e.g., `aggLevels= "all"`), [FrEDI::aggregate_impacts()] first aggregates over impact years  (if `"impactyear"` present in `aggLevels` or if `aggLevels="all"`) before aggregating over models.\cr
+#' *`modelaverage`* \tab To aggregate over models for temperature-driven sectors, [FrEDI::aggregate_impacts()] averages physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`, respectively) across all GCM models present in the data. [FrEDI::aggregate_impacts()] drops the column `"model"` from the grouping columns when averaging over models. Averages exclude observations with missing values. However, If all values within a grouping are missing, the model average is set to `NA`. The values in column `"model"` are set to `"Average"` for model averages and the model averages data frame is then row-bound to the main results data frame. For SLR-driven sectors, there is no need for additional model aggregation; these values already have `model = "Interpolation"`. If `"modelaverage"` is included in `aggLevels` (e.g., `aggLevels = "all"`), [FrEDI::aggregate_impacts()] first aggregates over impact years  (if `"impactyear"` present in `aggLevels` or if `aggLevels = "all"`) before aggregating over models.\cr
 #'
-#' *`national`* \tab To aggregate values to the national level, [FrEDI::aggregate_impacts()] sums physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`, respectively) across all regions present in the data. [FrEDI::aggregate_impacts()] drops the columns `"region"`, `"state"`, and `"postal"` when summing over states and regions. Years which have missing column data for all regions return as `NA`. Values for column `"region"` are set to `"National Total"`; values for column `"state"` are set to `All`, and values for column `"postal"` are set to `US`. The data frame with national totals is then row-bound to the main results data frame. If `"national"` is included in `aggLevels` (e.g., `aggLevels= "all"`), [FrEDI::aggregate_impacts()] first aggregates over impact years and/or models (if `"impactyear"` and/or `"modelaverage"` are present in `aggLevels` or if `aggLevels= "all"`) before aggregating over models.\cr
+#' *`national`* \tab To aggregate values to the national level, [FrEDI::aggregate_impacts()] sums physical impacts and annual costs (columns `"physical_impacts"` and `"annual_impacts"`, respectively) across all states present in the data. [FrEDI::aggregate_impacts()] drops the columns `"region"`, `"state"`, and `"postal"` when summing over states and regions. Years which have missing column data for all regions return as `NA`. Values for columns `"region"`, `"state"`, and `"postal"` are set to `"National Total"`, `All`, and `US`, respectively. The data frame with national totals is then row-bound to the main results data frame. If `"national"` is included in `aggLevels` (e.g., `aggLevels = "all"`), [FrEDI::aggregate_impacts()] first aggregates over impact years and/or models (if `"impactyear"` and/or `"modelaverage"` are present in `aggLevels` or if `aggLevels = "all"`) before aggregating over models.\cr
 #'
 #' *`impacttype`* \tab To aggregate values over impact types, [FrEDI::aggregate_impacts()] sums annual impacts (column `"annual_impacts"`) across all impact types for each sector. [FrEDI::aggregate_impacts()] drops the column `"impactType"` and `"physicalmeasure"` from the grouping columns when summing over impact types. Years which have missing column data for all impact types return as `NA`. All values in column `"impactType"` are set to `"all"`. Aggregating over impact types, drops columns related to physical impacts (i.e., columns `"physicalmeasure"` and `"physical_impacts"`). These columns are dropped since aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.\cr
 #' }
 #'
 #' After aggregating values, [FrEDI::aggregate_impacts()] joins the data frame of impacts with information about `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"state_pop"`.
 #'
-#' If `outputList=FALSE` (default), [FrEDI::run_fredi()] returns a data frame of annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, model type (`"GCM"` or `"SLR"`), and model. If `outputList=TRUE`, in addition to the data frame of impacts, [FrEDI::run_fredi()] returns a list object containing information about values for function arguments, driver scenarios, and population and GDP scenarios.
+#' If `outputList = FALSE` (default), [FrEDI::run_fredi()] returns a data frame of annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, model type (`"GCM"` or `"SLR"`), and model. If `outputList = TRUE`, in addition to the data frame of impacts, [FrEDI::run_fredi()] returns a list object containing information about values for function arguments, driver scenarios, and population and GDP scenarios.
 #'
 #'
 #'
 #' @return
-#' If `outputList=FALSE`, the output of [FrEDI::run_fredi()] is a dataframe object (described above) containing annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, and model (GCM name for temperature-driven sectors and "Interpolation" for SLR-driven sectors).
+#' If `outputList=FALSE`, the output of [FrEDI::run_fredi()] is a data frame object (described above) containing annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, and model (GCM name for temperature-driven sectors and `"Interpolation"` for SLR-driven sectors).
 #'
 #' If `outputList=TRUE`, [FrEDI::run_fredi()] returns a list object containing the following:
 #'
 #' * __`statusList`__. A list with values for the arguments passed to [FrEDI::run_fredi()] (including defaults if unspecified).
 #' * __`argsList`__. A list with elements named after [FrEDI::run_fredi()] arguments, containing the values of the arguments passed to [FrEDI::run_fredi()] (or default values if unspecified).
 #' * __`scenarios`__. A list with named elements `"temp"`, `"slr"`, `"gdp"`, and `"pop"` -- each containing the scenarios for temperature, SLR, GDP, and population as used by the model in calculating impacts.
-#' * __`results`__. Containing a data frame of annual impacts (i.e., the same data frame returned if `outputList=FALSE`).
+#' * __`results`__. Containing a data frame of annual impacts (i.e., the same data frame returned if `outputList = FALSE`).
 #'
 #'
 #'
@@ -126,7 +125,9 @@
 #' popScenario |> glimpse()
 #'
 #' ### Subset climate scenario
-#' temps1 <- gcamScenarios |> filter(scenario=="ECS_3.0_ref_0") |> select(year, temp_C)
+#' temps1 <- gcamScenarios |> filter(scenario=="Hector_GCAM_v5.3_ECS_3.0_ref")
+#' temps1 <- temps1 |> mutate(temp_C = temp_C_global |> convertTemps(from="global"))
+#' temps1 <- temps1 |> select(year, temp_C)
 #'
 #' ### Run custom scenario
 #' run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
@@ -143,10 +144,7 @@
 #' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
-#' x_inputs <- import_inputs(
-#'   slrfile  = slrInputFile,
-#'   popfile  = popInputFile
-#' )
+#' x_inputs <- import_inputs(slrfile=slrInputFile, popfile=popInputFile, popArea="state")
 #'
 #' ### Run custom scenarios
 #' run3 <- run_fredi(inputsList=x_inputs)
@@ -157,10 +155,10 @@
 #' ### Run for a single sector, with default inputs, no aggregation, and elasticity=1:
 #' run4 <- run_fredi(sectorList="ATS Temperature-Related Mortality", aggLevels="none", elasticity=1)
 #'
-#' ### Set end year for analysis to 2100 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
-#' run5 <- run_fredi(maxYear=2100)
+#' ### Set end year for analysis to 2110 -- messages user and returns a null value since default scenarios only have values out to 2100
+#' run5 <- run_fredi(maxYear=2110)
 #'
-#' ### Set end year for analysis to 2300 using default scenarios (values after 2090 will all be missing, since default scenarios only have values out to 2090)
+#' ### Set end year for analysis to 2300 -- messages user and returns a null value since default scenarios only have values out to 2100)
 #' run6 <- run_fredi(thru2300=TRUE)
 #'
 #'
@@ -183,7 +181,7 @@ run_fredi <- function(
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
     elasticity = 1, ### Override value for elasticity for economic values
-    maxYear    = 2090,
+    maxYear    = 2100,
     thru2300   = FALSE,
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
@@ -194,8 +192,8 @@ run_fredi <- function(
   msgUser   <- !silent
   ### Uncomment for allCols
   doPrimary <- F  ### whether to filter to primary impacts
-  ### Model years and NPD (FrEDI past 2090)
-  refYear   <- 2090
+  ### Model years and NPD (FrEDI past 2100)
+  refYear   <- 2100
   npdYear   <- 2300
   maxYear0  <- thru2300 |> ifelse(npdYear, maxYear)
   do_npd    <- maxYear0 > refYear
@@ -399,7 +397,7 @@ run_fredi <- function(
     ### Remove missing values of years, temperatures
     ### Zero out series at the temperature reference year
     tempInput <- tempInput |> select(c("year", "temp_C"))
-    tempInput <- tempInput |> filter(!(temp_C |> is.na()) & !(year |> is.na()))
+    tempInput <- tempInput |> filter_all(all_vars(!(. |> is.na())))
     tempInput <- tempInput |> filter(year > refYear_temp)
     tempInput <- tibble(year= refYear_temp, temp_C = 0) |> rbind(tempInput)
 
@@ -425,8 +423,22 @@ run_fredi <- function(
     tempInput <- tempInput       |> select(c("year", "temp_C"))
     temp_df   <- co_defaultTemps |> as_tibble()
   } ### End else(has_tempUpdate)
+
   ### Filter to appropriate years
-  temp_df <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
+  temp_df    <- temp_df |> filter(year >= refYear_temp) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msgInputs1 <- " scenario must have at least one non-missing value in or after the year " |> paste0(maxYear, "...")
+  msgInputs2 <- "\n" |> paste0("Exiting...")
+  msg_temp   <- "Temperature" |> paste0(msgInputs1)
+  check_temp <- temp_df |> filter(year == maxYear) |> nrow()
+  if(!check_temp) {
+    "\t" |> message(msg_temp)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_temp)
+  rm(msg_temp, check_temp)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["tempInput"]] <- has_tempUpdate |> ifelse("Custom", "Default")
@@ -448,7 +460,7 @@ run_fredi <- function(
   if(has_slrUpdate){
     "\t" |> message("Creating SLR scenario from user inputs...")
     slrInput  <- slrInput |> select(c("year", "slr_cm"))
-    slrInput  <- slrInput |> filter(!(slr_cm |> is.na()) & !(year |> is.na()))
+    slrInput  <- slrInput |> filter_all(all_vars(!(. |> is.na())))
     slrInput  <- slrInput |> filter(year >  refYear_slr)
     slrInput  <- tibble(year= refYear_slr, slr_cm = 0) |> rbind(slrInput)
     ### Interpolate values
@@ -471,8 +483,21 @@ run_fredi <- function(
     slrInput <- temps2slr(temps = temp_df$temp_C_global, years = temp_df$year)
     slr_df   <- slrInput
   } ### End else(has_slrUpdate)
+
   ### Filter to appropriate years
   slr_df  <- slr_df |> filter(year >= refYear_slr) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_slr   <- "SLR" |> paste0(msgInputs1)
+  check_slr <- slr_df |> filter(year == maxYear) |> nrow()
+  if(!check_slr) {
+    "\t" |> message(msg_slr)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_slr)
+  rm(msg_slr, check_slr)
+
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["slrInput"]] <- has_slrUpdate |> ifelse("Custom", "Default")
@@ -517,18 +542,31 @@ run_fredi <- function(
   popCols0 <- c("year", "region") |> c(stateCols0, popCol0)
   if(has_gdpUpdate){
     "\t" |> message("Creating GDP scenario from user inputs...")
-    gdpInput <- gdpInput |> filter(!(gdp_usd |> is.na()) & !(year |> is.na()))
+    gdpInput <- gdpInput |> filter_all(all_vars(!(. |> is.na())))
     gdpInput <- gdpInput |> filter(gdp_usd >= 0)
-    gdp_df   <- gdpInput |> interpolate_annual(years=list_years, column="gdp_usd", rule = 2) |> select(-c("region"))
+    gdp_df   <- gdpInput |> interpolate_annual(years=list_years, column="gdp_usd", rule=2) |> select(-c("region"))
   } else{
     "\t" |> message("No GDP scenario provided...Using default GDP scenario...")
     gdpInput <- gdp_default |> select(all_of(gdpCols0))
     gdp_df   <- gdpInput
   } ### End else(has_gdpUpdate)
+
+  ### Filter to appropriate years
+  gdp_df  <- gdp_df |> filter(year >= minYear) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_gdp   <- "GDP" |> paste0(msgInputs1)
+  check_gdp <- gdp_df |> filter(year == maxYear) |> nrow()
+  if(!check_gdp) {
+    "\t" |> message(msg_gdp)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_gdp)
+  rm(msg_gdp, check_gdp)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["gdpInput"]] <- has_gdpUpdate |> ifelse("Custom", "Default")
-    # argsList  [["inputsList"]][["gdpInput"]] <- inputsList[["gdpInput"]]
     argsList  [["inputsList"]][["gdpInput"]] <- gdpInput
   } ### End if(outputList)
   rm(gdpInput, gdp_default, has_gdpUpdate)
@@ -536,15 +574,36 @@ run_fredi <- function(
   ### Population inputs
   if(has_popUpdate){
     "\t" |> message("Creating population scenario from user inputs...")
+    ### Rename any columns
+    # rename0   <- "state_pop"
+    # renameTo  <- popCol0
+    rename0   <- "pop"
+    renameTo  <- popCol0
+    doRename0 <- rename0 %in% (popInput |> names())
+    if(doRename0) {
+      popInput <- popInput |> rename_at(c(rename0), ~renameTo)
+    } ### End if(doRename0)
+    rm(rename0, renameTo, doRename0)
+
     ### Standardize region and then interpolate
-    popInput     <- popInput |> filter(!(year |> is.na()))
-    popInput     <- popInput |> (function(y, col0=popCol0){y[!(y[[popCol0]] |> is.na()),]})()
-    popInput     <- popInput |> (function(y, col0=popCol0){y[!(y[[popCol0]] <= 0),]})()
-    pop_df       <- popInput |> mutate(region = gsub(" ", ".", region))
-    pop_df       <- pop_df   |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
+    popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
+    popInput     <- popInput  |> filter_at(c(popCol0), function(y){y >= 0})
+    ### Rename pop col
+    # rename0      <- c()
+    ### Join with region info
+    # select0      <- c(region, state, postal)
+    drop0        <- c("fips")
+    join0        <- popInput  |> names() |> (function(y, z=co_states |> names()){y[y %in% z]})()
+    popInput     <- co_states |> left_join(popInput, by=c(join0), relationship="many-to-many")
+    popInput     <- popInput  |> filter_all(all_vars(!(. |> is.na())))
+    popInput     <- popInput  |> select(-any_of(drop0))
+    rm(join0, drop0)
+    ### Mutate region, interpolate annual
+    pop_df       <- popInput  |> mutate(region = gsub(" ", ".", region))
+    pop_df       <- pop_df    |> interpolate_annual(years=list_years, column=popCol0, rule=2, byState=byState) |> ungroup()
     # pop_df |> glimpse()
     ### Calculate national population
-    national_pop <- pop_df |> group_by_at(.vars=c("year")) |> summarize_at(.vars=c(popCol0), sum, na.rm=T) |> ungroup()
+    national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
     national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
     # national_pop |> glimpse()
   } else{
@@ -554,6 +613,21 @@ run_fredi <- function(
     pop_df       <- popInput
     national_pop <- national_pop_default |> select("year", "national_pop")
   } ### End else(has_popUpdate)
+
+  ### Filter to appropriate years
+  pop_df       <- pop_df       |> filter(year >= minYear) |> filter(year <= maxYear)
+  national_pop <- national_pop |> filter(year >= minYear) |> filter(year <= maxYear)
+
+  ### Check if there are any years after the max year
+  msg_pop   <- "Population" |> paste0(msgInputs1)
+  check_pop <- pop_df |> filter(year == maxYear) |> nrow()
+  if(!check_pop) {
+    "\t" |> message(msg_pop)
+    msgInputs2 |> message()
+    return()
+  } ### if(!check_pop)
+  rm(msg_pop, check_pop)
+
   ### Add to list
   if(outputList){
     statusList[["inputsList"]][["popInput"]] <- has_popUpdate |> ifelse("Custom", "Default")

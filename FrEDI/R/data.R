@@ -3,7 +3,7 @@
 #
 #' A dataframe containing the default outputs of [FrEDI::run_fredi()]
 #
-#' @format A data frame with 775,179 rows and 20 columns:
+#' @format A data frame with 1,501,500 rows and 20 columns:
 #' \describe{
 #'   \item{sector}{Name of the associated sector.}
 #'   \item{variant}{Name of the associated variant or adaptation (values are sector-specific).}
@@ -30,13 +30,22 @@
 
 
 ###### gcamScenarios ######
-#' Six driver scenarios that can be passed as inputs to [FrEDI::run_fredi_sv()]
+#' Six driver scenarios that can be passed as inputs to [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()]
 #'
-#' A dataframe containing six driver scenarios that can be passed as inputs to [FrEDI::run_fredi_sv()].
+#' A dataframe containing six driver scenarios that can be passed as inputs to [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()]. This data frame has four columns -- `year`, `temp_C`, `slr_cm`, and `scenario` -- respectively containing:
 #'
-#' The scenarios in this dataframe were created using [Hector](https://jgcri.github.io/hector/), an open-source, reduced-form global carbon-cycle climate model (Hartin et al., 2015) to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM). The Global Change Analysis Model v5.3 ([GCAM](https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model)) is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019).
+#' \describe{
+#'   \item{year}{The Common Era (CE) year associated with the observation.}
+#'   \item{temp_C}{Global temperature (i.e., degrees of warming above the baseline year of 1995) in degrees Celsius, for the associated year and scenario.}
+#'   \item{slr_cm}{Global Mean Sea Level Rise (i.e., SLR) in centimeters for the associated year and scenario.}
+#'   \item{scenario}{Associated scenario identifier.}
+#' }
 #'
-#' These temperature scenarios have the original global temperatures. Users must convert to CONUS temperatures using the [FrEDI::convertTemps] (with argument `from="global"`) before passing the scenarios to [FrEDI::run_fredi()] or [FrEDI::run_fredi_sv()]. *Please note that the `gcamScenarios` should be subset to any of the individual scenarios specified in the `scenario` column before passing to [FrEDI::run_fredi()] (e.g., `gcamScenarios |> dplyr::filter(scenario=="ECS_3.0_ref_0")` for the reference scenario).
+#' The scenarios in this dataframe were created using [Hector](https://jgcri.github.io/hector/), an open-source, reduced-form global carbon-cycle climate model (Hartin et al., 2015) to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM). The Global Change Analysis Model v5.3 ([GCAM](https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model)) is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019). Scenario identifiers in the `scenario` column of [FrEDI::gcamScenarios()] have the string `"Hector_GCAM_v5.3_ECS_"` as a prefix, followed by the average warming temperature and the suffix `"_REF"` (e.g., `"Hector_GCAM_v5.3_ECS_3.0_REF"` for the default scenario for [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()].
+#'
+#' These six temperature scenarios represent global temperatures; however, [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()] require temperature scenarios for the contiguous U.S. (CONUS). Therefore, to use the `gcamScenarios` with [FrEDI::run_fredi()] or [FrEDI::run_fredi_sv()], users must first convert temperatures in the `temp_C` column to CONUS temperatures via the [FrEDI::convertTemps] function -- with argument `from = "global"` (e.g., `gcamScenarios |> mutate(temp_C = temp_C |> FrEDI::convertTemps(from = "global"))`).
+#'
+#' The GCAM scenarios can be passed directly to the SV module via the `driverInput` argument (e.g., `run_fredi_sv(driverInput = gcamScenarios)`), since [FrEDI::run_fredi_sv()] is designed to run multiple scenarios. In contrast, [FrEDI::run_fredi()] is intended to be run with a single scenario; `gcamScenarios` should be subset to a specific scenario before passing the temperature scenario to [FrEDI::run_fredi()] (e.g., `run_fredi(list(tempInput=gcamScenarios |> dplyr::filter(scenario=="Hector_GCAM_v5.3_ECS_3.0_REF")))` to use the default scenario).
 #'
 #' Calvin, K., Patel, P., Clarke, L., et al. 2019. GCAM v5.1: representing the linkages between energy, water, land, climate, and economic systems, Geosci. Model Dev., 12:677–698. https://doi.org/10.5194/gmd-12-677-2019.
 #'
@@ -45,7 +54,7 @@
 #' @format A data frame with 546 rows and 4 columns:
 #' \describe{
 #'   \item{year}{Year}
-#'   \item{temp_C}{CONUS temperature (in degrees Celsius) for the associated year and scenario}
+#'   \item{temp_C}{Global temperature (in degrees Celsius) for the associated year and scenario}
 #'   \item{slr_cm}{Global Mean Sea Level Rise (in centimeters) for the associated year and scenario}
 #'   \item{scenario}{Associated scenario identifier}
 #' }
@@ -54,9 +63,9 @@
 
 
 ###### popScenario ######
-#' Population scenario to use as an input to [FrEDI::run_fredi()]
+#' Population scenario to use as an input to [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()]
 #'
-#' A dataframe containing a population scenario to be passed as an input to [FrEDI::run_fredi()].
+#' A dataframe containing a population scenario to be passed as an input to [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()].
 #'
 #' This dataframe contains population projections at the state level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).
 #'
@@ -78,25 +87,3 @@
 "popScenario"
 
 
-###### popScenario_sv ######
-#' Population scenario to use as an input to [FrEDI::run_fredi_sv()]
-#'
-#' A dataframe containing a population scenario to be passed as an input to [FrEDI::run_fredi_sv()].
-#'
-#' This dataframe contains population projections at the regional level from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (2015).
-#'
-#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
-#'
-#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
-#'
-#' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
-#'
-#' @format A data frame with 133 rows and 3 columns:
-#' \describe{
-#'   \item{year}{Year}
-#'   \item{region}{Region of U.S. ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", and "Southwest")}
-#'   \item{reg_pop}{Regional population for associated region and year}
-#' }
-#'
-#' @source \url{https://epa.gov/cira/FrEDI/}
-"popScenario_sv"

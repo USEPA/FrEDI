@@ -7,20 +7,17 @@
 \title{README
 FrEDI: The Framework for Evaluating Damages and Impacts}
 \description{
-\link{FrEDI} is an R package being developed by the U.S. Environmental Protection Agency (EPA). The functions and data provided by this package can be used to estimate climate change impacts for the contiguous United States (CONUS) using the Framework for Evaluating Damages and Impacts (FrEDI), developed as part of EPA's \href{https://epa.gov/cira/}{Climate Change Impacts and Risk Analysis} (CIRA) project. \link{FrEDI} contains R code that implement FrEDI and allow users to project impacts from climate change and sea level rise for a selected set of sectors.
+FrEDI is an R package that is developed and maintained by the U.S. Environmental Protection Agency (EPA). The functions and data provided in this package can be used to project impacts of climate change within the contiguous United States (CONUS), under any custom temperature or socioeconomic trajectory, using the \href{https://epa.gov/cira/FrEDI/}{Framework for Evaluating Damages and Impacts (FrEDI)} that was developed as part of EPA's \href{https://epa.gov/cira/}{Climate Change Impacts and Risk Analysis} (CIRA) project. The FrEDI package contains R code that implements FrEDI and allows users to project annual impacts from climate change and sea level rise across over 20 impact sectors, geographic regions, and populations through the end of the 21st century (and optionally through 2300). While this framework does not currently account for all ways in which the American public may be impacted by future climate change, this type of detailed information helps EPA to better understand and communicate the types of potential impacts and risks from future climate change in the United States, as well as the potential benefits of greenhouse gas mitigation and adaptation.
 }
 \details{
-For help getting started with \link{FrEDI}, visit \url{https://usepa.github.io/FrEDI/articles/manual.html}.
-
-For additional package documentation, see \url{https://usepa.github.io/FrEDI/index.html}.
-
-For more information on the Framework and the CIRA project, visit \url{https://epa.gov/cira/}, especially \url{https://epa.gov/cira/FrEDI/}.
+See the \href{https://epa.gov/cira/about-fredi/}{FrEDI Technical Documentation} for additional information about the underlying theory, design, structure, components, and capabilities of FrEDI, as well as examples of some of its intended uses and applications. For help getting started with FrEDI, visit \url{https://usepa.github.io/FrEDI/articles/manual.html}. For additional package documentation, see \url{https://usepa.github.io/FrEDI/index.html}.
 }
 \section{Overview of Functions}{
 
-The function \code{\link[=run_fredi]{run_fredi()}} provided in this package is the primary function implementing the \href{https://epa.gov/cira/FrEDI/}{\code{FrEDI}} developed by the U.S. EPA for projecting annual climate impacts. The main inputs to \code{\link[=run_fredi]{run_fredi()}} are climate scenarios (temperature in degrees Celsius, global mean sea level rise in centimeters) and socioeconomic scenarios (U.S. gross domestic product, state population).
 
-\link{FrEDI} also contains functions to assist in the pre-processing of input scenarios and the post-processing of outputs.
+The function \code{\link[=run_fredi]{run_fredi()}} provided in this package is the primary function implementing the \href{https://epa.gov/cira/FrEDI/}{Framework for Evaluating Damages and Impacts (FrEDI)}, developed by the U.S. EPA for projecting annual climate impacts. The main inputs to \code{\link[=run_fredi]{run_fredi()}} are climate scenarios (temperature in degrees Celsius, global mean sea level rise in centimeters) and socioeconomic scenarios (U.S. gross domestic product, state population).
+
+FrEDI also contains functions to assist in the pre-processing of input scenarios and the post-processing of outputs.
 \itemize{
 \item Pre-processing functions include \code{\link[=get_sectorInfo]{get_sectorInfo()}}, \code{\link[=import_inputs]{import_inputs()}}, \code{\link[=convertTemps]{convertTemps()}}, \code{\link[=temps2slr]{temps2slr()}}.
 \itemize{
@@ -31,12 +28,15 @@ The function \code{\link[=run_fredi]{run_fredi()}} provided in this package is t
 }
 }
 
-\code{\link[=aggregate_impacts]{aggregate_impacts()}} is a post-processing helper function that helps users to aggregate and summarize the outputs of \link{FrEDI}. \code{\link[=aggregate_impacts]{aggregate_impacts()}} can be used to calculate national totals, model averages, sum over impact types, and interpolate between multiple impact years (note that \code{\link[=run_fredi]{run_fredi()}} will automatically run \code{\link[=aggregate_impacts]{aggregate_impacts()}} before returning outputs if the \code{aggLevels} argument is not \code{"none"}).
+\code{\link[=aggregate_impacts]{aggregate_impacts()}} is a post-processing helper function that helps users to aggregate and summarize the outputs of FrEDI. \code{\link[=aggregate_impacts]{aggregate_impacts()}} can be used to calculate national totals, model averages, sum over impact types, and interpolate between multiple impact years (note that \code{\link[=run_fredi]{run_fredi()}} will automatically run \code{\link[=aggregate_impacts]{aggregate_impacts()}} before returning outputs if the \code{aggLevels} argument is not \code{"none"}).
 
 Versions 2.3.0 and above include the \code{FrEDI} Social Vulnerability (SV) module for estimating impacts on socially vulnerable populations for select sectors. \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} allows users to access a list of sectors within the FrEDI SV module and related sector information. The function \code{\link[=run_fredi_sv]{run_fredi_sv()}} is the main function for the \code{FrEDI} SV module. \code{\link[=run_fredi_sv]{run_fredi_sv()}} is designed to calculate impacts for a single sector at a time for a custom population scenario or one or more custom temperature or sea level rise scenarios. For more information on the data underlying the \code{FrEDI} SV module, see \url{https://www.epa.gov/cira/social-vulnerability-report/}.
+}
 
-@section Overview of Package Contents:
-\link{FrEDI} consists of files in the following directories:
+\section{Overview of Package Contents}{
+
+
+FrEDI consists of files in the following directories:
 \itemize{
 \item \strong{R}. Contains function definitions (files ending in \code{".R"}) and configuration files (ending in \code{".rda"}).
 \item \strong{data}. Contains R Data files ending in \code{".rdb"}, \code{".rds"}, and \code{".rdx"}, containing data included with the package.
@@ -44,14 +44,14 @@ Versions 2.3.0 and above include the \code{FrEDI} Social Vulnerability (SV) modu
 \item \strong{Meta}. Contains RDS files (ending in \code{".rds"}) with information about the package contents.
 \item \strong{extdata}. \strong{extdata/scenarios} Contains four CSV files for users to test the function for importing data. For more information on importing scenarios for use with \code{\link[=run_fredi]{run_fredi()}}, refer to documentation for the function \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
-\item \code{"GCAM_scenario.csv"} contains a set of temperature scenarios that can be used with \link{FrEDI}, including the default temperature scenario used by both \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}} (labeled \verb{"description="Hector_GCAM_v5.3_ECS_3.0_REF"} in \code{"slr_from_GCAM.csv"} and \code{"ECS_3.0_ref_0"} in the \link{gcamScenarios} dataset)). Also see the documentation for the \link{gcamScenarios} dataset for more information.
-\item \code{"State ICLUS Population.csv"} and \code{"Region ICLUS Population.csv"} contain the default population scenarios used by \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}, respectively (see \link{popScenario} and \link{popScenario_sv}).
+\item \code{"GCAM_scenario.csv"} contains a set of temperature scenarios that can be used with FrEDI, including the default temperature scenario used by both \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}}. Also see documentation for the \link{gcamScenarios} dataset for more information.
+\item \code{"State ICLUS Population.csv"} contains the default state population scenario used by \code{\link[=run_fredi]{run_fredi()}} (see \link{popScenario} and \link{popScenario_sv}).
 \item \code{"slr_from_GCAM.csv"} contains global mean sea level rise heights in centimeters (created from the reference temperature scenario).
 }
 \item \strong{extdata/sv} Contains files used by the \code{FrEDI} SV module to calculate impacts.
 }
 
-The \code{FrEDI} package contains a loadable dataset with default results \code{defaultResults}, which contains annual impacts produced by \code{\link[=run_fredi]{run_fredi()}} for the with the default options and default default scenarios (i.e., default temperature, GDP and regional population trajectories). Other loadable datasets provided by \link{FrEDI} are a set of driver scenarios (\link{gcamScenarios}), a state-level population scenario (\link{popScenario}) for use with \code{\link[=run_fredi]{run_fredi()}}, and a region-level \code{popScenario_sv} for use with \code{\link[=run_fredi_sv]{run_fredi_sv()}}. These data can be loaded into the workspace using the \code{data()} function.
+The \code{FrEDI} package contains a loadable dataset with default results \code{defaultResults}, which contains annual impacts produced by \code{\link[=run_fredi]{run_fredi()}} for the with the default options and default scenarios (i.e., default temperature, GDP, and state population trajectories). Other loadable datasets provided by FrEDI are a set of driver scenarios (\link{gcamScenarios}) and a state population scenario (\link{popScenario}) for use with \code{\link[=run_fredi]{run_fredi()}} or \code{\link[=run_fredi_sv]{run_fredi_sv()}}, which can be loaded into the workspace using the \code{data()} function (e.g., \code{data(gcamScenarios)}).
 
 Typical use will involve \code{library(FrEDI)} or \code{require(FrEDI)}.
 }
@@ -63,9 +63,9 @@ Disclaimer: All code in this repository is being provided in a "draft" state and
 
 \section{Dependencies}{
 
-\link{FrEDI} requires R (>= 4.2.0).
+FrEDI requires R (>= 4.2.0).
 
-\link{FrEDI} depends on:
+FrEDI depends on:
 \itemize{
 \item \link{tidyverse} (Easily Install and Load the 'Tidyverse'). The official documentation for \link{tidyverse} can be found \href{https://cran.r-project.org/web/packages/tidyverse/index.html}{here}. \link{tidyverse} can be installed using \code{install.packages("tidyverse")}, or see \href{https://tidyverse.tidyverse.org/}{link} for more information.
 \item \link{ggpubr} ('ggplot2' Based Publication Ready Plots). The official documentation for \link{ggpubr} can be found \href{https://cran.r-project.org/web/packages/ggpubr/index.html}{here}. \link{ggpubr} can be installed using \code{install.packages("ggpubr")}, or see \href{https://rpkgs.datanovia.com/ggpubr/}{link} for more information.
