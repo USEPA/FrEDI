@@ -458,6 +458,7 @@ check_input_data <- function(
     popArea   = "state",  ### One of: c("state", "regional", "conus", "national")
     msgLevel  = 2         ### Level of messaging
 ){
+
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
@@ -500,7 +501,7 @@ check_input_data <- function(
   # has_i     <- inputDf |> length()
   nullData   <- inputDf |> is.null()
   if(nullData) return(inputDf)
-
+  #browser()
 
   ###### Filter Data ######
   msgNA     <- paste0("Filtering out missing values...")
@@ -588,12 +589,26 @@ check_input_data <- function(
   checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)
   checkMax  <- case_when(hasMax_i ~ (dataVals <= max_i) |> all(), .default = T)
   checkVals <- checkMin & checkMax
-
+  #browser()
   if(!checkVals) {
     msg2_i |> paste0(msg_i5) |> message()
     msg2_i |> paste0("Values for column ", valCol, " must be ", msgRange, ".") |> message()
-    msg2_i |> paste0(msg_i2) |> message()
-    return(NULL)
+    if(doTemp){
+      paste0("Values outside of range will be changed to 0 and result in 0 impacts") |> message()
+
+      inputDf <- inputDf |>
+        mutate(
+          !!sym(valCol)  := case_when(
+            !!sym(valCol) < 0 ~ 0,
+            !!sym(valCol) > 30 ~ 0,
+            !!sym(valCol) >= 0 & !!sym(valCol) <= 30 ~ !!sym(valCol)
+          )
+        )
+    }
+
+    if(!doTemp){
+      msg2_i |> paste0(msg_i2) |> message()
+      return(NULL)}
   } ### End if(!checkNum)
 
   ###### Format Columns ######
