@@ -278,7 +278,9 @@ calc_tractImpacts <- function(
   rename0     <- c(weightCol)
   renameTo    <- c("popWeight")
   # x_impacts   <- x_impacts |> mutate(popWeight = x_impacts[[weightsCol]])
-  x_impacts   <- x_impacts |> rename_at(vars(rename0), ~renameTo)
+  # x_impacts |> glimpse()
+  # x_impacts   <- x_impacts |> rename_at(vars(rename0), ~renameTo)
+  x_impacts[["popWeight"]]   <- x_impacts[[weightCol]]
   x_impacts   <- x_impacts |> select(-any_of(drop0))
   rm(drop0, rename0, renameTo)
 
