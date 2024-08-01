@@ -364,51 +364,123 @@ format_inputScenarios <- function(
 
 ###### summarize_seScenario ######
 ### Summarize regional population
+# summarize_seScenario <- function(
+#     df0, ### Dataframe with population & national values like gdp_usd
+#     national = TRUE, ### If false, summarizes to regional level; otherwise, does national
+#     popCol   = "pop" ### Population column
+# ){
+#   ### By state
+#   stateCols0 <- c("state", "postal")
+#   if(!national){
+#     popCol0  <- popCol
+#     regCols0 <- c("region") |> c(stateCols0)
+#   } else{
+#     # "got here" |> print()
+#     popCol0  <- c()
+#     regCols0 <- c()
+#   } ### End else
+#
+#   ### Regional column names
+#   # regCols0 <- regCol0 |> c(stateCols0)
+#   # regCols0 |> print()
+#   ### Columns to group by
+#   group0   <- regCols0 |> c("gdp_usd", "national_pop", "gdp_percap")
+#   group0   <- group0   |> c("year")
+#   ### Columns to drop
+#   sumCols0 <- popCol0  |> c("n")
+#   ### Add column count
+#   df0      <- df0      |> mutate(n = 1)
+#
+#   ### Mutate data
+#   if(byState){
+#     ### Add state column
+#     df0 <- df0 |> mutate(byState = 1)
+#     ### Bind a copy of the data
+#     df0 <- df0 |>
+#       mutate_at(c(stateCols0), function(y){"N/A"}) |>
+#       mutate(byState = 0) |>
+#       rbind(df0)
+#     ### Summarize
+#     df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(c(sumCols0), sum, na.rm=T) |> ungroup()
+#     # df0 |> glimpse()
+#     # rm(group0)
+#     # } ### End if(byState)
+#   } else{
+#     ### Add state column
+#     df0 <- df0 |> mutate(byState = 0)
+#   } ### End if(byState)
+#
+#   ### Drop count column
+#   drop0    <- c("n")
+#   df0      <- df0 |> select(-all_of(drop0))
+#
+#   ### Return
+#   return(df0)
+# }
+
+
+###### update_popScalars ######
+### Update scalars with regional population scenario
+# update_popScalars <- function(
+#     df_scalars, ### Tibble of scalars
+#     df_pop,     ### Socioeconomic scenario
+#     groupCols = c("region") |> c("state", "postal") |> c("year"),
+#     popCol    = c("state_pop")
+# ){
+#   ### Drop region population
+#   df_scalars <- df_scalars |> filter(scalarName!="reg_pop")
+#   # df_scalars <- df_scalars |> mutate(slrSector="N/A")
+#
+#   ### Format population data
+#   drop0      <- c("gdp_usd", "national_pop", "gdp_percap")
+#   df_pop     <- df_pop |> summarize_seScenario(national=FALSE)
+#   df_pop     <- df_pop |> select(-any_of(drop0))
+#
+#   ### Add additional scalar attributes
+#   df_pop     <- df_pop |> mutate(scalarName           = "reg_pop")
+#   df_pop     <- df_pop |> mutate(scalarType           = "physScalar")
+#   df_pop     <- df_pop |> mutate(national_or_regional = "regional")
+#   ### Rename column
+#   df_pop     <- df_pop |> rename_at(c(popCol), ~"value")
+#
+#   ### Bind values to scalars
+#   # df_scalars |> glimpse(); df_pop |> glimpse()
+#   df_scalars <- df_scalars |> rbind(df_pop)
+#   # df_scalars |> glimpse();
+#
+#   ### Return
+#   return(df_scalars)
+# }
+
+###### summarize_seScenario ######
+### Summarize regional population
 summarize_seScenario <- function(
-    df0, ### Dataframe with population & national values like gdp_usd
-    national = TRUE ### If false, summarizes to regional level; otherwise, does national
+    df0,             ### Dataframe with population & national values like gdp_usd
+    national = TRUE, ### If false, summarizes to regional level; otherwise, does national
+    popCol   = "pop" ### Population column
 ){
-  ### By state
-  byState  <- "state" %in% (df0 |> names())
-  if( byState ){stateCols0 <- c("state", "postal")} else{stateCols0 <- c()}
-  if(!national){
-    popCol0  <- byState |> ifelse("state_pop", "reg_pop")
-    regCols0 <- c("region") |> c(stateCols0)
-  } else{
-    # "got here" |> print()
-    popCol0  <- c()
-    regCols0 <- c()
-  } ### End else
+  ### State columns
+  stateCols0 <- c("state", "postal")
+  if(!national) regCols0 <- c("region") |> c(stateCols0)
+  else          regCols0 <- c()
 
   ### Regional column names
   # regCols0 <- regCol0 |> c(stateCols0)
   # regCols0 |> print()
   ### Columns to group by
-  group0   <- regCols0 |> c("gdp_usd", "national_pop", "gdp_percap")
-  group0   <- group0 |> c("byState", "year")
+  select0  <- regCols0 |> c("gdp_usd", "national_pop", "gdp_percap") |> c("year")
   ### Columns to drop
-  sumCols0 <- popCol0 |> c("n")
+  sumCols0 <- popCol0  |> c("n")
   ### Add column count
-  df0      <- df0 |> mutate(n=1)
-
-  ### Mutate data
-  if(byState){
-    ### Add state column
-    df0 <- df0 |> mutate(byState = 1)
-    ### Bind a copy of the data
-    df0 <- df0 |>
-      mutate_at(c(stateCols0), function(y){"N/A"}) |>
-      mutate(byState = 0) |>
-      rbind(df0)
-    ### Summarize
-    df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(c(sumCols0), sum, na.rm=T) |> ungroup()
-    # df0 |> glimpse()
-    # rm(group0)
-    # } ### End if(byState)
-  } else{
-    ### Add state column
-    df0 <- df0 |> mutate(byState = 0)
-  } ### End if(byState)
+  df0      <- df0      |> mutate(n = 1)
+  ### Bind a copy of the data
+  df0      <- df0      |> mutate_at(c(stateCols0), function(y){"N/A"})
+  # df0 <- df0 |> rbind(df0)
+  ### Summarize
+  df0      <- df0      |> group_by_at(c(group0)) |> summarize_at(c(sumCols0), sum, na.rm=T) |> ungroup()
+  # df0 |> glimpse()
+  # rm(group0)
+  # } ### End if(byState)
 
   ### Drop count column
   drop0    <- c("n")
@@ -433,7 +505,7 @@ update_popScalars <- function(
 
   ### Format population data
   drop0      <- c("gdp_usd", "national_pop", "gdp_percap")
-  df_pop     <- df_pop |> summarize_seScenario(national=FALSE)
+  # df_pop     <- df_pop |> summarize_seScenario(national=FALSE, popCol=popCol)
   df_pop     <- df_pop |> select(-any_of(drop0))
 
   ### Add additional scalar attributes
