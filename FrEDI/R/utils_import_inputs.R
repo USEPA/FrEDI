@@ -444,9 +444,12 @@ check_input_data <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  co_states <- "co_states"    |> get_frediDataObj("frediData")
-  df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
+  # co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
+  # co_states <- "co_states"    |> get_frediDataObj("frediData")
+  # df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
+  co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
+  co_states <- "co_states"     |> get_frediDataObj("frediData")
+  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
   # fListNames <- c("co_info", "co_states")
   # sListNames <- c("df_ratios")
   # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
