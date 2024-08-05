@@ -58,7 +58,7 @@ get_sectorInfo <- function(
     rename(model_type = modelType) |>
     mutate(model_type = model_type |> toupper())
   ### Sort
-  co_sectorsRef <- co_sectorsRef |> arrange_at(.vars=c("sector"))
+  co_sectorsRef <- co_sectorsRef |> arrange_at(vars("sector"))
   ### GCM or SLR
   gcm_string <- "GCM"
   if(gcmOnly){
