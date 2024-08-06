@@ -465,20 +465,22 @@ run_fredi <- function(
   paste0("Calculating impacts...") |> message()
   df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity)
   # df_results |> glimpse()
-  return(df_results)
+  # return(df_results)
 
   ### Get scaled impacts
-  df_impacts    <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
+  # df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
+  df_impacts   <- df_results |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
   # df_impacts |> glimpse()
   # return(df_impacts)
   # return(list(df0=df_results, df1=df_impacts))
 
   ### Get impacts
-  df_results     <- df_results |> calc_impacts_fredi(df1=df_impacts)
-  return(list(df0=df_results, df1=df_impacts))
+  # df_results     <- df_results |> calc_impacts_fredi(df1=df_impacts)
+  df_results   <- df_impacts |> calc_impacts_fredi()
+  # return(list(df0=df_results, df1=df_impacts))
   rm(df_impacts)
   # df_results |> glimpse()
-  # return(df_results)
+  return(df_results)
 
 
   ###### Format Results ######
