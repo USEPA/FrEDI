@@ -187,17 +187,29 @@ run_fredi <- function(
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
 ){
+  ###### Load Objects ######
+  ### Assign data objects to objects in this namespace
+  ### Assign FrEDI config
+  # for(list_i in rDataList) list_i[["data"]] |> list2env(envir = environment())
+  # fredi_config <- "fredi_config" |> get_frediDataObj("fredi_config")
+  fredi_config <- rDataList[["fredi_config"]]
+  # fredi_config |> names() |> print()
+  for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
+  # fredi_config |> names() |> print()
+  # "got here" |> print()
+  # fredi_config |> list2env(envir = environment())
+
+
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   msgUser   <- !silent
   ### Uncomment for allCols
   # doPrimary <- F  ### whether to filter to primary impacts
   ### Model years and NPD (FrEDI past 2100)
-  refYear   <- 2100
-  npdYear   <- 2300
-  maxYear0  <- thru2300 |> ifelse(npdYear, maxYear)
-  do_npd    <- maxYear0 > refYear
-
+  minYear   <- minYear0
+  maxYear   <- thru2300 |> ifelse(npdYear0, maxYear)
+  do_npd    <- maxYear > maxYear0
+  # "got here2" |> print()
 
   ###### ** Return List ######
   ### Initialize list to return
@@ -218,7 +230,7 @@ run_fredi <- function(
     statusList[["sectorList"]] <- (!(sectorList |> is.null())) |> get_returnListStatus()
     statusList[["aggLevels" ]] <- "placeholder"
     statusList[["elasticity"]] <- (elasticity == 1) |> get_returnListStatus()
-    statusList[["maxYear"   ]] <- (maxYear == refYear & !thru2300) |> get_returnListStatus()
+    statusList[["maxYear"   ]] <- (maxYear == maxYear0 & !thru2300) |> get_returnListStatus()
     statusList[["thru2300"  ]] <- (!thru2300) |> get_returnListStatus()
     statusList[["allCols"   ]] <- (!allCols ) |> get_returnListStatus()
     statusList[["silent"    ]] <- ( silent  ) |> get_returnListStatus()
@@ -232,25 +244,17 @@ run_fredi <- function(
     argsList[["sectorList"]] <- "placeholder"
     argsList[["aggLevels" ]] <- "placeholder"
     argsList[["elasticity"]] <- elasticity
-    argsList[["maxYear"   ]] <- maxYear0
+    argsList[["maxYear"   ]] <- maxYear
     argsList[["thru2300"  ]] <- thru2300
     argsList[["allCols"   ]] <- allCols
     argsList[["silent"    ]] <- silent
   } ### End if(outputList)
 
 
-  ###### ** Load Objects ######
-  ### Assign data objects to objects in this namespace
-  ### Assign FrEDI config
-  # for(list_i in rDataList) list_i[["data"]] |> list2env(envir = environment())
-  fredi_config <- "fredi_config" |> get_frediDataObj("frediData")
-  # fredi_config |> print()
-  # for(name_i in fredi_config) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
-  fredi_config |> list2env(envir = environment())
+
 
   ###### ** Years   ######
-  maxYear    <- maxYear0
-  list_years <- minYear:maxYear
+  # cYears0 <- minYear:maxYear
 
   ###### ** Elasticity ######
   ### Message user about elasticity
@@ -264,10 +268,11 @@ run_fredi <- function(
 
   ###### ** State Info ######
   byState        <- TRUE
-  popCol0        <- "state_pop"
+  # popCol0        <- "state_pop"
+  popCol0        <- "pop"
   stateCols0     <- c("state", "postal")
 
-  ###### ** Aggregation Levels  ######
+  ###### ** Agg Levels  ######
   ### Types of summarization to do: default
   ### Aggregation levels
   aggList0   <- aggList0  |> tolower()
@@ -316,19 +321,20 @@ run_fredi <- function(
   ###### ** Check Inputs ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  df_inputInfo <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
+  df_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
   df_inputInfo <- df_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
   df_inputInfo <- df_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
-  df_inputInfo <- df_inputInfo |> mutate(max_year = maxYear |> rep(df_inputInfo |> nrow()))
+  df_inputInfo <- df_inputInfo |> mutate(max_year = maxYear)
+  # df_inputInfo <- df_inputInfo |> mutate(max_year = maxYear |> rep(df_inputInfo |> nrow()))
 
   ### Input defaults
   inputDefs    <- list()
-  tempDefault  <- "co_defaultTemps" |> get_frediDataObj("frediData")
-  inputDefs[["temp"]] <- tempDefault |> rename_at(c("temp_C_conus"), ~"temp_C") |> select(c("year", "temp_C"))
-  inputDefs[["slr" ]] <- "slr_default" |> get_frediDataObj("frediData")
-  inputDefs[["gdp" ]] <- "gdp_default" |> get_frediDataObj("frediData")
-  inputDefs[["pop" ]] <- "pop_default" |> get_frediDataObj("stateData")
-  rm(tempDefault)
+  gcamDefault  <- "gcam_default" |> get_frediDataObj("scenarioData")
+  inputDefs[["temp"]] <- gcamDefault |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
+  inputDefs[["slr" ]] <- gcamDefault |> select(c("year", "slr_cm"))
+  inputDefs[["gdp" ]] <- "gdp_default" |> get_frediDataObj("scenarioData")
+  inputDefs[["pop" ]] <- "pop_default" |> get_frediDataObj("scenarioData")
+  rm(gcamDefault)
 
   ### Input info
   inNames      <- df_inputInfo |> pull(inputName)
@@ -336,25 +342,26 @@ run_fredi <- function(
     list0[["pop"]] <- c("region", "state", "postal")
     return(list0)
   })()
-  inValCols    <- df_inputInfo |> pull(valueCol) |> str_replace("pop", "state_pop")
+  # inValCols    <- df_inputInfo |> pull(valueCol) |> str_replace("pop", "state_pop")
+  inValCols    <- df_inputInfo |> pull(valueCol)
   inMinYears   <- df_inputInfo |> pull(min_year)
   inMaxYears   <- df_inputInfo |> pull(max_year)
 
   ### Rename inputs
   inputsList   <- inputsList |> set_names(inNames)
 
-  ### Rename pop column if present
-  inputsList   <- inputsList |> (function(list0){
-    df0    <- list0[["pop"]]
-    hasPop <- !(df0 |> is.null())
-    cond0  <- hasPop |> ifelse("pop" %in% (df0 |> names()), FALSE)
-    if(cond0){df0 <- df0 |> rename_at(c("pop"), ~"state_pop")}
-    return(df0)
-  })()
+  # ### Rename pop column if present
+  # inputsList   <- inputsList |> (function(list0){
+  #   df0    <- list0[["pop"]]
+  #   hasPop <- !(df0 |> is.null())
+  #   cond0  <- hasPop |> ifelse("pop" %in% (df0 |> names()), FALSE)
+  #   if(cond0){df0 <- df0 |> rename_at(c("pop"), ~"state_pop")}
+  #   return(df0)
+  # })()
 
   ### Make sure all inputs are present
   ### Check whether inputs are present
-  inputsList   <- inNames     |> map(function(name_i){inputsList[[name_i]]}) |> set_names(inNames)
+  inputsList   <- inNames     |> map(function(name_i){  inputsList[[name_i]]}) |> set_names(inNames)
   hasInputs    <- inNames     |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
   whichInputs  <- hasInputs   |> unlist()
   hasAnyInputs <- whichInputs |> length()
@@ -426,39 +433,29 @@ run_fredi <- function(
   select0    <- c("inputName")
   filter0    <- c("temp", "slr")
   df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
+  df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
   # return(df_drivers)
 
   ###### ** Socioeconomic Driver Scenario ######
   ### Update values
-  pop_df       <- inputsList[["pop"]] |> mutate(region = gsub(" ", ".", region))
   gdp_df       <- inputsList[["gdp"]]
+  pop_df       <- inputsList[["pop"]] |> mutate(region = region |> str_replace(" ", ""))
+  pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
   ### ### Subset to desired range
   pop_df       <- pop_df |> filter(year >= minYear, year <= maxYear)
   gdp_df       <- gdp_df |> filter(year >= minYear, year <= maxYear)
-  ### Calculate national population
-  national_pop <- pop_df |> group_by_at(c("year")) |> summarize_at(c(popCol0), sum, na.rm=T) |> ungroup()
-  national_pop <- national_pop |> rename_at(vars(popCol0), ~"national_pop")
-  # gdp_df |> glimpse(); national_pop |> glimpse();
-  natScenario  <- gdp_df      |> left_join(national_pop, by=c("year"))
-  natScenario  <- natScenario |> mutate(gdp_percap = gdp_usd / national_pop)
-  rm(gdp_df, national_pop)
+  ### Calculate national population and update national scenario
+  seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+  rm(gdp_df, pop_df)
+  # seScenario |> glimpse()
 
-  ### Update scenario
-  join0           <- "year"
-  arrange0        <- "region" |> c(stateCols0) |> c(join0)
-  updatedScenario <- natScenario     |> left_join(pop_df, by=join0)
-  updatedScenario <- updatedScenario |> arrange_at(c(arrange0))
-  # updatedScenario |> glimpse()
-  rm(join0, arrange0, pop_df, natScenario)
 
   ### Update scalars
   ### Filter main scalars to correct years and filter out regional population
   paste0("Updating scalars...") |> message()
-  df_mainScalars  <- "df_mainScalars" |> get_frediDataObj("stateData")
-  df_mainScalars  <- df_mainScalars |> filter(year >= minYear) |> filter(year <= maxYear)
-  df_mainScalars  <- df_mainScalars |> update_popScalars(updatedScenario)
-  df_mainScalars  <- df_mainScalars |> filter(year >= minYear & year <= maxYear)
-
+  df_scalars   <- "df_scalars" |> get_frediDataObj("stateData")
+  df_scalars   <- df_scalars |> filter(year >= minYear, year <= maxYear)
+  df_scalars   <- df_scalars |> update_popScalars(seScenario, popCol = "pop")
 
 
   ###### Calculate Impacts ######
@@ -466,24 +463,22 @@ run_fredi <- function(
   ### Initialized results: Join sector info and default scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_sectorsInfo  <- "df_sectorsInfo" |> get_frediDataObj("stateData")
-  df_sectorsInfo  <- df_sectorsInfo  |> filter(sector %in% sectorIds)
-  df_results0     <- updatedScenario |> initialize_resultsDf(
-    df_info    = df_sectorsInfo,
-    df_scalars = df_mainScalars,
-    elasticity = elasticity
-  ) ### End initialize_resultsDf
-  rm(df_mainScalars)
+  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity)
+  # df_results |> glimpse()
+  return(df_results)
 
-  ### Filter to years and calculate impacts
-  df_results0    <- df_results0 |> filter(year >= minYear & year <= maxYear)
-  df_results0    <- df_results0 |> calc_impacts_fredi(df1 = df_drivers)
-  # df_results0 |> glimpse()
-  # return(df_results0)
-  df_results     <- df_results0 |> filter(year >= minYear & year <= maxYear)
-  rm(df_results0)
+  ### Get scaled impacts
+  df_impacts    <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
+  # df_impacts |> glimpse()
+  # return(df_impacts)
+  # return(list(df0=df_results, df1=df_impacts))
+
+  ### Get impacts
+  df_results     <- df_results |> calc_impacts_fredi(df1=df_impacts)
+  return(list(df0=df_results, df1=df_impacts))
+  rm(df_impacts)
+  # df_results |> glimpse()
   # return(df_results)
-  # "got here" |> print()
 
 
   ###### Format Results ######
@@ -492,57 +487,30 @@ run_fredi <- function(
 
   ###### ** Get Labels ######
   ### Rename sector
-  rename0     <- c("sector", "variant", "impactType", "impactYear", "modelType_label", "modelUnitDesc", "modelUnit_label", "modelUnitValue", "model_label")
-  renameTo    <- c("sector_id", "variant_id", "impactType_id", "impactYear_id", "model_type", "driverType", "driverUnit", "driverValue", "model")
-  df_results  <- df_results |> rename_at(c(rename0), ~renameTo)
-  df_results  <- df_results |> rename(sector = sector_label)
-  rm(rename0, renameTo)
+  drop0       <- c("sector", "variant", "impactType", "impactYear", "modelType", "model")
+  renameAt0   <- drop0 |> paste0("_label") |> c("modelUnitDesc", "modelUnit_label", "modelUnitValue")
+  renameTo0   <- drop0 |> c("driverType", "driverUnit", "driverValue")
+  df_results  <- df_results |> select(-any_of(drop0))
+  df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
+  rm(drop0, renameAt0, renameTo0)
 
   ### Format region
-  df_results  <- df_results |> mutate(region = region |> str_replace("\\.", " ") |> as.factor())
+  select0     <- c("region_label", "region_id")
+  join0       <- c("region_id")
+  # renameAt0   <- c("region_label")
+  co_regions  <- "co_regions" |> get_frediDataObj("frediData") |> select(all_of(select0))
+  # co_regions |> pull(region) |> unique() |> print()
+  # df_results |> pull(region) |> unique() |> print()
+  df_results  <- df_results |> rename(region_id = region) |> left_join(co_regions, by=c(join0))
+  df_results  <- df_results |> select(-c(join0))
+  df_results  <- df_results |> rename(region = region_label)
+  rm(select0, join0, co_regions)
 
-  ### Get variants
-  rename0     <- c("variant_label")
-  renameTo    <- c("variant")
-  join0       <- c("sector_id", "variant_id")
-  select0     <- c(join0) |> c(rename0)
-  drop0       <- c("variant_id")
-  co_variants <- "co_variants" |> get_frediDataObj("frediData")
-  co_variants <- co_variants |> select(any_of(select0))
-  co_variants <- co_variants |> rename_at(c(rename0), ~renameTo)
-  df_results  <- df_results  |> left_join(co_variants, by=c(join0))
-  df_results  <- df_results  |> select(-any_of(drop0))
-  rm(rename0, renameTo, join0, select0, drop0, co_variants)
-
-  ### Get impact types
-  rename0     <- c("impactType_label")
-  renameTo    <- c("impactType")
-  join0       <- c("sector_id", "impactType_id")
-  select0     <- c(join0) |> c(rename0)
-  drop0       <- c("impactType_id") |> c("c0", "c1", "exp0", "year0") |> c(c("damageAdj", "physScalar", "physAdj", "econScalar", "econMultiplier") |> paste0("Name"))
-  df_impTypes <- "co_impactTypes" |> get_frediDataObj("frediData") |> select(any_of(select0))
-  df_impTypes <- df_impTypes    |> rename_at(c(rename0), ~renameTo)
-  df_results  <- df_results     |> left_join(df_impTypes, by=c(join0))
-  df_results  <- df_results     |> select(-any_of(drop0))
-  rm(rename0, renameTo, join0, select0, drop0, df_impTypes)
-
-  ### Get impact years
-  join0       <- c("sector_id", "impactYear_id")
-  drop0       <- c("sector_id", "impactYear_id", "impactYear_excel")
-  df_impYears <- "co_impactYears" |> get_frediDataObj("frediData")
-  df_results  <- df_results       |> left_join(df_impYears, by=c(join0))
-  rename0     <- c("impactYear_label")
-  # rename0     <- c("impactYear_id")
-  renameTo    <- c("impactYear")
-  df_results  <- df_results |> rename_at(c(rename0), ~renameTo)
-  df_results  <- df_results |> select(-any_of(drop0))
-  rm(rename0, renameTo, join0, drop0, df_impYears)
-
-  ### Drop model columns and add drivers
-  drop0       <- "model" |> paste0(c("_id", "_dot", "_underscore", "UnitType", "RefYear", "MaxOutput", "MaxExtrap", "UnitScale")) |> c("maxUnitValue") |> c("sector_id")
-  df_results  <- df_results |> select(-any_of(drop0))
-  rm(drop0)
-
+  ### Rename model type
+  renameAt0   <- c("modelType")
+  renameTo0   <- c("model_type")
+  df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
+  rm(renameAt0, renameTo0)
 
 
   ###### ** Columns List ######
@@ -604,7 +572,8 @@ run_fredi <- function(
 
   ###### ** Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
-  if(doAgg){
+  if(doAgg) {
+    # doAgg |> print()
     group0     <- groupCols0
     df_results <- df_results |> aggregate_impacts(
       aggLevels   = aggLevels,
@@ -618,6 +587,7 @@ run_fredi <- function(
   ### Order the rows, then order the columns
   # arrange0   <- groupCols0 |> c("year")
   arrange0   <- groupCols0 |> c("year") |> get_matches(y = df_results |> names())
+  # arrange0 |> print()
   ### Select columns
   df_results <- df_results |> arrange_at(c(arrange0))
   df_results <- df_results |> relocate(any_of(select0))
@@ -643,17 +613,6 @@ run_fredi <- function(
     returnObj <- df_results
   } ### End if(outputList)
 
-  ### Drop any intermediate objects
-  # ls() |> print()
-  # objects0 <- ls()
-  # ### Get names
-  # names1   <- rDataList    |> map(function(list_i){list_i[["data"]] |> names()}) |> unlist()
-  # names2   <- fredi_config |> names()
-  # ### Subset names
-  # names1   <- names1 |> get_matches(y=objects0)
-  # names2   <- names2 |> get_matches(y=objects0)
-  # for(name_i in names1){ if(name_i |> exists()){substitute(rm(b), list=list(b=name_i)) |> eval()}; rm(name_i)}
-  # for(name_i in names2){ if(name_i |> exists()){substitute(rm(b), list=list(b=name_i)) |> eval()}; rm(name_i)}
 
   ###### Return ######
   ### Message
