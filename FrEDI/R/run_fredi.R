@@ -347,27 +347,10 @@ run_fredi <- function(
   inMinYears   <- df_inputInfo |> pull(min_year)
   inMaxYears   <- df_inputInfo |> pull(max_year)
 
-  ### Rename inputs
-  # inputsList   <- inputsList |> set_names(inNames)
-  for(name_i in inNames) {
-    list_i <- inputsList[[name_i]]
-    null_i <- list_i |> is.null()
-    if(null_i) inputsList[[name_i]] <- NULL
-    rm(name_i, list_i, null_i)
-  } ### End for(name_i in inNames)
-
-  # ### Rename pop column if present
-  # inputsList   <- inputsList |> (function(list0){
-  #   df0    <- list0[["pop"]]
-  #   hasPop <- !(df0 |> is.null())
-  #   cond0  <- hasPop |> ifelse("pop" %in% (df0 |> names()), FALSE)
-  #   if(cond0){df0 <- df0 |> rename_at(c("pop"), ~"state_pop")}
-  #   return(df0)
-  # })()
 
   ### Make sure all inputs are present
   ### Check whether inputs are present
-  inputsList   <- inNames     |> map(function(name_i){  inputsList[[name_i]]}) |> set_names(inNames)
+  inputsList   <- inNames     |> paste0("Input") |> map(function(name_i){  inputsList[[name_i]]}) |> set_names(inNames)
   hasInputs    <- inNames     |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
   whichInputs  <- hasInputs   |> unlist()
   hasAnyInputs <- whichInputs |> length()
