@@ -468,19 +468,19 @@ run_fredi <- function(
   # return(df_results)
 
   ### Get scaled impacts
-  # df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
-  df_impacts   <- df_results |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
+  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
+  # df_impacts   <- df_results |> calc_scaled_impacts_fredi(drivers0 = df_drivers)
   # df_impacts |> glimpse()
   # return(df_impacts)
   # return(list(df0=df_results, df1=df_impacts))
 
   ### Get impacts
-  # df_results     <- df_results |> calc_impacts_fredi(df1=df_impacts)
-  df_results   <- df_impacts |> calc_impacts_fredi()
+  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts)
+  # df_results   <- df_impacts |> calc_impacts_fredi()
   # return(list(df0=df_results, df1=df_impacts))
   rm(df_impacts)
   # df_results |> glimpse()
-  return(df_results)
+  # return(df_results)
 
 
   ###### Format Results ######
@@ -489,24 +489,13 @@ run_fredi <- function(
 
   ###### ** Get Labels ######
   ### Rename sector
-  drop0       <- c("sector", "variant", "impactType", "impactYear", "modelType", "model")
+  drop0       <- c("sector", "variant", "impactType", "impactYear", "region", "modelType", "model")
   renameAt0   <- drop0 |> paste0("_label") |> c("modelUnitDesc", "modelUnit_label", "modelUnitValue")
   renameTo0   <- drop0 |> c("driverType", "driverUnit", "driverValue")
   df_results  <- df_results |> select(-any_of(drop0))
   df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
   rm(drop0, renameAt0, renameTo0)
-
-  ### Format region
-  select0     <- c("region_label", "region_id")
-  join0       <- c("region_id")
-  # renameAt0   <- c("region_label")
-  co_regions  <- "co_regions" |> get_frediDataObj("frediData") |> select(all_of(select0))
-  # co_regions |> pull(region) |> unique() |> print()
-  # df_results |> pull(region) |> unique() |> print()
-  df_results  <- df_results |> rename(region_id = region) |> left_join(co_regions, by=c(join0))
-  df_results  <- df_results |> select(-c(join0))
-  df_results  <- df_results |> rename(region = region_label)
-  rm(select0, join0, co_regions)
+  # df_results |> glimpse()
 
   ### Rename model type
   renameAt0   <- c("modelType")
@@ -566,10 +555,7 @@ run_fredi <- function(
   mutate0     <- c("sectorprimary", "includeaggregate")
   df_results  <- df_results |> mutate_at(c(mutate0), as.numeric)
   rm(mutate0)
-  # if(doPrimary){
-  #   df_results   <- df_results |> filter(sectorprimary   ==1)
-  #   df_results   <- df_results |> filter(includeaggregate==1)
-  # } ### End if(doPrimary)
+  # df_results |> glimpse()
 
 
   ###### ** Aggregation ######

@@ -800,7 +800,8 @@ extend_slrScalars <- function(
   return(df0)
 }
 
-
+###### get_co_sectorsInfo ######
+### This helper function helps get info about sector groups
 get_co_sectorsInfo <- function(
     sectors0   = NULL,  ### Sector IDs
     addRegions = FALSE, ### Whether to include regions & states
@@ -843,12 +844,12 @@ get_co_sectorsInfo <- function(
     c("model" |> paste0(c("UnitDesc", "Unit_id", "Unit_label"))) |>
     c("model" |> paste0(c("UnitScale", "RefYear", "MaxOutput", "MaxExtrap")))
   colsMods0   <- colsMods0 |> get_matches(y=c("model" |> paste0(c("UnitScale", "RefYear", "MaxOutput", "MaxExtrap"))), matches=F)
-  colsOth0    <- c()
 
   ### Add additional columns
+  colsOth0    <- c()
   if(doExtra) {
-    colsOth0 <- c(colsVars, colsTypes, colsMods0)
-    if(addModels) colsOth0 <- colsOth0 |> c("maxUnitValue")
+    colsOth0 <- c(colsVars, colsTypes)
+    if(addModels) colsOth0 <- colsOth0 |> c(colsMods0, "maxUnitValue")
   } ### if(doAll)
 
 
@@ -1202,16 +1203,25 @@ initialize_resultsDf <- function(
 
   ###### FrEDI Data ######
   ### Get FrEDI data objects and format data
-  df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
+  # df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
   slrScalars <- "co_slrScalars"  |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
   df_scalars <- "df_scalars"     |> get_frediDataObj("stateData")  ### Tibble of main scalars
 
+  ### Get info
+  df_info    <- sectors |> get_co_sectorsInfo(
+    addRegions = TRUE , ### Whether to include regions & states
+    addModels  = FALSE, ### Whether to include models
+    colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
+  ) ### End get_co_sectorsInfo()
+
   ### Format data
-  select0    <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType", "model") |> paste0("_label")
+  drop0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType") |> paste0("_label")
   # df_info |> glimpse(); select0 |> print()
   df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
   df_info    <- df_info    |> filter(sector %in% sectors)
-  df_info    <- df_info    |> select(-any_of(select0))
+  df_info    <- df_info    |> select(-any_of(drop0))
+  df_info    <- df_info    |> distinct()
+  rm(drop0)
 
   ### Model Types
   types0     <- df_info |> pull(modelType) |> unique() |> tolower()
@@ -1222,7 +1232,6 @@ initialize_resultsDf <- function(
   # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
   join0      <- df_info |> names() |> get_matches(df_se |> names())
   df0        <- df_info |> left_join(df_se, by=c(join0), relationship="many-to-many")
-  # df0        <- df0     |> select(-all_of(join0))
   rm(join0)
   # df0 |> glimpse(); # df0 |> dim() |> print()
   # return(df0)
@@ -1231,18 +1240,12 @@ initialize_resultsDf <- function(
   ### Update scalar info
   ### Physical scalars
   df0        <- df0 |> match_scalarValues(scalarType="physScalar")
-  # return(df0)
-  # "got here1" |> print()
   ### Physical adjustment
   df0        <- df0 |> match_scalarValues(scalarType="physAdj")
-  # "got here2" |> print()
-  # return(df0)
   ### Damage adjustment
   df0        <- df0 |> match_scalarValues(scalarType="damageAdj")
-  # "got here3" |> print()
   ### Economic scalar
   df0        <- df0 |> match_scalarValues(scalarType="econScalar")
-  # "got here4" |> print()
 
   ###### Economic Adjustment Values ######
   ### Get economic adjustment values
@@ -1635,14 +1638,16 @@ calc_scaled_impacts_fredi <- function(
   ###### ** Get Scenario IDs ######
   ### Mutate model for SLR sectors
   select0    <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType", "model")
-  mutate0    <- c("model")
+  drop0      <- c("maxUnitValue")
+  mutate0    <- c("model", "model_label")
   df_info0   <- "co_sectorsInfo" |> get_frediDataObj("frediData")
   df_info0   <- df_info0 |> filter(sector %in% sectors0)
-  gcmInfo0   <- df_info0 |> filter((modelType |> tolower()) == "gcm")
-  slrInfo0   <- df_info0 |> filter((modelType |> tolower()) == "slr") |>
+  df_info0   <- df_info0 |> select(-any_of(drop0))
+  gcmInfo0   <- df_info0 |> filter(modelType == "gcm")
+  slrInfo0   <- df_info0 |> filter(modelType == "slr") |>
     mutate_at(mutate0, function(x){"Interpolation"}) |>
     distinct()
-  rm(select0, mutate0, df_info0)
+  rm(select0, mutate0, drop0, df_info0)
 
   ### Create scenario ID and separate by model type
   include0   <- c("region") |> c(stateCols0) |> c("model")
@@ -1689,17 +1694,13 @@ calc_scaled_impacts_fredi <- function(
 
   ### Join results with initialized results and update missing observations with NA
   ### Drop columns, then join with scenario results
-  # dfGroups0 |> glimpse(); dfImpacts0 |> glimpse()
-  # dfGroups0 |> pull(state) |> unique() |> length() |> print(); dfImpacts0 |> pull(state) |> unique() |> length() |> print()
-  # namesData   <- dfGroups0  |> names()
-  # namesImp    <- dfImpacts0 |> names()
-  # join0       <- namesImp   |> get_matches(y=namesData)
   join0       <- c("scenario_id", "year")
   select0     <- join0 |> c("scaled_impacts")
+  # dfImpacts0 |> glimpse(); dfGroups0 |> glimpse()
   dfImpacts0  <- dfImpacts0 |> select(all_of(select0))
   dfGroups0   <- dfGroups0  |> left_join(dfImpacts0, by=c(join0))
   rm(dfImpacts0, select0, join0)
-  dfGroups0 |> glimpse()
+  # dfGroups0 |> glimpse()
 
   ### Return
   return(dfGroups0)
@@ -1707,19 +1708,47 @@ calc_scaled_impacts_fredi <- function(
 
 ####### calc_impacts_fredi ######
 calc_impacts_fredi <- function(
-    df0 ### Tibble with scalars/initialized results
-    # df0, ### Tibble with scalars/initialized results
-    # df1  ### Tibble with scaled impacts
+    # df0 ### Tibble with scalars/initialized results
+    df0, ### Tibble with scalars/initialized results
+    df1  ### Tibble with scaled impacts
 ){
   ### Column names
-  popCol0    <- "pop"
   stateCols0 <- c("state", "postal")
+  sectors0 <- df0 |> pull(sector) |> unique()
 
-  ### Add model info
-  # co_models  <- "co_models" |> get_frediDataObj("frediData")
-  # df0        <- df0
+  ### Get info
+  df_info  <- sectors0 |> get_co_sectorsInfo(
+  # df_info    <- sectors |> get_co_sectorsInfo(
+    addRegions = FALSE, ### Whether to include regions & states
+    addModels  = TRUE,  ### Whether to include models
+    colTypes   = c("ids") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
+  ) ### End get_co_sectorsInfo()
 
-  # ### Join results with initialized results and update missing observations with NA
+  ### Mutate info
+  mutate0  <- c("model")
+  gcmInfo0 <- df_info |> filter(modelType == "gcm")
+  slrInfo0 <- df_info |> filter(modelType == "slr") |>
+    mutate_at(mutate0, function(x){"Interpolation"}) |>
+    distinct()
+  rm(df_info)
+  df_info    <- gcmInfo0 |> rbind(slrInfo0)
+
+  ### Add model info to df0
+  join0    <- c("sector", "variant", "impactType", "impactYear", "modelType")
+  df0      <- df_info |> left_join(df0, by=c(join0), relationship="many-to-many")
+  rm(join0, df_info)
+
+  ### Add scenario ID
+  include0 <- c("region") |> c(stateCols0) |> c("model")
+  df0      <- df0 |> get_scenario_id(include = include0)
+
+  ### Join results with initialized results and update missing observations with NA
+  join0    <- c("scenario_id", "year")
+  drop0    <- df0 |> names() |> get_matches(y=df1 |> names()) |> get_matches(y=join0, matches=FALSE)
+  # drop0 |> print()
+  df0      <- df0 |> select(-all_of(drop0))
+  df0      <- df0 |> left_join(df1, by=c(join0))
+
   # ### Drop columns, then join with scenario results
   # # # join0       <- c("scenario_id", "year")
   # # # df0 |> pull(scenario_id) |> unique() |> head() |> print()
