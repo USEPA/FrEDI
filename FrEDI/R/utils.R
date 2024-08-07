@@ -936,7 +936,7 @@ match_scalarValues <- function(
     df_nat  <- df_nat  |> left_join(scalars_nat, by=c(join0))
     df0     <- df0     |> rbind(df_nat)
     # df_nat |> glimpse(); df0 |> glimpse()
-    rm(join0, drop0, df_nat)
+    rm(join0, df_nat)
   } ### End if(has_national)
   # df_national1 |> glimpse()
   # df0 |> glimpse()
@@ -1030,35 +1030,37 @@ get_econAdjValues <- function(
     ### Scalar Adjustments
     ### Take value at base year
     # scalars |> glimpse()
-    rename0   <- c("econMultiplierName", "econMultiplierValue")
-    rename1   <- c("econAdjName"       , "econAdjValue")
+    renameAt0 <- c("econMultiplierName", "econMultiplierValue")
+    renameTo0 <- c("econAdjName"       , "econAdjValue")
     drop0     <- c("year")
     drop1     <- c("econAdjValue")
     join0     <- c("year0", "econAdjName")
     base_vals <- scalars   |> filter(year == year0)
-    base_vals <- base_vals |> select(-all_of(drop0))|> rename_at(c(rename0), ~rename1)
-    scalarAdj <- scalars   |> rename_at(c(rename0), ~rename1)
+    base_vals <- base_vals |> select(-all_of(drop0))|> rename_at(c(renameAt0), ~renameTo0)
+    scalarAdj <- scalars   |> rename_at(c(renameAt0), ~renameTo0)
     scalarAdj <- scalarAdj |> select(-all_of(drop1))
     scalarAdj <- scalarAdj |> left_join(base_vals, by=c(join0), relationship="many-to-many")
-    rm(rename0, rename1, drop0, drop1, join0)
+    rm(renameAt0, renameTo0, drop0, drop1, join0)
 
     ###### Join with scalars
     # join0     <- c("year0", "year", "econAdjName")
     # join1     <- c("econMultiplierName") |> c("year0", "year", "econAdjName")
-    join0     <- scalars |> names() |> get_matches(scalarAdj |> names())
+    # scalars |> glimpse(); scalarAdj |> glimpse()
     scalars   <- scalars |> mutate(econAdjName = econMultiplierName)
-    # scalars |> glimpse(); scalarAdj |> glimpse(); data |> glimpse()
+    join0     <- scalars |> names() |> get_matches(scalarAdj |> names())
     scalars   <- scalars |> left_join(scalarAdj, by=c(join0))
-    join0 |> print()
+    # join0 |> print()
     rm(join0)
     # scalars |> glimpse(); scalarAdj |> glimpse(); data |> glimpse()
 
     ### Join data
+    # scalars |> glimpse(); data |> glimpse()
     join0     <- scalars |> names() |> get_matches(data |> names())
     data      <- data    |> left_join(scalars, by=c(join0))
   } ### End if(hasOther0)
 
   ###### Rename value column
+  # data |> glimpse(); df_none |> glimpse()
   data        <- data |> rbind(df_none)
   # data |> glimpse()
 
@@ -1291,7 +1293,7 @@ get_gcmScaledImpacts <- function(
   ### Which values have functions
   hasFuns0   <- gcmFuns0   |> nrow()
   hasNoFuns0 <- gcmNoFuns0 |> nrow()
-  hasFuns0 |> c(hasNoFuns0) |> print()
+  # hasFuns0 |> c(hasNoFuns0) |> print()
 
   ### Initialize results
   df0        <- tibble()
