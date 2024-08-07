@@ -439,7 +439,7 @@ aggregate_impacts <- function(
       ### Drop group columns from first data frame
       ### Drop summary columns from 2010
       df2010      <- df2010 |> select(-all_of(summaryCols))
-      df_aggImp_1 <- df_aggImp_1 |> select(-all_of(group0))
+      # df_aggImp_1 <- df_aggImp_1 |> select(-all_of(group0))
 
       ### Join upper and lower data frames and calculate the numerator, denominator, and adjustment factor
       # join0       <- "id_yrs" |> c("year")
@@ -479,8 +479,8 @@ aggregate_impacts <- function(
         rm(i, col_i, col_i_2010, col_i_2090, oldCol_i, newCol_i, select0)
       } ### End for(i in 1:num_sumCols)
       ### Add new factor and drop columns
-      # select0     <- c("numer_yr", "denom_yr", "adj_yr")
-      select0     <- c("numer_yr", "denom_yr", "adj_yr", "id_yrs")
+      select0     <- c("numer_yr", "denom_yr", "adj_yr")
+      # select0     <- c("numer_yr", "denom_yr", "adj_yr", "id_yrs")
       df_impYears <- df_impYears  |> mutate(impactYear="Interpolation")
       df_impYears <- df_impYears  |> select(-all_of(select0))
       rm(select0)
