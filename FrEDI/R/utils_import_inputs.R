@@ -444,16 +444,10 @@ check_input_data <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  # co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  # co_states <- "co_states"    |> get_frediDataObj("frediData")
-  # df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
   co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
   co_states <- "co_states"     |> get_frediDataObj("frediData")
   df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
-  # fListNames <- c("co_info", "co_states")
-  # sListNames <- c("df_ratios")
-  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+
 
   ### Get columns
   select0   <- c("inputName", "inputMin", "inputMax")
@@ -477,7 +471,7 @@ check_input_data <- function(
   ###### Conditionals ######
   doTemp    <- "temp" %in% inputName
   doPop     <- "pop"  %in% inputName
-
+  # doTemp |> print()
 
   ###### Check NULL ######
   ### Check that data exists
@@ -492,7 +486,8 @@ check_input_data <- function(
   inputDf   <- inputDf |> filter_all(all_vars(!(. |> is.na())))
   nrowData  <- inputDf |> nrow()
   namesDF   <- inputDf |> names()
-  hasData   <- !nullData & nullData |> ifelse(0, nrowData)
+  # hasData   <- !nullData & nullData |> ifelse(0, nrowData)
+  hasData   <- nullData |> ifelse(0, nrowData)
   if(hasData) {msgN |> paste0(msg0_i, msg_i1) |> message()} else {return(NULL)}
 
 
@@ -603,8 +598,8 @@ check_input_data <- function(
 
   ### Check that values are in range
   rangeVals <- dataVals |> range(na.rm=T)
-  checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)
-  checkMax  <- case_when(hasMax_i ~ (dataVals <= max_i) |> all(), .default = T)
+  checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> any(), .default = T)
+  checkMax  <- case_when(hasMax_i ~ (dataVals <= max_i) |> any(), .default = T)
   checkVals <- checkMin & checkMax
 
   if(!checkVals) {
