@@ -439,13 +439,15 @@ run_fredi <- function(
   ###### ** Socioeconomic Driver Scenario ######
   ### Update values
   gdp_df       <- inputsList[["gdp"]]
-  pop_df       <- inputsList[["pop"]] |> mutate(region = region |> str_replace(" ", ""))
+  pop_df       <- inputsList[["pop"]]
+  pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
   pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
   ### ### Subset to desired range
   pop_df       <- pop_df |> filter(year >= minYear, year <= maxYear)
   gdp_df       <- gdp_df |> filter(year >= minYear, year <= maxYear)
   ### Calculate national population and update national scenario
   seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+  # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
   # seScenario |> glimpse()
 
@@ -456,7 +458,8 @@ run_fredi <- function(
   df_scalars   <- "df_scalars" |> get_frediDataObj("stateData")
   df_scalars   <- df_scalars |> filter(year >= minYear, year <= maxYear)
   df_scalars   <- df_scalars |> update_popScalars(seScenario, popCol = "pop")
-
+  # df_scalars |> pull(region) |> unique() |> print()
+  # return(df_scalars)
 
   ###### Calculate Impacts ######
   ###### ** Initialize Impacts Data frame ######
@@ -464,6 +467,7 @@ run_fredi <- function(
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
   df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity)
+  # df_results |> pull(region) |> unique() |> print()
   # df_results |> glimpse()
   # return(df_results)
 
