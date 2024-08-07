@@ -445,21 +445,14 @@ run_fredi <- function(
   ### ### Subset to desired range
   pop_df       <- pop_df |> filter(year >= minYear, year <= maxYear)
   gdp_df       <- gdp_df |> filter(year >= minYear, year <= maxYear)
+  # return(pop_df)
   ### Calculate national population and update national scenario
   seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+
+  # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
   # seScenario |> glimpse()
-
-
-  ### Update scalars
-  ### Filter main scalars to correct years and filter out regional population
-  paste0("Updating scalars...") |> message()
-  df_scalars   <- "df_scalars" |> get_frediDataObj("stateData")
-  df_scalars   <- df_scalars |> filter(year >= minYear, year <= maxYear)
-  df_scalars   <- df_scalars |> update_popScalars(seScenario, popCol = "pop")
-  # df_scalars |> pull(region) |> unique() |> print()
-  # return(df_scalars)
 
   ###### Calculate Impacts ######
   ###### ** Initialize Impacts Data frame ######
@@ -467,6 +460,9 @@ run_fredi <- function(
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
   df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity)
+  # return(df_results)
+  # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
+  # return()
   # df_results |> pull(region) |> unique() |> print()
   # df_results |> glimpse()
   # return(df_results)
@@ -480,10 +476,12 @@ run_fredi <- function(
 
   ### Get impacts
   df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts)
+  # df_results |> pull(region) |> unique() |> print()
   # df_results   <- df_impacts |> calc_impacts_fredi()
   # return(list(df0=df_results, df1=df_impacts))
-  rm(df_impacts)
+  # rm(df_impacts)
   # df_results |> glimpse()
+  # df_results |> pull(region) |> unique() |> print()
   # return(df_results)
 
 
@@ -506,7 +504,8 @@ run_fredi <- function(
   renameTo0   <- c("model_type")
   df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
-
+  # df_results |> pull(region) |> unique() |> print()
+  # return(df_results)
 
   ###### ** Columns List ######
   ### Grouping columns
@@ -560,6 +559,8 @@ run_fredi <- function(
   df_results  <- df_results |> mutate_at(c(mutate0), as.numeric)
   rm(mutate0)
   # df_results |> glimpse()
+  # df_results |> pull(region) |> unique() |> print()
+  # return(df_results)
 
 
   ###### ** Aggregation ######
