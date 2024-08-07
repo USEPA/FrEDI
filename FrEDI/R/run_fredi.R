@@ -48,7 +48,7 @@
 #'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdpInput = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
 #' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
+#'    * `popInput` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"pop"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
 #'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(popInput = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
@@ -56,7 +56,7 @@
 #' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, [FrEDI::run_fredi()] subsets the input scenarios to values within the analysis period.
 #'
 #' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit = "degrees Celsius"` and `driverUnit = "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type = "GCM"` and `model_type = "SLR"` for temperature- and SLR-driven sectors, respectively
-#' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"state_pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
+#' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
 #'
 #' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList = NULL` (default), all sectors are included.
 #'
@@ -66,14 +66,14 @@
 #'
 #' [FrEDI::run_fredi()] aggregates or summarizes results to level(s) of aggregation specified by the user (passed to `aggLevels`) using the post-processing helper function [FrEDI::aggregate_impacts()]. Users can specify all aggregation levels at once by specifying `aggLevels = "all"` (default) or no aggregation levels (`aggLevels = "none"`). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to `aggLevels`. Options for aggregation include calculating national totals (`aggLevels = "national"`), averaging across model types and models (`aggLevels = "modelaverage"`), summing over all impact types (`aggLevels = "impacttype"`), and interpolating between impact year estimates (`aggLevels = "impactYear"`).
 #'
-#' If the user specifies `aggLevels = "none"`, [FrEDI::run_fredi()] returns a data frame with columns: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, `"state_pop"`, `"year"`, `"physical_impacts"`, and `"annual_impacts"`.
+#' If the user specifies `aggLevels = "none"`, [FrEDI::run_fredi()] returns a data frame with columns: `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, `"model"`, `"sectorprimary"`, `"includeaggregate"`, `"physicalmeasure"`, `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, `"pop"`, `"year"`, `"physical_impacts"`, and `"annual_impacts"`.
 #'
 #'
 #' * Columns `"sector"`, `"variant"`, `"impactType"`, `"impactYear"`, `"region"`, `"state"`, `"postal"`, `"model_type"`, and `"model"` all contain observation identifiers (sector name, variant (i.e., sector variant or adaptation name), impact type, impact year, region, state, state postal code abbreviation, model type, and model, respectively).
 #' * Column `"sectorprimary"` contains values indicating which variant (i.e., sector variant or adaptation name) is the primary one for the sector (`sectorprimary = 1`for primary variants and `sectorprimary = 0` for non-primary variants). This column can be used to filter the outputs of [FrEDI::run_fredi()] (e.g., as might be done before aggregating impacts over sectors).
 #' * Column `"includeaggregate"` contains values indicating which sectors should be included when aggregating over sectors (`includeaggregate = 1`for primary sectors and `includeaggregate = 0` for non-primary sectors). For instance, sectors __ATS Temperature-Related Mortality__, __CIL Temperature-Related Mortality__, and __Extreme Temperature__ have values for temperature-related mortality. To avoid double counting, outputs of [FrEDI::run_fredi()] should be filtered to values for which `sectorprimary = 1` and `includeaggregate = 1`.
 #' * Columns `"driverType"`, `"driverUnit"`, and `"driverValue"` contain information about the temperature and SLR scenarios.
-#' * Columns `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"state_pop"` contain information about the GDP and population scenarios.
+#' * Columns `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"pop"` contain information about the GDP and population scenarios.
 #' * Columns `"physicalmeasure"` and `"physical_impacts"` contain information about physical impacts.
 #' * Column `"annual_impacts"` contains information on the economic value associated with annual impacts.
 #'
@@ -91,7 +91,7 @@
 #' *`impacttype`* \tab To aggregate values over impact types, [FrEDI::aggregate_impacts()] sums annual impacts (column `"annual_impacts"`) across all impact types for each sector. [FrEDI::aggregate_impacts()] drops the column `"impactType"` and `"physicalmeasure"` from the grouping columns when summing over impact types. Years which have missing column data for all impact types return as `NA`. All values in column `"impactType"` are set to `"all"`. Aggregating over impact types, drops columns related to physical impacts (i.e., columns `"physicalmeasure"` and `"physical_impacts"`). These columns are dropped since aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.\cr
 #' }
 #'
-#' After aggregating values, [FrEDI::aggregate_impacts()] joins the data frame of impacts with information about `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"state_pop"`.
+#' After aggregating values, [FrEDI::aggregate_impacts()] joins the data frame of impacts with information about `"driverType"`, `"driverUnit"`, `"driverValue"`, `"gdp_usd"`, `"national_pop"`, `"gdp_percap"`, and `"pop"`.
 #'
 #' If `outputList = FALSE` (default), [FrEDI::run_fredi()] returns a data frame of annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, model type (`"GCM"` or `"SLR"`), and model. If `outputList = TRUE`, in addition to the data frame of impacts, [FrEDI::run_fredi()] returns a list object containing information about values for function arguments, driver scenarios, and population and GDP scenarios.
 #'
@@ -348,7 +348,13 @@ run_fredi <- function(
   inMaxYears   <- df_inputInfo |> pull(max_year)
 
   ### Rename inputs
-  inputsList   <- inputsList |> set_names(inNames)
+  # inputsList   <- inputsList |> set_names(inNames)
+  for(name_i in inNames) {
+    list_i <- inputsList[[name_i]]
+    null_i <- list_i |> is.null()
+    if(null_i) inputsList[[name_i]] <- NULL
+    rm(name_i, list_i, null_i)
+  } ### End for(name_i in inNames)
 
   # ### Rename pop column if present
   # inputsList   <- inputsList |> (function(list0){

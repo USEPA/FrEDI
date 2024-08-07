@@ -577,8 +577,16 @@ check_input_data <- function(
   if(hasYears) {
     ### Check
     whichYrs  <- c()
-    if(hasMinYr) whichYrs <- inputDf  |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMin)
-    if(hasMaxYr) whichYrs <- whichYrs |> c(inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length() |> ifelse(yearMax))
+    if(hasMinYr) {
+      nMinYrs <- inputDf  |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      if(nMinYrs) whichYrs <- whichYrs |> c(yearMin)
+      rm(nMinYrs)
+    } ### End if(hasMinYr)
+    if(hasMaxYr) {
+      nMaxYrs  <- inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      whichYrs <- whichYrs |> c(yearMax)
+      rm(nMaxYrs)
+    } ### End if(hasMaxYr)
     naYears   <- rangeYrs |> get_matches(y=whichYrs)
     checkYrs  <- (rangeYrs |> length()) == (naYears |> length())
     ### Messages
@@ -636,10 +644,10 @@ check_input_data <- function(
       inputDf <- inputDf |> calc_import_pop(popArea=popArea)
     } ### End if(doCalc)
     ### Rename state population column
-    rename0  <- c("pop")
-    renameTo <- c("state_pop")
-    doRename <- rename0 %in% (inputDf |> names())
-    if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
+    # rename0  <- c("pop")
+    # renameTo <- c("state_pop")
+    # doRename <- rename0 %in% (inputDf |> names())
+    # if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
   } ### End if(doPop)
 
 
