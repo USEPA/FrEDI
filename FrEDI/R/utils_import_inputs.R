@@ -636,7 +636,12 @@ check_input_data <- function(
     if(doCalc) {
       msg_pop <- paste0("Calculating state population from ", popArea, " values...")
       paste0(msg1_i, msg_pop) |> message()
+      if("region" %in% (inputDf |> names())) {
+        inputDf <- inputDf |> filter(!(region |> str_detect("National")))
+        inputDf <- inputDf |> filter(!(region |> is.na()))
+      } ### End if("region" %in% (inputDf |> names()))
       inputDf <- inputDf |> calc_import_pop(popArea=popArea)
+      inputDf <- inputDf |> filter(!(region |> is.na()))
     } ### End if(doCalc)
     ### Rename state population column
     # rename0  <- c("pop")

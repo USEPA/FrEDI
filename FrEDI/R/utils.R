@@ -435,12 +435,15 @@ calc_nationalPop <- function(df0){
   popCol0  <- c("pop")
   select0  <- c("region", "state", "postal", "year") |> c(popCol0)
   df0      <- df0 |> select(all_of(select0)) |> unique()
+  ### Filter out missing values
+  df0      <- df0 |> filter(!(region |> str_detect("National")))
+  df0      <- df0 |> filter(!(region |> is.na()))
   ### Summarize population over states and regions
   group0   <- c("year")
   sum0     <- c(popCol0)
   df0      <- df0 |>
-    group_by_at (vars(group0)) |>
-    summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
+    group_by_at (c(group0)) |>
+    summarize_at(c(sum0), sum, na.rm=T) |> ungroup()
   ### Rename values
   renameAt <- sum0
   renameTo <- "national_pop"
@@ -475,7 +478,6 @@ create_nationalScenario <- function(
   ### Join nat0 with state population by year
   nat0     <- nat0 |> left_join(pop0, by=c(join0), relationship="many-to-many")
   ### Arrange by colsP0
-  # arrange0 <- colsP0 |> (function(x, y="pop"){x[!(x %in% y)]})()
   arrange0 <- colsP0 |> get_matches(y=c("pop"), matches=F)
   nat0     <- nat0 |> arrange_at(vars(arrange0))
   ### Return
