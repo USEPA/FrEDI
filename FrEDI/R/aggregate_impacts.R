@@ -116,40 +116,7 @@ aggregate_impacts <- function(
 
   ###### Get FrEDI Data Objects ######
   ### Load info tables from sysdata.rda
-  # co_models   <- "co_models"     |> get_frediDataObj("frediData")
-  # co_sectors  <- "co_sectors"    |> get_frediDataObj("frediData")
-  # co_variants <- "co_variants"   |> get_frediDataObj("frediData")
-  # co_sectInfo <- "co_sectorInfo" |> get_frediDataObj("frediData")
   co_sectInfo <- get_co_sectorsInfo(addRegions=F, addModels=F, colTypes=c("ids", "labels"))
-
-  # ### Format sector info
-  # select0     <- c("sector", "variant", "impactType", "impactYear") |>
-  #   c("region") |> c(stateCols0) |>
-  #   c("modelType", "model")
-  # renameAt0   <- select0
-  # rename
-  #
-  # ###### - Format Sector Info ######
-  # rename0     <- c("sector_id", "sector_label", "modelType")
-  # rename1     <- c("sector_id", "sector", "model_type")
-  # co_sectors  <- co_sectors |> select(all_of(rename0))
-  # co_sectors  <- co_sectors |> rename_at(c(rename0), ~rename1)
-  # co_sectors  <- co_sectors |> mutate_at(c("model_type"), toupper)
-  # rm(rename0, rename1)
-  #
-  # ###### - Format Variant Info ######
-  # ### Format variants
-  # rename0     <- c("sector_id", "variant_label")
-  # rename1     <- c("sector_id", "variant")
-  # select0     <- c(rename1) #|> c("sectorprimary", "includeaggregate")
-  # co_variants <- co_variants |> rename_at(c(rename0), ~rename1)
-  # co_variants <- co_variants |> select(all_of(select0))
-  # rm(rename0, rename1, select0)
-  # ### Combine sector and variant info
-  # join0          <- "sector_id"
-  # co_sectorVars  <- co_sectors |> left_join(co_variants, by =join0)
-  # co_sectorVars  <- co_sectorVars |> select(-all_of(join0))
-  # rm(join0, co_variants)
 
   ###### Grouping Columns  ######
   ### Use default group by columns if none specified...otherwise, check which are present
@@ -187,7 +154,6 @@ aggregate_impacts <- function(
     ### If hasDropCols
     if(hasDropCols){
       ### Drop levels
-      # groupByCols  <- groupByCols |> (function(y){y[!(y %in% dropCols)]})()
       groupByCols  <- groupByCols |> get_matches(y=dropCols, matches=F)
     } ### End if(hasDropCols)
 
@@ -210,7 +176,6 @@ aggregate_impacts <- function(
 
   ###### Summary Columns  ######
   ### Columns to summarize
-  # if(!is.null(columns)){summaryCols <- columns}
   summaryCols0 <- c("annual_impacts")
   nullSumCols  <- columns |> is.null()
   if(nullSumCols) summaryCols <- summaryCols0
@@ -226,18 +191,19 @@ aggregate_impacts <- function(
   summaryCols <- summaryCols[isPresent0]
   rm(summaryCols0, nullSumCols, isPresent0, hasNaCols0)
 
+  ### Scalar columns
+  # scalarCols  <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Value")
+  # scalarCols  <- scalarCols |> c("physScalar", "econScalar", "physEconScalar")
+  # scalarCols  <- c("c0", "c1", "exp0", "year0") |> c(scalarCols)
+
   ### Drop some columns from summary columns
   if(aggImpTypes){
-    # scalarCols  <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Value")
-    # scalarCols  <- scalarCols |> c("physScalar", "econScalar", "physEconScalar")
-    # scalarCols  <- c("c0", "c1", "exp0", "year0") |> c(scalarCols)
     dropCols    <- c("physical_impacts")
     isDropCol   <- summaryCols %in% dropCols
     hasDropCols <- isDropCol |> any()
     ### If hasDropCols drop columns
     if(hasDropCols){
       ### Drop levels
-      # summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
       summaryCols  <- summaryCols |> get_matches(y=dropCols, matches=F)
     } ### End if(hasDropCols)
 
@@ -266,7 +232,6 @@ aggregate_impacts <- function(
     ### If hasDropCols, message user
     if(hasDropCols){
       ### Drop levels
-      # summaryCols  <- summaryCols |> (function(y){y[!(y %in% dropCols)]})()
       summaryCols  <- summaryCols |> get_matches(y=dropCols, matches=F)
     } ### End if(hasDropCols)
 
@@ -300,7 +265,6 @@ aggregate_impacts <- function(
   ###### Format Columns  ######
   ### Make sure all summary values are numeric
   mutate0       <- c("sectorprimary", "includeaggregate")
-  # chrCols0      <- groupByCols |> (function(y){y[!(y %in% c(mutate0))]})()
   chrCols0      <- groupByCols |> get_matches(y=mutate0, matches=F)
   numCols0      <- summaryCols |> c(mutate0)
   numCols0      <- numCols0    |> c("gdp_usd", "national_pop", "gdp_percap")
@@ -330,7 +294,6 @@ aggregate_impacts <- function(
   ### List of standardized columns
   standardCols  <- c(groupByCols, baseCols, regPopCols, natPopCols) |> unique()
   standardCols  <- standardCols |> c(driverCols, summaryCols) |> unique()
-  # scenarioCols  <- standardCols |> (function(y){y[!(y %in% c(groupByCols, yearCol0, summaryCols))]})()
   scenarioCols  <- standardCols |> get_matches(y=c(groupByCols, yearCol0, summaryCols), matches=F)
   data          <- data         |> select(any_of(standardCols))
   # data |> names() |> print
@@ -338,11 +301,10 @@ aggregate_impacts <- function(
   ###### Base Scenario Info  ######
   ### Some values are the same for all runs and regions...separate those values
   baseScenario  <- data |> select(all_of(baseCols)) |> distinct()
-  # return(baseScenario)
+
   ### Regional population
   regionalPop   <- data |> select(all_of(regPopCols)) |> distinct()
   ### Create national population scenario from the base scenario
-  # nationalPop   <- baseScenario |> select(all_of(baseCols)) |> distinct() |>
   nationalPop   <- baseScenario |>
     mutate(region = national0) |>
     select(all_of(natPopCols)) |>
@@ -362,28 +324,6 @@ aggregate_impacts <- function(
   df_agg      <- data  |> select(-all_of(scenarioCols))
   rm(data, drop0)
 
-  # ### Group columns
-  # main_ids    <- c("sector", "variant")
-  # main_groups <- main_ids    |> get_matches(y=groupByCols, matches=F)
-  # groups_yrs  <- main_groups |> get_matches(y=c("impactYear"), matches=F)
-  # groups_mod  <- groupByCols |> get_matches(y=c("model"     ), matches=F)
-  # groups_nat  <- groupByCols |> get_matches(y=c("region", stateCols0), matches=F)
-  # groups_type <- groupByCols |> get_matches(y=c("impactType"), matches=F)
-  #
-  # ### Add IDS
-  # # groupByCols0 <- c("sector", "variant", "impactType", "impactYear")
-  # # groupByCols0 <- groupByCols0 |> c("region") |> c(stateCols0)
-  # # groupByCols0 <- groupByCols0 |> c("model_type", "model")
-  # funPaste0   <- function(i, cols0, df0){df0[i,cols0] |> paste(collapse="_")}
-  # rows_agg    <- df_agg |> nrow() |> seq_len()
-  # df_agg      <- df_agg |> mutate(id_main = rows_agg |> funPaste0(cols=c(main_ids)))
-  # # df_agg      <- df_agg |> mutate(id_yrs  = rows_agg |> funPaste0(cols=c("id_main", "impactType", "region", stateCols0, )))
-  # # aggImpYear  <- "impactyear"   %in% aggLevels
-  # # aggImpTypes <- "impacttype"   %in% aggLevels
-  # # aggNational <- "national"     %in% aggLevels
-  # # aveModels   <- "modelaverage" %in% aggLevels
-
-
 
 
   ###### ** Impact Years ######
@@ -393,11 +333,8 @@ aggregate_impacts <- function(
     ### Ungroup first
     df_agg        <- df_agg |> ungroup()
     ### Group by columns
-    # # group0        <- groupByCols |> (function(y){y[!(y %in% c("impactYear", yearCol0))]})()
     group0        <- groupByCols |> get_matches(y=c("impactYear", yearCol0), matches=F)
     group0        <- group0 |> c("year")
-    # group0        <- "id_main" |> c(groups_yrs)
-    # df_agg        <- df_agg |> mutate(id_yrs = rows_agg |> funPaste0(cols=group0))
     ### Impact years
     impactYears   <- c(2010, 2090) |> as.character()
     cImpYear1     <- impactYears[1]
@@ -439,11 +376,8 @@ aggregate_impacts <- function(
       ### Drop group columns from first data frame
       ### Drop summary columns from 2010
       df2010      <- df2010 |> select(-all_of(summaryCols))
-      # df_aggImp_1 <- df_aggImp_1 |> select(-all_of(group0))
 
       ### Join upper and lower data frames and calculate the numerator, denominator, and adjustment factor
-      # join0       <- "id_yrs" |> c("year")
-      # df_impYears <- df2090 |> left_join(df2010, by=c(join0))
       df_impYears <- df2090 |> left_join(df2010, by=c(group0))
       # df2090 |> glimpse(); df2010 |> glimpse(); df_impYears |> glimpse()
       rm(df2090, df2010)
@@ -480,7 +414,6 @@ aggregate_impacts <- function(
       } ### End for(i in 1:num_sumCols)
       ### Add new factor and drop columns
       select0     <- c("numer_yr", "denom_yr", "adj_yr")
-      # select0     <- c("numer_yr", "denom_yr", "adj_yr", "id_yrs")
       df_impYears <- df_impYears  |> mutate(impactYear="Interpolation")
       df_impYears <- df_impYears  |> select(-all_of(select0))
       rm(select0)
@@ -501,14 +434,9 @@ aggregate_impacts <- function(
     if(msgUser){msg0 (1) |> paste0(modelAveMsg) |> message()}
     ### Ungroup first
     df_agg        <- df_agg |> ungroup()
-    # df_agg        <- df_agg |> mutate_at(c("model"), as.character) |> ungroup()
     ### Group by columns
-    # # group0        <- groupByCols |> (function(y){y[!(y %in% c("model", yearCol0))]})()
     group0        <- groupByCols |> get_matches(y=c("model", yearCol0), matches=F)
     group0        <- group0 |> c("year")
-    # group0        <- "id_main" |> c(groups_mod)
-    # df_agg        <- df_agg |> mutate(id_mod = rows_agg |> funPaste0(cols=group0))
-    # group0 |> print()
     ### Separate model types
     df_gcm        <- df_agg |> filter(model_type |> tolower() == "gcm")
     df_agg        <- df_agg |> filter(model_type |> tolower() != "gcm")
@@ -550,7 +478,6 @@ aggregate_impacts <- function(
     ### Ungroup first
     df_agg      <- df_agg |> ungroup()
     ### Grouping columns
-    # group0      <- groupByCols |> (function(y){y[!(y %in% c("region", stateCols0, popCol0, yearCol0))]})()
     group0      <- groupByCols |> get_matches(y=c("region", stateCols0, popCol0, yearCol0), matches=F)
     group0      <- group0      |> c("year")
     ### Calculate number of non missing values
@@ -596,7 +523,6 @@ aggregate_impacts <- function(
     ### Ungroup first
     df_agg  <- df_agg |> ungroup()
     ### Grouping columns
-    # group0  <- groupByCols |> (function(y){y[!(y %in% c("impactType", yearCol0))]})()
     group0  <- groupByCols |> get_matches(y=c("impactType", yearCol0), matches=F)
     group0  <- group0 |> c("year")
     ### Separate into observations that have a single impact type and those with multiple impacts
@@ -647,17 +573,7 @@ aggregate_impacts <- function(
   rm(join0, arrange0, regionalPop)
 
   ### Join base scenario with aggregated info
-  # ### Names
-  # names0        <- df_agg        |> names()
-  # names1        <- co_sectorVars |> names()
-  # # join0         <- co_sectorVars |> names() |> (function(y){y[y %in% names0]})()
-  # # join1         <- df_base       |> names() |> (function(y){y[y %in% c(names0, names1)]})()
-  # join0         <- names1        |> get_matches(y=names0)
-  # join1         <- df_base       |> names() |> get_matches(y=c(names0, names1))
-  # df_agg        <- df_agg |> left_join(co_sectorVars, by=c(join0))
-  # df_agg        <- df_agg |> left_join(df_base      , by=c(join1))
-  # rm(names0, names1, join0, join1)
-  # df_base |> glimpse(); df_agg |> glimpse()
+  ### Order the data frame and ungroup
   namesB0  <- df_base |> names() |> get_matches(y=c(yearCol0), matches=F)
   join0    <- c("model_type") |> c("region") |> c(stateCols0) |> c(yearCol0)
   arrange0 <- c("sector", "variant", "impactType", "impactYear") |>
@@ -683,13 +599,8 @@ aggregate_impacts <- function(
   rm(mutate0)
 
   ###### Order Columns ######
-  ### Order the data frame and ungroup
   ### Column indices of columns used in ordering
-  # df_agg |> names() |> print(); groupByCols |> print()
-  # arrange0      <- groupByCols |> c(yearCol0) |> unique()
-  # df_agg        <- df_agg |> arrange_at(c(arrange0))
   df_agg        <- df_agg |> select(any_of(standardCols))
-  # df_agg        <- df_agg |> ungroup()
 
   ###### Return ######
   ### Return object
