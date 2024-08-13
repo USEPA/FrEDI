@@ -105,19 +105,21 @@ run_fredi_sv <- function(
   impactsPath <- pkgPath |> file.path("extdata", "sv", "impactLists")
 
   ### Get FrEDI data objects
-  fredi_config  <- "fredi_config"  |> get_frediDataObj("frediData")
+  # fredi_config  <- "fredi_config"  |> get_frediDataObj("frediData")
+  fredi_config  <- rDataList[["fredi_config"]]
   co_modelTypes <- "co_modelTypes" |> get_frediDataObj("frediData")
   co_states     <- "co_states"     |> get_frediDataObj("frediData")
   temp_default  <- "temp_default"  |> get_frediDataObj("frediData")
   pop_default   <- "pop_default"   |> get_frediDataObj("stateData")
 
   ### Assign config files
-  fredi_config |> list2env(envir = environment())
+  # fredi_config |> list2env(envir = environment())
+  for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
-  minYear  <- 2010
-  maxYear  <- 2100
+  minYear  <- minYear0
+  maxYear  <- maxYear0
   yearsBy5 <- minYear |> seq(maxYear, by=5)
 
   ### Testing
@@ -133,7 +135,8 @@ run_fredi_sv <- function(
 
   ###### By State ######
   byState    <- TRUE
-  popCol0    <- "state_pop"
+  # popCol0    <- "state_pop"
+  popCol0    <- "pop"
   stateCols0 <- c("state", "postal")
 
 

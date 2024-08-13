@@ -153,26 +153,6 @@ run_fun_tryInput <- function(
 }
 
 
-###### rename_inputs ######
-# rename_inputs <- function(
-    #     data,
-#     new_names
-# ){
-#   ### Get the length of the new names
-#   data_names   <- data |> names()
-#   num_names    <- new_names |> length()
-#   num_dataCols <- data |> ncol()
-#
-#   if(num_dataCols>num_names){
-#     data <- data[,1:num_names]
-#   }
-#
-#   names(data) <- new_names
-#
-#   return(data)
-#
-# }
-
 
 ###### check_inputs ######
 ### Check Input Ranges
@@ -456,6 +436,8 @@ check_input_data <- function(
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
     tempType  = "conus",  ### One of: c("conus", "global")
     popArea   = "state",  ### One of: c("state", "regional", "conus", "national")
+    yearMin   = NULL,     ### Check min year
+    yearMax   = NULL,     ### Check max year
     msgLevel  = 2         ### Level of messaging
 ){
 
@@ -463,13 +445,10 @@ check_input_data <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  co_states <- "co_states"    |> get_frediDataObj("frediData")
-  df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
-  # fListNames <- c("co_info", "co_states")
-  # sListNames <- c("df_ratios")
-  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+  co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
+  co_states <- "co_states"     |> get_frediDataObj("frediData")
+  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
 
   ### Get columns
   select0   <- c("inputName", "inputMin", "inputMax")
@@ -493,7 +472,7 @@ check_input_data <- function(
   ###### Conditionals ######
   doTemp    <- "temp" %in% inputName
   doPop     <- "pop"  %in% inputName
-
+  # doTemp |> print()
 
   ###### Check NULL ######
   ### Check that data exists
@@ -508,7 +487,8 @@ check_input_data <- function(
   inputDf   <- inputDf |> filter_all(all_vars(!(. |> is.na())))
   nrowData  <- inputDf |> nrow()
   namesDF   <- inputDf |> names()
-  hasData   <- !nullData & nullData |> ifelse(0, nrowData)
+  # hasData   <- !nullData & nullData |> ifelse(0, nrowData)
+  hasData   <- nullData |> ifelse(0, nrowData)
   if(hasData) {msgN |> paste0(msg0_i, msg_i1) |> message()} else {return(NULL)}
 
 
@@ -584,10 +564,43 @@ check_input_data <- function(
     return(NULL)
   } ### End if(!checkNum)
 
+  ### Check that appropriate years are present
+  rangeYrs  <- c(yearMin, yearMax)
+  hasMinYr  <- !(yearMin |> is.null())
+  hasMaxYr  <- !(yearMax |> is.null())
+  hasYears  <- hasMinYr | hasMaxYr
+
+  if(hasYears) {
+    ### Check
+    whichYrs  <- c()
+    if(hasMinYr) {
+      nMinYrs <- inputDf  |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      if(nMinYrs) whichYrs <- whichYrs |> c(yearMin)
+      rm(nMinYrs)
+    } ### End if(hasMinYr)
+    if(hasMaxYr) {
+      nMaxYrs  <- inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      whichYrs <- whichYrs |> c(yearMax)
+      rm(nMaxYrs)
+    } ### End if(hasMaxYr)
+    naYears   <- rangeYrs |> get_matches(y=whichYrs)
+    checkYrs  <- (rangeYrs |> length()) == (naYears |> length())
+    ### Messages
+    if(!checkYrs) {
+      msg_yrs <- "Data must have at least one non-missing value "
+      msg_min <- "in or before the year " |> paste0(yearMin)
+      msg_and <- (hasMinYr & hasMaxYr) |> ifelse("and at least one non-missing value ", "")
+      msg_min <- "in or after the year " |> paste0(yearMax)
+      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_min, "!") |> message()
+      return(NULL)
+    } ### End if(!checkYrs)
+  } ### End if(hasYears)
+
+
   ### Check that values are in range
   rangeVals <- dataVals |> range(na.rm=T)
-  checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> all(), .default = T)
-  checkMax  <- case_when(hasMax_i ~ (dataVals <= max_i) |> all(), .default = T)
+  checkMin  <- case_when(hasMin_i ~ (dataVals >= min_i) |> any(), .default = T)
+  checkMax  <- case_when(hasMax_i ~ (dataVals <= max_i) |> any(), .default = T)
   checkVals <- checkMin & checkMax
   #browser()
   if(!checkVals) {
@@ -610,6 +623,7 @@ check_input_data <- function(
       msg2_i |> paste0(msg_i2) |> message()
       return(NULL)}
   } ### End if(!checkNum)
+
 
   ###### Format Columns ######
   ### If checks pass, convert all id columns to character
@@ -637,13 +651,18 @@ check_input_data <- function(
     if(doCalc) {
       msg_pop <- paste0("Calculating state population from ", popArea, " values...")
       paste0(msg1_i, msg_pop) |> message()
+      if("region" %in% (inputDf |> names())) {
+        inputDf <- inputDf |> filter(!(region |> str_detect("National")))
+        inputDf <- inputDf |> filter(!(region |> is.na()))
+      } ### End if("region" %in% (inputDf |> names()))
       inputDf <- inputDf |> calc_import_pop(popArea=popArea)
+      inputDf <- inputDf |> filter(!(region |> is.na()))
     } ### End if(doCalc)
     ### Rename state population column
-    rename0  <- c("pop")
-    renameTo <- c("state_pop")
-    doRename <- rename0 %in% (inputDf |> names())
-    if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
+    # rename0  <- c("pop")
+    # renameTo <- c("state_pop")
+    # doRename <- rename0 %in% (inputDf |> names())
+    # if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
   } ### End if(doPop)
 
 
