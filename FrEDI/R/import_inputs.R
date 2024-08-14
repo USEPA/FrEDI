@@ -5,38 +5,42 @@
 #'
 #'
 #'
-#' @param tempfile=NULL A character string indicating the location of a CSV file containing a custom temperature scenario. The first column in the CSV should be named `"year"` and contain years associated with the temperature estimates; the second column (named `"temp_C"`) should contain values for temperatures (i.e., degrees of warming relative to a baseline year of 1995), in degrees Celsius. The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param slrfile=NULL A character string indicating the location of a CSV file containing a custom sea level rise scenario. The first column in the CSV should be named `"year"` and contain years associated with the sea level rise estimates; second column should be named "`slr_cm"` and contain values for global mean sea level rise (GMSL), in centimeters, above a baseline year of 2000. The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#' @param gdpfile=NULL A character string indicating the location of a CSV file containing a custom scenario for U.S. gross domestic product (GDP). The first column in the CSV should be named `"year"` and contains years associated with the GDP estimates; the second column (named `"gdp_usd"`) should contain values for U.S. GDP in 2015 U.S. dollars  (2015$ USD). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]). Values for GDP in column `"gdp_usd"` must be greater than or equal to zero.
-#' @param popfile=NULL A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions. The first column should be named `"year"` and contain years in the interval 2010 to 2300. The second column should be called `"pop"` and contain population values. Whether a third column is required depends on the geographical scale of the data, as specified by the `popArea` argument (for more information, see the `popArea` argument, below.
-#'    * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year. If `popArea = "national"`, only the `year` and `pop` columns are required.
-#'    * If `popArea = "state"`, the file must contain estimates for all CONUS states -- i.e., all states except Alaska and Hawaii must be present in the input file (estimates for Alaska and Hawaii are optional). If `popArea = "regional"`, the file must contain estimates for all seven NCA regions.
-#'    * The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]). Values for population in column `"pop"` must be greater than or equal to zero.
+#' @param inputsList=list(gdp=NULL,pop=NULL,temp=NULL,slr=NULL,ch4=NULL,nox=NULL) A named list containing file paths to CSV files containing scenarios:
+#'    * __gdp__ A character string indicating the location of a CSV file containing a custom scenario for U.S. gross domestic product (GDP), for use with [FrEDI::run_fredi()] or [FrEDI::run_fredi_methane()]. The first column in the CSV should be named `"year"` and contains years associated with the GDP estimates; the second column (named `"gdp_usd"`) should contain values for U.S. GDP in 2015 U.S. dollars  (2015$ USD). The GDP scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()] or [FrEDI::run_fredi_methane()]). Values for GDP in column `"gdp_usd"` must be greater than or equal to zero.
+#'    * __pop__ A character string indicating the location of a CSV file containing a custom population scenario for states and NCA regions, for use with [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], or [FrEDI::run_fredi_methane()]. The first column should be named `"year"` and contain years in the interval 2010 to 2300. The second column should be called `"pop"` and contain population values. Whether a third column is required depends on the geographical scale of the data, as specified by the `popArea` argument (for more information, see the `popArea` argument, below.
+#'        * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year. If `popArea = "national"`, only the `year` and `pop` columns are required.
+#'        * If `popArea = "state"`, the file must contain estimates for all CONUS states -- i.e., all states except Alaska and Hawaii must be present in the input file (estimates for Alaska and Hawaii are optional). If `popArea = "regional"`, the file must contain estimates for all seven NCA regions.
+#'        * The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()] or [FrEDI::run_fredi_methane()]). Values for population in column `"pop"` must be greater than or equal to zero.
+#'    * __temp__ A character string indicating the location of a CSV file containing a custom temperature scenario, for use with `run_fredi()` or `run_fredi_sv()`. The first column in the CSV should be named `"year"` and contain years associated with the temperature estimates; the second column (named `"temp_C"`) should contain values for temperatures (i.e., degrees of warming relative to a baseline year of 1995), in degrees Celsius. The temperature scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#'    * __slr__ A character string indicating the location of a CSV file containing a custom sea level rise scenario, for use with `run_fredi()` or `run_fredi_sv()`. The first column in the CSV should be named `"year"` and contain years associated with the sea level rise estimates; second column should be named "`slr_cm"` and contain values for global mean sea level rise (GMSL), in centimeters, above a baseline year of 2000. The SLR scenario must start in 2000 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#'    * __ch4__ A character string indicating the location of a CSV file containing a custom scenario for methane, for use with `run_fredi_methane()`. The first column in the CSV should be named `"year"` and contain years associated with the national methane estimates; second column should be named "`CH4_ppbv"` and contain values for methane. The methane scenario must start in 2020 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi_methane()]).
+#'    * __nox__ A character string indicating the location of a CSV file containing a custom scenario for NOx values. The first column in the CSV should be named `"year"` and contain years associated with the national NOx estimates; second column should be named "`Mt"` and contain values for NOx emissions, in megatons per year (Mt). The NOx scenario must start in 2020 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi_methane()]).
 #' @param temptype="conus" A character string indicating whether the temperature values in the temperature input file (as specified by `tempfile`) represent temperature changes, in degrees Celsius, at the global level (`temptype = "global"`) or for the contiguous U.S. (CONUS) only (`temptype = "conus"`, default).
 #' @param popArea="state" A character string indicating the geographical scale of population inputs (as specified by `popfile`). Specify one of: `"state"`, for state-level population (default); `"conus"`, for the contiguous U.S. (CONUS) only (i.e., national totals, but excluding Alaska and Hawaii); or `"national"`, for national totals (CONUS population, including Alaska and Hawaii).
 #'
 #'
 #'
 #' @details
-#' This function enables users to import data on custom scenarios for use with temperature binning. Users specify path names to CSV files containing temperature, global mean sea level rise (GMSL), population, and gross domestic product (GDP) scenarios (`tempfile`, `slrfile`, `gdpfile`, and `popfile`, respectively). [FrEDI::import_inputs()] reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios.
+#' This function enables users to import data on custom scenarios for use with temperature binning. Users provide a named list specifying path names to CSV files containing scenarios for gross domestic product (GDP) (for use with [FrEDI::run_fredi()] or [FrEDI::run_fredi_methane()]); population (for use with [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], or [FrEDI::run_fredi_methane()]); temperature and/or global mean sea level rise (GMSL) (for use with [FrEDI::run_fredi()] or [FrEDI::run_fredi_sv()]); or methane or NOx (for use with [FrEDI::run_fredi_methane()]). [FrEDI::import_inputs()] reads in and formats any specified files as data frames and returns a list of data frames for imported scenarios.
 #'
 #' The CSV files should contain estimates aligned with the requirements of the `run_fredi()` or ``
 #'
-#' * __Temperature Scenario.__ The file specified by `tempfile` must have two columns -- `"year"` and `"temp_C"` -- respectively containing the years associated with the temperature estimates and the temperatures (i.e., degrees of warming) in degrees Celsius relative to a baseline year of 1995 (i.e., the central year of a 1986-2005 reference period).
-#'    * If values in `"temp_C"` have global rather than CONUS-specific temperatures, users should specify `temptype = "global"` when running `import_inputs()`, and `import_inputs()` will convert the temperatures to CONUS using [FrEDI::convertTemps] (with argument `from = "global"`).
-#'    * Temperature inputs to [FrEDI::run_fredi()] must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
-#' * __SLR Scenario.__ The file specified by `slrfile` must have two columns -- `"year"` and `"slr_cm"` -- respectively containing the years associated with the GMSL estimates and GMSL estimates, in centimeters, above a 2000 baseline year.
-#'    * GMSL heights must be greater than or equal to zero.
-#'    * The SLR scenario must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
-#' * __GDP Scenario.__ The file specified by `gdpfile` must have two columns -- `"year"` and `"gdp_usd"` -- respectively containing the years associated with the GDP estimates and the estimates for U.S. GDP, in 2015$.
+#' * __GDP Scenario.__ The file specified by `inputsList$gdp` must have two columns -- `"year"` and `"gdp_usd"` -- respectively containing the years associated with the GDP estimates and the estimates for U.S. GDP, in 2015$.
 #'    * GDP values must be greater than or equal to zero.
 #'    * The GDP scenario must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
-#' * __Population Scenario.__ The file specified by `popfile` population must have at least two columns -- `"year"` and `"pop"` -- respectively containing the years associated with the population estimates and the population estimates. requires state-level population values. Whether a third column is required depends on the geographical scale of the data, as specified by the `popArea` argument.
-#'    * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year. If `popArea = "national"`, only the `year` and `pop` columns are required.
-#'    * If `popArea = "state"`, the file must contain estimates for all CONUS states -- i.e., all states except Alaska and Hawaii must be present in the input file (estimates for Alaska and Hawaii are optional). If `popArea = "regional"`, the file must contain estimates for all seven NCA regions.
-#'    * The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
-#'    * Population values must be greater than or equal to zero.
-#'    * Population estimates must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __Population Scenario.__ The file specified by `inputsList$pop` population must have at least two columns -- `"year"` and `"pop"` -- respectively containing the years associated with the population estimates and the population estimates. requires state-level population values. Whether a third column is required depends on the geographical scale of the data, as specified by the `popArea` argument.
+#'     * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year. If `popArea = "national"`, only the `year` and `pop` columns are required.
+#'     * If `popArea = "state"`, the file must contain estimates for all CONUS states -- i.e., all states except Alaska and Hawaii must be present in the input file (estimates for Alaska and Hawaii are optional). If `popArea = "regional"`, the file must contain estimates for all seven NCA regions.
+#'     * The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
+#'     * Population values must be greater than or equal to zero.
+#'     * Population estimates must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __Temperature Scenario.__ The file specified by `inputsList$temp` must have two columns -- `"year"` and `"temp_C"` -- respectively containing the years associated with the temperature estimates and the temperatures (i.e., degrees of warming) in degrees Celsius relative to a baseline year of 1995 (i.e., the central year of a 1986-2005 reference period).
+#'    * If values in `"temp_C"` have global rather than CONUS-specific temperatures, users should specify `temptype = "global"` when running `import_inputs()`, and `import_inputs()` will convert the temperatures to CONUS using [FrEDI::convertTemps] (with argument `from = "global"`).
+#'    * Temperature inputs to [FrEDI::run_fredi()] must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#' * __SLR Scenario.__ The file specified by `inputsList$slr` must have two columns -- `"year"` and `"slr_cm"` -- respectively containing the years associated with the GMSL estimates and GMSL estimates, in centimeters, above a 2000 baseline year.
+#'    * GMSL heights must be greater than or equal to zero.
+#'    * The SLR scenario must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
+#'
 #'
 #' [FrEDI::run_fredi()] requires a population scenario at the state level. If the population scenario is supplied to [FrEDI::import_inputs()] at a geographical scale above the state level (i.e., if `popArea = "national"`, `popArea = "area"`, or `popArea = "regional"`), [FrEDI::import_inputs()] will calculate state-level estimates from the provided data:
 #'
@@ -46,7 +50,7 @@
 #'
 #' [FrEDI::import_inputs()] outputs a list of data frame objects that can be passed to the main FREDI function [FrEDI::run_fredi()] using the `inputList` argument. For example, specify `run_fredi(inputsList = x)` to generate impacts for a custom scenario `x` (where `x` is a list of data frames such as that output from [FrEDI::import_inputs()]) (see [FrEDI::run_fredi()]).
 #'
-#' All inputs to [FrEDI::import_inputs()] are optional. If the user does not specify a file path for `tempfile`, `slrfile`, `gdpfile`, or `popfile` (or if there is are any errors reading in inputs from a file path), [FrEDI::import_inputs()] outputs a list with a `NULL` value for the associated list element. After reading in data from the specified CSV files, [FrEDI::import_inputs()] performs basic checks and will also return a `NULL` value for a particular list element if any of the checks fail.
+#' All inputs to [FrEDI::import_inputs()] are optional. If the user does not specify particular named elements (or if there is are any errors reading in inputs from a file path), [FrEDI::import_inputs()] outputs a list with a `NULL` value for the associated list element. After reading in data from the specified CSV files, [FrEDI::import_inputs()] performs basic checks and will also return a `NULL` value for a particular list element if any of the checks fail.
 #'
 #' When using [FrEDI::import_inputs()] with [FrEDI::run_fredi()], [FrEDI::run_fredi()] defaults back to the default scenarios for any elements of the inputs list that are `NULL` or missing. In other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()] (see [FrEDI::run_fredi()]).
 #'
@@ -56,10 +60,10 @@
 #'
 #' \tabular{ll}{
 #' \strong{List Index} \tab \strong{Description} \cr
-#' `tempInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `tempfile`, with missing values removed. `tempInput` has two columns with names `"year"` and `"temp_C"`, containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
-#' `slrInput` \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by `slrfile`, with missing values removed. `slrInput` has two columns with names `"year"`, and `"slr_cm"`, containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
-#' `gdpInput` \tab Data frame containing a custom GDP scenario imported from the CSV file specified by `gdpfile`, with missing values removed. `gdpInput` has two columns with names `"year"`, and `"gdp_usd"`, containing the year and the national GDP, respectively. \cr
-#' `popInput` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `popfile`, with missing values removed. `popInput` has three columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation (e.g., `postal = "ME"` for `state = "Maine"`), and the state population, respectively. \cr
+#' `temp` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `inputsList$temp`, with missing values removed. `temp` has two columns with names `"year"` and `"temp_C"`, containing the year and CONUS temperatures in degrees Celsius, respectively. \cr
+#' `slr` \tab Data frame containing a custom GMSL scenario imported from the CSV file specified by `inputsList$slr`, with missing values removed. `slr` has two columns with names `"year"`, and `"slr_cm"`, containing the year and global mean sea level rise (GMSL) in centimeters, respectively. \cr
+#' `gdp` \tab Data frame containing a custom GDP scenario imported from the CSV file specified by `inputsList$gdp`, with missing values removed. `gdp` has two columns with names `"year"`, and `"gdp_usd"`, containing the year and the national GDP, respectively. \cr
+#' `pop` \tab Data frame containing a custom temperature scenario imported from the CSV file specified by `inputsList$pop`, with missing values removed. `popInput` has three columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"pop"`, containing the year, the NCA region name, and the state, the postal code abbreviation (e.g., `postal = "ME"` for `state = "Maine"`), and the state population, respectively. \cr
 #' }
 #'
 #'
@@ -77,7 +81,7 @@
 #' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
 #'
 #' ### Import inputs
-#' example_inputsList <- import_inputs(slrfile=slrInputFile, popfile=popInputFile, popArea="state")
+#' example_inputsList <- import_inputs(inputsList=list(slr=slrInputFile, pop=popInputFile), popArea="state")
 #'
 #' ### Use imports with FREDI:
 #' df_x <- run_fredi(inputsList=example_inputsList)
@@ -100,12 +104,14 @@
 ###### import_inputs ######
 ### This function imports data from user-specified file names.
 import_inputs <- function(
-  tempfile = NULL, ### File path of CSV with temperature inputs
-  slrfile  = NULL,
-  gdpfile  = NULL,
-  popfile  = NULL,
-  temptype = "conus", ### "global", or "conus" (default)
-  popArea  = "state"  ### "national", "conus", "regional", or "state" (default)
+  # tempfile = NULL, ### File path of CSV with temperature inputs
+  # slrfile  = NULL,
+  # gdpfile  = NULL,
+  # popfile  = NULL,
+  inputsList = list(gdp=NULL, pop=NULL, temp=NULL, slr=NULL, ch4=NULL, nox=NULL, o3=NULL),
+  temptype   = "conus", ### "global", or "conus" (default)
+  popArea    = "state", ### "national", "conus", "regional", or "state" (default)
+  module     = "fredi"  ### "fredi", "sv", "methane"
 ){
   ###### Messaging ######
   silent  <- TRUE
@@ -120,73 +126,121 @@ import_inputs <- function(
   ### Message the user
   msgN |> paste0(msg0) |> paste0("In import_inputs():") |> message()
 
+  ###### Module Options ######
+  module0    <- module |> tolower()
+  inNames0   <- c("gdp", "pop")
+  doMain     <- "fredi"   %in% module0
+  doSV       <- "sv"      %in% module0
+  doFredi    <- doMain | doSV
+  doMethane  <- "methane" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "package")
+  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  co_states <- "co_states"    |> get_frediDataObj("frediData")
-  df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
-  # fListNames <- c("co_info", "co_states")
-  # sListNames <- c("df_ratios")
-  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+  # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData"   )
+  # co_states <- "co_states"     |> get_frediDataObj("frediData"   )
+  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
-
-  ###### Defaults ######
+  ###### Input Names ######
   ### Input names, output names
-  inNames    <- c("temp", "slr", "gdp", "pop")
-  outNames   <- inNames |> paste0("Input")
-  nInputs    <- inNames |> length()
+  # inNames    <- c("temp", "slr", "gdp", "pop")
+  # outNames   <- inNames |> paste0("Input")
+  inNames0   <- co_info |> pull(inputName)
+
+  ### Figure out which inputs are not null, and filter to that list
+  ### inputsList Names
+  inNames    <- inputsList |> names()
+  inWhich    <- inNames |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+  ### Filter to values that are not NULL
+  inputsList <- inputsList[inWhich]
+  inNames    <- inputsList |> names()
+  rm(inWhich)
+  ### Check which input names are in the user-provided list
+  inWhich    <- inNames %in% inNames0
+  inNames    <- inNames[inWhich]
+  rm(inWhich)
+
+
+
+  ###### Temperature Options ######
   ### Valid values
   tempTypes  <- c("global", "conus")
-  popAreas   <- c("national", "conus", "regional", "state")
   ### Convert string inputs to lower case
   tempType   <- temptype |> tolower()
-  popArea    <- popArea  |> tolower()
   ### Check whether inputs temperatures are already in CONUS degrees
   conus      <- "conus" %in% tempType
   # conus |> print()
   ### Check for validity
   tempValid  <- tempType %in% tempTypes
-  popValid   <- popArea %in% popAreas
   ### Error messages
   msgTemp    <- paste0("`tempType` must be either \"global\" or \"conus\", not \"", tempType, "\"!")
-  msgPop     <- paste0("`popArea` must be in \"", popAreas |> paste(collapse="\", \""), ", not \"", popArea, "\", !")
   ### If not valid, message and drop those from outputs
   if(!tempValid) {
-    fListNames[["temp"]] <- NULL
+    # inputsList[["temp"]] <- NULL
     msg1 |> paste0(msgTemp) |> message()
     msg2 |> paste0("Dropping temp inputs from outputs.") |> message()
-  } else if(!popValid){
-    fListNames[["pop"]] <- NULL
-    msg1 |> paste0(msgPop)
-    msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
+    inputsList <- inputsList |> (function(list0, name0="temp"){list0[!((list0 |> names()) %in% name0)]})
+    inNames    <- inputsList |> names()
   } ### End if(!tempValid)
 
 
-  ###### Other Values ######
-  ### Get list with expected name of column containing values
+
+  ###### Population Options ######
+  ### Valid values
+  popAreas   <- c("national", "conus", "regional", "state")
+  ### Convert string inputs to lower case
+  popArea    <- popArea  |> tolower()
+  ### Check for validity
+  popValid   <- popArea %in% popAreas
+  ### Error messages
+  msgPop     <- paste0("`popArea` must be in \"", popAreas |> paste(collapse="\", \""), ", not \"", popArea, "\", !")
+  ### If not valid, message and drop those from outputs
+  if(!popValid){
+    # inputsList[["pop"]] <- NULL
+    msg1 |> paste0(msgPop)
+    msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
+    inputsList <- inputsList |> (function(list0, name0="pop"){list0[!((list0 |> names()) %in% name0)]})
+    inNames    <- inputsList |> names()
+  } ### End if(!popValid)
+
+
+
+  ###### Valid Inputs & Input Info ######
+  ### Filter to valid inputs & get info
+  ### Reorganize inputs list
+  co_info    <- co_info |> filter(inputName %in% inNames)
+  inNames    <- co_info |> pull(inputName)
+  inputsList <- inputsList[inNames]
+  outNames   <- inNames
+  nInputs    <- inNames |> length()
+
+  ### Message user
+  if(nInputs) {
+    msg1 |> paste0("Loading data...", "\n") |> message()
+  } else {
+    msg1 |> paste0("No inputs specified! Returning an empty list.") |> message()
+    return(list())
+  } ### End if(nInputs)
+
   ### Get list with expected name of columns used for unique ids
-  valCols    <- get_import_inputs_valCols(popArea=popArea)
-  idCols     <- get_import_inputs_idCols (popArea=popArea)
+  ### Get list with expected name of column containing values
+  # idCols     <- get_import_inputs_idCols (popArea=popArea)
+  # valCols    <- get_import_inputs_valCols(popArea=popArea)
+  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> get_import_inputs_idCols()}) |> set_names(inNames)
+  valCols    <- co_info |> pull(valueCol) |> as.list() |> set_names(inNames)
   # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
 
   ###### Initialize Input File Names List ######
   ### Initialize list of file names and
-  fList      <- inNames |> map(function(x){parse(text=x |> paste0("file")) |> eval()}) |> set_names(inNames)
+  # fList      <- inNames |> map(function(x){parse(text=x |> paste0("file")) |> eval()}) |> set_names(inNames)
+  fList      <- inputsList
 
   ###### Initialize Inputs List ######
-  ### Initialize a list for loaded data
-  ### Check if any file names supplied
-  inputsList <- fList
-  hasInputs  <- fList |> map(function(item_i){!(item_i |> is.null())}) |> unlist() |> any()
-
-  ### Message user
-  if(hasInputs) {msg1 |> paste0("Loading data...", "\n") |> message()}
-  else          {msg1 |> paste0("No inputs specified! Returning an empty list.") |> message()}
-
   ### If some file names supplied, iterate over list, trying to read in file names
   inputsList <- list(
     inputName = inNames,
@@ -206,14 +260,14 @@ import_inputs <- function(
     valCol    = valCols,
     idCol     = idCols,
     tempType  = tempType |> rep(nInputs),
-    popArea   = popArea |> rep(nInputs)
+    popArea   = popArea  |> rep(nInputs)
   ) |>
     pmap(check_input_data) |>
     set_names(inNames)
 
 
-  ###### Rename List ######
-  inputsList <- inputsList |> set_names(outNames)
+  # ###### Rename List
+  # inputsList <- inputsList |> set_names(outNames)
 
 
   ###### Return ######
