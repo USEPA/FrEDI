@@ -12,39 +12,58 @@ get_msg_prefix <- function(
 ###### get_import_inputs_valCols ######
 ### 2024.06.18: eventually move to FrEDI Data
 ### Info about which column contains input values
-get_import_inputs_valCols <- function(
-    popArea = "state" ### One of: c("state", "regional", "area", "national")
-){
-  ### Initialize list
-  list0    <- list()
-  list0[["temp"]] <- c("temp_C")
-  list0[["slr" ]] <- c("slr_cm")
-  list0[["gdp" ]] <- c("gdp_usd")
-  list0[["pop" ]] <- c("pop")
-  ### Return
-  return(list0)
-}
+# get_import_inputs_valCols <- function(
+#     popArea = "state" ### One of: c("state", "regional", "area", "national")
+# ){
+#   ### Initialize list
+#   list0    <- list()
+#   list0[["temp"]] <- c("temp_C")
+#   list0[["slr" ]] <- c("slr_cm")
+#   list0[["gdp" ]] <- c("gdp_usd")
+#   list0[["pop" ]] <- c("pop")
+#   ### Return
+#   return(list0)
+# }
 
 ###### get_import_inputs_idCols ######
-### 2024.06.18: eventually move to FrEDI Data
 ### Info about which column contains info on region
+# get_import_inputs_idCols <- function(
+#     popArea = "state" ### One of: c("state", "regional", "area", "national")
+# ){
+#   ### Initialize lists
+#   list0    <- list()
+#   # listPop0 <- list()
+#   list0[["temp"]] <- c("year")
+#   list0[["slr" ]] <- c("year")
+#   list0[["gdp" ]] <- c("year")
+#   list0[["pop" ]] <- list()
+#   list0[["pop" ]][["national"]] <- c("year")
+#   list0[["pop" ]][["conus"   ]] <- c("year")
+#   list0[["pop" ]][["regional"]] <- c("region", "year")
+#   list0[["pop" ]][["state"   ]] <- c("state", "year")
+#   ### Update population value column based on pop area
+#   list0[["pop" ]] <- list0[["pop"]][[popArea]]
+#   ### Return
+#   return(list0)
+# }
 get_import_inputs_idCols <- function(
+    type0  = c("gdp", "pop", "temp", "slr"),
     popArea = "state" ### One of: c("state", "regional", "area", "national")
 ){
-  ### Initialize list
-  list0    <- list()
-  list0[["temp"]] <- c("year")
-  list0[["slr" ]] <- c("year")
-  list0[["gdp" ]] <- c("year")
-  list0[["pop" ]] <- list()
-  list0[["pop" ]][["national"]] <- c("year")
-  list0[["pop" ]][["conus"   ]] <- c("year")
-  list0[["pop" ]][["regional"]] <- c("region", "year")
-  list0[["pop" ]][["state"   ]] <- c("state", "year")
-  ### Update population value column based on pop area
-  list0[["pop" ]] <- list0[["pop"]][[popArea]]
+  ### Initialize vectors
+  cols0  <- c("year")
+  cols1  <- c()
+  ### Check if population
+  doPop0   <- "pop" %in% type0
+  doState0 <- c("state") %in% c(popArea)
+  doReg0   <- c("regional") %in% c(popArea)
+  if(doPop0 & (doState0 | doReg0)) {
+    cols1 <- doState0 |> ifelse("state", "region")
+  } ### End if(doPop0)
+  ### Update list
+  cols0   <- cols1 |> c(cols0)
   ### Return
-  return(list0)
+  return(cols0)
 }
 
 ###### fun_tryInput ######
@@ -191,17 +210,36 @@ check_inputs <- function(
 ###### check_pop_regions ######
 ### Check that all regions, states, present in data
 check_pop_regions <- function(
-    df0,         ### Tibble with population info
-    msgLevel = 1 ### Level of messaging
+    df0,                ### Tibble with population info
+    module   = "fredi", #### "fredi", "sv", or "methane"
+    msgLevel = 1        ### Level of messaging
 ){
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  fListNames <- c("co_states")
-  sListNames <- c("df_ratios")
-  for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+  # fListNames <- c("co_states")
+  # sListNames <- c("df_ratios")
+  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
+  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+
+  ###### Module Options ######
+  module0    <- module |> tolower()
+  inNames0   <- c("gdp", "pop")
+  doMain     <- "fredi"   %in% module0
+  doSV       <- "sv"      %in% module0
+  doFredi    <- doMain | doSV
+  doMethane  <- "methane" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "package")
+  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+
+  ###### Load Data from FrEDI ######
+  ### Get objects from FrEDI name space
+  ### Get input scenario info: co_info
+  ### Get state info: co_states
+  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
 
   ###### Messages ######
   msgN       <- "\n"
@@ -224,8 +262,8 @@ check_pop_regions <- function(
 
   ### Check whether data has regions, states to check
   namesState <- co_states |> names()
-  namesPop   <- df0 |> names()
-  namesCheck <- c("region", "state") |> (function(x, y=namesPop){x[x %in% y]})()
+  namesPop   <- df0       |> names()
+  namesCheck <- c("region", "state") |> get_matches(y=namesPop)
   hasCols    <- namesCheck |> length()
 
   ### Check whether population data present and regions, states present
@@ -240,7 +278,7 @@ check_pop_regions <- function(
 
     ### Get unique values for data, then join with state info
     ### Drop missing values
-    join0   <- namesState |> (function(x, y=namesPop){x[x %in% y]})()
+    join0   <- namesState |> get_matches(y=namesPop)
     dfCheck <- df0     |> select(all_of(join0)) |> unique()
     dfCheck <- dfCheck |> left_join(co_states, by=c(join0), relationship="many-to-many")
     dfCheck <- dfCheck |> filter_all(all_vars(!(. |> is.na())))
@@ -252,7 +290,7 @@ check_pop_regions <- function(
       ### Missing reference values
       refVals  <- co_states |> pull(all_of(col_i)) |> unique()
       newVals  <- dfCheck   |> pull(all_of(col_i)) |> unique()
-      naVals   <- refVals   |> (function(x, y=newVals){x[!(x %in% y)]})()
+      naVals   <- refVals   |> get_matches(y=newVals, matches=F)
       passVals <- (naVals |> length()) == 0
 
       ### Message
@@ -280,7 +318,7 @@ check_valCols <- function(
     inputDf,   ### Data frame of values
     inputName, ### Input name c("temp", "slr", "gdp", "pop")
     valCol   , ### Value column
-    tempType = "conus",  ### One of: c("conus", "global")
+    tempType = "conus", ### One of: c("conus", "global")
     popArea  = "state", ### One of: c("state", "regional", "conus", "national")
     msgLevel = 2
 ) {
@@ -297,62 +335,101 @@ check_valCols <- function(
 
   ###### Data Columns ######
   ### Get value column and id column
-  if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
+  # if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
   # if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols (popArea=popArea)[[inputName]]
 
   ###### Check Values ######
-  namesDF   <- inputDf |> names()
+  ### Initial names and values
+  valCol0   <- valCol
+  namesDF0  <- inputDf |> names()
+  inName0   <- inputName
+  ### Convert to lowercase
+  valCol    <- valCol    |> tolower()
+  namesDF   <- namesDF0  |> tolower()
+  inName    <- inputName |> tolower()
+  inputDf   <- inputDf   |> set_names(namesDf)
+  ### Check if there is a match
   checkVCol <- valCol %in% namesDF
   vColMatch <- namesDF[checkVCol]
   nMatches  <- vColMatch |> length()
   ### Check if there are any string matches, and get number of matches
   if(!nMatches) {
     ### Messages
-    msg_vcol0 <- paste0("Column ", "\"", valCol, "\"", " not found in ", inputName, "file data!")
-    msg_vcol1 <- paste0("Looking for columns with matches to the string ", "\"", inputName, "\"", "...")
+    msg_vcol0 <- paste0("Column ", "\"", valCol, "\"", " not found in ", inName0, "file data!")
+    msg_vcol1 <- paste0("Looking for columns with matches to the string ", "\"", inName0, "\"", "...")
     msg1_i |> paste0(msg_vcol0) |> message()
     # msg2_i |> paste0(msg_vcol1) |> message()
     ### Look for matches
-    checkVCol <- namesDF |> tolower() |> str_detect(inputName |> tolower())
-    vColMatch <- namesDF[checkVCol]
-    nMatches  <- vColMatch |> length()
-    matches2  <- nMatches > 1
+    checkVCol1 <- namesDF |> str_detect(inName)
+    vColMatch1 <- namesDF[checkVCol1]
+    nMatches1  <- vColMatch1 |> length()
+    matches1   <- nMatches1 > 1
     ### If matches, check if there are more than once match
-    if(nMatches) {
+    if(nMatches1) {
       ### Messages
-      msg_vcol2 <- paste0(nMatches, " match", matches2 |> ifelse("es", ""), " found!")
+      msg_vcol2 <- paste0(nMatches1, " match", matches1 |> ifelse("es", ""), " found!")
       msg1_i |> paste0(msg_vcol1, msg_vcol2) |> message()
       ### If number of matches is greater than one and doTemp:
-      if(matches2) {
+      if(matches1) {
         ### - If doTemp:
         ###     - First, look for "conus" string and, if found, use that one
         ###     - If not, check for "global" string and, if found, use that one
         ###     - Otherwise, use first column
         if(doTemp) {
-          ### Find CONUS, global
-          findConus  <- vColMatch |> tolower() |> str_detect("conus")
-          findGlobal <- vColMatch |> tolower() |> str_detect("global")
-          ### Columns
-          vColConus  <- vColMatch[findConus]
-          vColGlobal <- vColMatch[findGlobal]
-          ### Number of matches
-          nConus     <- vColConus  |> length()
-          nGlobal    <- vColGlobal |> length()
-          ### Matched column
-          vColMatch  <- case_when(
-            nConus  ~ vColConus [1],
-            nGlobal ~ vColGlobal[1],
-            .default = vColMatch[1]
-          ) ### End case_when
-          ### Update tempType
-          tempType   <- case_when(
-            nGlobal ~ "global",
-            .default = "conus"
-          ) ### End case_when
-          ### Remove values
-          ### c("find", "vCol", "n") |> map(function(x, y=c("conus", "global")){ x |> paste0(y)}) |> unlist()
-          rm(findConus, vColConus, nConus)
-          rm(findGlobal, vColGlobal, nGlobal)
+          ### Try to match based on the tempType
+          findTemp   <- vColMatch1 |> str_detect(tempType)
+          vColMatch2 <- vColMatch1[findTemp]
+          nMatches2  <- vColMatch2 |> length()
+          matches2   <- nMatches2 > 1
+          ### If no matches found, message user and change type
+          if(!matches2) {
+            tempType <- ("conus" %in% tempType) |> ifelse("global", "conus")
+            findTemp   <- vColMatch1 |> str_detect(tempType)
+            vColMatch2 <- vColMatch1[findTemp]
+            nMatches2  <- vColMatch2 |> length()
+            matches2   <- nMatches2 > 1
+            if(matches2) {
+              msg_vcol3 <- paste0("Only a match for `tempType=", tempType, "` found! Changing `tempType`...")
+              msg2_i |> paste0(msg_vcol1, msg_vcol3) |> message()
+              rm(msg_vcol3)
+            } ### End if(matches2)
+          } ### End if(!matches2)
+          ### Update matched column
+          vColMatch <- vColMatch2
+          rm(findTemp, vColMatch2, nMatches2, matches2)
+          # ### Find CONUS, global
+          # findConus  <- vColMatch1 |> str_detect("conus")
+          # findGlobal <- vColMatch1 |> str_detect("global")
+          # ### Which columns
+          # cConus     <- findConus  |> which()
+          # cGlobal    <- findGlobal |> which()
+          # cMatch     <- cConus |> c(cGlobal) |> sort() |> first()
+          # ### Number of columns
+          # nConus     <- findConus  |> which() |> length()
+          # nGlobal    <- findGlobal |> which() |> length()
+          # ### Columns
+          # vColConus  <- vColMatch[findConus]
+          # vColGlobal <- vColMatch[findGlobal]
+          # ### Number of matches
+          # nConus     <- vColConus  |> length()
+          # nGlobal    <- vColGlobal |> length()
+          # ### Matched column
+          # vColMatch  <- case_when(
+          #   nConus  ~ vColConus [1],
+          #   nGlobal ~ vColGlobal[1],
+          #   .default = vColMatch[1]
+          # ) ### End case_when
+          # vColMatch2 <- vColMatch1[cMatch2]
+          # ### Update tempType
+          # tempType   <- case_when(
+          #   cConus >
+          #   nGlobal ~ "global",
+          #   .default = "conus"
+          # ) ### End case_when
+          # ### Remove values
+          # ### c("find", "vCol", "n") |> map(function(x, y=c("conus", "global")){ x |> paste0(y)}) |> unlist()
+          # rm(findConus, vColConus, nConus)
+          # rm(findGlobal, vColGlobal, nGlobal)
         } ### End if(doTemp)
 
         ### - Else if doPop:
@@ -360,35 +437,38 @@ check_valCols <- function(
         ###     - Otherwise, use first column
         else if(doPop) {
           ### Find matches
-          findState <- vColMatch |> tolower() |> str_detect("state")
-          findReg   <- vColMatch |> tolower() |> str_detect("reg")
-          findConus <- vColMatch |> tolower() |> str_detect("conus")
-          findNat   <- vColMatch |> tolower() |> str_detect("nat")
+          findState <- vColMatch1 |> str_detect("state")
+          findReg   <- vColMatch1 |> str_detect("reg")
+          findConus <- vColMatch1 |> str_detect("conus")
+          findNat   <- vColMatch1 |> str_detect("nat")
           ### Columns
-          vColState <- vColMatch[findState]
-          vColReg   <- vColMatch[findReg  ]
-          vColConus <- vColMatch[findConus]
-          vColNat   <- vColMatch[findNat  ]
+          vColState <- vColMatch1[findState]
+          vColReg   <- vColMatch1[findReg  ]
+          vColConus <- vColMatch1[findConus]
+          vColNat   <- vColMatch1[findNat  ]
           ### Number of matches
           nState    <- vColState |> length()
           nReg      <- vColReg
           nConus    <- vColConus
           nNat      <- vColNat
           ### Matched column
-          vColMatch  <- case_when(
+          vColMatch2 <- case_when(
             nState  ~ vColState[1],
             nReg    ~ vColReg  [1],
             nConus  ~ vColConus[1],
             nNat    ~ vColNat  [1],
-            .default = vColMatch[1]
+            .default = vColMatch1[1]
           ) ### End case_when
           ### Update popArea
           popArea    <- case_when(
+            nState  ~ "state",
             nReg    ~ "regional",
             nConus  ~ "conus",
             nNat    ~ "national",
-            .default = "state"
+            .default = popArea
           ) ### End case_when
+          ### Update matched column
+          vColMatch <- vColMatch2
           ### Remove values
           rm(findState, vColState, nState)
           rm(findReg  , vColReg  , nReg  )
@@ -398,29 +478,40 @@ check_valCols <- function(
 
         ### - Otherwise, use first column
         else{
-          vColMatch <- vColMatch[1]
+          vColMatch <- vColMatch1[1]
           ### End if(doTemp)
         } ### End else
       } ### End if(matches2)
 
       ### Rename columns
-      inputDf <- inputDf |> rename_at(c(vColMatch), ~valCol)
+      cMatch0   <- namesDF %in% vColMatch
+      renameAt0 <- namesDF[cMatch0]
+      renameTo0 <- valCol0
+      doRename0 <- !(renameTo0 %in% renameAt0)
+      if(doRename0) {
+        msg_vcol2 <- paste0("Using column ", "\"", renameAt0, "\"", ", and renaming to ", "\"", renameTo0, "\"", "...")
+        msg1_i |> paste0(msg_vcol2) |> message()
+        # inputDf <- inputDf |> rename_at(c(vColMatch), ~valCol)
+        inputDf <- inputDf |> rename_at(c(renameAt0), ~renameTo0)
+      } ### End if(doRename0)
     } else{
       ### Message user
       msg_vcol2 <- paste0("No matches found! Exiting...")
       msg1_i |> paste0(msg_vcol1, msg_vcol2) |> message()
       return()
     } ### End if(nMatches)
-    ### Message user
-    renameVal <- doPop |> ifelse("state_", "") |> paste0(valCol)
-    msg_vcol2 <- paste0("Using column ", "\"", vColMatch, "\"", ", and renaming to ", "\"", renameVal, "\"", "...")
-    msg1_i |> paste0(msg_vcol2) |> message()
+    # ### Message user
+    # renameVal <- doPop |> ifelse("state_", "") |> paste0(valCol)
+    # msg_vcol2 <- paste0("Using column ", "\"", vColMatch, "\"", ", and renaming to ", "\"", renameVal, "\"", "...")
+    # msg1_i |> paste0(msg_vcol2) |> message()
   } ### End if(hasValCol) (no else)
 
   ###### Return ######
   list0 <- list()
   list0[["inputDf" ]] <- inputDf
   list0[["valCol"  ]] <- valCol
+  # if(doTemp) list0[["tempType"]] <- tempType
+  # if(doPop ) list0[["popArea" ]] <- popArea
   list0[["tempType"]] <- tempType
   list0[["popArea" ]] <- popArea
   return(list0)
@@ -438,15 +529,34 @@ check_input_data <- function(
     popArea   = "state",  ### One of: c("state", "regional", "conus", "national")
     yearMin   = NULL,     ### Check min year
     yearMax   = NULL,     ### Check max year
+    module    = "fredi",  #### "fredi", "sv", or "methane"
     msgLevel  = 2         ### Level of messaging
 ){
+
+  ###### Load Data from FrEDI ######
+  # ### Get objects from FrEDI name space
+  # ### Get input scenario info: co_info
+  # ### Get state info: co_states
+  # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
+  # co_states <- "co_states"     |> get_frediDataObj("frediData")
+  # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
+  ###### Module Options ######
+  module0    <- module |> tolower()
+  inNames0   <- c("gdp", "pop")
+  doMain     <- "fredi"   %in% module0
+  doSV       <- "sv"      %in% module0
+  doFredi    <- doMain | doSV
+  doMethane  <- "methane" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "package")
+  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
-  co_states <- "co_states"     |> get_frediDataObj("frediData")
+  co_states <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
 
@@ -606,18 +716,17 @@ check_input_data <- function(
   if(!checkVals) {
     msg2_i |> paste0(msg_i5) |> message()
     msg2_i |> paste0("Values for column ", valCol, " must be ", msgRange, ".") |> message()
-    if(doTemp){
+    if(doTemp) {
       paste0("Values outside of range will be changed to 0 and result in 0 impacts") |> message()
 
-      inputDf <- inputDf |>
-        mutate(
-          !!sym(valCol)  := case_when(
-            !!sym(valCol) < 0 ~ 0,
-            !!sym(valCol) > 30 ~ 0,
-            !!sym(valCol) >= 0 & !!sym(valCol) <= 30 ~ !!sym(valCol)
-          )
-        )
-    }
+      inputDf <- inputDf |> mutate(
+        !!sym(valCol)  := case_when(
+          !!sym(valCol) < 0 ~ 0,
+          !!sym(valCol) > 30 ~ 0,
+          !!sym(valCol) >= 0 & !!sym(valCol) <= 30 ~ !!sym(valCol)
+        ) ### End case_when
+      ) ### End mutate
+    } ### End if doTemp
 
     if(!doTemp){
       msg2_i |> paste0(msg_i2) |> message()
@@ -627,7 +736,7 @@ check_input_data <- function(
 
   ###### Format Columns ######
   ### If checks pass, convert all id columns to character
-  mutate0   <- idCol |> (function(x, y=yearCol_i){x[!(x %in% y)]})()
+  mutate0   <- idCol   |> get_matches(y=yearCol_i, matches=F)
   inputDf   <- inputDf |> mutate_at(c(mutate0), as.character)
 
 
@@ -655,7 +764,7 @@ check_input_data <- function(
         inputDf <- inputDf |> filter(!(region |> str_detect("National")))
         inputDf <- inputDf |> filter(!(region |> is.na()))
       } ### End if("region" %in% (inputDf |> names()))
-      inputDf <- inputDf |> calc_import_pop(popArea=popArea)
+      inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module)
       inputDf <- inputDf |> filter(!(region |> is.na()))
     } ### End if(doCalc)
     ### Rename state population column
@@ -679,6 +788,7 @@ check_input_data <- function(
 calc_import_pop <- function(
     df0      = NULL,    ### Population data
     popArea  = "state", ### One of: c("state", "regional", "conus", "national")
+    module   = "fredi",  #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
 ){
   ###### Messages ######
@@ -689,26 +799,44 @@ calc_import_pop <- function(
   msg_i1   <- paste0("Calculating state population from ") |> paste0(popArea, " level...")
 
   ###### Load Data from FrEDI ######
+  # ### Get objects from FrEDI name space
+  # ### Get input scenario info: co_info
+  # ### Get state info: co_states
+  # # fListNames <- c("co_states")
+  # # sListNames <- c("df_ratios")
+  # # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
+  # # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
+  # co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
+  # co_states <- "co_states"    |> get_frediDataObj("frediData")
+  # df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
+  # # df_ratios  <- df_ratios |> as_tibble()
+
+  ###### Module Options ######
+  module0    <- module |> tolower()
+  inNames0   <- c("gdp", "pop")
+  doMain     <- "fredi"   %in% module0
+  doSV       <- "sv"      %in% module0
+  doFredi    <- doMain | doSV
+  doMethane  <- "methane" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "package")
+  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+
+  ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  # fListNames <- c("co_states")
-  # sListNames <- c("df_ratios")
-  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
-  co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  co_states <- "co_states"    |> get_frediDataObj("frediData")
-  df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
-  # df_ratios  <- df_ratios |> as_tibble()
+  co_states <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
   ###### Data Info ######
   hasPop   <- df0 |> length()
   namesPop <- df0 |> names()
-  namesSta <- co_states    |> names()
+  namesSta <- co_states |> names()
   namesRat <- df_ratios |> names()
 
   ### Join data with pop ratios
-  join0    <- namesPop |> (function(x, y=namesRat){x[x %in% y]})()
+  join0    <- namesPop |> get_matches(y=namesRat)
   df0      <- df0 |> left_join(df_ratios, by=c(join0))
   rm(join0)
 
@@ -746,10 +874,10 @@ calc_import_pop <- function(
   ###### Format Data ######
   ### Join data with region info, then check for columns, regions
   namesPop <- df0 |> names()
-  join0    <- namesPop  |> (function(x, y=namesSta){x[x %in% y]})()
+  join0    <- namesPop  |> get_matches(y=namesSta)
   df0      <- co_states |> left_join(df0, by=c(join0))
   df0      <- df0 |> filter_all(all_vars(!(. |> is.na())))
-  df0      <- df0 |> check_pop_regions(msgLevel = msgLevel)
+  df0      <- df0 |> check_pop_regions(module=module, msgLevel=msgLevel)
   popPass  <- !(df0 |> is.null())
 
   ### Select columns
