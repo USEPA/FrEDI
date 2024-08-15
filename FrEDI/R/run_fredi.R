@@ -338,7 +338,7 @@ run_fredi <- function(
 
   ### Input info
   inNames0     <- co_inputInfo |> pull(inputName)
-  inNames0 |> print()
+  # inNames0 |> print()
 
   ###### ** Input Defaults ######
   inputDefs    <- inNames0 |> map(function(name0){
@@ -368,7 +368,7 @@ run_fredi <- function(
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  inNames |> print()
+  # inNames |> print()
   # inputsList |> map(glimpse)
   # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
   inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
@@ -382,7 +382,7 @@ run_fredi <- function(
   inputsList   <- inputsList[inNames]
   hasAnyInputs <- inNames |> length()
   rm(inWhich)
-  inNames |> print()
+  # inNames |> print()
 
 
 
@@ -427,7 +427,9 @@ run_fredi <- function(
   ### - Make sure values are at correct range
   ### - Update in status list
   if(outputList){
-    statusList[["inputsList"]] <- inputsList |> map(function(df0){df0 |> length() |> as.logical() |> get_returnListStatus()}) |> set_names(inNames)
+    statusList[["inputsList"]] <- inputsList |> map(function(df0){
+      df0 |> length() |> as.logical() |> get_returnListStatus()
+    }) |> set_names(inNames)
     argsList  [["inputsList"]] <- inputsList
   } ### End if(outputList)
 
@@ -456,7 +458,7 @@ run_fredi <- function(
   ### Update values
   # inNames |> print()
   hasInputs    <- inNames      |> length()
-  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
+  # df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
 
   ### Iterate over list and format values
   if(hasInputs) {
@@ -474,7 +476,7 @@ run_fredi <- function(
         valCols0  = valCols0,
         minYear   = minYear,
         maxYear   = maxYear,
-        info0     = df_inputInfo
+        info0     = co_inputInfo
       ) ### End format_inputScenarios
     }) |> set_names(inNames)
   } ### End if(hasInputs)

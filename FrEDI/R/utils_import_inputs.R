@@ -515,7 +515,7 @@ check_input_data <- function(
     module    = "fredi",  #### "fredi", "sv", or "methane"
     msgLevel  = 2         ### Level of messaging
 ){
-  inputDf |> glimpse()
+  # inputDf |> glimpse()
 
   ###### Module Options ######
   module0    <- module |> tolower()
