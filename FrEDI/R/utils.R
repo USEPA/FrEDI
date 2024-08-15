@@ -306,7 +306,6 @@ format_inputScenarios <- function(
   msg_i1  <- "Creating " |> paste0(label0, " scenario from user inputs...")
   msg_i2  <- "No "       |> paste0(label0, " scenario provided...using default scenario...")
   msg_i   <- hasInput0 |> ifelse(msg_i1, msg_i2)
-  1 |> get_msgPrefix() |> paste0(msg_i) |> message()
 
   ### Info (need different info if calculating SLR from temperatures)
   doSlr   <- name0 %in% c("slr") & "temp_C" %in% (df0 |> names())
@@ -315,6 +314,9 @@ format_inputScenarios <- function(
   info1   <- info0  |> filter(inputName == name1)
   if(doSlr) {valCol0 <- info1  |> pull(valueCol)} else{valCol0 <- valCols0}
   yrRef0  <- info1  |> pull(ref_year)
+
+  if(doSlr) 1 |> get_msgPrefix() |> paste0("Creating ", label0 , " scenario from user temperature scenario...") |> message()
+  else      1 |> get_msgPrefix() |> paste0(msg_i) |> message()
 
   ### Format data
   select0 <- idCols0 |> c(valCol0) |> c("year") |> unique()
@@ -328,6 +330,7 @@ format_inputScenarios <- function(
     ### Zero out values if temp or slr
     doZero0 <- name0 %in% c("temp", "slr")
     if(doZero0) {
+      # df0 |> glimpse(); df0 |> pull(year) |> range() |> print(); yrRef0 |> print()
       df0 <- df0 |> filter(year > yrRef0)
       df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
       df0 <- df0 |> rbind(df1)
@@ -2305,6 +2308,7 @@ combine_driverScenarios <- function(
   rename0  <- c("modelType_id")
   renameTo <- c("modelType")
   info1    <- info1 |> rename_at(c(rename0), ~renameTo)
+  # info0 |> glimpse(); info1 |> glimpse(); df0 |> glimpse()
   rm(rename0, renameTo)
 
   ### Join info
