@@ -184,7 +184,7 @@ import_inputs <- function(
     # inputsList[["temp"]] <- NULL
     msg1 |> paste0(msgTemp) |> message()
     msg2 |> paste0("Dropping temp inputs from outputs.") |> message()
-    inputsList <- inputsList |> (function(list0, name0="temp"){list0[!((list0 |> names()) %in% name0)]})
+    inputsList <- inputsList |> (function(list0, name0="temp"){list0[!((list0 |> names()) %in% name0)]})()
     inNames    <- inputsList |> names()
   } ### End if(!tempValid)
 
@@ -204,7 +204,7 @@ import_inputs <- function(
     # inputsList[["pop"]] <- NULL
     msg1 |> paste0(msgPop)
     msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
-    inputsList <- inputsList |> (function(list0, name0="pop"){list0[!((list0 |> names()) %in% name0)]})
+    inputsList <- inputsList |> (function(list0, name0="pop"){list0[!((list0 |> names()) %in% name0)]})()
     inNames    <- inputsList |> names()
   } ### End if(!popValid)
 
@@ -253,7 +253,7 @@ import_inputs <- function(
   ###### Check the Inputs ######
   ### Message the user
   ### Use the input info to check the values make sense
-  if(hasInputs) msgN |> paste0(msg1, "Checking input values...") |> message()
+  if(nInputs) msgN |> paste0(msg1, "Checking input values...") |> message()
   inputsList <- list(
     inputName = inNames,
     inputDf   = inputsList,

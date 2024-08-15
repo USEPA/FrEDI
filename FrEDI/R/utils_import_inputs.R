@@ -132,7 +132,7 @@ run_fun_tryInput <- function(
   msg1_i <- get_msg_prefix(level=msgLevel + 1)
   msg2_i <- get_msg_prefix(level=msgLevel + 2)
   msg_i1 <- paste0("User specified ", inputName |> paste0("file"), "...")
-  msg_i2 <- paste0("File does not exist! Returning a null data frame for", inputName |> paste0("Input", "."))
+  msg_i2 <- paste0("File does not exist! Returning a null data frame for ", inputName |> paste0(" input", "."))
   msg_i3 <- paste0("Importing data from ", fileName, "...")
 
   ### Initialize data frame as a null value
