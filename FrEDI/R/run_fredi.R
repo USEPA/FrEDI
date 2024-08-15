@@ -8,7 +8,7 @@
 #'
 #' As of FrEDI Version 4.1.0, [FrEDI::run_fredi()] calculates impacts at the state-level for all available sectors.
 #'
-#' @param inputsList=NULL A list of named elements named elements (`names(inputsList) = c("gdp", "pop", "temp", "slr")`), each containing data frames of custom temperature, global mean sea level rise (GMSL), gross domestic product (GDP), and/or state-level population trajectories, respectively, over a continuous period in the range 2010 to 2300. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
+#' @param inputsList=list(gdp=NULL,pop=NULL,temp=NULL,slr=NULL) A list with named elements (`gdp`, `pop`, `temp`, and/or `slr`), each containing data frames of custom scenarios for gross domestic product (GDP), state-level population, temperature, and/or global mean sea level rise (GMSL) trajectories, respectively, over a continuous period. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population and GDP scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #'
 #' @param sectorList=NULL A character vector indicating a selection of sectors for which to calculate results (see [FrEDI::get_sectorInfo()]). If `NULL`, all sectors are included (i.e., `sectorList = get_sectorInfo()`).
 #'
@@ -32,7 +32,7 @@
 #'
 #' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with elements `"gdp"`, and `"pop"`, `"temp"`, and `"slr"``, with each containing a data frame with a custom scenario for temperature, GMSL, GDP, and state-level population, respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' If `inputsList = NULL`, [FrEDI::run_fredi()] uses defaults for temperature, SLR, GDP, and population. Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for list elements `temp`, `slr`, `gdp`, and `pop` containing data frames with custom scenarios for temperature, GMSL, GDP, and regional population, respectively. [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
+#' Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for named list elements -- `gdp`, `pop`, `temp`, and/or `slr` -- each containing a data frame with a custom scenario for GDP, and state population, temperature, and/or GMSL, respectively. If `inputsList = NULL` or `inputsList = list()` (default), [FrEDI::run_fredi()] uses default trajectories for temperature, SLR, GDP, and population see . [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
 #'
 #' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
 #'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from = "global")` (or by specifying [FrEDI::import_inputs]`(temptype = "global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
@@ -169,7 +169,7 @@
 #'
 #' @export
 #' @md
-#'list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL) |> (function(x){x |> set_names(x |> names())})
+#'
 #'
 #'
 #'
@@ -196,8 +196,8 @@ run_fredi <- function(
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Other values
-  co_sectors   <- "co_sectors"  |> get_frediDataObj("frediData")
-  co_modTypes  <- "co_modTypes" |> get_frediDataObj("frediData")
+  co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
+  co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
 
 
   ###### Set up the environment ######
@@ -316,8 +316,12 @@ run_fredi <- function(
   ###### ** Model Types List ######
   ### Which model types are in play based on sector selection
   modTypes0    <- co_sectors  |> filter(sector_label %in% sectorLbls) |> pull(modelType) |> unique()
-  modInputs0   <- co_modTypes |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
-  modInputs0   <- c("gdp", "pop") |> c(modInputs0)
+  # sectorLbls |> print(); modTypes0 |> print(); co_modTypes |> glimpse()
+  modTypesIn0  <- co_modTypes |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
+  doSlr        <- ("slr" %in% modTypes0)
+  doGcm        <- ("gcm" %in% modTypes0)
+  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
+  modInputs0   <- c("gdp", "pop") |> c(modTypesIn)
 
   ###### Inputs List ######
   ###### ** Input Info ######
@@ -328,21 +332,15 @@ run_fredi <- function(
   co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
   co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
-  # co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear |> rep(df_inputInfo |> nrow()))
+
+  ### Initialize subset
+  df_inputInfo <- co_inputInfo
 
   ### Input info
   inNames0     <- co_inputInfo |> pull(inputName)
-
+  inNames0 |> print()
 
   ###### ** Input Defaults ######
-  # inputDefs    <- list()
-  # gcamDefault  <- "gcam_default" |> get_frediDataObj("scenarioData")
-  # inputDefs[["temp"]] <- gcamDefault |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
-  # inputDefs[["slr" ]] <- gcamDefault |> select(c("year", "slr_cm"))
-  # inputDefs[["gdp" ]] <- "gdp_default" |> get_frediDataObj("scenarioData")
-  # inputDefs[["pop" ]] <- "pop_default" |> get_frediDataObj("scenarioData")
-  # # inputDefs    <- inputDefs[inNames]
-  # rm(gcamDefault)
   inputDefs    <- inNames0 |> map(function(name0){
     ### Objects
     doTemp0  <- "temp" %in% name0
@@ -351,7 +349,7 @@ run_fredi <- function(
     df0      <- defName0 |> get_frediDataObj("scenarioData")
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
-    if(doTemp0) df0 <- df0 |> select(c("year", "slr_cm"      )) |> rename_at(c("temp_C_conus"), ~"temp_C")
+    if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
     ### Return
     return(df0)
   }) |> set_names(inNames0)
@@ -360,17 +358,18 @@ run_fredi <- function(
   ###### ** Input Columns ######
   ### Get list with expected name of columns used for unique ids
   ### Get list with expected name of column containing values
-  valCols0     <- co_inputInfo |> pull(valueCol) |> as.list() |> set_names(inNames)
-  idCols0      <- list(valCols0=valCols, df0=inputDefs[inNames]) |> pmap(function(valCols0, df0){
+  valCols0     <- co_inputInfo |> pull(valueCol) |> as.list() |> set_names(inNames0)
+  idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
     df0 |> names() |> get_matches(y=valCols0, matches=F)
-  }) |> set_names(inNames)
+  }) |> set_names(inNames0)
 
 
   ###### ** Valid Inputs & Input Info ######
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  inWhich      <- inNames |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+  # inNames |> print()
+  inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
   ### Filter to values that are not NULL
   inputsList   <- inputsList[inWhich]
   inNames      <- inputsList |> names()
@@ -378,37 +377,19 @@ run_fredi <- function(
   ### Check which input names are in the user-provided list
   inWhich      <- inNames %in% inNames0
   inNames      <- inNames[inWhich]
-  rm(inWhich)
-
-  ### Filter to valid inputs & get info
-  ### Reorganize inputs list
-  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames)
-  inNames      <- df_inputInfo |> pull(inputName)
-  inputsList   <- inputsList[inNames]
   hasAnyInputs <- inNames |> length()
+  rm(inWhich)
+  # inNames |> print()
 
 
-  # ### Input info
-  # inNames      <- df_inputInfo |> pull(inputName)
-  # inIDCols     <- get_import_inputs_idCols(popArea="state") |> (function(list0){
-  #   list0[["pop"]] <- c("region", "state", "postal")
-  #   return(list0)
-  # })()
-  # inValCols    <- df_inputInfo |> pull(valueCol) |> str_replace("pop", "state_pop")
-  # inValCols    <- df_inputInfo |> pull(valueCol)
-  # inMinYears   <- df_inputInfo |> pull(min_year)
-  # inMaxYears   <- df_inputInfo |> pull(max_year)
-  #
-  #
-  # ### Make sure all inputs are present
-  # ### Check whether inputs are present
-  # inputsList   <- inNames     |> paste0("Input") |> map(function(name_i){  inputsList[[name_i]]}) |> set_names(inNames)
-  # hasInputs    <- inNames     |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
-  # whichInputs  <- hasInputs   |> unlist()
-  # hasAnyInputs <- whichInputs |> length()
-  # # whichInputs |> print()
 
   ###### ** Check Inputs ######
+  ### Filter to valid inputs & get info
+  ### Reorganize inputs list
+  df_inputInfo <- df_inputInfo |> filter(inputName %in% inNames)
+  inNames      <- df_inputInfo |> pull(inputName)
+  inputsList   <- inputsList[inNames]
+
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
     inputsList <- list(
@@ -422,66 +403,76 @@ run_fredi <- function(
     ) |>
       pmap(check_input_data) |>
       set_names(inNames)
+
+    ### Check again for inputs
+    ### Filter to values that are not NULL
+    inWhich      <- inNames |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    inputsList   <- inputsList[inWhich]
+    inNames      <- inputsList |> names()
+    rm(inWhich)
   } ### if(hasAnyInputs)
 
-  ### Check again for inputs
-  ### Filter to values that are not NULL
-  inWhich      <- inNames |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-  inputsList   <- inputsList[inWhich]
-  inNames      <- inputsList |> names()
-  rm(inWhich)
 
+  ### Update list
   ### For each input:
   ### - Make sure values are at correct range
   ### - Update in status list
-  # if(outputList){    for(name_i in inNames) {
-  #   name_i1  <- name_i |> paste0("Input")
-  #   inputs_i <- inputsList[[name_i]]
-  #   inputs_i <- inputs_i |> filter(year >= minYear, year <= maxYear)
-  #   inputsList[[name_i]] <- inputs_i
-  #   ### Add lists
-  #   statusList[["inputsList"]][[name_i1]] <- hasInputs[[name_i]] |> get_returnListStatus()
-  #   argsList  [["inputsList"]][[name_i1]] <- inputs_i
-  #   returnList[["scenarios" ]][[name_i ]] <- inputs_i
-  #   rm(name_i)
-  # } } ### End if(outputList)
   if(outputList){
-    statusList[["inputsList"]] <- inputsList |> map(function(df0){df0 |> length |> as.logical() |> get_returnListStatus()}) |> set_names(inNames)
+    statusList[["inputsList"]] <- inputsList |> map(function(df0){df0 |> length() |> as.logical() |> get_returnListStatus()}) |> set_names(inNames)
     argsList  [["inputsList"]] <- inputsList
   } ### End if(outputList)
 
 
-
   ### If SLR is missing but user provided a temperature scenario, update with new temperature scenario
-  doSlr0       <- ("slr" %in% inNames0) & !("slr" %in% inNames0) & ("temp" %in% inNames)
-  if(doSlr0) inputsList[["slr"]] <- inputsList[["temp"]]
-  rm(doSlr0)
+  ### If there are no GCM sectors, drop temperature
+  if(doSlr) {
+    if(!("slr" %in% inNames)) {
+      if("temp" %in% inNames) {
+        inputsList <- inputsList |> (function(list0, y="slr"){list0[!((list0 |> names() %in% y))]})()
+        inputsList[["slr"]] <- inputsList[["temp"]]
+        inNames    <- inNames |> c("slr") |> unique()
+      } ### End if("temp" %in% inNames)
+    } ### End if(!("slr" %in% inNames))
+  } ### End if(doSlr0)
+  inNames |> print()
+
+  ### If !doGcm, drop temperatures if present
+  if(!doGcm) {
+    inputsList <- inputsList |> (function(list0, y="temp"){list0[!((list0 |> names() %in% y))]})()
+    inputDefs  <- inputDefs  |> (function(list0, y="temp"){list0[!((list0 |> names() %in% y))]})()
+    inNames0   <- inNames0   |> get_matches(y="temp", matches=F)
+    inNames    <- inNames    |> get_matches(y="temp", matches=F)
+  } ### End if(!doGcm)
   ### Update values
-  inNames      <- inputsList |> names()
-  hasInputs    <- inNames    |> length()
-  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames)
+  # inNames |> print()
+  hasInputs    <- inNames      |> length()
+  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
 
   ### Iterate over list and format values
-  inputsList   <- list(
-    name0     = inNames,
-    df0       = inputsList,
-    hasInput0 = TRUE |> rep(inNames |> length()),
-    idCols0   = idCols0 [inNames],
-    valCols0  = valCols0[inNames]
-  ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
-    df0 |> format_inputScenarios(
-      name0     = name0,
-      hasInput0 = hasInput0,
-      idCols0   = idCols0,
-      valCols0  = valCols0,
-      minYear   = minYear,
-      maxYear   = maxYear,
-      info0     = df_inputInfo
-    ) ### End format_inputScenarios
-  }) |> set_names(inNames)
+  if(hasInputs) {
+    inputsList   <- list(
+      name0     = inNames,
+      df0       = inputsList,
+      hasInput0 = TRUE |> rep(inNames |> length()),
+      idCols0   = idCols0 [inNames],
+      valCols0  = valCols0[inNames]
+    ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
+      df0 |> format_inputScenarios(
+        name0     = name0,
+        hasInput0 = hasInput0,
+        idCols0   = idCols0,
+        valCols0  = valCols0,
+        minYear   = minYear,
+        maxYear   = maxYear,
+        info0     = df_inputInfo
+      ) ### End format_inputScenarios
+    }) |> set_names(inNames)
+  } ### End if(hasInputs)
 
   ### Update inputs with defaults if values are missing
-  inputsList   <- inputDefs |> (function(list0, list1=inputsList){
+  inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
+    ### Filter to list
+    list0    <- list0[names0]
     ### List names
     names0   <- list0 |> names()
     ### If user provided a scenario, update defaults list
@@ -493,29 +484,17 @@ run_fredi <- function(
     } ### End for(name_i in names0)
     ### Return
     return(list0)
-  })() |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
-    df0 |> filter(year >= minYear, year <= maxYear)
-  }) |> set_names(inputDefs |> names())
-  ### Update values
+  })()
+  # inputsList |> names() |> print()
+  ### Update names
   inNames      <- inputsList |> names()
+  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames)
 
-  ### For each input:
-  ### - Make sure values are at correct range
-  ### - Update in status list
-  # if(outputList){    for(name_i in inNames) {
-  #   name_i1  <- name_i |> paste0("Input")
-  #   inputs_i <- inputsList[[name_i]]
-  #   inputs_i <- inputs_i |> filter(year >= minYear, year <= maxYear)
-  #   inputsList[[name_i]] <- inputs_i
-  #   ### Add lists
-  #   statusList[["inputsList"]][[name_i1]] <- hasInputs[[name_i]] |> get_returnListStatus()
-  #   argsList  [["inputsList"]][[name_i1]] <- inputs_i
-  #   returnList[["scenarios" ]][[name_i ]] <- inputs_i
-  #   rm(name_i)
-  # } } ### End if(outputList)
-  # if(outputList){
-  #   returnList[["scenarios" ]] <- inputsList
-  # } ### End if(outputList)
+  ### Filter to lists
+  inputsList   <- inputsList |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
+    df0 |> filter(year >= minYear, year <= maxYear)
+  }) |> set_names(inNames)
+
 
 
   ###### Scenarios ######
@@ -527,6 +506,8 @@ run_fredi <- function(
   rm(filter0)
   # return(df_drivers)
 
+
+
   ###### ** Socioeconomic Driver Scenario ######
   ### Get GDP and Population scenarios
   gdp_df       <- inputsList[["gdp"]]
@@ -534,10 +515,6 @@ run_fredi <- function(
   ### Convert region to region IDs
   pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
   pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
-  # ### ### Subset to desired range
-  # pop_df       <- pop_df |> filter(year >= minYear, year <= maxYear)
-  # gdp_df       <- gdp_df |> filter(year >= minYear, year <= maxYear)
-  # # return(pop_df)
   ### Calculate national population and update national scenario
   seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   # return(seScenario)
