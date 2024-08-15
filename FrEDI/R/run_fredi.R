@@ -368,8 +368,10 @@ run_fredi <- function(
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  # inNames |> print()
-  inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+  inNames |> print()
+  # inputsList |> map(glimpse)
+  # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+  inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
   ### Filter to values that are not NULL
   inputsList   <- inputsList[inWhich]
   inNames      <- inputsList |> names()
@@ -377,9 +379,10 @@ run_fredi <- function(
   ### Check which input names are in the user-provided list
   inWhich      <- inNames %in% inNames0
   inNames      <- inNames[inWhich]
+  inputsList   <- inputsList[inNames]
   hasAnyInputs <- inNames |> length()
   rm(inWhich)
-  # inNames |> print()
+  inNames |> print()
 
 
 
@@ -388,25 +391,31 @@ run_fredi <- function(
   ### Reorganize inputs list
   df_inputInfo <- df_inputInfo |> filter(inputName %in% inNames)
   inNames      <- df_inputInfo |> pull(inputName)
-  inputsList   <- inputsList[inNames]
 
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
+    ### Min ad max years
+    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
+    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
+
+    ### Check inputs
     inputsList <- list(
       inputName = inNames,
-      inputDf   = inputsList,
-      idCol     = idCols0 [inNames],
-      valCol    = valCols0[inNames],
-      yearMin   = df_inputInfo |> pull(min_year),
-      yearMax   = df_inputInfo |> pull(max_year),
+      inputDf   = inputsList[inNames],
+      idCol     = idCols0   [inNames],
+      valCol    = valCols0  [inNames],
+      yearMin   = minYrs0,
+      yearMax   = maxYrs0,
       module    = "fredi" |> rep(inNames |> length())
     ) |>
       pmap(check_input_data) |>
       set_names(inNames)
+    rm(minYrs0, maxYrs0)
 
     ### Check again for inputs
     ### Filter to values that are not NULL
-    inWhich      <- inNames |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    # inWhich      <- inNames |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
     inputsList   <- inputsList[inWhich]
     inNames      <- inputsList |> names()
     rm(inWhich)
@@ -434,7 +443,7 @@ run_fredi <- function(
       } ### End if("temp" %in% inNames)
     } ### End if(!("slr" %in% inNames))
   } ### End if(doSlr0)
-  inNames |> print()
+  # inNames |> print()
 
   ### If !doGcm, drop temperatures if present
   if(!doGcm) {
@@ -443,6 +452,7 @@ run_fredi <- function(
     inNames0   <- inNames0   |> get_matches(y="temp", matches=F)
     inNames    <- inNames    |> get_matches(y="temp", matches=F)
   } ### End if(!doGcm)
+
   ### Update values
   # inNames |> print()
   hasInputs    <- inNames      |> length()
@@ -492,7 +502,8 @@ run_fredi <- function(
 
   ### Filter to lists
   inputsList   <- inputsList |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
-    df0 |> filter(year >= minYear, year <= maxYear)
+    df0 <- df0 |> filter(year >= minYear, year <= maxYear)
+    return(df0)
   }) |> set_names(inNames)
 
 

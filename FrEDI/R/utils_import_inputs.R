@@ -341,27 +341,27 @@ check_valCols <- function(
   ###### Check Values ######
   ### Initial names and values
   valCol0   <- valCol
-  namesDF0  <- inputDf |> names()
+  namesDf0  <- inputDf |> names()
   inName0   <- inputName
   ### Convert to lowercase
   valCol    <- valCol    |> tolower()
-  namesDF   <- namesDF0  |> tolower()
+  namesDf   <- namesDf0  |> tolower()
   inName    <- inputName |> tolower()
   inputDf   <- inputDf   |> set_names(namesDf)
   ### Check if there is a match
-  checkVCol <- valCol %in% namesDF
-  vColMatch <- namesDF[checkVCol]
+  checkVCol <- valCol %in% namesDf
+  vColMatch <- namesDf[checkVCol]
   nMatches  <- vColMatch |> length()
   ### Check if there are any string matches, and get number of matches
   if(!nMatches) {
     ### Messages
-    msg_vcol0 <- paste0("Column ", "\"", valCol, "\"", " not found in ", inName0, "file data!")
+    msg_vcol0 <- paste0("Column ", "\"", valCol0, "\"", " not found in ", inName0, "file data!")
     msg_vcol1 <- paste0("Looking for columns with matches to the string ", "\"", inName0, "\"", "...")
     msg1_i |> paste0(msg_vcol0) |> message()
     # msg2_i |> paste0(msg_vcol1) |> message()
     ### Look for matches
-    checkVCol1 <- namesDF |> str_detect(inName)
-    vColMatch1 <- namesDF[checkVCol1]
+    checkVCol1 <- namesDf |> str_detect(inName)
+    vColMatch1 <- namesDf[checkVCol1]
     nMatches1  <- vColMatch1 |> length()
     matches1   <- nMatches1 > 1
     ### If matches, check if there are more than once match
@@ -377,59 +377,35 @@ check_valCols <- function(
         ###     - Otherwise, use first column
         if(doTemp) {
           ### Try to match based on the tempType
-          findTemp   <- vColMatch1 |> str_detect(tempType)
-          vColMatch2 <- vColMatch1[findTemp]
+          # tempType |> print(); vColMatch1 |> print()
+          findTemp2  <- vColMatch1 |> str_detect(tempType)
+          vColMatch2 <- vColMatch1[findTemp2]
           nMatches2  <- vColMatch2 |> length()
-          matches2   <- nMatches2 > 1
+          matches2   <- nMatches2 > 0
           ### If no matches found, message user and change type
           if(!matches2) {
-            tempType <- ("conus" %in% tempType) |> ifelse("global", "conus")
-            findTemp   <- vColMatch1 |> str_detect(tempType)
-            vColMatch2 <- vColMatch1[findTemp]
+            tempType2  <- ("conus" %in% tempType) |> ifelse("global", "conus")
+            tempType2 |> print()
+            findTemp2  <- vColMatch1 |> str_detect(tempType2)
+            vColMatch2 <- vColMatch1[findTemp2]
             nMatches2  <- vColMatch2 |> length()
-            matches2   <- nMatches2 > 1
+            matches2   <- nMatches2 > 0
             if(matches2) {
-              msg_vcol3 <- paste0("Only a match for `tempType=", tempType, "` found! Changing `tempType`...")
+              msg_vcol3 <- paste0("Only a match for `tempType=", tempType2, "` found! Changing `tempType`...")
               msg2_i |> paste0(msg_vcol1, msg_vcol3) |> message()
+              tempType  <- tempType2
               rm(msg_vcol3)
             } ### End if(matches2)
+            rm(tempType2)
+          } else{
+            msg_vcol3 <- paste0("Match for `tempType=", tempType, "` found!")
+            msg2_i |> paste0(msg_vcol1, msg_vcol3) |> message()
+            rm(msg_vcol3)
           } ### End if(!matches2)
           ### Update matched column
-          vColMatch <- vColMatch2
-          rm(findTemp, vColMatch2, nMatches2, matches2)
-          # ### Find CONUS, global
-          # findConus  <- vColMatch1 |> str_detect("conus")
-          # findGlobal <- vColMatch1 |> str_detect("global")
-          # ### Which columns
-          # cConus     <- findConus  |> which()
-          # cGlobal    <- findGlobal |> which()
-          # cMatch     <- cConus |> c(cGlobal) |> sort() |> first()
-          # ### Number of columns
-          # nConus     <- findConus  |> which() |> length()
-          # nGlobal    <- findGlobal |> which() |> length()
-          # ### Columns
-          # vColConus  <- vColMatch[findConus]
-          # vColGlobal <- vColMatch[findGlobal]
-          # ### Number of matches
-          # nConus     <- vColConus  |> length()
-          # nGlobal    <- vColGlobal |> length()
-          # ### Matched column
-          # vColMatch  <- case_when(
-          #   nConus  ~ vColConus [1],
-          #   nGlobal ~ vColGlobal[1],
-          #   .default = vColMatch[1]
-          # ) ### End case_when
-          # vColMatch2 <- vColMatch1[cMatch2]
-          # ### Update tempType
-          # tempType   <- case_when(
-          #   cConus >
-          #   nGlobal ~ "global",
-          #   .default = "conus"
-          # ) ### End case_when
-          # ### Remove values
-          # ### c("find", "vCol", "n") |> map(function(x, y=c("conus", "global")){ x |> paste0(y)}) |> unlist()
-          # rm(findConus, vColConus, nConus)
-          # rm(findGlobal, vColGlobal, nGlobal)
+          # vColMatch1 |> print(); vColMatch2 |> print()
+          vColMatch <- vColMatch2[1]
+          rm(findTemp2, vColMatch2, nMatches2, matches2)
         } ### End if(doTemp)
 
         ### - Else if doPop:
@@ -484,34 +460,41 @@ check_valCols <- function(
       } ### End if(matches2)
 
       ### Rename columns
-      cMatch0   <- namesDF %in% vColMatch
-      renameAt0 <- namesDF[cMatch0]
-      renameTo0 <- valCol0
+      # vColMatch |> print(); namesDf  |> print(); namesDf0 |> print()
+      cMatch0   <- (namesDf %in% vColMatch) |> which()
+      # cMatch0 |> print(); namesDf [-cMatch0] |> print(); namesDf0[-cMatch0] |> print()
+      # namesDf[cMatch0] |> c(valCol, valCol0) |> print()
+      renameAt0 <- namesDf[cMatch0]
+      renameTo0 <- valCol
       doRename0 <- !(renameTo0 %in% renameAt0)
+      # namesDf [-cMatch0] |> print(); namesDf0[-cMatch0] |> print()
       if(doRename0) {
-        msg_vcol2 <- paste0("Using column ", "\"", renameAt0, "\"", ", and renaming to ", "\"", renameTo0, "\"", "...")
+        msg_vcol2 <- paste0("Using column ", "\"", namesDf0[cMatch0], "\"", ", and renaming to ", "\"", valCol0, "\"", "...")
         msg1_i |> paste0(msg_vcol2) |> message()
         # inputDf <- inputDf |> rename_at(c(vColMatch), ~valCol)
         inputDf <- inputDf |> rename_at(c(renameAt0), ~renameTo0)
       } ### End if(doRename0)
+      ### Update columns
+      namesDf [cMatch0] <- valCol
+      namesDf0[cMatch0] <- valCol0
     } else{
       ### Message user
       msg_vcol2 <- paste0("No matches found! Exiting...")
       msg1_i |> paste0(msg_vcol1, msg_vcol2) |> message()
       return()
     } ### End if(nMatches)
-    # ### Message user
-    # renameVal <- doPop |> ifelse("state_", "") |> paste0(valCol)
-    # msg_vcol2 <- paste0("Using column ", "\"", vColMatch, "\"", ", and renaming to ", "\"", renameVal, "\"", "...")
-    # msg1_i |> paste0(msg_vcol2) |> message()
   } ### End if(hasValCol) (no else)
+
+  ###### Rename Columns ######
+  renameAt0 <- namesDf
+  renameTo0 <- namesDf0
+  # renameAt0 |> print(); renameTo0 |> print(); inputDf |> glimpse()
+  inputDf   <- inputDf |> rename_at(c(renameAt0), ~renameTo0)
 
   ###### Return ######
   list0 <- list()
   list0[["inputDf" ]] <- inputDf
-  list0[["valCol"  ]] <- valCol
-  # if(doTemp) list0[["tempType"]] <- tempType
-  # if(doPop ) list0[["popArea" ]] <- popArea
+  list0[["valCol"  ]] <- valCol0
   list0[["tempType"]] <- tempType
   list0[["popArea" ]] <- popArea
   return(list0)
@@ -532,14 +515,7 @@ check_input_data <- function(
     module    = "fredi",  #### "fredi", "sv", or "methane"
     msgLevel  = 2         ### Level of messaging
 ){
-
-  ###### Load Data from FrEDI ######
-  # ### Get objects from FrEDI name space
-  # ### Get input scenario info: co_info
-  # ### Get state info: co_states
-  # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData")
-  # co_states <- "co_states"     |> get_frediDataObj("frediData")
-  # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  inputDf |> glimpse()
 
   ###### Module Options ######
   module0    <- module |> tolower()
@@ -555,15 +531,15 @@ check_input_data <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
 
   ### Get columns
   select0   <- c("inputName", "inputMin", "inputMax")
-  co_info <- co_info |> select(all_of(select0))
-  co_info <- co_info |> rename_at(c("inputName"), ~"inputType")
+  co_info   <- co_info |> select(all_of(select0))
+  co_info   <- co_info |> rename_at(c("inputName"), ~"inputType")
   rm(select0)
 
 
@@ -596,7 +572,7 @@ check_input_data <- function(
   msgNA     <- paste0("Filtering out missing values...")
   inputDf   <- inputDf |> filter_all(all_vars(!(. |> is.na())))
   nrowData  <- inputDf |> nrow()
-  namesDF   <- inputDf |> names()
+  namesDf   <- inputDf |> names()
   # hasData   <- !nullData & nullData |> ifelse(0, nrowData)
   hasData   <- nullData |> ifelse(0, nrowData)
   if(hasData) {msgN |> paste0(msg0_i, msg_i1) |> message()} else {return(NULL)}
@@ -641,14 +617,14 @@ check_input_data <- function(
   if(!hasValCol) return()
 
   ### Check other columns
-  namesDF   <- inputDf |> names()
-  whichCols <- cols_i %in% namesDF
+  namesDf   <- inputDf |> names()
+  whichCols <- cols_i %in% namesDf
   checkCols <- whichCols |> all()
 
   ### If columns don't pass, message user and return NULL
   ### Otherwise, continue
   if(!checkCols) {
-    msg2_i |> paste0(msg_i3) |> paste0(namesDF[whichCols] |> paste(collapse=", "), "!") |> message()
+    msg2_i |> paste0(msg_i3) |> paste0(namesDf[whichCols] |> paste(collapse=", "), "!") |> message()
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkCols)
@@ -825,7 +801,7 @@ calc_import_pop <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
