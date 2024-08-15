@@ -90,9 +90,9 @@
 #'
 #' @format A data frame with 4,459 rows and 5 columns:
 #' \describe{
-#'   \item{region}{Region of the contiguous U.S. ("Midwest", "Northeast", "Northern Plains", "Northwest", "Southeast", "Southern Plains", and "Southwest") or Alaska or Hawaii.}
-#'   \item{state }{One of 48 contiguous U.S. states or the District of Columbia, Alaska, or Hawaii}
-#'   \item{postal}{Two-letter postal code abbreviation associated with the state (e.g., "AK" for Alaska)}
+#'   \item{region}{Region of the U.S.: one of `"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, or `"Southwest"` for CONUS states, or `"Alaska"` and `"Hawaii"` for Alaska and Hawaii, respectively.}
+#'   \item{state }{U.S. states or the District of Columbia}
+#'   \item{postal}{Two-letter postal code abbreviation associated with the state (e.g., `"AL"` for Alabama)}
 #'   \item{year  }{Year}
 #'   \item{pop   }{State population for associated region and year}
 #' }
