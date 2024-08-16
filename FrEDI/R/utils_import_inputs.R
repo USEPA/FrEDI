@@ -9,43 +9,9 @@ get_msg_prefix <- function(
   return(msgP)
 }
 
-###### get_import_inputs_valCols ######
-### 2024.06.18: eventually move to FrEDI Data
-### Info about which column contains input values
-# get_import_inputs_valCols <- function(
-#     popArea = "state" ### One of: c("state", "regional", "area", "national")
-# ){
-#   ### Initialize list
-#   list0    <- list()
-#   list0[["temp"]] <- c("temp_C")
-#   list0[["slr" ]] <- c("slr_cm")
-#   list0[["gdp" ]] <- c("gdp_usd")
-#   list0[["pop" ]] <- c("pop")
-#   ### Return
-#   return(list0)
-# }
 
 ###### get_import_inputs_idCols ######
 ### Info about which column contains info on region
-# get_import_inputs_idCols <- function(
-#     popArea = "state" ### One of: c("state", "regional", "area", "national")
-# ){
-#   ### Initialize lists
-#   list0    <- list()
-#   # listPop0 <- list()
-#   list0[["temp"]] <- c("year")
-#   list0[["slr" ]] <- c("year")
-#   list0[["gdp" ]] <- c("year")
-#   list0[["pop" ]] <- list()
-#   list0[["pop" ]][["national"]] <- c("year")
-#   list0[["pop" ]][["conus"   ]] <- c("year")
-#   list0[["pop" ]][["regional"]] <- c("region", "year")
-#   list0[["pop" ]][["state"   ]] <- c("state", "year")
-#   ### Update population value column based on pop area
-#   list0[["pop" ]] <- list0[["pop"]][[popArea]]
-#   ### Return
-#   return(list0)
-# }
 get_import_inputs_idCols <- function(
     type0  = c("gdp", "pop", "temp", "slr"),
     popArea = "state" ### One of: c("state", "regional", "area", "national")
@@ -53,12 +19,15 @@ get_import_inputs_idCols <- function(
   ### Initialize vectors
   cols0  <- c("year")
   cols1  <- c()
-  ### Check if population
+  ### Check if population or ozone
   doPop0   <- "pop" %in% type0
+  doO3     <- "o3"  %in% type0
   doState0 <- c("state") %in% c(popArea)
   doReg0   <- c("regional") %in% c(popArea)
   if(doPop0 & (doState0 | doReg0)) {
     cols1 <- doState0 |> ifelse("state", "region")
+  } else if(doO3) {
+    cols1 <- c("state", "model")
   } ### End if(doPop0)
   ### Update list
   cols0   <- cols1 |> c(cols0)
