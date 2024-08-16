@@ -321,6 +321,7 @@ run_fredi <- function(
   doSlr        <- ("slr" %in% modTypes0)
   doGcm        <- ("gcm" %in% modTypes0)
   if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
+  else      modTypesIn <- modTypesIn0
   modInputs0   <- c("gdp", "pop") |> c(modTypesIn)
 
   ###### Inputs List ######
