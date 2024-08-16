@@ -368,6 +368,9 @@ format_inputScenarios <- function(
     if("pop" %in% name0) {
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T) |> ungroup()
+    } else if("o3" %in% name0) {
+      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
+      df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=T) |> ungroup()
     } else {
       df0  <- df0 |> mutate(region = "NationalTotal")
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2) |> ungroup()
