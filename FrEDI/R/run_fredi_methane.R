@@ -10,7 +10,7 @@
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 ### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi_methane <- function(
-    inputsList = list(o3 = NULL, ch4=NULL, nox=NULL, gdp=NULL, pop=NULL), ### List of inputs
+    inputsList = list(ch4=NULL, nox=NULL, gdp=NULL, pop=NULL), ### List of inputs
     elasticity = 1,    ### Override value for elasticity for economic values
     maxYear    = 2100,
     thru2300   = FALSE,
@@ -24,6 +24,9 @@ run_fredi_methane <- function(
   fredi_config <- rDataList[["fredi_config"]]
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
+  calc_NOx_factor <- listMethane$package$coefficients$NOx      [["fun0"]]
+  calc_mortality  <- listMethane$package$coefficients$Mortality[["fun0"]]
+  NOxFactor0      <- listMethane$package$coefficients$NOx$NOxFactor0
 
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
@@ -92,103 +95,215 @@ run_fredi_methane <- function(
 
 
   ###### Scenarios ######
-  ###### ** Check Inputs ######
+  ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  df_inputInfo <- listMethane[["package"]][["co_inputInfo"]]
+  co_inputInfo <- "co_inputInfo" |> get_frediDataObj(listSub="package", listName="listMethane")
+  # co_inputInfo <- co_inputInfo |> filter(!inputName %in% "o3")
+  co_inputInfo <- co_inputInfo |> mutate(ref_year = 2020)
+  co_inputInfo <- co_inputInfo |> mutate(min_year = 2020)
+  co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
 
-  ### Input defaults
-  inputDefs    <- list()
-  gcamDefault  <- "gcam_default" |> get_frediDataObj("scenarioData")
-  inputDefs[["temp"]] <- gcamDefault |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
-  inputDefs[["slr" ]] <- gcamDefault |> select(c("year", "slr_cm"))
-  inputDefs[["gdp" ]] <- "gdp_default" |> get_frediDataObj("scenarioData")
-  inputDefs[["pop" ]] <- "pop_default" |> get_frediDataObj("scenarioData")
-  rm(gcamDefault)
+  ### Initialize subset
+  df_inputInfo <- co_inputInfo
 
   ### Input info
+  inNames0     <- co_inputInfo |> pull(inputName)
+  # inNames0 |> print()
+
+
+  ###### ** Input Columns ######
+  ### Get list with expected name of columns used for unique ids
+  ### Get list with expected name of column containing values
+  valCols0     <- co_inputInfo |> pull(valueCol) |> as.list() |> set_names(inNames0)
+  idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
+    df0 |> names() |> get_matches(y=valCols0, matches=F)
+  }) |> set_names(inNames0)
+
+
+
+  ###### ** Input Defaults ######
+  # listMethane$package$ch4_default <- listMethane$package$ch4_default |> rename(CH4_ppbv = delta_ch4)
+  # listMethane$package$nox_default <- listMethane$package$nox_default |> rename(NOx_Mt   = NOx      )
+  # listMethane$package$o3_response <- listMethane$package$o3_default
+  # listMethane$package$o3_default  <- listMethane$package$ch4_default |> left_join(
+  #   "nox_default" |> get_frediDataObj(listSub="package", listName="listMethane"),
+  #   by=c("year")
+  # ) |>
+  #   mutate(O3_pptv_per_ppbv = NOx_Mt |> calc_NOx_factor()) |>
+  #   mutate(O3_pptv_per_ppbv = O3_pptv_per_ppbv / NOxFactor0) |>
+  #   mutate(O3_pptv_per_ppbv = O3_pptv_per_ppbv * CH4_ppbv) |>
+  #   select(c("year", "O3_pptv_per_ppbv"))
+
+  inputDefs    <- inNames0 |> map(function(name0){
+    ### Get defaults
+    defName0 <- name0    |> paste0("_default")
+    df0      <- defName0 |> get_frediDataObj(listSub="package", listName="listMethane")
+    ### Format defaults
+    do_ch4_0 <- "ch4" %in% name0
+    do_nox_0 <- "nox" %in% name0
+    do_o3_0  <- "o3"  %in% name0
+    if(do_ch4_0) df0 <- df0 |> rename(CH4_ppbv = delta_ch4)
+    if(do_nox_0) df0 <- df0 |> rename(NOx_Mt   = NOx      )
+    if(do_o3_0 ) {
+      df0 <- df0 |> rename(O3_pptv_per_ppbv = o3_response)
+      df0 <- df0 |> select(c(idCols0[["o3"]], valCols0[["o3"]]))
+    } ### End if(do_o3_0 )
+    ### Return
+    return(df0)
+  }) |> set_names(inNames0)
+
+
+
+
+
+  ###### ** Valid Inputs & Input Info ######
+  ### Figure out which inputs are not null, and filter to that list
+  ### inputsList Names
+  inNames      <- inputsList |> names()
+  # inNames |> print(); inputsList |> map(glimpse)
+  inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+  ### Filter to values that are not NULL
+  inputsList   <- inputsList[inWhich]
+  inNames      <- inputsList |> names()
+  rm(inWhich)
+  ### Check which input names are in the user-provided list
+  inWhich      <- inNames %in% inNames0
+  inNames      <- inNames[inWhich]
+  inputsList   <- inputsList[inNames]
+  hasAnyInputs <- inNames |> length()
+  rm(inWhich)
+  # inNames |> print()
+
+
+  ### Need scenario for CH4 & NOX or O3:
+  ### If has O3, use O3. Otherwise, use CH4
+  has_o3     <- inputsList[["o3" ]] |> nrow()
+  has_ch4    <- inputsList[["ch4"]] |> nrow()
+  if(has_o3) {
+    inputsList <- inputsList |> (function(list0, y=c("ch4", "nox")){list0[!((list0 |> names() %in% y))]})()
+    inputDefs  <- inputDefs  |> (function(list0, y=c("ch4", "nox")){list0[!((list0 |> names() %in% y))]})()
+    inNames0   <- inNames0   |> get_matches(y=c("ch4", "nox"), matches=F)
+    inNames    <- inNames    |> get_matches(y=c("ch4", "nox"), matches=F)
+  } else {
+    inputsList <- inputsList |> (function(list0, y=c("o3")){list0[!((list0 |> names() %in% y))]})()
+    inputDefs  <- inputDefs  |> (function(list0, y=c("o3")){list0[!((list0 |> names() %in% y))]})()
+    inNames0   <- inNames0   |> get_matches(y=c("o3"), matches=F)
+    inNames    <- inNames    |> get_matches(y=c("o3"), matches=F)
+  } ### End if(has_o3)
+
+
+  ###### ** Check Inputs ######
+  ### Filter to valid inputs & get info
+  ### Reorganize inputs list
+  df_inputInfo <- df_inputInfo |> filter(inputName %in% inNames)
   inNames      <- df_inputInfo |> pull(inputName)
-  inIDCols     <- get_import_inputs_idCols(popArea="state") |> (function(list0){
-    list0[["pop"]] <- c("region", "state", "postal")
-    return(list0)
-  })()
-  # inValCols    <- df_inputInfo |> pull(valueCol) |> str_replace("pop", "state_pop")
-  inValCols    <- df_inputInfo |> pull(valueCol)
-  inMinYears   <- df_inputInfo |> pull(min_year)
-  inMaxYears   <- df_inputInfo |> pull(max_year)
-
-
-  ### Make sure all inputs are present
-  ### Check whether inputs are present
-  inputsList   <- inNames     |> paste0("Input") |> map(function(name_i){  inputsList[[name_i]]}) |> set_names(inNames)
-  hasInputs    <- inNames     |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
-  whichInputs  <- hasInputs   |> unlist()
-  hasAnyInputs <- whichInputs |> length()
-  # whichInputs |> print()
 
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
+    ### Min ad max years
+    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
+    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
+
+    ### Check inputs
     inputsList <- list(
       inputName = inNames,
-      inputDf   = inputsList,
-      idCol     = inIDCols,
-      valCol    = inValCols,
-      yearMin   = inMinYears,
-      yearMax   = inMaxYears
+      inputDf   = inputsList[inNames],
+      idCol     = idCols0   [inNames],
+      valCol    = valCols0  [inNames],
+      yearMin   = minYrs0,
+      yearMax   = maxYrs0,
+      module    = "methane" |> rep(inNames |> length())
     ) |>
       pmap(check_input_data) |>
       set_names(inNames)
+    rm(minYrs0, maxYrs0)
+
+    ### Check again for inputs
+    ### Filter to values that are not NULL
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    inputsList   <- inputsList[inWhich]
+    inNames      <- inputsList |> names()
+    rm(inWhich)
   } ### if(hasAnyInputs)
 
-  ### Check again for inputs
-  hasInputs    <- inNames |> map(function(name_i){!(inputsList[[name_i]] |> is.null())}) |> set_names(inNames)
 
-  ### Update inputs with defaults if values are missing
-  for(name_i in inNames) { if(inputsList[[name_i]] |> is.null()) {
-    if("slr" %in% name_i) inputsList[[name_i]] <- inputsList[["temp"]]
-    else                  inputsList[[name_i]] <- inputDefs[[name_i]]
-    rm(name_i)
-  } } ### End if, end for
-
-  ### Iterate over list and calculate values
-  inputsList   <- list(
-    name0     = inNames,
-    df0       = inputsList,
-    hasInput0 = hasInputs,
-    idCols0   = inIDCols,
-    valCols0  = inValCols
-  ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
-    df0 |> format_inputScenarios(
-      name0     = name0,
-      hasInput0 = hasInput0,
-      idCols0   = idCols0,
-      valCols0  = valCols0,
-      minYear   = minYear,
-      maxYear   = maxYear,
-      info0     = df_inputInfo
-    )
-  }) |> set_names(inNames)
-
-
+  ### Update list
   ### For each input:
   ### - Make sure values are at correct range
   ### - Update in status list
-  if(outputList){    for(name_i in inNames) {
-    name_i1  <- name_i |> paste0("Input")
-    inputs_i <- inputsList[[name_i]]
-    inputs_i <- inputs_i |> filter(year >= minYear, year <= maxYear)
-    inputsList[[name_i]] <- inputs_i
-    ### Add lists
-    statusList[["inputsList"]][[name_i1]] <- hasInputs[[name_i]] |> get_returnListStatus()
-    argsList  [["inputsList"]][[name_i1]] <- inputs_i
-    returnList[["scenarios" ]][[name_i ]] <- inputs_i
-    rm(name_i)
-  } } ### End if(outputList)
+  if(outputList){
+    statusList[["inputsList"]] <- inputsList |> map(function(df0){
+      df0 |> length() |> as.logical() |> get_returnListStatus()
+    }) |> set_names(inNames)
+    argsList  [["inputsList"]] <- inputsList
+  } ### End if(outputList)
+
+
+  ### Update values
+  # inNames |> print()
+  hasInputs    <- inNames |> length()
+
+  ### Iterate over list and format values
+  if(hasInputs) {
+    inputsList   <- list(
+      name0     = inNames,
+      df0       = inputsList,
+      hasInput0 = TRUE |> rep(inNames |> length()),
+      idCols0   = idCols0 [inNames],
+      valCols0  = valCols0[inNames]
+    ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
+      df0 |> format_inputScenarios(
+        name0     = name0,
+        hasInput0 = hasInput0,
+        idCols0   = idCols0,
+        valCols0  = valCols0,
+        minYear   = minYear,
+        maxYear   = maxYear,
+        info0     = co_inputInfo
+      ) ### End format_inputScenarios
+    }) |> set_names(inNames)
+  } ### End if(hasInputs)
+
+  ### Update inputs with defaults if values are missing
+  inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
+    ### Filter to list
+    list0    <- list0[names0]
+    ### List names
+    names0   <- list0 |> names()
+    ### If user provided a scenario, update defaults list
+    for(name_i in names0) {
+      df_i     <- list1[[name_i]]
+      has_i    <- df_i |> length()
+      if(has_i) list0[[name_i]] <- df_i
+      rm(name_i, df_i, has_i)
+    } ### End for(name_i in names0)
+    ### Return
+    return(list0)
+  })()
+  # inputsList |> names() |> print()
+  ### Update names
+  inNames      <- inputsList |> names()
+  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames)
+
+  ### Filter to lists
+  inputsList   <- inputsList |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
+    df0 <- df0 |> filter(year >= minYear, year <= maxYear)
+    return(df0)
+  }) |> set_names(inNames)
+
 
 
 
   ###### ** Physical Driver Scenario  ######
-  ### Select columns
+  ### Need scenario for CH4 & NOX or O3
+  has_ch4    <- inputsList[["ch4"]] |> nrow()
+  has_nox    <- inputsList[["nox"]] |> nrow()
+  has_o3     <- inputsList[["o3" ]] |> nrow()
+  has_driver <- (has_ch4 & has_nox) | has_o3
+  if(!has_driver) {
+    1 |> get_msgPrefix(newline=T) |> paste0("Warning! `run_fredi_methane()` requires :") |> message()
+  }
   select0    <- c("inputName")
   filter0    <- c("temp", "slr")
   df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
