@@ -139,8 +139,7 @@ run_fredi_methane <- function(
     ### Return
     return(df0)
   }) |> set_names(inNames0)
-
-
+  # inputDefs$o3 |> glimpse()
 
 
 
@@ -165,25 +164,29 @@ run_fredi_methane <- function(
 
   ### Need scenario for CH4 & NOX or O3:
   ### If has O3, use O3. Otherwise, use CH4
-  has_o3     <- !(inputsList[["o3" ]] |> is.null())
-  has_o3 |> print()
-  # has_ch4    <- !(inputsList[["ch4"]] |> is.null())
+  has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
+  has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
   if(has_o3) {
-    inputsList <- inputsList |> (function(list0, y=c("ch4", "nox")){list0[!((list0 |> names() %in% y))]})()
-    inputDefs  <- inputDefs  |> (function(list0, y=c("ch4", "nox")){list0[!((list0 |> names() %in% y))]})()
-    inNames0   <- inNames0   |> get_matches(y=c("ch4", "nox"), matches=F)
-    inNames    <- inNames    |> get_matches(y=c("ch4", "nox"), matches=F)
-  } else {
-    inputsList <- inputsList |> (function(list0, y=c("o3")){list0[!((list0 |> names() %in% y))]})()
-    inputDefs  <- inputDefs  |> (function(list0, y=c("o3")){list0[!((list0 |> names() %in% y))]})()
-    inNames0   <- inNames0   |> get_matches(y=c("o3"), matches=F)
-    inNames    <- inNames    |> get_matches(y=c("o3"), matches=F)
+    drop0      <- c("ch4", "nox")
+    inputsList <- inputsList |> (function(list0, y=drop0){list0[!((list0 |> names() %in% y))]})()
+    inputDefs  <- inputDefs  |> (function(list0, y=drop0){list0[!((list0 |> names() %in% y))]})()
+    inNames0   <- inNames0   |> get_matches(y=drop0, matches=F)
+    inNames    <- inNames    |> get_matches(y=drop0, matches=F)
+    rm(drop0)
+  } else if(has_ch4) {
+    drop0      <- c("o3")
+    inputsList <- inputsList |> (function(list0, y=drop0){list0[!((list0 |> names() %in% y))]})()
+    inputDefs  <- inputDefs  |> (function(list0, y=drop0){list0[!((list0 |> names() %in% y))]})()
+    inNames0   <- inNames0   |> get_matches(y=drop0, matches=F)
+    inNames    <- inNames    |> get_matches(y=drop0, matches=F)
+    rm(drop0)
   } ### End if(has_o3)
 
 
   ###### ** Check Inputs ######
   ### Filter to valid inputs & get info
   ### Reorganize inputs list
+  # inputDefs |> names() |> print()
   df_inputInfo <- df_inputInfo |> filter(inputName %in% inNames)
   inNames      <- df_inputInfo |> pull(inputName)
 
@@ -285,10 +288,9 @@ run_fredi_methane <- function(
 
   ###### Physical Driver Scenario  ######
   ### Need scenario for CH4 & NOX or O3
-  has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
-  has_nox    <- inputsList[["nox"]] |> nrow() |> length()
   has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
-  has_driver <- (has_ch4 & has_nox) | has_o3
+  has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
+  has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
   } else{
@@ -298,16 +300,9 @@ run_fredi_methane <- function(
   } ### End if(has_o3)
 
   ### Get RR scalar and ozone response data
-  df_drivers <- df_drivers |> (function(df0, df1=listMethane$package$state_rrScalar){
-    ### Join data
-    join0 <- df0 |> names() |> get_matches(y=df1 |> names())
-    df0   <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
-    rm(df1)
-    ### Calculate O3 if methane and nox present
-    do_o3 <- df0 |> names() |> get_matches(y=c("CH4_ppbv")) |> length()
-    if(do_o3) df0 <- df0 |> calc_o3_conc()
-  })()
+  df_drivers <- df_drivers |> format_methane_drivers()
   # return(df_drivers)
+  # df_drivers |> glimpse()
 
   ###### Socioeconomic Driver Scenario ######
   ### Update values
@@ -319,9 +314,11 @@ run_fredi_methane <- function(
   ### Calculate national population and update national scenario
   natScenario  <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   rm(gdp_df, pop_df)
+  # natScenario |> glimpse()
 
   ### Calculate for CONUS values
   seScenario   <- natScenario |> calc_conus_scenario()
+  rm(natScenario)
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   # seScenario |> glimpse()
@@ -334,26 +331,45 @@ run_fredi_methane <- function(
   df_results   <- seScenario |> calc_methane_scalars(elasticity = elasticity)
   # return(df_results)
   # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
+  # df_results |> glimpse()
 
   ###### ** Calculate Mortality Rate ######
-  df_results <- df_results |> calc_mortality()
+  df_results <- df_results |> calc_methane_mortality()
+  # df_results |> glimpse()
 
   ###### ** Calculate Excess Mortality ######
-  df_results <- df_results |> (function(df0, df1=df_drivers){
-    ### Join data with drivers
-    join0 <- df0 |> names() |> get_matches(y=df1 |> names())
-    df0   <- df0 |> left_join(df1, by=join0)
-    rm(df1)
-    ### Calculate excess mortality
-    df0   <- df0 |> mutate(physical_impacts = pop * respMrate * state_mortScalar * O3_pptv)
-    ### Calculate annual impacts
-    df0   <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
-  })()
+  df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
+  # df_results |> glimpse()
 
 
   ###### Format Results ######
   ### Add in model info
   paste0("Formatting results", "...") |> message()
+
+  ### Add values
+  move0      <- c("physicalmeasure")
+  after0     <- c("econScalarName")
+  df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
+  df_results <- df_results |> relocate(all_of(move0), .after=all_of(after0))
+  rm(move0, after0)
+
+  ### Adjust model
+  join0      <- c("model")
+  renameAt0  <- join0 |> paste0("_label")
+  select0    <- c(join0) |> c(renameAt0)
+  me_models  <- listMethane$package$co_models |> select(all_of(select0))
+  df_results <- df_results |> left_join(me_models, by=join0)
+  df_results <- df_results |> select(-any_of(join0))
+  df_results <- df_results |> rename_at(c(renameAt0), ~join0)
+  rm(join0, select0, renameAt0)
+
+  ### Drop values
+  idCols0    <- c("region", "state", "postal", "model") |> c("year")
+  valCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap", "physicalmeasure", "physical_impacts", "annual_impacts")
+  select0    <- idCols0    |> c(valCols0)
+  arrange0   <- idCols0
+  df_results <- df_results |> select(all_of(select0))
+  df_results <- df_results |> arrange_at(c(arrange0))
 
 
   ###### Return Object ######
