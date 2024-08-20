@@ -147,12 +147,13 @@ interpolate_annual <- function(
   if (byModel) {modelCols0 <- c("model")} else{modelCols0 <- c()}
   ##### Columns
   dataCols  <- data |> names()
+  defCols   <- c(stateCols0) |> c(modelCols0) |> c("year")
   defCols   <- c("region") |> c(stateCols0) |> c(modelCols0) |> c("year")
-  # defCol0   <- dataCols[!(dataCols %in% defCols)][1]
+  # # defCol0   <- dataCols[!(dataCols %in% defCols)][1]
   defCol0   <- dataCols |> get_matches(y=defCols, matches=FALSE) |> first()
   column0   <- column   |> is.null() |> ifelse(defCol0, column)
   # othCols   <- dataCols[!(dataCols %in% c(defCols, column0))]
-  othCols   <- dataCols |> get_matches(y=defCols |> c(column0), matches=FALSE) |> first()
+  othCols   <- dataCols |> get_matches(y=defCols |> c(column0), matches=FALSE)
   # defCol0 |> print(); column0 |> print()
   # data |> glimpse(); dataCols |> print()
   rm(defCol0)
@@ -194,12 +195,14 @@ interpolate_annual <- function(
 
   ### Get IDs
   ### Subset data
-  group0 <- "region" |> c(stateCols0, modelCols0)
-  group0 <- data |> select(any_of(group0))
-  # group0 <- data[,"region" |> c(stateCols0, modelCols0)]
+  groupCol0 <- defCols |> get_matches(y=c("year"), matches=F)
+  group0    <- data |> select(any_of(groupCol0))
+  # group0   <- data[,"region" |> c(stateCols0, modelCols0)]
   ### Get scenario IDs
-  group0 <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
-  data   <- data   |> mutate(group_id = group0)
+  group0    <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
+  data      <- data   |> mutate(group_id = group0)
+  # groupCol0 |> print(); data |> glimpse()
+  # data |> group_by_at(c(all_of(groupCol0), "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
 
   ### Iterate over groups
   groups0   <- data |> pull(group_id) |> unique()
@@ -334,7 +337,7 @@ format_inputScenarios <- function(
     yrs0 <- yrRef0:maxYear |> unique()
     if("pop" %in% name0) {
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
-      df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T) |> ungroup()
+      df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=F) |> ungroup()
     } else if("o3" %in% name0) {
       # "got here" |> print()
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()

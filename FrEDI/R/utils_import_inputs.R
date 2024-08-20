@@ -216,6 +216,7 @@ check_regions <- function(
   ### Join states, regions
   ### Drop region from states, rename region_label
   join0     <- c("region")
+  drop0     <- c("area", "us_area", "fips")
   if(doFredi) {
     renameAt0 <- c("region_id")
     renameTo0 <- c("region"   )
@@ -224,12 +225,14 @@ check_regions <- function(
     renameTo0 <- c()
   } ### End if(doFredi)
   co_region <- co_region |> rename_at(c(renameAt0), ~renameTo0)
+  co_region <- co_region |> select(-any_of(drop0))
+  co_states <- co_states |> select(-any_of(drop0))
   co_states <- co_states |> left_join(co_region, by=join0)
   rm(join0, renameAt0, renameTo0)
   ### Drop region, rename region label
   renameTo0 <- c("region")
   renameAt0 <- c(renameTo0)  |> paste0("_label")
-  drop0     <- c(renameTo0)  |> c("us_area", "fips")
+  drop0     <- c(renameTo0)
   co_states <- co_states |> select(-any_of(drop0))
   co_states <- co_states |> rename_at(c(renameAt0), ~renameTo0)
   # co_states$region |> unique() |> print()
