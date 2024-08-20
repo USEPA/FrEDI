@@ -429,8 +429,9 @@ run_fredi_methane <- function(
 
 
   ###### Return ######
-  ### Message
-  message("\n", "Finished", ".")
+  ### Message, clear unused memory, return
+  paste0("\n", "Finished", ".") |> message()
+  gc()
   return(returnObj)
 
 } ### End function

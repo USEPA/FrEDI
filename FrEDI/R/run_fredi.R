@@ -689,8 +689,9 @@ run_fredi <- function(
 
 
   ###### Return ######
-  ### Message
+  ### Message, clear unused memory, return
   message("\n", "Finished", ".")
+  gc()
   return(returnObj)
 
 } ### End function
