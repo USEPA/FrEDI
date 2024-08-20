@@ -147,13 +147,14 @@ interpolate_annual <- function(
   if (byModel) {modelCols0 <- c("model")} else{modelCols0 <- c()}
   ##### Columns
   dataCols  <- data |> names()
-  defCols   <- c("year", "region") |> c(stateCols0) |> c(modelCols0)
+  defCols   <- c("region") |> c(stateCols0) |> c(modelCols0) |> c("year")
   # defCol0   <- dataCols[!(dataCols %in% defCols)][1]
   defCol0   <- dataCols |> get_matches(y=defCols, matches=FALSE) |> first()
   column0   <- column   |> is.null() |> ifelse(defCol0, column)
   # othCols   <- dataCols[!(dataCols %in% c(defCols, column0))]
   othCols   <- dataCols |> get_matches(y=defCols |> c(column0), matches=FALSE) |> first()
   # defCol0 |> print(); column0 |> print()
+  # data |> glimpse(); dataCols |> print()
   rm(defCol0)
 
   ###### Format data
@@ -171,6 +172,7 @@ interpolate_annual <- function(
 
   ##### Regions
   addRegion <- !("region" %in% dataCols)
+  # addRegion |> print()
   if (addRegion) {data <- data |> mutate(region = region0)}
   rm(addRegion)
 
@@ -192,7 +194,9 @@ interpolate_annual <- function(
 
   ### Get IDs
   ### Subset data
-  group0 <- data[,"region" |> c(stateCols0, modelCols0)]
+  group0 <- "region" |> c(stateCols0, modelCols0)
+  group0 <- data |> select(any_of(group0))
+  # group0 <- data[,"region" |> c(stateCols0, modelCols0)]
   ### Get scenario IDs
   group0 <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
   data   <- data   |> mutate(group_id = group0)
@@ -213,66 +217,29 @@ interpolate_annual <- function(
     ### Return
     return(new_i)
   }) |> bind_rows()
-  # ### Iterate over states if byState=T
-  # ### Otherwise, iterate over regions
-  # if (byState) {
-  #   states0   <- data |> pull(state) |> unique()
-  #   df_interp <- states0 |> map(function(state_i){
-  #     ### Values
-  #     df_i     <- data |> filter(state==state_i)
-  #     x_i      <- df_i[["year" ]]
-  #     y_i      <- df_i[[column0]]
-  #     ### Approximate
-  #     new_i   <- approx(x=x_i, y=y_i, xout=years, rule=rule, method=method)
-  #     new_i   <- new_i |> as_tibble()
-  #     new_i   <- new_i |> rename_at(c(cols0), ~cols1)
-  #     new_i   <- new_i |> mutate(state=state_i)
-  #     # new_i |> names() |> print()
-  #     ### Return
-  #     return(new_i)
-  #   }) |> bind_rows()
-  # } else { ### By state
-  #   regions0  <- data |> pull(region) |> unique()
-  #   df_interp <- regions0 |> map(function(region_i){
-  #     ### Values
-  #     df_i     <- data |> filter(region==region_i)
-  #     x_i      <- df_i[["year" ]]
-  #     y_i      <- df_i[[column0]]
-  #     ### Approximate
-  #     new_i   <- approx(x=x_i, y=y_i, xout=years, rule=rule, method=method)
-  #     new_i   <- new_i |> as_tibble()
-  #     new_i   <- new_i |> rename_at(c(cols0), ~cols1)
-  #     new_i   <- new_i |> mutate(region = region_i)
-  #     # new_i |> names() |> print()
-  #     ### Return
-  #     return(new_i)
-  #   }) |> bind_rows()
-  # } ### End else
-  # # df_interp |> names() |> print()
 
+  ### Determine join
   ### Drop yCol from data
   # data |> glimpse(); df_interp |> glimpse(); cols1 |> print()
-  data   <- data |> select(-all_of(cols1))
-  ### Join with original data:
-  names0 <- data      |> names()
-  names1 <- df_interp |> names()
-  join0  <- names0    |> get_matches(y=names1)
-  doJoin <- (names0   |> length() > 0) & (join0 |> length() > 0)
-  ### Group data
-  data   <- data |> select(all_of(names0)) |> distinct()
+  names0 <- data |> names() |> get_matches(y=cols1, matches=F)
+  join0  <- names0 |> get_matches(y=df_interp |> names())
+  doJoin <- (names0 |> length() > 0) & (join0 |> length() > 0)
+  # doJoin |> print(); names0 |> print(); join0 |> print()
 
   ### Do join
   if(doJoin){
-    # df_interp |> glimpse(); data |> glimpse()
+    # data |> glimpse(); df_interp |> glimpse()
+    data <- data |> select(-all_of(cols1)) |> distinct()
     data <- data |> left_join(df_interp, by=c(join0))
   } else{
     data <- df_interp
   } ### End else
+  # data |> glimpse()
 
   ### Arrange data
   drop0    <- c("group_id")
-  arrange0 <- c(join0) |> c("year") |> unique() |> get_matches(y=drop0)
-  data     <- data |> select(any_of(drop0))
+  arrange0 <- c(join0) |> c("year") |> unique() |> get_matches(y=drop0, matches=F)
+  data     <- data |> select(-any_of(drop0))
   data     <- data |> arrange_at(c(arrange0))
 
   ### Return
@@ -369,6 +336,7 @@ format_inputScenarios <- function(
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T) |> ungroup()
     } else if("o3" %in% name0) {
+      # "got here" |> print()
       # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=T) |> ungroup()
     } else {
@@ -401,7 +369,7 @@ format_inputScenarios <- function(
       rm(df1)
     } ### End if(doSlr)
   } ### End if(hasInput0)
-
+  # df0 |> glimpse()
   ### Filter to appropriate years
   df0     <- df0 |> filter(year >= minYear) |> filter(year <= maxYear)
 

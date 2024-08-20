@@ -181,7 +181,7 @@ run_fredi_methane <- function(
     inNames    <- inNames    |> get_matches(y=drop0, matches=F)
     rm(drop0)
   } ### End if(has_o3)
-
+  # inNames |> print()
 
   ###### ** Check Inputs ######
   ### Filter to valid inputs & get info
@@ -217,7 +217,7 @@ run_fredi_methane <- function(
     inNames      <- inputsList |> names()
     rm(inWhich)
   } ### if(hasAnyInputs)
-
+  # inNames |> print()
 
   ### Update list
   ### For each input:
@@ -237,6 +237,11 @@ run_fredi_methane <- function(
 
   ### Iterate over list and format values
   if(hasInputs) {
+    ### Update idCols for population, o3 if present in outputs
+    doPop0       <- "pop" %in% inNames
+    doO3_0       <- "o3"  %in% inNames
+    if(doPop0) idCols0[["pop"]] <- c("region", "state", "postal") |> c(idCols0[["pop"]]) |> unique()
+    if(doO3_0) idCols0[["o3" ]] <- c("region", "state", "postal") |> c(idCols0[["o3" ]]) |> unique()
     inputsList   <- list(
       name0     = inNames,
       df0       = inputsList,
@@ -338,6 +343,7 @@ run_fredi_methane <- function(
   # df_results |> glimpse()
 
   ###### ** Calculate Excess Mortality ######
+  # df_drivers |> glimpse()
   df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
   # df_results |> glimpse()
 
@@ -349,22 +355,24 @@ run_fredi_methane <- function(
   ### Add values
   move0      <- c("physicalmeasure")
   after0     <- c("econScalarName")
+  df_results <- df_results |> mutate(module = "Methane")
   df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
   df_results <- df_results |> relocate(all_of(move0), .after=all_of(after0))
   rm(move0, after0)
 
-  ### Adjust model
+  # ### Adjust model
   join0      <- c("model")
   renameAt0  <- join0 |> paste0("_label")
   select0    <- c(join0) |> c(renameAt0)
   me_models  <- listMethane$package$co_models |> select(all_of(select0))
+  # me_models |> glimpse()
   df_results <- df_results |> left_join(me_models, by=join0)
   df_results <- df_results |> select(-any_of(join0))
   df_results <- df_results |> rename_at(c(renameAt0), ~join0)
   rm(join0, select0, renameAt0)
 
   ### Drop values
-  idCols0    <- c("region", "state", "postal", "model") |> c("year")
+  idCols0    <- c("module", "region", "state", "postal", "model") |> c("year")
   valCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap", "physicalmeasure", "physical_impacts", "annual_impacts")
   select0    <- idCols0    |> c(valCols0)
   arrange0   <- idCols0

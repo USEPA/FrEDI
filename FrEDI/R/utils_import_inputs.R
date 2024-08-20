@@ -178,20 +178,11 @@ check_inputs <- function(
 
 ###### check_pop_regions ######
 ### Check that all regions, states, present in data
-check_pop_regions <- function(
+check_regions <- function(
     df0,                ### Tibble with population info
     module   = "fredi", #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
 ){
-  ###### Load Data from FrEDI ######
-  ### Get objects from FrEDI name space
-  ### Get input scenario info: co_info
-  ### Get state info: co_states
-  # fListNames <- c("co_states")
-  # sListNames <- c("df_ratios")
-  # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
-
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
@@ -209,15 +200,14 @@ check_pop_regions <- function(
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
-
   ###### Messages ######
   msgN       <- "\n"
   msg0_i     <- get_msg_prefix(level=msgLevel)
   msg1_i     <- get_msg_prefix(level=msgLevel + 1)
   msg2_i     <- get_msg_prefix(level=msgLevel + 2)
-  msg_i1     <- paste0("Checking pop inputs for unique ")
-  msg_i2     <- paste0("Missing population data for the following " )
-  msg_i3     <- paste0("Dropping pop inputs from outputs.")
+  msg_i1     <- paste0("Checking inputs for unique ")
+  msg_i2     <- paste0("Missing input data for the following " )
+  msg_i3     <- paste0("Dropping inputs from outputs.")
 
   ###### Format Data ######
   ### Drop missing values
@@ -261,6 +251,7 @@ check_pop_regions <- function(
       newVals  <- dfCheck   |> pull(all_of(col_i)) |> unique()
       naVals   <- refVals   |> get_matches(y=newVals, matches=F)
       passVals <- (naVals |> length()) == 0
+      # naVals |> print()
 
       ### Message
       if(passVals) {
@@ -527,6 +518,7 @@ check_input_data <- function(
   ###### Conditionals ######
   doTemp    <- "temp" %in% inputName
   doPop     <- "pop"  %in% inputName
+  doO3      <- "o3"   %in% inputName
   # doTemp |> print()
 
   ###### Check NULL ######
@@ -719,6 +711,27 @@ check_input_data <- function(
     # if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
   } ### End if(doPop)
 
+  ###### Check Regions ######
+  if(doPop | doO3) {
+    msg_reg <- paste0("Checking that all states, etc. are present...")
+    paste0(msg1_i, msg_reg) |> message()
+    ### Join data with region info, then check for columns, regions
+    drop0    <- c("fips")
+    move0    <- c("region", "state", "postal")
+    join0    <- inputDf   |> names() |> get_matches(y=co_states |> names()) |> get_matches(y=drop0, matches=F)
+    # inputDf |> glimpse(); co_states |> glimpse()
+    inputDf  <- co_states |> select(-any_of(drop0)) |> left_join(inputDf, by=c(join0))
+    inputDf  <- inputDf   |> relocate(all_of(move0))
+    inputDf  <- inputDf   |> filter_all(all_vars(!(. |> is.na())))
+    inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
+    # inputDf |> glimpse();
+    rm(join0, drop0)
+    regPass  <- !(inputDf |> is.null())
+    ### Message if error
+    msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
+    if(!regPass) paste0(msg1_i, msg_reg) |> message()
+  } ### End if(doPop | doO3)
+
 
   ###### Return ######
   paste0(msg0_i, "Values passed.") |> message()
@@ -733,7 +746,7 @@ check_input_data <- function(
 calc_import_pop <- function(
     df0      = NULL,    ### Population data
     popArea  = "state", ### One of: c("state", "regional", "conus", "national")
-    module   = "fredi",  #### "fredi", "sv", or "methane"
+    module   = "fredi", #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
 ){
   ###### Messages ######
@@ -742,19 +755,6 @@ calc_import_pop <- function(
   msg1_i   <- get_msg_prefix(level=msgLevel + 1)
   msg2_i   <- get_msg_prefix(level=msgLevel + 2)
   msg_i1   <- paste0("Calculating state population from ") |> paste0(popArea, " level...")
-
-  ###### Load Data from FrEDI ######
-  # ### Get objects from FrEDI name space
-  # ### Get input scenario info: co_info
-  # ### Get state info: co_states
-  # # fListNames <- c("co_states")
-  # # sListNames <- c("df_ratios")
-  # # for(name_i in fListNames){name_i |> assign(rDataList[["frediData"]][["data"]][[name_i]]); rm(name_i)}
-  # # for(name_i in sListNames){name_i |> assign(rDataList[["stateData"]][["data"]][[name_i]]); rm(name_i)}
-  # co_info   <- "co_inputScenarioInfo" |> get_frediDataObj("frediData")
-  # co_states <- "co_states"    |> get_frediDataObj("frediData")
-  # df_ratios <- "df_popRatios" |> get_frediDataObj("stateData")
-  # # df_ratios  <- df_ratios |> as_tibble()
 
   ###### Module Options ######
   module0    <- module |> tolower()
@@ -816,21 +816,15 @@ calc_import_pop <- function(
     if(doState) {df0 <- df0 |> mutate(pop = pop * state2reg)}
   } ### End if(calcPop)
 
-  ###### Format Data ######
-  ### Join data with region info, then check for columns, regions
-  namesPop <- df0 |> names()
-  join0    <- namesPop  |> get_matches(y=namesSta)
-  df0      <- co_states |> left_join(df0, by=c(join0))
-  df0      <- df0 |> filter_all(all_vars(!(. |> is.na())))
-  df0      <- df0 |> check_pop_regions(module=module, msgLevel=msgLevel)
-  popPass  <- !(df0 |> is.null())
 
   ### Select columns
   select0  <- c("region", "state", "postal", "year", "pop")
-  if(popPass) {
-    df0      <- df0 |> select(all_of(select0))
-    df0      <- df0 |> arrange_at(c(select0))
-  } ### End if(popPass)
+  df0      <- df0 |> select(all_of(select0))
+  df0      <- df0 |> arrange_at(c(select0))
+  # if(popPass) {
+  #   df0      <- df0 |> select(all_of(select0))
+  #   df0      <- df0 |> arrange_at(c(select0))
+  # } ### End if(popPass)
 
   ###### Return ######
   return(df0)
