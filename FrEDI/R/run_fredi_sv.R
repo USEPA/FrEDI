@@ -230,8 +230,11 @@ run_fredi_sv <- function(
 
 
   ###### ** Input Columns ######
-  ### Get list with expected name of columns used for unique ids
+  ### Get list with minimum, maximum years associated with inputs
+  ### Get lists with expected name of columns used for unique ids
   ### Get list with expected name of column containing values
+  minYrs0      <- inNames0 |> map(function(name0, df0=co_inputInfo){df0 |> filter(inputName==name0) |> pull(min_year) |> unique()})
+  maxYrs0      <- inNames0 |> map(function(name0, df0=co_inputInfo){df0 |> filter(inputName==name0) |> pull(max_year) |> unique()})
   valCols0     <- co_inputInfo |> pull(valueCol) |> as.list() |> set_names(inNames0)
   idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
     df0 |> names() |> get_matches(y=valCols0, matches=F)
@@ -242,7 +245,6 @@ run_fredi_sv <- function(
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
   inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
   ### Filter to values that are not NULL
   inputsList   <- inputsList[inWhich]
@@ -288,25 +290,24 @@ run_fredi_sv <- function(
 
     ### Unlist one level and format names
     inputsList <- inputsList |> unlist(recursive=FALSE)
-    inNames    <- inputsList |> names() |> str_replace(pattern=inNames |> names() |> paste0("\\.") |> paste(collapse="|"), "")
-    inputsList <- inputsList |> set_names(inNames)
-    idCols0    <- inNames |> map(function(name0, list0=idCols0     ){list0[[name0]]}) |> set_names(inNames)
-    valCols0   <- inNames |> map(function(name0, list0=valCols0    ){list0[[name0]]}) |> set_names(inNames)
-    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName==name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
-    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName==name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
+    inputsList <- inputsList |> (function(list0, names0=inNames){
+      lNames0 <- list0   |> names()
+      str0    <- names0  |> paste0("\\.") |> paste(collapse="|")
+      lNames1 <- lNames0 |> str_replace(pattern=str0, "")
+      list0   <- list0   |> set_names(lNames1)
+      return(list0)
+    })()
+    ### Update names
+    inNames    <- inputsList |> names()
 
     ### Check input data
     inputsList <- list(
       inputName = inNames,
       inputDf   = inputsList,
-      # idCol     = idCols0 [inNames],
-      # valCol    = valCols0[inNames],
-      # yearMin   = df_inputInfo |> pull(min_year),
-      # yearMax   = df_inputInfo |> pull(max_year),
-      idCol     = idCols0 ,
-      valCol    = valCols0,
-      yearMin   = minYrs0,
-      yearMax   = maxYrs0,
+      idCol     = idCols0 [inNames],
+      valCol    = valCols0[inNames],
+      yearMin   = minYrs0 [inNames],
+      yearMax   = maxYrs0 [inNames],
       module    = "sv" |> rep(inNames |> length())
     ) |>
       pmap(check_input_data) |>
@@ -314,7 +315,6 @@ run_fredi_sv <- function(
 
     ### Check again for inputs
     ### Filter to values that are not NULL
-    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
     inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
     inputsList   <- inputsList[inWhich]
     inNames      <- inputsList |> names()
@@ -357,7 +357,15 @@ run_fredi_sv <- function(
       idCols0   = idCols0 [inNames],
       valCols0  = valCols0[inNames]
     ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
-      df0 |> format_inputScenarios(
+      ### If scenario present, get unique scenario and drop column from data
+      # scenCol <- "scenario"
+      # doScen0 <- scenCol %in% (df0 |> names())
+      # if(doScen0) {
+      #   scen0 <- df0 |> pull(all_of(scenCol)) |> unique()
+      #   df0   <- df0 |> select(-any_of(scenCol))
+      # } ### End if(doScen0)
+      ### Format input scenario
+      df0     <- df0 |> format_inputScenarios(
         name0     = name0,
         hasInput0 = hasInput0,
         idCols0   = idCols0,
@@ -366,6 +374,10 @@ run_fredi_sv <- function(
         maxYear   = maxYear,
         info0     = co_inputInfo
       ) ### End format_inputScenarios
+      # ### If scenario present, add unique scenario to data
+      # if(doScen0) df0[[scenCol]] <- scen0
+      ### Return
+      return(df0)
     }) |> set_names(inNames)
 
     ### Iterate over types of names and row bind similar scenarios
@@ -373,11 +385,12 @@ run_fredi_sv <- function(
     inputsList   <- inNames |> map(function(name0, list0=inputsList){
       which0 <- (inputsList |> names()) %in% name0
       list0  <- list0[which0]
-      list0  <- list0 |> bind.rows()
+      list0  <- list0 |> bind_rows()
       return(list0)
     }) |> set_names(inNames)
   } ### End if(hasInputs)
-
+  ### Free memory
+  gc()
 
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
     ### Filter to list
@@ -394,6 +407,8 @@ run_fredi_sv <- function(
     ### Return
     return(list0)
   })()
+  ### Free memory
+  gc()
   # inputsList |> names() |> print()
   ### Update names
   inNames      <- inputsList |> names()
@@ -561,10 +576,15 @@ run_fredi_sv <- function(
   listResults <- listResults |> mutate(sector = c_sector)
   listResults <- listResults |> relocate(all_of(move0))
 
-  ###### Return Object ######
-  msg1 |> paste0("Finished.") |> message()
   # if(.testing) {listResults <- list(results = listResults, county_pop = df_popProj)}
   # else         {listResults <- listResults}
+
+
+
+  ###### Return Object ######
+  ### Message, clear unused memory, return
+  msg1 |> paste0("Finished.") |> message()
+  gc()
   return(listResults)
 }
 

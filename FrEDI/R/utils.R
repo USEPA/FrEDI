@@ -177,7 +177,7 @@ interpolate_annual <- function(
   if (addRegion) {data <- data |> mutate(region = region0)}
   rm(addRegion)
 
-  ###### Interpolation Info ######
+  ###### Interpolation Rules ######
   ### - Return NA values outside of extremes
   ### - If only one value is provided use the same for left and right
   ### - Interpolation method
@@ -188,22 +188,19 @@ interpolate_annual <- function(
   if(repRule ){rule <- rule |> rep(2)}
   method    <- method |> is.null() |> ifelse("linear", method)
 
-  ###### Interpolate NA values ######
-  ### Filter to the region and then interpolate missing values
+  ### Column names
   cols0     <- c("x", "y")
   cols1     <- c("year") |> c(column0)
 
-  ### Get IDs
-  ### Subset data
+  ### Get group IDs and add to data
   groupCol0 <- defCols |> get_matches(y=c("year"), matches=F)
   group0    <- data |> select(any_of(groupCol0))
-  # group0   <- data[,"region" |> c(stateCols0, modelCols0)]
-  ### Get scenario IDs
   group0    <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
   data      <- data   |> mutate(group_id = group0)
   # groupCol0 |> print(); data |> glimpse()
   # data |> group_by_at(c(all_of(groupCol0), "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
 
+  ###### Iteration ######
   ### Iterate over groups
   groups0   <- data |> pull(group_id) |> unique()
   df_interp <- groups0 |> map(function(group_i){
@@ -221,8 +218,7 @@ interpolate_annual <- function(
     return(new_i)
   }) |> bind_rows()
 
-  ### Determine join
-  ### Drop yCol from data
+  ### Determine join and join data
   # data |> glimpse(); df_interp |> glimpse(); cols1 |> print()
   names0 <- data |> names() |> get_matches(y=cols1, matches=F)
   join0  <- names0 |> get_matches(y=df_interp |> names())
@@ -246,6 +242,7 @@ interpolate_annual <- function(
   data     <- data |> arrange_at(c(arrange0))
 
   ### Return
+  gc()
   return(data)
 } ### End function
 
@@ -326,25 +323,34 @@ format_inputScenarios <- function(
     ### Zero out values if temp or slr
     doZero0 <- name0 %in% c("temp", "slr")
     if(doZero0) {
+      ### Zero out rows at ref year
       # df0 |> glimpse(); df0 |> pull(year) |> range() |> print(); yrRef0 |> print()
-      df0 <- df0 |> filter(year > yrRef0)
-      df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
-      df0 <- df0 |> rbind(df1)
+      # df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      drop0  <- c("year") |> c(valCol0)
+      df1    <- df0 |> select(-any_of(drop0)) |> distinct()
+      df1    <- df1 |> mutate(x = yrRef0, y = 0)
+      df1    <- df1 |> rename_at(c("x", "y"), ~drop0)
+      rm(drop0)
+
+      ### Then, drop rows in yrRef0 and bind zero rows to values
+      # df0 |> glimpse(); df1 |> glimpse()
+      df0    <- df0 |> filter(year > yrRef0)
+      df0    <- df0 |> rbind(df1)
       rm(df1)
+
+      ### Order values
+      order0 <- df0 |> names() |> get_matches(y=valCol0, matches=F)
+      df0    <- df0 |> arrange_at(order0)
     } ### if(doZero0)
 
     ### Calculate values
     yrs0 <- yrRef0:maxYear |> unique()
     if("pop" %in% name0) {
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=F) |> ungroup()
     } else if("o3" %in% name0) {
-      # "got here" |> print()
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=T) |> ungroup()
     } else {
       df0  <- df0 |> mutate(region = "NationalTotal")
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1) |> ungroup()
       df0  <- df0 |> select(-c("region"))
     } ### End if("pop" %in% name0)
