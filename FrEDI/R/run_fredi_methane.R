@@ -234,6 +234,7 @@ run_fredi_methane <- function(
   ### Update values
   # inNames |> print()
   hasInputs    <- inNames |> length()
+  # return()
 
   ### Iterate over list and format values
   if(hasInputs) {
@@ -260,6 +261,7 @@ run_fredi_methane <- function(
       ) ### End format_inputScenarios
     }) |> set_names(inNames)
   } ### End if(hasInputs)
+  return()
 
   ### Update inputs with defaults if values are missing
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
@@ -316,17 +318,21 @@ run_fredi_methane <- function(
   pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
   pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
   # return(pop_df)
+  # gdp_df |> group_by(year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
+  # pop_df |> group_by(state, year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
   ### Calculate national population and update national scenario
   natScenario  <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   rm(gdp_df, pop_df)
   # natScenario |> glimpse()
+  # natScenario |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ### Calculate for CONUS values
   seScenario   <- natScenario |> calc_conus_scenario()
   rm(natScenario)
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
-  # seScenario |> glimpse()
+  seScenario |> glimpse()
+  # seScenario |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ###### Calculate Impacts ######
   ###### ** Calculate Scalars ######
@@ -337,17 +343,17 @@ run_fredi_methane <- function(
   # return(df_results)
   # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
   # df_results |> glimpse()
-  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ###### ** Calculate Mortality Rate ######
   df_results <- df_results |> calc_methane_mortality()
-  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
   ###### ** Calculate Excess Mortality ######
   # df_drivers |> glimpse()
   df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
-  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  # df_results |> group_by(state, model, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
 

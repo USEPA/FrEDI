@@ -198,7 +198,7 @@ check_regions <- function(
   ### Get input scenario info: co_info
   ### Get state info: co_states
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
   ###### Messages ######
   msgN       <- "\n"
@@ -213,11 +213,44 @@ check_regions <- function(
   ### Drop missing values
   df0        <- df0 |> filter_all(all_vars(!(. |> is.na())))
 
+  ### Join states, regions
+  ### Drop region from states, rename region_label
+  join0     <- c("region")
+  if(doFredi) {
+    renameAt0 <- c("region_id")
+    renameTo0 <- c("region"   )
+  } else {
+    renameAt0 <- c()
+    renameTo0 <- c()
+  } ### End if(doFredi)
+  co_region <- co_region |> rename_at(c(renameAt0), ~renameTo0)
+  co_states <- co_states |> left_join(co_region, by=join0)
+  rm(join0, renameAt0, renameTo0)
+  ### Drop region, rename region label
+  renameTo0 <- c("region")
+  renameAt0 <- c(renameTo0)  |> paste0("_label")
+  drop0     <- c(renameTo0)  |> c("us_area", "fips")
+  co_states <- co_states |> select(-any_of(drop0))
+  co_states <- co_states |> rename_at(c(renameAt0), ~renameTo0)
+  # co_states$region |> unique() |> print()
+  rm(drop0, renameAt0, renameTo0)
+
+  ### Join data with region info, then check for columns, regions
+  move0    <- c("region", "state", "postal")
+  # join0    <- df0       |> names() |> get_matches(y=co_states |> names()) |> get_matches(y=drop0, matches=F)
+  join0    <- df0       |> names() |> get_matches(y=co_states |> names())
+  # df0 |> glimpse(); co_states |> glimpse()
+  df0      <- co_states |> left_join(df0, by=c(join0))
+  df0      <- df0       |> relocate(all_of(move0))
+  df0      <- df0       |> filter_all(all_vars(!(. |> is.na())))
+  rm(move0, join0)
+
   ###### Check Data ######
   ### Check that there is data
   nullData   <- df0 |> is.null()
   nrowData   <- df0 |> nrow()
   hasData    <- !nullData & nullData |> ifelse(0, nrowData)
+
 
   ### Check whether data has regions, states to check
   namesState <- co_states |> names()
@@ -493,7 +526,7 @@ check_input_data <- function(
   ### Get state info: co_states
   co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  # co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
 
   ### Get columns
@@ -715,17 +748,7 @@ check_input_data <- function(
   if(doPop | doO3) {
     msg_reg <- paste0("Checking that all states, etc. are present...")
     paste0(msg1_i, msg_reg) |> message()
-    ### Join data with region info, then check for columns, regions
-    drop0    <- c("fips")
-    move0    <- c("region", "state", "postal")
-    join0    <- inputDf   |> names() |> get_matches(y=co_states |> names()) |> get_matches(y=drop0, matches=F)
-    # inputDf |> glimpse(); co_states |> glimpse()
-    inputDf  <- co_states |> select(-any_of(drop0)) |> left_join(inputDf, by=c(join0))
-    inputDf  <- inputDf   |> relocate(all_of(move0))
-    inputDf  <- inputDf   |> filter_all(all_vars(!(. |> is.na())))
     inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
-    # inputDf |> glimpse();
-    rm(join0, drop0)
     regPass  <- !(inputDf |> is.null())
     ### Message if error
     msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
