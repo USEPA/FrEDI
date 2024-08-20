@@ -19,13 +19,13 @@ on:
         options:
         - no
         - yes
-      update_results:
-        type: choice
-        description: Update default results?
-        required: true
-        options:
-        - no
-        - yes
+#       update_results:
+#         type: choice
+#         description: Update default results?
+#         required: true
+#         options:
+#         - no
+#         - yes
       update_scenarios:
         type: multi-choice
         description: Update scenarios?
@@ -64,10 +64,11 @@ jobs:
         run: |
           Rscript -e '
             ###### Conditionals ######
-            ### Which scenarios to update
+            ### Which scenarios/documentation to update
             do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
             do_gdp   <- "GDP"         %in% "${{ inputs.update_scenarios}}"
             do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
+            do_docs  <- "yes"         %in% "${{ inputs.update_scenarios}}"
 
 
             ###### File Paths ######
@@ -82,40 +83,48 @@ jobs:
             ###### Update Scenarios ######
             ### Temperature & CSV
             if(do_temp) {
-              gcamScenarios <- "scenarios_gcam" |> get_frediDataObj("frediData")
-              gcamScenarios <- gcamScenarios |> mutate(temp_C_conus = temp_C_global |> convertTemps(from="global"))
-              gcamScenarios <- gcamScenarios |> (function(df0){
-                scenarios0 <- gcamScenarios |> pull(scenario) |> unique()
-                dfSlr0     <- scenarios0 |> map(function(x0, df0=df0){
-                  df0 <- df0 |> filter(scenario == x0)
-                  df0 <- temps2slr(temps = df0 |> pull(temp_C_global), years = df0 |> pull(year))
-                  return(df0)
-                }) |> bind_rows(.id = "scenario")
-                df0        <- df0 |> left_join(dfSlr0, by=c("year"))
-                return(df0)
-              })()
-              arrange0      <- c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm")
-              gcamScenarios <- gcamScenarios |> arrange_at(c(arrnage0))
-              fTemps        <- "Hector_GCAM_v5.3_scenarios"
+              gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
+              fTemps        <- "gcamScenarios"
               dTemps        <- dPath0 |> paste0(fTemps, ".rda")
               cTemps        <- cPath0 |> paste0(fTemps, ".csv")
               gcamScenarios |> save(file=dTemps)
               gcamScenarios |> write.csv(filename=cTemps, row.names=F)
-
+              rm(fTemps, dTemps, cTemps, gcamScenarios)
             } ### End if(do_temp)
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+
+            ### GDP
+            if(do_gdp) {
+              gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
+              fGdp          <- "gdpDefault"
+              dGdp          <- dPath0 |> paste0(fGdp, ".rda")
+              cGdp          <- cPath0 |> paste0(fGdp, ".csv")
+              gdpDefault |> save(file=dGdp)
+              gdpDefault |> write.csv(filename=cGdp, row.names=F)
+              rm(fGdp, dGdp, cGdp, gdpDefault)
+            } ### End if(do_gdp)
+
+            ### Population
+            if(do_pop) {
+              popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
+              fPop          <- "popDefault"
+              dPop          <- dPath0 |> paste0(fPop, ".rda")
+              cPop          <- cPath0 |> paste0(fPop, ".csv")
+              popDefault |> save(file=dPop)
+              popDefault |> write.csv(filename=cPop, row.names=F)
+              rm(fPop, dPop, cPop, popDefault)
+            } ### End if(do_pop)
 
 
             ###### Update Documentation ######
             ###### - Build Manual
             ###### - Add and build vignettes
             ###### - Generate Documentation
-            roxygen2::roxygenise(pPath0)
-            devtools::document(pkg = pPath0)
-            # devtools::build_manual(pkg = pPath0)
-            # devtools::build_vignettes(pkg = pPath0)
+            if(do_docs) {
+              roxygen2::roxygenise(pPath0)
+              devtools::document(pkg = pPath0)
+              # devtools::build_manual(pkg = pPath0)
+              # devtools::build_vignettes(pkg = pPath0)
+            } ### End if(do_docs)
 
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
@@ -132,10 +141,10 @@ jobs:
             pPath0   <- rPath0 |> file.path("FrEDI")
             oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
-            ###### Create Default Results ######
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+            # ###### Create Default Results ######
+            # pPath0 |> devtools::load_all()
+            # defaultResults <- run_fredi()
+            # save(defaultResults, file=oPath0)
 
             ###### Update Documentation ######
             ###### - Build Manual
