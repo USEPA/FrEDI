@@ -396,10 +396,17 @@ run_fredi_methane <- function(
   df_results <- df_results |> rename_at(c(renameAt0), ~join0)
   rm(join0, select0, renameAt0)
 
-  ### Drop values
+  ### Format driver values
+  df_results <- df_results |> mutate(driverType  = "Ozone Concentration")
+  df_results <- df_results |> mutate(driverUnit  = "pptv")
+  df_results <- df_results |> mutate(driverValue = O3_pptv)
+
+  ### Select columns
   idCols0    <- c("module", "region", "state", "postal", "model") |> c("year")
-  valCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap", "physicalmeasure", "physical_impacts", "annual_impacts")
-  select0    <- idCols0    |> c(valCols0)
+  modCols0   <- c("driver") |> paste0(c("Type", "Unit", "Value"))
+  natCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap")
+  valCols0   <- c("physicalmeasure", "physical_impacts", "annual_impacts")
+  select0    <- idCols0    |> c(modCols0) |> c(natCols0) |> c(valCols0)
   arrange0   <- idCols0
   df_results <- df_results |> select(all_of(select0))
   df_results <- df_results |> arrange_at(c(arrange0))
