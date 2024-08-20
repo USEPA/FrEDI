@@ -234,6 +234,7 @@ run_fredi_methane <- function(
   ### Update values
   # inNames |> print()
   hasInputs    <- inNames |> length()
+  # return(inputsList)
 
   ### Iterate over list and format values
   if(hasInputs) {
@@ -241,7 +242,7 @@ run_fredi_methane <- function(
     doPop0       <- "pop" %in% inNames
     doO3_0       <- "o3"  %in% inNames
     if(doPop0) idCols0[["pop"]] <- c("region", "state", "postal") |> c(idCols0[["pop"]]) |> unique()
-    if(doO3_0) idCols0[["o3" ]] <- c("region", "state", "postal") |> c(idCols0[["o3" ]]) |> unique()
+    if(doO3_0) idCols0[["o3" ]] <- c("region", "state", "postal", "model") |> c(idCols0[["o3" ]]) |> unique()
     inputsList   <- list(
       name0     = inNames,
       df0       = inputsList,
@@ -260,6 +261,7 @@ run_fredi_methane <- function(
       ) ### End format_inputScenarios
     }) |> set_names(inNames)
   } ### End if(hasInputs)
+  # return(inputsList)
 
   ### Update inputs with defaults if values are missing
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
@@ -305,7 +307,10 @@ run_fredi_methane <- function(
   } ### End if(has_o3)
 
   ### Get RR scalar and ozone response data
+  df_drivers <- df_drivers |> mutate(region = region |> str_replace(" ", ""))
+  df_drivers <- df_drivers |> mutate(region = region |> str_replace("\\.", ""))
   df_drivers <- df_drivers |> format_methane_drivers()
+  # df_drivers$model |> unique() |> print()
   # return(df_drivers)
   # df_drivers |> glimpse()
 
@@ -316,10 +321,13 @@ run_fredi_methane <- function(
   pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
   pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
   # return(pop_df)
+  # gdp_df |> group_by(year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
+  # pop_df |> group_by(state, year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
   ### Calculate national population and update national scenario
   natScenario  <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   rm(gdp_df, pop_df)
   # natScenario |> glimpse()
+  # natScenario |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ### Calculate for CONUS values
   seScenario   <- natScenario |> calc_conus_scenario()
@@ -327,6 +335,7 @@ run_fredi_methane <- function(
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   # seScenario |> glimpse()
+  # seScenario |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ###### Calculate Impacts ######
   ###### ** Calculate Scalars ######
@@ -337,14 +346,18 @@ run_fredi_methane <- function(
   # return(df_results)
   # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
   # df_results |> glimpse()
+  # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ###### ** Calculate Mortality Rate ######
   df_results <- df_results |> calc_methane_mortality()
+  # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
   ###### ** Calculate Excess Mortality ######
   # df_drivers |> glimpse()
   df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
+  # df_results |> group_by(state, model, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  # df_results$model |> unique() |> print()
   # df_results |> glimpse()
 
 
@@ -359,6 +372,18 @@ run_fredi_methane <- function(
   df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
   df_results <- df_results |> relocate(all_of(move0), .after=all_of(after0))
   rm(move0, after0)
+
+  ### Adjust region
+  join0      <- c("region")
+  renameAt0  <- c("region_label")
+  renameTo0  <- c(join0)
+  select0    <- c(join0) |> c(renameAt0)
+  me_regions <- listMethane$package$co_regions |> select(all_of(select0))
+  # me_models |> glimpse()
+  df_results <- df_results |> left_join(me_regions, by=join0)
+  df_results <- df_results |> select(-any_of(join0))
+  df_results <- df_results |> rename_at(c(renameAt0), ~join0)
+  rm(join0, select0, renameAt0)
 
   # ### Adjust model
   join0      <- c("model")
