@@ -238,9 +238,12 @@ check_regions <- function(
   # co_states$region |> unique() |> print()
   rm(drop0, renameAt0, renameTo0)
 
+  ### Check if region is in data and, if so, standardize region
+  doRegion <- "region" %in% (df0 |> names())
+  if(doRegion) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
+
   ### Join data with region info, then check for columns, regions
   move0    <- c("region", "state", "postal")
-  # join0    <- df0       |> names() |> get_matches(y=co_states |> names()) |> get_matches(y=drop0, matches=F)
   join0    <- df0       |> names() |> get_matches(y=co_states |> names())
   # df0 |> glimpse(); co_states |> glimpse()
   df0      <- co_states |> left_join(df0, by=c(join0))
@@ -724,6 +727,18 @@ check_input_data <- function(
   rm(doConvert)
 
 
+  ###### Check Regions ######
+  if(doPop | doO3) {
+    msg_reg <- paste0("Checking that all states, etc. are present...")
+    paste0(msg1_i, msg_reg) |> message()
+    inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
+    regPass  <- !(inputDf |> is.null())
+    ### Message if error
+    msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
+    if(!regPass) paste0(msg1_i, msg_reg) |> message()
+  } ### End if(doPop | doO3)
+
+
   ###### Calculate State Population ######
   # ### Check regions, states, postal for correct values if pop input present
   # if(doPop) inputDf <- inputDf |> calc_import_pop(popArea=popArea, msgLevel=msgLevel + 1)
@@ -740,23 +755,7 @@ check_input_data <- function(
       inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module)
       inputDf <- inputDf |> filter(!(region |> is.na()))
     } ### End if(doCalc)
-    ### Rename state population column
-    # rename0  <- c("pop")
-    # renameTo <- c("state_pop")
-    # doRename <- rename0 %in% (inputDf |> names())
-    # if(doRename) inputDf <- inputDf |> rename_at(c(rename0), ~renameTo)
   } ### End if(doPop)
-
-  ###### Check Regions ######
-  if(doPop | doO3) {
-    msg_reg <- paste0("Checking that all states, etc. are present...")
-    paste0(msg1_i, msg_reg) |> message()
-    inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
-    regPass  <- !(inputDf |> is.null())
-    ### Message if error
-    msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
-    if(!regPass) paste0(msg1_i, msg_reg) |> message()
-  } ### End if(doPop | doO3)
 
 
   ###### Return ######
