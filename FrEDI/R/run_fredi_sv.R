@@ -239,7 +239,7 @@ run_fredi_sv <- function(
   idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
     df0 |> names() |> get_matches(y=valCols0, matches=F)
   }) |> set_names(inNames0)
-
+  valCols0 |> print(); idCols0 |> print()
 
   ###### ** Valid Inputs & Input Info ######
   ### Figure out which inputs are not null, and filter to that list
@@ -346,7 +346,6 @@ run_fredi_sv <- function(
   ### Update values
   # inNames |> print()
   hasInputs    <- inNames      |> length()
-  # df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
 
   ### Iterate over list and format values
   if(hasInputs) {
