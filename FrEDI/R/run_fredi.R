@@ -174,15 +174,13 @@
 #'
 ###### run_fredi ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
-### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi <- function(
-    # inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
   inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
-    elasticity = 1,    ### Override value for elasticity for economic values
-    maxYear    = 2100,
-    thru2300   = FALSE,
+    elasticity = 1,     ### Override value for elasticity for economic values
+    maxYear    = 2100,  ### Maximum year for the analysis period
+    thru2300   = FALSE, ### Whether to run FrEDI through 2300
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
