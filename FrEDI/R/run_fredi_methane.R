@@ -337,14 +337,17 @@ run_fredi_methane <- function(
   # return(df_results)
   # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
   # df_results |> glimpse()
+  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
   ###### ** Calculate Mortality Rate ######
   df_results <- df_results |> calc_methane_mortality()
+  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
   ###### ** Calculate Excess Mortality ######
   # df_drivers |> glimpse()
   df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
+  df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
 
