@@ -603,8 +603,9 @@ aggregate_impacts <- function(
   df_agg        <- df_agg |> select(any_of(standardCols))
 
   ###### Return ######
-  ### Return object
-  # if(msgUser) message("\n", "Finished...")
+  ### Message, clear unused memory, return
+  # paste0("\n", "Finished", ".") |> message()
+  gc()
   return(df_agg)
 }
 

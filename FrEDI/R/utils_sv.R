@@ -158,6 +158,7 @@ get_countyPop <- function(
   list0    <- list0 |> bind_rows()
 
   ### Return
+  gc()
   return(list0)
 }
 
@@ -212,7 +213,7 @@ calc_tractScaledImpacts <- function(
   msg1 |> paste0("Finished calculating tract-level impacts.") |> message()
 
   ### Return
-  # return(data_x)
+  gc()
   return(list_x)
 }
 
@@ -450,6 +451,7 @@ calc_tractImpacts <- function(
 
   ###### Return ######
   msg1 |> paste0("Finished calculating total impacts.") |> message()
+  gc()
   return(x_impacts)
 }
 

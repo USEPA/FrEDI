@@ -271,8 +271,9 @@ import_inputs <- function(
 
 
   ###### Return ######
-  ### Return input list
+  ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
+  gc()
   return(inputsList)
 }
 
