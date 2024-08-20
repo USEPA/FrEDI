@@ -264,7 +264,7 @@ aggregate_impacts <- function(
 
   ###### Format Columns  ######
   ### Make sure all summary values are numeric
-  mutate0       <- c("sectorprimary", "includeaggregate")
+  mutate0       <- c("sectorprimary", "includeaggregate") |> get_matches(y=data |> names())
   chrCols0      <- groupByCols |> get_matches(y=mutate0, matches=F)
   numCols0      <- summaryCols |> c(mutate0)
   numCols0      <- numCols0    |> c("gdp_usd", "national_pop", "gdp_percap")
@@ -429,7 +429,10 @@ aggregate_impacts <- function(
 
   ###### ** Model Averages ######
   ### Average values across models
-  if(aveModels){
+  modTypes0    <- df_agg[["model_type"]]
+  has_modTypes <- modTypes0 |> length()
+  has_gcm      <- has_modTypes |> ifelse("gcm" %in% modTypes0, FALSE)
+  if(aveModels & has_gcm){
     modelAveMsg   <- "Calculating model averages..."
     if(msgUser){msg0 (1) |> paste0(modelAveMsg) |> message()}
     ### Ungroup first
@@ -559,7 +562,7 @@ aggregate_impacts <- function(
   ### Join base scenario with driver scenario
   # baseScenario |> glimpse(); driverScenario |> glimpse()
   join0    <- c(yearCol0)
-  arrange0 <- c("model_type") |> c(join0)
+  arrange0 <- c("model_type") |> get_matches(y=driverScenario |> names()) |> c(join0) |> unique()
   df_base  <- baseScenario  |> left_join(driverScenario, by=c(join0), relationship="many-to-many")
   df_base  <- df_base       |> arrange_at(c(arrange0))
   rm(join0, arrange0, driverScenario, baseScenario)
@@ -567,7 +570,7 @@ aggregate_impacts <- function(
   ### Join base scenario with population scenario
   # df_base |> glimpse(); regionalPop |> glimpse()
   join0    <- c(yearCol0)
-  arrange0 <- c("model_type") |> c("region") |> c(stateCols0) |> c(yearCol0)
+  arrange0 <- c("model_type") |> get_matches(y=df_base |> names()) |> c("region") |> c(stateCols0) |> c(yearCol0)
   df_base  <- df_base |> left_join(regionalPop, by=c(join0))
   df_base  <- df_base |> arrange_at(c(arrange0))
   rm(join0, arrange0, regionalPop)
@@ -575,11 +578,12 @@ aggregate_impacts <- function(
   ### Join base scenario with aggregated info
   ### Order the data frame and ungroup
   namesB0  <- df_base |> names() |> get_matches(y=c(yearCol0), matches=F)
-  join0    <- c("model_type") |> c("region") |> c(stateCols0) |> c(yearCol0)
+  join0    <- c("model_type") |> get_matches(y=df_base |> names()) |> c("region") |> c(stateCols0) |> c(yearCol0)
   arrange0 <- c("sector", "variant", "impactType", "impactYear") |>
     c("region", stateCols0) |>
     c("model_type", "model") |>
-    c(yearCol0)
+    c(yearCol0) |>
+    get_matches(y=df_agg |> names())
   df_agg   <- df_agg |> ungroup()
   df_agg   <- df_agg |> left_join(df_base, by=c(join0))
   df_agg   <- df_agg |> relocate(all_of(namesB0), .after=all_of(arrange0))
