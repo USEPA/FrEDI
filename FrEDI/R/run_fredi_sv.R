@@ -64,19 +64,19 @@
 #' df_sv <- run_fredi_sv(sector="Extreme Temperature")
 #'
 #' ### Load temperature scenarios
-#' load(gcamScenarios)
+#' data(gcamScenarios)
 #'
 #' ### Load population scenario
-#' load(popScenario)
+#' data(popDefault)
 #'
 #' ### Run SV Module for "Extreme Temperature" with custom population and temperature scenarios
-#' df_sv <- run_fredi_sv(sector = "Extreme Temperature", inputsList = list(pop=popScenario, temp=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Extreme Temperature", inputsList = list(pop=popDefault, temp=gcamScenarios)
 #'
 #' ### Run SV Module for "Coastal Properties" with custom population and SLR scenarios
-#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popScenario, slr=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popDefault, slr=gcamScenarios)
 #'
 #' ### Run SV Module for "Coastal Properties" with custom population and temperature scenarios
-#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popScenario, temp=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popDefault, temp=gcamScenarios)
 #'
 #'
 #'

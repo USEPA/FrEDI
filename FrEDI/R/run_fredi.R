@@ -113,7 +113,7 @@
 #' ### Load FrEDI
 #' require(FrEDI)
 #'
-#' ### Run function with defaults (same as `defaultResults` dataset)
+#' ### Run function with defaults
 #' run1 <- run_fredi()
 #'
 #' ### Load climate scenarios and glimpse data
@@ -121,16 +121,15 @@
 #' gcamScenarios |> glimpse()
 #'
 #' ### Load population scenario and glimpse data
-#' data(popScenario)
-#' popScenario |> glimpse()
+#' data("popDefault")
+#' popDefault |> glimpse()
 #'
 #' ### Subset climate scenario
-#' temps1 <- gcamScenarios |> filter(scenario=="Hector_GCAM_v5.3_ECS_3.0_ref")
-#' temps1 <- temps1 |> mutate(temp_C = temp_C_global |> convertTemps(from="global"))
-#' temps1 <- temps1 |> select(year, temp_C)
+#' temps1 <- gcamScenarios |> filter(scenario=="ECS_3.0_ref")
+#' temps1 <- temps1 |> select(year, temp_C_conus)
 #'
 #' ### Run custom scenario
-#' run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
+#' run2 <- run_fredi(inputsList=list(temp=temps1, pop=popDefault))
 #'
 #' ### Load scenarios from file:
 #' scenariosPath <- system.file(package="FrEDI") |> file.path("extdata","scenarios")
@@ -138,10 +137,10 @@
 #'
 #'
 #' ### SLR Scenario File Name
-#' slrInputFile  <- scenariosPath |> file.path("slr_from_GCAM.csv")
+#' slrInputFile  <- scenariosPath |> file.path("gcamDefault.csv")
 #'
 #' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
+#' popInputFile  <- scenariosPath |> file.path("popDefault.csv")
 #'
 #' ### Import inputs
 #' x_inputs <- import_inputs(inputsList=list(slr=slrInputFile, pop=popInputFile), popArea="state")
