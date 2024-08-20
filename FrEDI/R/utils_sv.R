@@ -101,8 +101,8 @@ get_sv_sectorInfo <- function(
 calc_countyPop <- function(
     fun0 = NULL, ### Function from list svPopList[["popProjList"]]
     df0,         ### Tibble with population projections
-    xCol0 = "year",      ### X column in df0
-    yCol0 = "state_pop"  ### Y column in df0
+    xCol0 = "year", ### X column in df0
+    yCol0 = "pop"   ### Y column in df0
 ){
   ### Check function
   hasFun0 <- !(fun0 |> is.null())
@@ -111,10 +111,11 @@ calc_countyPop <- function(
   rm(y0)
 
   ### Calculate county population
-  df0     <- df0 |> mutate(county_pop = state_pop * state2county)
+  # df0     <- df0 |> mutate(county_pop = pop * state2county)
+  df0     <- df0 |> mutate(county_pop = !!sym(xCol0) * state2county)
 
   ### Select columns
-  drop0   <- c("state_pop", "state2county")
+  drop0   <- c("pop", "state2county")
   df0     <- df0 |> select(-all_of(drop0))
 }
 
@@ -122,10 +123,12 @@ calc_countyPop <- function(
 get_countyPop <- function(
     df0,    ### Dataframe of state-level population projection
     years   = seq(2010, 2100, by=5), ### Years for analysis
-    xCol0   = "year",       ### X column in df0
-    yCol0   = "state_pop",  ### Y column in df0
+    xCol0   = "year",  ### X column in df0
+    yCol0   = "pop" ,  ### Y column in df0
     funList = svPopList[["popProjList"]] ### List of population projections
 ){
+  ### Filter to years
+  df0      <- df0 |> filter(year %in% years)
   ### Get unique states and regions
   select0  <- c("region", "state")
   pList0   <- df0    |> select(all_of(select0)) |> unique()
@@ -286,8 +289,8 @@ calc_tractImpacts <- function(
 
   ###### Tract Population ######
   ### Calculate total tract population and drop columns
-  drop0       <- c("state", "county", "geoid10", "region_pop", "state_pop", "county_pop")
-  # drop0       <- c("region_pop", "state_pop", "county_pop")
+  drop0       <- c("state", "county", "geoid10", "region_pop", "pop", "county_pop")
+  # drop0       <- c("region_pop", "pop", "county_pop")
   x_impacts   <- x_impacts |> mutate(tract_totPop = county_pop * ratioTract2CountyPop)
   x_impacts   <- x_impacts |> select(-any_of(drop0))
   rm(drop0)
