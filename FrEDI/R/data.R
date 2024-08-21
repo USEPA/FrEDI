@@ -23,7 +23,7 @@
 #'
 #'    * Users can filter the `gcamScenarios` data frame to any of these six scenarios, which can then be passed directly to the [FrEDI::run_fredi()] function via a named element (`temp` and/or `slr`) in a list passed to the `inputsList` argument -- e.g., `run_fredi(inputsList=list(temp=gcamScenarios |> filter(scenario=="ECS_3.0_REF")))` will run using the default temperature scenario.
 #'    * Any or all of the GCAM scenarios can be passed directly to the FrEDI SV module via the [FrEDI::run_fredi_sv()] function via a named list element (`temp` and/or `slr`) in a list passed to the `inputsList` argument -- e.g., `run_fredi_sv(inputsList=list(temp=gcamScenarios))` will run the SV module for all the GCAM scenarios provided in `gcamScenarios`.
-#'    * `gcamScenarios` can also be combined with other provided scenarios (`gdpScenario`, `popScenario`) in function calls (e.g., `run_fredi(inputsList=list(temp=gcamScenarios |> filter(scenario=="ECS_3.0_REF"), gdp=gdpScenario, pop=popScenario))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
+#'    * `gcamScenarios` can also be combined with other provided scenarios (`gdpDefault`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(temp=gcamScenarios |> filter(scenario=="ECS_3.0_REF"), gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
 #'
 #' Calvin, K., Patel, P., Clarke, L., et al. 2019. GCAM v5.1: representing the linkages between energy, water, land, climate, and economic systems, Geosci. Model Dev., 12:677–698. https://doi.org/10.5194/gmd-12-677-2019.
 #'
@@ -42,12 +42,12 @@
 "gcamScenarios"
 
 
-###### popScenario ######
+###### popDefault ######
 #' U.S. state population scenario, which can be passed as an input to [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], and/or [FrEDI:run_fredi_methane()].
 #'
-#' `popScenario` is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the **Integrated Climate and Land Use Scenarios Version 2** (**ICLUSv2**) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
+#' `popDefault` is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the **Integrated Climate and Land Use Scenarios Version 2** (**ICLUSv2**) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
 #'
-#' To use `popScenario` as an input to FrEDI, the FrEDI SV module, and/or the FrEDI Methane module, pass the data frame via the named element `pop` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], and/or [FrEDI:run_fredi_methane()], respectively, e.g.: `run_fredi(inputsList=list(pop=popScenario))`. `popScenario` can also be combined with other provided scenarios (`gcamScenarios`, `gdpScenario`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpScenario, pop=popScenario))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
+#' To use `popDefault` as an input to FrEDI, the FrEDI SV module, and/or the FrEDI Methane module, pass the data frame via the named element `pop` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], and/or [FrEDI:run_fredi_methane()], respectively, e.g.: `run_fredi(inputsList=list(pop=popDefault))`. `popDefault` can also be combined with other provided scenarios (`gcamScenarios`, `gdpDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
 #'
 #'
 #'
@@ -66,15 +66,15 @@
 #'   \item{pop   }{State population for associated region and year}
 #' }
 #' @source \url{https://epa.gov/cira/FrEDI/}
-"popScenario"
+"popDefault"
 
 
-###### gdpScenario ######
+###### gdpDefault ######
 #' Scenario with values for U.S. Gross Domestic Product (GDP), which can be passed as an input to [FrEDI::run_fredi()] or [FrEDI::run_fredi_methane()].
 #'
-#' `gdpScenario` is a data frame object containing values for U.S. GDP for the contiguous U.S. (CONUS) for the period from 2010 to 2100. Values are from the **MIT Economic Projection and Policy Analysis Version 6** (**EPPA v6**) model (Chen et al, 2015; EPA 2017).
+#' `gdpDefault` is a data frame object containing values for U.S. GDP for the contiguous U.S. (CONUS) for the period from 2010 to 2100. Values are from the **MIT Economic Projection and Policy Analysis Version 6** (**EPPA v6**) model (Chen et al, 2015; EPA 2017).
 #'
-#' To use `gdpScenario` as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element `gdp` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()] and/or [FrEDI:run_fredi_methane()], respectively, e.g.: `run_fredi(inputsList=list(gdp=gdpScenario))`. `gdpScenario` can also be combined with other provided scenarios (`gcamScenarios`, `popScenario`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpScenario, pop=popScenario))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
+#' To use `gdpDefault` as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element `gdp` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()] and/or [FrEDI:run_fredi_methane()], respectively, e.g.: `run_fredi(inputsList=list(gdp=gdpDefault))`. `gdpDefault` can also be combined with other provided scenarios (`gcamScenarios`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
 #'
 #' Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: conomic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
 #'
@@ -87,4 +87,4 @@
 #'   \item{gdp_usd}{U.S. Gross Domestic Product for the contiguous U.S.}
 #' }
 #' @source \url{https://epa.gov/cira/FrEDI/}
-"gdpScenario"
+"gdpDefault"
