@@ -120,7 +120,20 @@ jobs:
             ### O3, CH4, and NOx
             if(do_o3) {
               ### Ozone
-              o3Default     <- "o3_default" |> get_frediDataObj("scenarioData")
+              select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
+              o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              o3Default     <- o3Default |> select(all_of(select0))
+              rm(select0)
+
+              ### Adjust the default scenario
+              co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+              co_mods       <- co_mods   |> select(model, model_label)
+              o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
+              o3Default     <- o3Default |> select(-model)
+              o3Default     <- o3Default |> rename(model=model_label)
+              o3Default     <- o3Default |> relocate(c("model"))
+
+              ### Save ozone
               fO3           <- "o3Default"
               dO3           <- dPath0 |> paste0(fO3, ".rda")
               cO3           <- cPath0 |> paste0(fO3, ".csv")
@@ -129,7 +142,7 @@ jobs:
               rm(fO3, dO3, cO3, o3Default)
 
               ### CH4
-              ch4Default    <- "ch4_default" |> get_frediDataObj("scenarioData")
+              ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
               fCH4          <- "ch4Default"
               dCH4          <- dPath0 |> paste0(fCH4, ".rda")
               cCH4          <- cPath0 |> paste0(fCH4, ".csv")
@@ -138,7 +151,7 @@ jobs:
               rm(fCH4, dCH4, cCH4, ch4Default)
 
               ### NOx
-              noxDefault    <- "nox_default" |> get_frediDataObj("scenarioData")
+              noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
               fNOx          <- "noxDefault"
               dNOx          <- dPath0 |> paste0(fNOx, ".rda")
               cNOx          <- cPath0 |> paste0(fNOx, ".csv")
