@@ -1,3 +1,4 @@
+###### Documentation ######
 #' Import custom scenarios for temperature, global mean sea level rise (GMSL), population, and GDP from user-specified file names
 #'
 #' @description
@@ -29,7 +30,7 @@
 #'    * GDP values must be greater than or equal to zero.
 #'    * The GDP scenario must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by the [FrEDI::run_fredi()] `maxYear` argument).
 #' * __Population Scenario.__ The file specified by `inputsList$pop` population must have at least two columns -- `"year"` and `"pop"` -- respectively containing the years associated with the population estimates and the population estimates. requires state-level population values. Whether a third column is required depends on the geographical scale of the data, as specified by the `popArea` argument.
-#'     * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year. If `popArea = "national"`, only the `year` and `pop` columns are required.
+#'     * If `popArea = "state"`, the third column should be called `"state"` and contain the name of the state associated with each population estimate in a given year. If `popArea = "regional"`, the third column should be called `"region"` and contain the NCA Region label associated with each population estimate in a given year (one of `"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, or `"Southwest"` for CONUS states, or `"Alaska"` and `"Hawaii"` for Alaska and Hawaii, respectively). If `popArea = "national"`, only the `year` and `pop` columns are required.
 #'     * If `popArea = "state"`, the file must contain estimates for all CONUS states -- i.e., all states except Alaska and Hawaii must be present in the input file (estimates for Alaska and Hawaii are optional). If `popArea = "regional"`, the file must contain estimates for all seven NCA regions.
 #'     * The population scenario must start in 2010 or earlier and end at or after the maximum model run year (e.g., as specified by the `maxYear` argument to [FrEDI::run_fredi()]).
 #'     * Population values must be greater than or equal to zero.
