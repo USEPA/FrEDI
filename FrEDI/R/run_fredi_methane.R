@@ -454,8 +454,6 @@ run_fredi_methane <- function(
   } ### End if(has_o3)
 
   ### Get RR scalar and ozone response data
-  df_drivers <- df_drivers |> mutate(region = region |> str_replace(" ", ""))
-  df_drivers <- df_drivers |> mutate(region = region |> str_replace("\\.", ""))
   df_drivers <- df_drivers |> format_methane_drivers()
   # df_drivers$model |> unique() |> print()
   # return(df_drivers)
