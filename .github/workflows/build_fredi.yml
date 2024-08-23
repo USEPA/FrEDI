@@ -125,13 +125,13 @@ jobs:
               o3Default     <- o3Default |> select(all_of(select0))
               rm(select0)
 
-              ### Adjust the default scenario
-              co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
-              co_mods       <- co_mods   |> select(model, model_label)
-              o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
-              o3Default     <- o3Default |> select(-model)
-              o3Default     <- o3Default |> rename(model=model_label)
-              o3Default     <- o3Default |> relocate(c("model"))
+              # ### Adjust the default scenario
+              # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+              # co_mods       <- co_mods   |> select(model, model_label)
+              # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
+              # o3Default     <- o3Default |> select(-model)
+              # o3Default     <- o3Default |> rename(model=model_label)
+              # o3Default     <- o3Default |> relocate(c("model"))
 
               ### Save ozone
               fO3           <- "o3Default"

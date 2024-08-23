@@ -524,8 +524,7 @@ run_fredi <- function(
   gdp_df       <- inputsList[["gdp"]]
   pop_df       <- inputsList[["pop"]]
   ### Convert region to region IDs
-  pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
-  pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
+  pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
   ### Calculate national population and update national scenario
   seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   # return(seScenario)

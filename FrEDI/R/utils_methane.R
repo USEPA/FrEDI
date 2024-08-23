@@ -80,7 +80,6 @@ format_methane_drivers <- function(
   select0  <- idCols0 |> c(sumCols0)
   df1      <- df1     |> select(all_of(select0))
   ### Join data
-  df0$model |> unique() |> print(); df1$model |> unique() |> print()
   join0    <- df0 |> names() |> get_matches(y=df1 |> names())
   df0      <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
   rm(df1)

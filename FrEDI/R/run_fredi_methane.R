@@ -445,7 +445,8 @@ run_fredi_methane <- function(
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
-    df_drivers <- df_drivers |> mutate(model = model |> str_replace_all("\\.|_", ""))
+    df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+    df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
     df_drivers <- inputsList[["ch4"]] |> left_join(inputsList[["nox"]], by=join0)
@@ -464,8 +465,7 @@ run_fredi_methane <- function(
   ### Update values
   gdp_df       <- inputsList[["gdp"]]
   pop_df       <- inputsList[["pop"]]
-  pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
-  pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
+  pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
   # return(pop_df)
   # gdp_df |> group_by(year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
   # pop_df |> group_by(state, year) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
