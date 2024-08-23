@@ -415,10 +415,10 @@ sum_impacts_byDoW <- function(
 
   do_gcm     <- "gcm" %in% (models |> tolower())
 
-  ### Filter to includeaggregate==1
+  ### Filter to includeaggregate>=1
   ### Filter to sector primary
   ### Filter to appropriate year
-  if(aggOnly){df0 <- df0 |> filter(includeaggregate==1)}
+  if(aggOnly){df0 <- df0 |> filter(includeaggregate>=1)}
   if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
   if(do_gcm ){df0 <- df0 |> filter(year == year0)}
 
@@ -497,9 +497,9 @@ sum_impacts_byDoW_years <- function(
   nYears     <- years0 |> length()
   primary    <- !bySector
 
-  ### Filter to includeaggregate==1
+  ### Filter to includeaggregate>=1
   ### Filter to sector primary
-  if(aggOnly){df0 <- df0 |> filter(includeaggregate==1)}
+  if(aggOnly){df0 <- df0 |> filter(includeaggregate>=1)}
   if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
 
   ### Run scenarios
@@ -722,7 +722,7 @@ get_fig7_slrImpacts <- function(
     sumCol      = "annual_impacts",
     # groupVars   = c("variant", "impactType", "impactYear"),
     impactYears = c("Interpolation", "NA", "2010", "2090"),
-    aggOnly    = TRUE, ### Whether to filter to includeaggregate==1
+    aggOnly    = TRUE, ### Whether to filter to includeaggregate>=1
     years      = c(2050, 2090),
     adjVal     = 1/10**9, ### Factor to multiply by
     adjCol     = "impact_billions"
@@ -739,10 +739,10 @@ get_fig7_slrImpacts <- function(
   modelHeights    <- modelLabels |> map(function(.x){str_split(string=.x, pattern="\\s")[[1]][1]}) |> unlist() |> as.numeric()
 
   ###### Format data ######
-  ### Filter to includeaggregate==1
+  ### Filter to includeaggregate>=1
   ### Filter to primary==1
   ### Filter to appropriate categories and years
-  if(aggOnly){slrImpacts <- slrImpacts |> filter(includeaggregate==1)}
+  if(aggOnly){slrImpacts <- slrImpacts |> filter(includeaggregate>=1)}
   if(aggOnly){slrImpacts <- slrImpacts |> filter(sectorprimary==1)}
   if(!bySector){slrImpacts <- slrImpacts |> filter(year %in% years)}
 
@@ -1145,7 +1145,7 @@ create_default_tablePlot <- function(x=1){
   ### Filter to values used to report
   results0 <- results0 |>
     filter(model %in% c("Interpolation", "Average")) |>
-    filter(includeaggregate == 1) |>
+    filter(includeaggregate >= 1) |>
     filter(sectorprimary == 1) |>
     filter(region == "National Total")
   results0 |> glimpse()
