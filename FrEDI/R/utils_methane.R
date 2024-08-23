@@ -13,14 +13,13 @@ calc_methane_mortality <- function(
   select0 <- c("year", "ifRespScalar", "rffPop") |> c(sCol0, iCol0)
   df1     <- df1 |> select(all_of(select0))
   ### Join df0 and df1
-  # join0 <- c("year")
   join0   <- joinCols
   df0     <- df0 |> left_join(df1, by=join0)
   rm(df1)
   ### Calculate intermediate populations
-  # df0   <- df0 |> mutate(delta_rffPop = national_pop - rffPop)
-  # df0   <- df0 |> mutate(rffFactor    = delta_rffPop * rffMrate_slope + rffMrate_intercept)
-  df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
+  # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
+  # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
+  df0     <- df0 |> mutate(logPop       = (!!sym(pCol0)) |> log())
   df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
   df0     <- df0 |> mutate(respMrate    = rffFactor    * ifRespScalar)
   ### Return data
