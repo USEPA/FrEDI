@@ -7,6 +7,21 @@
     <loc>https://usepa.github.io/FrEDI/articles/About.html</loc>
   </url>
   <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/contributing.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/Example1.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/Example2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/manual.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/FrEDI/articles/articles/References.html</loc>
+  </url>
+  <url>
     <loc>https://usepa.github.io/FrEDI/articles/contributing.html</loc>
   </url>
   <url>
@@ -49,13 +64,10 @@
     <loc>https://usepa.github.io/FrEDI/reference/defaultResults.html</loc>
   </url>
   <url>
-    <loc>https://usepa.github.io/FrEDI/reference/FrEDI.html</loc>
+    <loc>https://usepa.github.io/FrEDI/reference/FrEDI-package.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/reference/gcamScenarios.html</loc>
-  </url>
-  <url>
-    <loc>https://usepa.github.io/FrEDI/reference/get_plots.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/FrEDI/reference/get_sectorInfo.html</loc>

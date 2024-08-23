@@ -1,6 +1,6 @@
 ---
 title: "Example #2"
-date: "July, 2023"
+date: "August, 2024"
 description: >
   Running & Analyzing results from FrEDI SV.
 #output: rmarkdown::html_vignette
@@ -65,50 +65,21 @@ Use this chunk to specify the input trajectories (temperature, population, GDP) 
 
 ## Input Files
 tempInputFile <- NULL
-  # Description: csv file with time series of temperature relative to 1986-2005 average 
-  # (units: degC, values: >=0)
-  # data must start in 2000 or earlier and can be global or CONUS
-  # If global --> must convert to CONUS temperature using the import_inputs() helper function
-  # column 1 = 'year', column 2 = 'temp_C'
-
-
-popInputFile <- NULL
-  # Description: csv file with time series of annual NCA regional population (values >= 0) 
-  # data must start in 2000 or earlier
-  # column 1 = 'year', column 2 = region, column 3 = population (long popform)
-  #   NCA region names: 'Midwest', 'Northeast', 'Northern.Plains', 'Northwest',
-  #   'Southeast', 'Southern.Plains', 'Southwest'
-  # If NULL - use default population trajectory (from ICLUS)
-
-## Input Trajectory parameters
-popformFlag = 'long'   
-  # Description: Use this to specify the format of the regional population data
-  # Options: wide/long. 
-  # Wide = columns 2-8 correspond to population in each NCA region. 
-  # Long = column 2 = NCA region name ('region'), 
-  # column 3 = population for that region ('reg_pop'). 
-  # NCA region names: 'Midwest', 'Northeast', 'Northern.Plains', 'Northwest',
-  #   'Southeast', 'Southern.Plains', 'Southwest'
+# Description: csv file with time series of temperature relative to 1986-2005 average 
+# (units: degC, values: >=0)
+# data must start in 2000 or earlier and can be global or CONUS
+# If global --> must convert to CONUS temperature using the import_inputs() helper function
+# column 1 = 'year', column 2 = 'temp_C'
 
 temptypeflag <- 'global' 
-  # Description: Use this to specify whether the input temperature is global or CONUS
-  # import_inputs() will convert to global to CONUS temperature
-  # Options: global (input is global T), conus (input is CONUS T)
+# Description: Use this to specify whether the input temperature is global or CONUS
+# import_inputs() will convert to global to CONUS temperature
+# Options: global (input is global T), conus (input is CONUS T)
+
 
 ## Use the import_inputs() helper function to format the input trajectories for use in FrEDI
-inputs_list <- import_inputs(tempfile = tempInputFile,
-                        popfile = popInputFile,
-                        temptype = temptypeflag,
-                        popform = popformFlag)
+inputs_list <- import_inputs(tempfile = tempInputFile)
 
-# print out how many custom input files were loaded 
-# should be = 1 if using custom temperature only
-if ( length(inputs_list) ==0 ){
-  print('CONFIRM: No user-specific input data loaded')
-} else {
-  print( paste('CONFIRM: Number of user-specified input files loaded:',
-               length(inputs_list)))
-}
 ```
 
 If no input files are specified, `run_fredi_sv()` will use default temperature and U.S. regional population projections. In this case, `run_fredi_sv()` will calculate annual projected sea level rise based on the default temperature change. 
@@ -120,18 +91,15 @@ Default population scenarios are based on UN Median Population projection ([Unit
 Next, set `FrEDI_SV` runtime parameters
 ```{r set_fredi_sv, include = TRUE, eval = FALSE}
 
-# Calculate the fredi_sv() results for a single impact sector
-# NOTE: the fredi_sv() module takes a few minutes to run because
+# Calculate the run_fredi_sv() results for a single impact sector
+
+# NOTE: the run_fredi_sv() module takes a few minutes to run because
 # the damages are calculated at the Census tract level and then 
 # aggregated to the regional level
 
 # take formatted temperature vector from the output of the
 # import_inputs() helper function
- temp_C <- inputs_list$tempInput 
-
-# take formatted population vector from the output of the
-# import_inputs() helper function
- reg_pop <- inputs_list$popInput
+ temp_input <- inputs_list$tempInput 
 
 # To see all available sectors, run:
 # FrEDI::get_sv_sectorInfo()
@@ -141,40 +109,25 @@ sectorFlag = "Air Quality - Premature Mortality"
   # Purpose:
   #   Specify the SV sector to calculate (can only run one sector at once)
   # Options: run FrEDI::get_sv_sectorInfo() to get a list of the 
-  #   current sectors
-driverFlag <- temp_C
+  #   possible sectors
+driverFlag <- temp_input
   # Purpose:
-  #   Specify the temperature trajectory to use as an input. 
+  #   Specify the temperature trajectory (up to 4) to use as an input. 
   #   Temperature needs to be in degrees C, *CONUS* temperature, relative
   #   to the 1986-2005 average baseline
+  #   column 1 = 'year','column 2 = 'scenario', column 3 = 'temp_C'
   #   NOTE: if temperature is in global degrees, use the 
   #   FrEDI::convertTemps() helper function to convert from global to CONUS
-popFlag <- reg_pop
+popFlag <- NULL
   # Purpose:
-  #   Specify the regional population trajectory to use as an input. 
-  #   Population needs to be regional, relative
-  #   to the 1986-2005 average baseline, in the long popform format
+  #   Specify the population trajectory to use as an input.
+  # column 1 = 'year', column 2 = 'region', column 3 = 'state', column 4 = 'postal', column 5 = 'state_pop'
+  # default = if null, uses default population trajectory
 silentFlag = TRUE
   # Purpose:
   #   Specify the level of messaging desired
   # Options: TRUE/FALSE
-saveFlag = FALSE
-  # Purpose:
-  #   Specify whether to save output results to a pre-formatted Excel workbook
-  # Options: TRUE/FALSE
-outFlag = getwd()
-  # Purpose:
-  #   Specify a file directory to save the Excel file.
-  # Options: TRUE/FALSE
-overwriteFlag = T
-  # Purpose: 
-  #   Specify whether or not to overwrite any existing Excel workbooks
-  # Options: TRUE/FALSE
-addDateFlag = FALSE
-  # Purpose: 
-  #   Specify whether to add the date to the name of the output Excel file if
-  # Options: TRUE/FALSE
-  # 
+
 ```
 
 # Step 3. Run `FrEDI_SV` {#runFrEDI}
@@ -191,23 +144,19 @@ Note: `run_fredi_sv()` takes longer to run than the main module, `run_fredi()`, 
 output_df <- run_fredi_sv(sector      = sectorFlag, 
                           driverInput = driverFlag, 
                           popInput    = popFlag,
-                          silent      = silentFlag,
-                          save        = saveFlag, 
-                          outpath     = outFlag,
-                          overwrite   = overwriteFlag,
-                          addDate     = addDateFlag) 
+                          silent      = silentFlag) 
 
 # Option: write output
 ## Write Full Dataframe to CSV (or feather)
-# write.csv(output_df$results, './output/example_output.csv')
+# write.csv(output_df, './output/example_output.csv')
 
 #First five lines of output dataframe
-#output_df$results[1:5,]
+#output_df[1:5,]
 ```
 
 # Step 4. Analyze `FrEDI_SV` {#analyzeFrEDI}
 
-Results from the `FrEDI::run_fredi_sv()` module can be analyzed directly in R or in the accompanying MS excel workbook (if input `save = TRUE`)
+Results from the `FrEDI::run_fredi_sv()` module can be analyzed directly in R
 
 **Disclaimer: These results only provide an illustrative example and should *NOT* be used for further analysis.**
 

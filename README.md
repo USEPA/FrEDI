@@ -1,10 +1,10 @@
 # FrEDI
 The Framework for Evaluating Damages and Impacts (FrEDI)
 
-FrEDI estimates the annual physical and economic impacts of future climate change to the US, through the 21st century.
+FrEDI estimates the annual physical and economic impacts of future climate change to the US, through the 21st century (and optionally through 2300).
 
 ***
-<em>Starting in February 2024, the 2024 FrEDI Technical Documentation and v4.0 of the FrEDI R package will be subject to an independent, external peer review and public comment period. All comments received will be carefully reviewed, considered, and responded to. The final 2024 Technical Documentation and v4.0 R package are expected in late spring 2024.</em> 
+<em>The 2024 FrEDI Technical Documentation and v4.1 of the FrEDI R package were subject to an independent external peer review and public comment period. All comments received were carefully reviewed, considered, and responded to. The final versions of the 2024 Technical Documentation and v4.1 R package were published in August 2024.</em> 
 ***
 
 ## Installation
@@ -34,7 +34,7 @@ To install FrEDI for the first time:
  After loading FrEDI, point FrEDI to a particular temperature file of 
  interest formatted year, temp_c:
  `tempInputFile <- file.path("your_file.csv")`.  
- You also can add in files for gdp and population.
+ You also can add in files for U.S. GDP and population.
 
  Here we specify that the temperature inputs are global. This will
  allow FrEDI to convert those temperatures to CONUS level:
