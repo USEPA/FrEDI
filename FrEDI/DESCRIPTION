@@ -1,6 +1,6 @@
 Package: FrEDI
 Title: The Framework for Evaluating Damages and Impacts (FrEDI)
-Version: 4.1.0
+Version: 4.1.1
 Authors@R: c(person("Corinne", "Hartin",
                     email   = "hartin.corinne@epa.gov",
                     role    = c("aut","cre"),
@@ -10,6 +10,11 @@ Authors@R: c(person("Corinne", "Hartin",
                      email   = "mcduffie.erin.e@epa.gov",
                      role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0002-6845-6077",
+                                 github = "emcduffie")),
+             person("Marcus","Sarofim",
+                     email   = "mcduffie.erin.e@epa.gov",
+                     role    = c("aut","ctb"),
+                     comment = c(ORCID = "0000-0001-7753-1676",
                                  github = "emcduffie")),
              person("Karen","Noiva",
                      role    = c("aut","ctb"),

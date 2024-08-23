@@ -52,6 +52,6 @@ footer:
     left: developed_by
     right: [built_with, date]
   components:
-    date: "| July 2023"
+    date: "| August 2024"
 
 #destination: ../docs/
