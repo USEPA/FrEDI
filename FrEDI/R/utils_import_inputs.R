@@ -624,7 +624,7 @@ check_input_data <- function(
   ### If columns don't pass, message user and return NULL
   ### Otherwise, continue
   if(!checkCols) {
-    msg2_i |> paste0(msg_i3) |> paste0(namesDf[whichCols] |> paste(collapse=", "), "!") |> message()
+    msg2_i |> paste0(msg_i3) |> paste0(namesDf[!whichCols] |> paste(collapse=", "), "!") |> message()
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkCols)
