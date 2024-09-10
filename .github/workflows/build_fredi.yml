@@ -19,21 +19,22 @@ on:
         options:
         - no
         - yes
-      update_results:
-        type: choice
-        description: Update default results?
-        required: true
-        options:
-        - no
-        - yes
+#       update_results:
+#         type: choice
+#         description: Update default results?
+#         required: true
+#         options:
+#         - no
+#         - yes
       update_scenarios:
         type: multi-choice
         description: Update scenarios?
         required: true
         options:
-        - Temps & SLR
-        - Population
         - GDP
+        - Population
+        - Temps & SLR
+        - O3, CH4, & NOx
 
 jobs:
   compile_data:
@@ -64,10 +65,13 @@ jobs:
         run: |
           Rscript -e '
             ###### Conditionals ######
-            ### Which scenarios to update
-            do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
+            ### Which scenarios/documentation to update
+            do_docs  <- "yes"         %in% "${{ inputs.update_scenarios}}"
             do_gdp   <- "GDP"         %in% "${{ inputs.update_scenarios}}"
             do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
+            do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
+            do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
+
 
 
             ###### File Paths ######
@@ -80,42 +84,93 @@ jobs:
 
 
             ###### Update Scenarios ######
+            ### GDP
+            if(do_gdp) {
+              gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
+              fGdp          <- "gdpDefault"
+              dGdp          <- dPath0 |> paste0(fGdp, ".rda")
+              cGdp          <- cPath0 |> paste0(fGdp, ".csv")
+              gdpDefault |> save(file=dGdp)
+              gdpDefault |> write.csv(filename=cGdp, row.names=F)
+              rm(fGdp, dGdp, cGdp, gdpDefault)
+            } ### End if(do_gdp)
+
+            ### Population
+            if(do_pop) {
+              popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
+              fPop          <- "popDefault"
+              dPop          <- dPath0 |> paste0(fPop, ".rda")
+              cPop          <- cPath0 |> paste0(fPop, ".csv")
+              popDefault |> save(file=dPop)
+              popDefault |> write.csv(filename=cPop, row.names=F)
+              rm(fPop, dPop, cPop, popDefault)
+            } ### End if(do_pop)
+
             ### Temperature & CSV
             if(do_temp) {
-              gcamScenarios <- "scenarios_gcam" |> get_frediDataObj("frediData")
-              gcamScenarios <- gcamScenarios |> mutate(temp_C_conus = temp_C_global |> convertTemps(from="global"))
-              gcamScenarios <- gcamScenarios |> (function(df0){
-                scenarios0 <- gcamScenarios |> pull(scenario) |> unique()
-                dfSlr0     <- scenarios0 |> map(function(x0, df0=df0){
-                  df0 <- df0 |> filter(scenario == x0)
-                  df0 <- temps2slr(temps = df0 |> pull(temp_C_global), years = df0 |> pull(year))
-                  return(df0)
-                }) |> bind_rows(.id = "scenario")
-                df0        <- df0 |> left_join(dfSlr0, by=c("year"))
-                return(df0)
-              })()
-              arrange0      <- c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm")
-              gcamScenarios <- gcamScenarios |> arrange_at(c(arrnage0))
-              fTemps        <- "Hector_GCAM_v5.3_scenarios"
+              gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
+              fTemps        <- "gcamScenarios"
               dTemps        <- dPath0 |> paste0(fTemps, ".rda")
               cTemps        <- cPath0 |> paste0(fTemps, ".csv")
               gcamScenarios |> save(file=dTemps)
               gcamScenarios |> write.csv(filename=cTemps, row.names=F)
-
+              rm(fTemps, dTemps, cTemps, gcamScenarios)
             } ### End if(do_temp)
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+
+            ### O3, CH4, and NOx
+            if(do_o3) {
+              ### Ozone
+              select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
+              o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              o3Default     <- o3Default |> select(all_of(select0))
+              rm(select0)
+
+              # ### Adjust the default scenario
+              # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+              # co_mods       <- co_mods   |> select(model, model_label)
+              # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
+              # o3Default     <- o3Default |> select(-model)
+              # o3Default     <- o3Default |> rename(model=model_label)
+              # o3Default     <- o3Default |> relocate(c("model"))
+
+              ### Save ozone
+              fO3           <- "o3Default"
+              dO3           <- dPath0 |> paste0(fO3, ".rda")
+              cO3           <- cPath0 |> paste0(fO3, ".csv")
+              o3Default |> save(file=dO3)
+              o3Default |> write.csv(filename=cO3, row.names=F)
+              rm(fO3, dO3, cO3, o3Default)
+
+              ### CH4
+              ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              fCH4          <- "ch4Default"
+              dCH4          <- dPath0 |> paste0(fCH4, ".rda")
+              cCH4          <- cPath0 |> paste0(fCH4, ".csv")
+              ch4Default |> save(file=dCH4)
+              ch4Default |> write.csv(filename=cCH4, row.names=F)
+              rm(fCH4, dCH4, cCH4, ch4Default)
+
+              ### NOx
+              noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              fNOx          <- "noxDefault"
+              dNOx          <- dPath0 |> paste0(fNOx, ".rda")
+              cNOx          <- cPath0 |> paste0(fNOx, ".csv")
+              noxDefault |> save(file=dNOx)
+              noxDefault |> write.csv(filename=cNOx, row.names=F)
+              rm(fNOx, dNOx, cNOx, noxDefault)
+            } ### End if(do_o3)
 
 
             ###### Update Documentation ######
             ###### - Build Manual
             ###### - Add and build vignettes
             ###### - Generate Documentation
-            roxygen2::roxygenise(pPath0)
-            devtools::document(pkg = pPath0)
-            # devtools::build_manual(pkg = pPath0)
-            # devtools::build_vignettes(pkg = pPath0)
+            if(do_docs) {
+              roxygen2::roxygenise(pPath0)
+              devtools::document(pkg = pPath0)
+              # devtools::build_manual(pkg = pPath0)
+              # devtools::build_vignettes(pkg = pPath0)
+            } ### End if(do_docs)
 
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
@@ -132,10 +187,10 @@ jobs:
             pPath0   <- rPath0 |> file.path("FrEDI")
             oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
-            ###### Create Default Results ######
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+            # ###### Create Default Results ######
+            # pPath0 |> devtools::load_all()
+            # defaultResults <- run_fredi()
+            # save(defaultResults, file=oPath0)
 
             ###### Update Documentation ######
             ###### - Build Manual

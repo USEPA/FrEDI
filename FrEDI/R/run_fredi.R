@@ -30,10 +30,18 @@
 #'
 #' @details This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. [FrEDI::run_fredi()] is the main function in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information).
 #'
-#' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with elements `"gdp"`, and `"pop"`, `"temp"`, and `"slr"``, with each containing a data frame with a custom scenario for temperature, GMSL, GDP, and state-level population, respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
+#' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with named elements `gdp`, `pop`, `temp`, and `slr`, with each containing a data frame with a custom scenario for GDP, state-level population, temperature, and/or GMSL respectively. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the [FrEDI::run_fredi()] argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for named list elements -- `gdp`, `pop`, `temp`, and/or `slr` -- each containing a data frame with a custom scenario for GDP, and state population, temperature, and/or GMSL, respectively. If `inputsList = NULL` or `inputsList = list()` (default), [FrEDI::run_fredi()] uses default trajectories for temperature, SLR, GDP, and population see . [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
+#' Otherwise, [FrEDI::run_fredi()] looks for a list object passed to the argument `inputsList`. Within that list, [FrEDI::run_fredi()] looks for named list elements -- `gdp`, `pop`, `temp`, and/or `slr` -- each containing a data frame with a custom scenario for GDP, state population, temperature, and/or GMSL, respectively. If `inputsList = NULL` or `inputsList = list()` (default), [FrEDI::run_fredi()] uses default trajectories for GDP, population, temperature, and SLR (see [FrEDI::gdpDefault], [FrEDI::popDefault], and [FrEDI::gcamScenarios] for more information). [FrEDI::run_fredi()] will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running [FrEDI::run_fredi()]).
 #'
+#' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
+#'    * `gdp` requires a data frame object with two columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
+#'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
+#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdp = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
+#' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
+#'    * `pop` requires a data frame object with five columns with names `"region"`, `"state"`, `"postal"`, `"year"`, and `"pop"` containing the year, the NCA region name (one of `"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, or `"Southwest"`), the state name, the postal code abbreviation for the state, and the state population, respectively.
+#'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
+#'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(pop = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #' * __Temperature Inputs.__ The input temperature scenario requires CONUS temperatures in degrees Celsius relative to 1995 (degrees of warming relative to the baseline year--i.e., the central year of the 1986-2005 baseline). CONUS temperature values must be greater than or equal to zero degrees Celsius.
 #'    * Users can convert global temperatures to CONUS temperatures using [FrEDI::convertTemps]`(from = "global")` (or by specifying [FrEDI::import_inputs]`(temptype = "global")` when using [FrEDI::import_inputs()] to import a temperature scenario from a CSV file).
 #'    * `temp` requires a data frame object with two columns with names `"year"`, and `"temp_C"` containing the year and CONUS temperatures in degrees Celsius, respectively.
@@ -43,20 +51,12 @@
 #'    * `slr` requires a data frame object with two columns with names `"year"`, `"slr_cm"` containing the year and global mean sea level rise (GMSL) in centimeters, respectively.
 #'    * SLR inputs must have at least one non-missing value in 2000 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
 #'    * If the user does not specify an input scenario for SLR (i.e., `inputsList = list(slr = NULL)`, [FrEDI::run_fredi()] first converts the input or default CONUS temperature scenario to global temperatures (using [FrEDI::convertTemps()]) and then converts the global temperatures to a global mean sea level rise (GMSL) height in centimeters (using [FrEDI::temps2slr()]).
-#' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
-#'    * `gdp` requires a data frame object with two columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
-#'    * GDP inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdp = NULL)`, [FrEDI::run_fredi()] uses a default GDP scenario.
-#' * __Population Inputs.__ The input population scenario requires state-level population values. Population values must be greater than or equal to zero.
-#'    * `pop` requires a data frame object with five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"pop"` containing the year, the NCA region name, the state name, the postal code abbreviation for the state, and the state population, respectively.
-#'    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(pop = NULL)`, [FrEDI::run_fredi()] uses a default population scenario.
 #'
 #'
 #' [FrEDI::run_fredi()] linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, [FrEDI::run_fredi()] subsets the input scenarios to values within the analysis period.
 #'
-#' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit = "degrees Celsius"` and `driverUnit = "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type = "GCM"` and `model_type = "SLR"` for temperature- and SLR-driven sectors, respectively
-#' * [FrEDI::run_fredi()] calculations national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
+#' * Temperatures are interpolated using 1995 as the baseline year (i.e., the central year of the 1986-2005 baseline) and GMSL is interpolated using 2000 as the baseline year. In other words, temperature (in degrees Celsius) is set to zero for the year 1995, whereas GMSL is set to zero for the year 2000. The interpolated temperature and GMSL scenarios are combined into a column called `driverValue`, along with additional columns for year, the driver unit (column `"driverUnit"`, with `driverUnit = "degrees Celsius"` and `driverUnit = "cm"` for temperature- and SLR-driven sectors, respectively), and the associated model type (column `"model_type"`, with `model_type = "GCM"` and `model_type = "SLR"` for temperature- and SLR-driven sectors, respectively.
+#' * [FrEDI::run_fredi()] calculates national population from state-level values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively.
 #'
 #' By default, [FrEDI::run_fredi()] will calculate impacts for all sectors included in the tool. Alternatively, users can pass a character vector specifying a single sector or a subset of sectors using the `sectorList` argument. To see a list of sectors included within [FrEDI], run [FrEDI::get_sectorInfo()]. If `sectorList = NULL` (default), all sectors are included.
 #'
@@ -113,7 +113,7 @@
 #' ### Load FrEDI
 #' require(FrEDI)
 #'
-#' ### Run function with defaults (same as `defaultResults` dataset)
+#' ### Run function with defaults
 #' run1 <- run_fredi()
 #'
 #' ### Load climate scenarios and glimpse data
@@ -121,16 +121,15 @@
 #' gcamScenarios |> glimpse()
 #'
 #' ### Load population scenario and glimpse data
-#' data(popScenario)
-#' popScenario |> glimpse()
+#' data("popDefault")
+#' popDefault |> glimpse()
 #'
 #' ### Subset climate scenario
-#' temps1 <- gcamScenarios |> filter(scenario=="Hector_GCAM_v5.3_ECS_3.0_ref")
-#' temps1 <- temps1 |> mutate(temp_C = temp_C_global |> convertTemps(from="global"))
-#' temps1 <- temps1 |> select(year, temp_C)
+#' temps1 <- gcamScenarios |> filter(scenario=="ECS_3.0_ref")
+#' temps1 <- temps1 |> select(year, temp_C_conus)
 #'
 #' ### Run custom scenario
-#' run2 <- run_fredi(inputsList=list(tempInput=temps1, popInput=popScenario))
+#' run2 <- run_fredi(inputsList=list(temp=temps1, pop=popDefault))
 #'
 #' ### Load scenarios from file:
 #' scenariosPath <- system.file(package="FrEDI") |> file.path("extdata","scenarios")
@@ -138,10 +137,10 @@
 #'
 #'
 #' ### SLR Scenario File Name
-#' slrInputFile  <- scenariosPath |> file.path("slr_from_GCAM.csv")
+#' slrInputFile  <- scenariosPath |> file.path("gcamDefault.csv")
 #'
 #' ### Population Scenario File Name
-#' popInputFile  <- scenariosPath |> file.path("State ICLUS Population.csv")
+#' popInputFile  <- scenariosPath |> file.path("popDefault.csv")
 #'
 #' ### Import inputs
 #' x_inputs <- import_inputs(inputsList=list(slr=slrInputFile, pop=popInputFile), popArea="state")
@@ -175,15 +174,13 @@
 #'
 ###### run_fredi ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
-### run_fredi relies on the following helper functions: "interpolate_annual", "match_scalarValues","get_econAdjValues" , "calcScalars", "interpolate_tempBin"
 run_fredi <- function(
-    # inputsList = list(tempInput=NULL, slrInput=NULL, gdpInput=NULL, popInput=NULL), ### List of inputs
   inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
-    elasticity = 1,    ### Override value for elasticity for economic values
-    maxYear    = 2100,
-    thru2300   = FALSE,
+    elasticity = 1,     ### Override value for elasticity for economic values
+    maxYear    = 2100,  ### Maximum year for the analysis period
+    thru2300   = FALSE, ### Whether to run FrEDI through 2300
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
@@ -527,8 +524,7 @@ run_fredi <- function(
   gdp_df       <- inputsList[["gdp"]]
   pop_df       <- inputsList[["pop"]]
   ### Convert region to region IDs
-  pop_df       <- pop_df |> mutate(region = region |> str_replace(" ", ""))
-  pop_df       <- pop_df |> mutate(region = region |> str_replace("\\.", ""))
+  pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
   ### Calculate national population and update national scenario
   seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   # return(seScenario)
@@ -689,8 +685,9 @@ run_fredi <- function(
 
 
   ###### Return ######
-  ### Message
+  ### Message, clear unused memory, return
   message("\n", "Finished", ".")
+  gc()
   return(returnObj)
 
 } ### End function

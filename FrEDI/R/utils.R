@@ -124,6 +124,47 @@ get_frediDataObj <- function(
   return(return_x)
 } ### End get_frediDataObj
 
+
+
+
+###### get_scenario_id ######
+### Function to standardize the creation of the scenario_id
+get_scenario_id <- function(
+    data_x,
+    include=c("region", "model") ### Character vector of column names to include
+){
+  ### Other vals
+  mnl0   <- "\n" ### Message new line
+  msg0   <- "\t" ### Message indent level 0
+  mcom   <- ", " ### Comma for collapsing lists
+  mqu0   <- "\'" ### Message quote
+  mqu1   <- mqu0 |> paste0(mcom, mqu0, collapse="")
+  mend0  <- "..."
+  ### Columns to include
+  main0  <- c("sector", "variant", "impactType", "impactYear")
+  cols0  <- main0  |> c(include)
+  ### Check names
+  names0 <- data_x |> names()
+  cCheck <- (cols0 %in% names0)
+  nCheck <- (!cCheck) |> which() |> length()
+  if(nCheck){
+    paste0("In get_scenario_id:") |> message()
+    msg0 |> paste0("Data is missing columns ", mqu0, cols0[!cCheck] |> paste(collapse=mqu1), mqu0, mend0) |> message()
+    paste0("Creating `scenario_id` from columns ", mqu0, cols0[cCheck] |> paste(collapse=mqu1), mqu0, mend0) |> message()
+    ### New names
+    cols0  <- cols0[cCheck]
+  } ### End if(nCheck)
+  ### Subset data
+  scen_x <- data_x[,cols0]
+  ### Get scenario IDs
+  scen_x <- scen_x |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
+  data_x <- data_x |> mutate(scenario_id = scen_x)
+  ### Return
+  return(data_x)
+}
+
+
+
 ###### interpolate_annual ######
 ### Created 2021.02.05. Updated 2021.02.05
 ### Interpolate Annual Values
@@ -177,7 +218,7 @@ interpolate_annual <- function(
   if (addRegion) {data <- data |> mutate(region = region0)}
   rm(addRegion)
 
-  ###### Interpolation Info ######
+  ###### Interpolation Rules ######
   ### - Return NA values outside of extremes
   ### - If only one value is provided use the same for left and right
   ### - Interpolation method
@@ -188,22 +229,19 @@ interpolate_annual <- function(
   if(repRule ){rule <- rule |> rep(2)}
   method    <- method |> is.null() |> ifelse("linear", method)
 
-  ###### Interpolate NA values ######
-  ### Filter to the region and then interpolate missing values
+  ### Column names
   cols0     <- c("x", "y")
   cols1     <- c("year") |> c(column0)
 
-  ### Get IDs
-  ### Subset data
+  ### Get group IDs and add to data
   groupCol0 <- defCols |> get_matches(y=c("year"), matches=F)
   group0    <- data |> select(any_of(groupCol0))
-  # group0   <- data[,"region" |> c(stateCols0, modelCols0)]
-  ### Get scenario IDs
   group0    <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
   data      <- data   |> mutate(group_id = group0)
   # groupCol0 |> print(); data |> glimpse()
   # data |> group_by_at(c(all_of(groupCol0), "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
 
+  ###### Iteration ######
   ### Iterate over groups
   groups0   <- data |> pull(group_id) |> unique()
   df_interp <- groups0 |> map(function(group_i){
@@ -221,8 +259,7 @@ interpolate_annual <- function(
     return(new_i)
   }) |> bind_rows()
 
-  ### Determine join
-  ### Drop yCol from data
+  ### Determine join and join data
   # data |> glimpse(); df_interp |> glimpse(); cols1 |> print()
   names0 <- data |> names() |> get_matches(y=cols1, matches=F)
   join0  <- names0 |> get_matches(y=df_interp |> names())
@@ -246,44 +283,58 @@ interpolate_annual <- function(
   data     <- data |> arrange_at(c(arrange0))
 
   ### Return
+  gc()
   return(data)
 } ### End function
 
-###### get_scenario_id ######
-### Function to standardize the creation of the scenario_id
-get_scenario_id <- function(
-    data_x,
-    include=c("region", "model") ### Character vector of column names to include
+
+
+### Function to zero out values for temperature and SLR scenarios
+zero_out_scenario     <- function(
+    df0,    ### Tibble with scenario and years, value column
+    type0   = "temp", ### Or SLR
+    valCol0 = NULL  , ### If NULL, function will use default
+    yrRef0  = NULL  , ### If NULL, function will use default
+    refVal0 = 0       ### Default to zero
 ){
-  ### Other vals
-  mnl0   <- "\n" ### Message new line
-  msg0   <- "\t" ### Message indent level 0
-  mcom   <- ", " ### Comma for collapsing lists
-  mqu0   <- "\'" ### Message quote
-  mqu1   <- mqu0 |> paste0(mcom, mqu0, collapse="")
-  mend0  <- "..."
-  ### Columns to include
-  main0  <- c("sector", "variant", "impactType", "impactYear")
-  cols0  <- main0  |> c(include)
-  ### Check names
-  names0 <- data_x |> names()
-  cCheck <- (cols0 %in% names0)
-  nCheck <- (!cCheck) |> which() |> length()
-  if(nCheck){
-    paste0("In get_scenario_id:") |> message()
-    msg0 |> paste0("Data is missing columns ", mqu0, cols0[!cCheck] |> paste(collapse=mqu1), mqu0, mend0) |> message()
-    paste0("Creating `scenario_id` from columns ", mqu0, cols0[cCheck] |> paste(collapse=mqu1), mqu0, mend0) |> message()
-    ### New names
-    cols0  <- cols0[cCheck]
-  } ### End if(nCheck)
-  ### Subset data
-  scen_x <- data_x[,cols0]
-  ### Get scenario IDs
-  scen_x <- scen_x |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
-  data_x <- data_x |> mutate(scenario_id = scen_x)
-  ### Return
-  return(data_x)
+  ###### Load Data from FrEDI ######
+  ### Get objects from FrEDI name space
+  ### Get input scenario info: co_info
+  ### Get state info: co_states
+  co_info <- "co_inputInfo"  |> get_frediDataObj("frediData")
+  co_mods <- "co_modelTypes" |> get_frediDataObj("frediData")
+
+  ### Subset input info
+  df_info <- co_info |> filter(inputName %in% type0)
+  df_mods <- co_mods |> filter(inputName %in% type0)
+  valCol0 <- (valCol0 |> is.null()) |> ifelse(df_info |> pull(valueCol), valCol0)
+  yrRef0  <- (yrRef0  |> is.null()) |> ifelse(df_mods |> pull(modelRefYear), yrRef0)
+
+  ### Zero out rows at ref year
+  # df0 |> glimpse(); df0 |> pull(year) |> range() |> print(); yrRef0 |> print()
+  # df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+  drop0   <- c("year") |> c(valCol0)
+  df1     <- tibble(x = yrRef0, y = refVal0)
+  # df1 |> glimpse()
+  df1     <- df1 |> rename_at(c("x", "y"), ~drop0)
+
+  ### Df2
+  join0   <- c("year")
+  df2     <- df0 |> select(-any_of(drop0)) |> distinct() |> mutate(year = yrRef0)
+  df1     <- df1 |> left_join(df2, by=join0)
+  rm(drop0, join0)
+
+  ### Then, drop rows in yrRef0 and bind zero rows to values
+  # df0 |> glimpse(); df1 |> glimpse()
+  df0    <- df0 |> filter(year > yrRef0)
+  df0    <- df0 |> rbind(df1)
+  rm(df1)
+
+  ### Order values
+  order0 <- df0 |> names() |> get_matches(y=valCol0, matches=F)
+  df0    <- df0 |> arrange_at(order0)
 }
+
 
 ###### format_inputScenarios ######
 ### This function helps format input scenarios
@@ -325,26 +376,16 @@ format_inputScenarios <- function(
   if(hasInput0) {
     ### Zero out values if temp or slr
     doZero0 <- name0 %in% c("temp", "slr")
-    if(doZero0) {
-      # df0 |> glimpse(); df0 |> pull(year) |> range() |> print(); yrRef0 |> print()
-      df0 <- df0 |> filter(year > yrRef0)
-      df1 <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
-      df0 <- df0 |> rbind(df1)
-      rm(df1)
-    } ### if(doZero0)
+    if(doZero0) df0 <- df0 |> zero_out_scenario(type0=name1)
 
     ### Calculate values
     yrs0 <- yrRef0:maxYear |> unique()
     if("pop" %in% name0) {
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=F) |> ungroup()
     } else if("o3" %in% name0) {
-      # "got here" |> print()
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2, byState=T) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1, byState=T, byModel=T) |> ungroup()
     } else {
       df0  <- df0 |> mutate(region = "NationalTotal")
-      # df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=2:2) |> ungroup()
       df0  <- df0 |> interpolate_annual(years=yrs0, column=valCol0, rule=1) |> ungroup()
       df0  <- df0 |> select(-c("region"))
     } ### End if("pop" %in% name0)
@@ -352,24 +393,39 @@ format_inputScenarios <- function(
 
     ### If SLR, calculate SLR values from temperatures
     if(doSlr) {
-      # "got here" |> print()
-      ### - Get new info
-      valCol0 <- infoSlr |> pull(valueCol)
-      yrRef0  <- infoSlr |> pull(ref_year)
+      # # "got here" |> print()
+      # ### - Get new info
+      # valCol0 <- infoSlr |> pull(valueCol)
+      # yrRef0  <- infoSlr |> pull(ref_year)
+      # ### - First, calculate global temps
+      # df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
+      # # ### - Then, zero out again
+      # # df0     <- df0 |> filter(year > yrRef0)
+      # # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~"temp_C")
+      # # df0     <- df0 |> rbind(df1)
+      # # rm(df1)
+      # ### - Then, zero out again
+      # df0     <- df0 |> filter(year > yrRef0)
+      # df1     <- df0 |> first() |> mutate(year = yrRef0) |> mutate_at(c(valCol0), function(x){0})
+      # df0     <- df0 |> rbind(df1)
+      # rm(df1)
+      # ### Then, calculate SLR heights
+      # df0     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
+      # ### - Then, zero out again
+      # df0     <- df0 |> filter(year > yrRef0)
+      # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
+      # df0     <- df0 |> rbind(df1)
+      # rm(df1)
       ### - First, calculate global temps
       df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
-      ### - Then, zero out again
-      df0     <- df0 |> filter(year > yrRef0)
-      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~"temp_C")
-      df0     <- df0 |> rbind(df1)
-      rm(df1)
       ### Then, calculate SLR heights
-      df0     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
-      ### - Then, zero out again
-      df0     <- df0 |> filter(year > yrRef0)
-      df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
-      df0     <- df0 |> rbind(df1)
-      rm(df1)
+      join0   <- c("year")
+      drop0   <- c("temp_C")
+      df1     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
+      df0     <- df0 |> left_join(df1, by=join0)
+      df0     <- df0 |> select(-any_of(drop0))
+      df0     <- df0 |> zero_out_scenario(type0=name0)
+      rm(join0, drop0)
     } ### End if(doSlr)
   } ### End if(hasInput0)
   # df0 |> glimpse()
