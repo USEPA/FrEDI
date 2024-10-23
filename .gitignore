@@ -13,6 +13,11 @@ analysis/*
 
 data_tests/*
 
+../docs/
+docs
+/doc/
+/Meta/
+
 FrEDI/.Rproj.user/*
 FrEDI/.Rproj.user
 FrEDI/.Rhistory
