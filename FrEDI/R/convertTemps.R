@@ -33,13 +33,18 @@ convertTemps <- function(
   c0 <- 0 ### Update
   c1 <- 1.421 ### Update
 
-  toType <- from |> tolower()
-  if(from == "global"){
+  ## Make "from" argument lowercase
+  fromType <- from |> tolower()
+
+  if(fromType == "global"){
     temp_global <- temps
     new_temps   <- c1*temp_global + c0
-  } else{
+  } else if(fromType == "conus"){
     temp_conus <- temps
     new_temps  <- (temp_conus - c0)/c1
+  } else {
+    print("Please enter Conus or Global in `from` argument")
+    return()
   }
 
   ###### Return ######
