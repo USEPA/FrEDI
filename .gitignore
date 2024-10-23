@@ -4,16 +4,14 @@ inst/doc
 
 .Rproj.user/*
 .Rproj.user
-
 .Rhistory
 
 analysis/*
 
-createSystemData/.Rproj.user/*
-createSystemData/.Rproj.user
-createSystemData/.Rhistory
-createSystemData/inst/extdata/~$*
-createSystemData/inst/extdata/sv/~$*
+*.html
+.github/*.html
+
+data_tests/*
 
 FrEDI/.Rproj.user/*
 FrEDI/.Rproj.user
