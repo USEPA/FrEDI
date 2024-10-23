@@ -43,8 +43,7 @@ convertTemps <- function(
     temp_conus <- temps
     new_temps  <- (temp_conus - c0)/c1
   } else {
-    print("Please enter Conus or Global in `from` argument")
-    return()
+    stop("Warning! In convertTemps(): Invalid value provided to from argument. Please enter a valid value. Exiting...")
   }
 
   ###### Return ######
