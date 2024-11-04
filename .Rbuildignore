@@ -12,3 +12,4 @@
 ^pkgdown$
 ^docs$
 ^\.github$
+^\.github\workflows\*
