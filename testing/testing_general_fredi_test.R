@@ -3,8 +3,9 @@
 ### Output test for Main FrEDI
 general_fredi_test <- function(
     newOutputs,
+    refOutputs,
     outPath   = ".",
-    xlsxName  = "testResults_fredi_general.xlsx",
+    xlsxName  = "fredi_general_testResults.xlsx",
     save      = TRUE,
     return    = TRUE,
     overwrite = TRUE
@@ -37,19 +38,19 @@ general_fredi_test <- function(
 
 
   ###### Load Reference Data ######
-  ### Load previous Default Data to compare to new outputs
-  ### 0. Names for reference data
-  ### 1. Create new environment
-  ### 2. Load data into new environment
-  ### 3. Remove intermediate objects
-  dName0      <- "defaultResults" ### Name of data to load
-  dPkg0       <- "FrEDI"          ### Name of package to load data from (i.e., FrEDI)
-  newEnv      <- new.env()
-  expr0       <- substitute(data(d, package=dPkg0, envir=newEnv), list(d=dName0))
-  expr0 |> eval()
-  refOutputs  <- dName0 |> get(envir=newEnv, inherits = F)
-  rm(newEnv)
-  # refOutputs %>% glimpse
+  # ### Load previous Default Data to compare to new outputs
+  # ### 0. Names for reference data
+  # ### 1. Create new environment
+  # ### 2. Load data into new environment
+  # ### 3. Remove intermediate objects
+  # dName0      <- "defaultResults" ### Name of data to load
+  # dPkg0       <- "FrEDI"          ### Name of package to load data from (i.e., FrEDI)
+  # newEnv      <- new.env()
+  # expr0       <- substitute(data(d, package=dPkg0, envir=newEnv), list(d=dName0))
+  # expr0 |> eval()
+  # refOutputs  <- dName0 |> get(envir=newEnv, inherits = F)
+  # rm(newEnv)
+  # # refOutputs |> glimpse()
 
 
   ###### Add Data to List ######
@@ -65,8 +66,8 @@ general_fredi_test <- function(
   ###### Compare Tables #######
   ### Get anti-join between the two tables: Join using all names
   ### Add table to save_list
-  # join0     <- newOutputs %>% names
-  join0     <- newOutputs |> names() |> (function(y, z=refOutputs){y[(y %in% (z |> names()))]})()
+  # join0     <- newOutputs |> names()
+  join0     <- newOutputs |> names() |> get_matches(y=refOutputs |> names())
   df_diffs1 <- newOutputs |> anti_join(refOutputs, by=c(join0)) |> mutate(antiJoin = "New to Ref")
   df_diffs2 <- refOutputs |> anti_join(newOutputs, by=c(join0)) |> mutate(antiJoin = "Ref to New")
   df_diffs  <- df_diffs1 |> rbind(df_diffs2)
@@ -83,8 +84,8 @@ general_fredi_test <- function(
     c_save0 <- save_list |> names()
     ### Iterate over items in save_list: add worksheets and save tables
     for(name_i in c_save0) {
-      wbook0 |> addWorksheet(sheetName = name_i)
-      wbook0 |> writeDataTable(sheet = name_i, x = save_list[[name_i]], tableName = name_i)
+      wbook0 |> addWorksheet(sheetName=name_i)
+      wbook0 |> writeDataTable(sheet=name_i, x=save_list[[name_i]], tableName=name_i)
     } ### End for(name_i in c_save0)
   } ### End if(save)
 

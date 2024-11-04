@@ -1,11 +1,13 @@
 ### Function to check if column has at least one non NA value
-has_nonNA_values <- function(x) {
+has_nonNA_values <- function(
+    x
+) {
   ### Check whether values in x are NA
   x <- x |> is.na()
   ### Calculate number of rows
   y <- tibble(numRows = x |> nrow())
   ### Number of NA values
-  y <- y |> mutate(numNA = x |> colSums() |> nrow() |> is.null() |> if_else(0,1))
+  y <- y |> mutate(numNA = x |> colSums() |> nrow() |> is.null() |> if_else(0, 1))
   ### Whether all results are missing
   y <- y |> mutate(allNA = (numRows == numNA))
   ### Filter to values with allNA
@@ -18,10 +20,14 @@ has_nonNA_values <- function(x) {
 } ### End has_nonNA_values_df
 
 ### Function to check if column has at least one non NA value
-has_nonNA_values_df <- function(df0, groups0="sector", col0="annual_impacts") {
+has_nonNA_values_df <- function(
+    df0,
+    groups0 = "sector",
+    col0    = "annual_impacts"
+) {
   ### Add counters
   df0   <- df0 |> mutate(numRows = 1)
-  vals0 <- df0[[col0]] |> is.na()
+  vals0 <- df0 |> pull(all_of(col0)) |> is.na()
   x     <- df0 |> mutate(numNA   = 1 * vals0)
   ### Summarize
   sum0  <- c("numRows", "numNA")

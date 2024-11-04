@@ -45,7 +45,7 @@ jobs:
     name: Load Package Code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -71,8 +71,6 @@ jobs:
             do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
             do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
             do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
-
-
 
             ###### File Paths ######
             ### - Main repo path, FrEDI project path
@@ -175,7 +173,6 @@ jobs:
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
             # devtools::build(pkg=pPath0, path=rPath0)
-
           '
 
 
@@ -204,16 +201,15 @@ jobs:
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
             # devtools::build(pkg=pPath0, path=rPath0)
-
           '
 
 
+      ### git add FrEDI/data/defaultResults.rda
       - name: Commit results
         run: |
           git config --local core.autocrlf false
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name  "${{ github.actor }}"
-          git add FrEDI/data/defaultResults.rda
           git add FrEDI/man/*.Rd
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
           git commit -am "Updated documentation & default results"

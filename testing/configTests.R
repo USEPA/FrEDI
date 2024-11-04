@@ -42,7 +42,8 @@ dataInfo_test <- function(
     TRUE ~ "N/A"
   ))
   ### Add names back to list
-  listTypes <- listTypes |> (function(x){names(x) <- listNames; return(x)})()
+  listTypes <- listTypes |> set_names(listNames)
+  # listTypes <- listTypes |> (function(x){names(x) <- listNames; return(x)})()
   # c(length(listTypes), names(listTypes) |> length) |> print()
 
   ###### Initial Table Info ######
@@ -74,12 +75,20 @@ dataInfo_test <- function(
   #### Check if each table has duplicate values: Number of rows should equal number of unique rows
   ### List of tables to make exceptions for
   except0   <- c("data_scaledImpacts")
-  df_info   <- df_info |> mutate(has_dups = case_when((itemClass == "list") ~ F, (num_rows == unique_rows) ~ F, (table %in% except0) ~ F))
+  df_info   <- df_info |> mutate(has_dups = case_when(
+    itemClass == "list" ~ F,
+    num_rows == unique_rows ~ F,
+    table %in% except0 ~ F
+  )) ### End mutate/case)when
   ### Check whether all tests are passed
-  df_info   <- df_info |> mutate(passed   = case_when((itemClass == "list") ~ T, (has_dups == T | na_flag == T) ~ F, (has_dups == F & na_flag == F) ~ T))
+  df_info   <- df_info |> mutate(passed   = case_when(
+    itemClass == "list" ~ T,
+    has_dups == T | na_flag == T ~ F,
+    has_dups == F & na_flag == F ~ T
+  )) ### End mutate/case)when
   ### Mutate logicals to numeric
   mutate0   <- c("has_dups", "passed")
-  df_info   <- df_info |> mutate_at(.vars=c(mutate0), as.numeric)
+  df_info   <- df_info |> mutate_at(c(mutate0), as.numeric)
   ### Remove intermediates
   rm(except0, mutate0)
 
