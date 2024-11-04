@@ -50,7 +50,7 @@ jobs:
     name: Load Package Code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Send input status
         run: |
@@ -179,7 +179,7 @@ jobs:
       - name: Upload Tests
         if: |
           inputs.run_tests == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Test Data
           path: |
@@ -190,7 +190,7 @@ jobs:
       - name: Upload FigH Results
         if: |
           inputs.figH_results == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: FigH results
           path: |
@@ -200,7 +200,7 @@ jobs:
       - name: Upload Report Appendix Figures
         if: |
           inputs.make_appx_figs == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Report appendix figures & data
           path: |
@@ -209,7 +209,7 @@ jobs:
       - name: Upload Report Fig7 Figures
         if: |
           inputs.make_tots_figs == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Fig7 report figures & data
           path: |
