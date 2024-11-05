@@ -71,7 +71,8 @@ jobs:
             oFileRef <- oPath0 |> file.path("refResults.rda")
 
             ### Check if path exists and, if not, create it
-            if(!exists0) oPath0 |> dir.create(recursive = TRUE)
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
 
             ###### Action Arguments ######
             urlRepo   <- "https://github.com/USEPA/FrEDI"
