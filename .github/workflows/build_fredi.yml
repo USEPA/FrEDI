@@ -212,6 +212,6 @@ jobs:
           git config --local user.name  "${{ github.actor }}"
           git add FrEDI/man/*.Rd
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
-          git commit -am "Updated documentation & default results"
+          git commit -am "Updated package documentation"
           git push
 

@@ -7,7 +7,7 @@ on:
         type: string
         description: From which data-only branch of FrEDI_Data do you want to pull in data (e.g., entering "state_initial" will pull from the "data_only_branch_state_initial" branch on FrEDI_data)?
 
-
+### git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git data_only_branch_${{ github.event.inputs.data_branch }} --allow-unrelated-histories
 jobs:
   get_data:
     runs-on: ubuntu-latest
@@ -15,9 +15,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Commit results
         run: |
+          branch1="data_only_branch_"
+          branch2="${{ github.event.inputs.data_branch }}"
+          branch0="${branch1}${branch2}"
+          echo branch0
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git data_only_branch_${{ github.event.inputs.data_branch }} --allow-unrelated-histories
+          git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git "$branch0" --allow-unrelated-histories
           mv data/sysdata.rd* R/sysdata.rd*
           git branch --show-current
           git add R/sysdata.rd*
