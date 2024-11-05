@@ -6,7 +6,7 @@
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
-name: 3. Test FrEDI Package
+name: 2a. Test FrEDI Package
 
 on:
   workflow_dispatch:
@@ -21,27 +21,6 @@ on:
         options:
         - no
         - yes
-      # figH_results:
-      #   type: choice
-      #   description: Fig H results?
-      #   required: true
-      #   options:
-      #   - no
-      #   - yes
-      # make_appx_figs:
-      #   type: choice
-      #   description: Create appendix figures for report?
-      #   required: true
-      #   options:
-      #   - no
-      #   - yes
-      # make_tots_figs:
-      #   type: choice
-      #   description: Make figures for impact type totals?
-      #   required: true
-      #   options:
-      #   - no
-      #   - yes
 
 jobs:
   compile_data:
@@ -49,7 +28,6 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
-    # echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_appx_figs }} ${{ inputs.make_tots_figs }}"
     name: Load Package Code
     steps:
       - name: Checkout
