@@ -408,6 +408,7 @@ run_fredi_methane <- function(
   } ### End if(hasInputs)
   # return(inputsList)
 
+  ## Add an object to track names of User Inputs
   inNames1 <- if(hasInputs){inputsList[!(inputsList |> map(is.null) |> unlist())] |> names()}
 
   ### Update inputs with defaults if values are missing
