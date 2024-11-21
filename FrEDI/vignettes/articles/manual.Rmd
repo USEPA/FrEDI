@@ -1,6 +1,6 @@
 ---
 title: "Installing & Running FrEDI"
-date: "June, 2023"
+date: "August, 2024"
 description: >
   Getting Started with FrEDI.
 output: rmarkdown::html_vignette
@@ -44,7 +44,7 @@ withr::with_libpaths(
         subdir = "FrEDI",  
         type = "source",  
         force = TRUE,  
-        ref = "main" # edit this to install a different branch of interest
+        ref = "v4.1" # edit this to install a different branch of interest
         )
     )
 
