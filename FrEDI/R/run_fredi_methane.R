@@ -135,7 +135,7 @@
 ###### run_fredi_methane ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi_methane <- function(
-    inputsList = list(ch4=NULL, nox=NULL, gdp=NULL, pop=NULL), ### List of inputs
+    inputsList = list(ch4=NULL, nox=NULL, gdp=NULL, pop=NULL,o3=NULL), ### List of inputs
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period
     thru2300   = FALSE, ### Whether to run FrEDI methane through 2300
@@ -408,6 +408,8 @@ run_fredi_methane <- function(
   } ### End if(hasInputs)
   # return(inputsList)
 
+  inNames1 <- if(hasInputs){inputsList[!(inputsList |> map(is.null) |> unlist())] |> names()}
+
   ### Update inputs with defaults if values are missing
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
     ### Filter to list
@@ -440,12 +442,19 @@ run_fredi_methane <- function(
 
   ###### Physical Driver Scenario  ######
   ### Need scenario for CH4 & NOX or O3
-  has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
-  has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
+  #has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
+  #has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
+  has_o3     <-  "o3" %in% inNames1
+  has_ch4    <-  "ch4" %in% inNames1
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
+    ##Check Region
+    do_reg <- "region" %in% (df_drivers |> names())
+    if(do_reg){df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))}
+    ##Check State
     df_drivers <- df_drivers |> mutate(state = state |> str_replace_all("\\.|_|-| ", ""))
+
     df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
