@@ -135,7 +135,7 @@
 ###### run_fredi_methane ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi_methane <- function(
-    inputsList = list(ch4=NULL, nox=NULL, gdp=NULL, pop=NULL,o3=NULL), ### List of inputs
+    inputsList = list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL), ### List of inputs
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period
     thru2300   = FALSE, ### Whether to run FrEDI methane through 2300
@@ -454,8 +454,7 @@ run_fredi_methane <- function(
     do_reg <- "region" %in% (df_drivers |> names())
     if(do_reg){df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))}
     ##Check State
-    df_drivers <- df_drivers |> mutate(state = state |> str_replace_all("\\.|_|-| ", ""))
-
+    df_drivers <- df_drivers |> mutate(state  = state  |> str_replace_all("\\.|_|-| ", ""))
     df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
