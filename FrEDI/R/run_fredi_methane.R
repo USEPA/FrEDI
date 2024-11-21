@@ -445,7 +445,7 @@ run_fredi_methane <- function(
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
-    df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+    df_drivers <- df_drivers |> mutate(state = state |> str_replace_all("\\.|_|-| ", ""))
     df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
