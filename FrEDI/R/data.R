@@ -88,3 +88,26 @@
 #' }
 #' @source \url{https://epa.gov/cira/FrEDI/}
 "gdpDefault"
+
+
+
+###### ch4Default ######
+#' Scenario with changes in US methane concentrations for the years 2020 through 2100, which can be passed as an input to [FrEDI:run_fredi_methane()].
+#'
+#' `ch4Default` is a data frame object that contains projections with changes in annual US methane concentrations, at the national level, for the period from 2020 to 2100. Values for changes in annual US methane concentrations are provided in parts per billion by volume (ppbv) relative to a 1995-2006 baseline era. This scenario represents the SSP245 mean emissions pathway from RCMIP5, with methane concentrations produced using the FaIR model. For more information on the SSP245 mean emissions pathway and the FaIR model, see Nichols et al. (2020) and Leach, et al. (2021), respectively.
+#'
+#' To use `ch4Default` as an input to the FrEDI Methane module, pass the data frame via the named element `ch4` in a list passed to the `inputsList` argument in function calls to [FrEDI:run_fredi_methane()], e.g.: `run_fredi_methane(inputsList=list(ch4=ch4Default))`. `ch4Default` can also be combined with other provided scenarios (`gdpDefault`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
+#'
+#' Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. FaIRv2.0.0: a generalized impulse response model for climate uncertainty and future scenario exploration, Geosci. Model Dev., 14, 3007--3036, https://doi.org/10.5194/gmd-14-3007-2021.
+#'
+#' Nicholls, Z. R. J., Meinshausen, M., Lewis, J., Gieseke, R., Dommenget, D., Dorheim, K., Fan, C.-S., Fuglestvedt, J. S., Gasser, T., Goluke, U., Goodwin, P., Hartin, C., Hope, A. P., Kriegler, E., Leach, N., Marchegiani, D., McBride, L. A., Quilcaille, Y., Rogelj, J., Xie, Z. (2020). Reduced Complexity Model Intercomparison Project Phase 1: introduction and evaluation of global-mean temperature response. Geoscientific Model Development. 13. 5175-5190. 10.5194/gmd-13-5175-2020.
+#'
+#' Environmental Protection Agency (EPA). Forthcoming. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
+#'
+#'  @format A data frame with 81 rows and 2 columns:
+#' \describe{
+#'   \item{year    }{Year}
+#'   \item{CH4_ppbv}{Change in U.S. methane concentrations, in parts per billion by volume (ppbv), relative to a 1995-2006 baseline era.}
+#' }
+#' @source \url{https://epa.gov/cira/FrEDI/}
+"gdpDefault"
