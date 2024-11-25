@@ -50,7 +50,7 @@ The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame obj
 }
 \examples{
 ### Run SV Module with defaults without specifying sector
-df_sv <- run_fredi_sv()
+# df_sv <- run_fredi_sv()
 
 ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
 get_sv_sectorInfo()
