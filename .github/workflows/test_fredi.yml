@@ -35,7 +35,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
+          echo "$${{ github.ref_name }} ${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
 
 
       - name: Setup R
@@ -79,6 +79,7 @@ jobs:
             urlRepo   <- "https://github.com/USEPA/FrEDI"
             newBranch <- "${{ github.ref_name   }}"
             refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
             aggTypes  <- "${{ inputs.agg_types  }}" == "true"
             if(aggTypes) {
               cAggLvls  <- "all"
@@ -91,7 +92,7 @@ jobs:
             ### Install FrEDI from ref branch
             ### Load library
             ### Run FrEDI
-            devtools::install_github(repo=urlRepo, ref=refBranch, dependencies=F, upgrade="never", force=T, type="source")
+            devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
             dfRef    <- run_fredi(allLevels=cAggLvls)
             dfRef |> save(file=oFileRef)
