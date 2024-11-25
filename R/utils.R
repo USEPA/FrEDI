@@ -42,6 +42,7 @@ get_returnListStatus <- function(cond0=TRUE){
 }
 
 ### Function to make it easier to subset a vector
+#' @export
 get_matches <- function(
     x, ### Vector to subset
     y, ### Vector to check x against
