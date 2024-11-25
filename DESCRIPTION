@@ -1,6 +1,6 @@
 Package: FrEDI
 Title: The Framework for Evaluating Damages and Impacts (FrEDI)
-Version: 4.1.1
+Version: 4.2.0
 Authors@R: c(person("Corinne", "Hartin",
                     email   = "hartin.corinne@epa.gov",
                     role    = c("aut","cre"),
@@ -38,10 +38,11 @@ Description: This R package models damages and impacts from climate change in th
     using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the Climate Change Impacts and 
     Risk Analysis (CIRA) project at the U.S. Environmental Protection Agency. The package contains functions that 
     implement FrEDI for projecting impacts from climate change and sea level rise for a selected set of 
-    sectors. Version 3 and above includes a module for estimating impacts on socially vulnerable populations for 
-    select sectors. Versions > 3.3.0 extend calculations out to 2300 to facilitate the calculation of Net Present Values 
-    (NPV) but only contains default values through 2090--users must provide their own inputs through 2300. Versions 4.0.1 and 
-    above calculate values at the state-level.  
+    sectors. Versions 3+ include a module for estimating impacts on socially vulnerable populations for 
+    select sectors. Versions 3.3+ extend calculations out to 2300 to facilitate the calculation of Net Present Values 
+    (NPV) but only contain default values through 2090--users must provide their own custom input scenarios for results past 2090. 
+    Versions 4.0.1+ calculate values at the state-level. Versions 4.2+ include a module for estimating excess mortality from changes
+    to ozone concentrations or methane concentrations and, optionally, NOx emissions. 
 License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.2.0),
@@ -49,7 +50,7 @@ Depends: R (>= 4.2.0),
     ggpubr,
     openxlsx
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.1
 LazyData: TRUE
 Suggests: knitr, rmarkdown, prettydoc, devtools, kableExtra
 VignetteBuilder: knitr
