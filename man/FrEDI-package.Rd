@@ -100,6 +100,7 @@ Useful links:
 Authors:
 \itemize{
   \item Erin McDuffie \email{mcduffie.erin.e@epa.gov} (\href{https://orcid.org/0000-0002-6845-6077}{ORCID}) (emcduffie) [contributor]
+  \item Marcus Sarofim \email{mcduffie.erin.e@epa.gov} (\href{https://orcid.org/0000-0001-7753-1676}{ORCID}) (emcduffie) [contributor]
   \item Karen Noiva (\href{https://orcid.org/0000-0002-4412-5302}{ORCID}) (knoiva-indecon) [contributor]
 }
 
