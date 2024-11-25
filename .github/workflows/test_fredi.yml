@@ -73,14 +73,19 @@ jobs:
             ### Check if path exists and, if not, create it
             exists0  <- oPath0 |> dir.exists()
             if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+            "got here1" |> print()
 
             ###### Action Arguments ######
             urlRepo   <- "https://github.com/USEPA/FrEDI"
             newBranch <- "${{ github.ref_name   }}"
             refBranch <- "${{ inputs.ref_branch }}"
             aggTypes  <- "${{ inputs.agg_types  }}" == "true"
-            if(aggTypes) cAggLvls  <- "all"
-            else         cAggLvls  <- c("national", "modelaverage", "impactyear")
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
+            "got here2" |> print()
 
             ###### Run FrEDI for Reference Branch ######
             ### Install FrEDI from ref branch
@@ -90,6 +95,7 @@ jobs:
             library(FrEDI)
             dfRef    <- run_fredi(allLevels=cAggLvls)
             dfRef |> save(file=oFileRef)
+            "got here3" |> print()
 
             ### Detach FrEDI package
             package:FrEDI |> detach(unload=TRUE)
@@ -100,6 +106,7 @@ jobs:
             library(FrEDI)
             dfNew    <- run_fredi(allLevels=cAggLvls)
             dfNew |> save(file=oFileNew)
+            "got here4" |> print()
 
             ###### Test results ######
             ### Load testing scripts
@@ -107,7 +114,8 @@ jobs:
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
             ### Get test results
             dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
-            '
+            "got here5" |> print()
+          '
 
       - name: Upload Tests
         uses: actions/upload-artifact@v4
