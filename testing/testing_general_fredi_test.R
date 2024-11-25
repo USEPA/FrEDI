@@ -70,9 +70,14 @@ general_fredi_test <- function(
   join0     <- newOutputs |> names() |> get_matches(y=refOutputs |> names())
   df_diffs1 <- newOutputs |> anti_join(refOutputs, by=c(join0)) |> mutate(antiJoin = "New to Ref")
   df_diffs2 <- refOutputs |> anti_join(newOutputs, by=c(join0)) |> mutate(antiJoin = "Ref to New")
+  ### Bind values
+  df_diffs1 |> names() |> print(); df_diffs2 |> names() |> print()
+  cols1     <- df_diffs1 |> names() |> get_matches(df_diffs2 |> names())
+  df_diffs1 <- df_diffs1 |> select(all_of(cols1))
+  df_diffs2 <- df_diffs2 |> select(all_of(cols1))
   df_diffs  <- df_diffs1 |> rbind(df_diffs2)
   save_list[[c_diff0]] <- df_diffs
-  rm(join0, df_diffs1, df_diffs2)
+  rm(join0, df_diffs1, df_diffs2); rm(cols1)
 
   ###### Create Excel Workbook ######
   ### Create workbook if save=T

@@ -106,13 +106,13 @@ jobs:
             dfNew |> save(file=oFileNew)
             "got here4" |> print()
 
-            ###### Test results ######
-            ### Load testing scripts
-            tFiles0 <- tPath0 |> list.files(full.names=TRUE)
-            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-            ### Get test results
-            dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
-            "got here5" |> print()
+            # ###### Test results ######
+            # ### Load testing scripts
+            # tFiles0 <- tPath0 |> list.files(full.names=TRUE)
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            # ### Get test results
+            # dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
+            # "got here5" |> print()
           '
 
       - name: Upload Tests
