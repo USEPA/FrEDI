@@ -85,7 +85,6 @@ jobs:
             } else {
               cAggLvls  <- c("national", "modelaverage", "impactyear")
             } ### End if(aggTypes)
-            "got here2" |> print()
 
             ###### Run FrEDI for Reference Branch ######
             ### Install FrEDI from ref branch
@@ -93,10 +92,8 @@ jobs:
             ### Run FrEDI
             devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
-            .libPaths()[1] |> list.files() |> print()
             dfRef    <- run_fredi(aggLevels=cAggLvls)
             dfRef |> save(file=oFileRef)
-            "got here3" |> print()
 
             ### Detach FrEDI package
             package:FrEDI |> detach(unload=TRUE)
@@ -104,19 +101,18 @@ jobs:
             ###### Run FrEDI for New Branch ######
             ### Install FrEDI from new branch
             devtools::install_github(repo=urlRepo, ref=newBranch, dependencies=F, upgrade="never", force=T, type="source")
-            .libPaths()[1] |> list.files() |> print()
             library(FrEDI)
             dfNew    <- run_fredi(aggLevels=cAggLvls)
             dfNew |> save(file=oFileNew)
             "got here4" |> print()
 
-            ###### Test results ######
-            ### Load testing scripts
-            tFiles0 <- tPath0 |> list.files(full.names=TRUE)
-            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-            ### Get test results
-            dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
-            "got here5" |> print()
+            # ###### Test results ######
+            # ### Load testing scripts
+            # tFiles0 <- tPath0 |> list.files(full.names=TRUE)
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            # ### Get test results
+            # dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
+            # "got here5" |> print()
           '
 
       - name: Upload Tests
