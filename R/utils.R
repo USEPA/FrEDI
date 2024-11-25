@@ -29,7 +29,7 @@ get_msgPrefix <- function(level=1, newline=FALSE){
   ### Message new line
   msgN0  <- newline |> ifelse("\n", "")
   ### Message indents
-  msgX0  <- "\t" |> rep(level)
+  msgX0  <- "\t" |> rep(level) |> paste(collapse="")
   ### Message prefix
   msg0   <- msgN0 |> paste0(msgX0)
   ### Return
