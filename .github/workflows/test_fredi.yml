@@ -94,7 +94,7 @@ jobs:
             ### Run FrEDI
             devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
-            dfRef    <- run_fredi(allLevels=cAggLvls)
+            dfRef    <- run_fredi(aggLevels=cAggLvls)
             dfRef |> save(file=oFileRef)
             "got here3" |> print()
 
@@ -105,7 +105,7 @@ jobs:
             ### Install FrEDI from new branch
             devtools::install_github(repo=urlRepo, ref=newBranch, dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
-            dfNew    <- run_fredi(allLevels=cAggLvls)
+            dfNew    <- run_fredi(aggLevels=cAggLvls)
             dfNew |> save(file=oFileNew)
             "got here4" |> print()
 
