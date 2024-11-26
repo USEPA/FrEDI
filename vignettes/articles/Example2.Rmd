@@ -1,6 +1,6 @@
 ---
 title: "Example #2"
-date: "August, 2024"
+date: "November 2024"
 description: >
   Running & Analyzing results from FrEDI SV.
 #output: rmarkdown::html_vignette
@@ -35,8 +35,8 @@ For more information about `FrEDI` or `FrEDI_SV`, see the [About](About.html) pa
 When installing for the first time, see [Installing & Running FrEDI](manual.html) page.
 
 Load package
-```{r load_FrEDI, message = FALSE,results = 'hide'}
-library(FrEDI)
+```{r load_FrEDI, message=FALSE, results="hide"}
+require(FrEDI)
 ```
 
 
@@ -44,7 +44,7 @@ After successfully [installing `FrEDI`](manual.html), documentation for `FrEDI` 
 
 For an overview of `FrEDI`'s user-defined functions, type `library(help="FrEDI")` into an `R` console (this command will show documentation for `FrEDI` even if the package is not installed).
 
-For documentation for a specific function, type `help("*functionName*", package="FrEDI")` into an `R` console, where *functionName* is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). 
+For documentation for a specific function, type `help("*functionName*", package="FrEDI")` into an `R` console, where `*functionName*` is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). Alternatively, use the syntax `?FrEDI::*functionName*` (e.g., `?FrEDI::run_fredi_sv()`).
 
 If `FrEDI` has been installed, users can also search for function-specific documentation in RStudio through the [**Help** window](https://www.r-project.org/help.html). Move the focus to the **Help** window using the keyboard shortcut `Ctrl+3` or toggle the search field in **Help** using `Ctrl+Alt+F1`. Documentation for each function includes examples. 
 
@@ -56,30 +56,49 @@ First, use this chunk to specify & format input projections. Either provide path
 
 Use this chunk to specify the input trajectories (temperature, population, GDP) and runtime parameters for `FrEDI_SV`.
 
-```{r setup_fredi_input, results = 'hold', message=FALSE }
-# To run FrEDI_SV for more than one scenario, the code below can be
-# adapted into a loop to format the inputs for each scenario. 
+```{r setup_fredi_input, results='hold', message=FALSE}
+### To run FrEDI_SV for more than one scenario, the code below can be
+### adapted into a loop to format the inputs for each scenario. 
 
-#***********************************************
-#1. Specify & Format Input Trajectories (temperature, population, U.S. GDP)
+###***********************************************
+### 1. Specify & Format Input Trajectories (temperature, population, U.S. GDP)
 
-## Input Files
+### Input Files
+### Population input file
+### - Purpose: Specify the population trajectory to use as an input.
+### - Requires columns year, region, state, postal, and pop
+### - Default: if null, uses default population trajectory
+popInputFile <- NULL
+
+### * Temperature input file
+### - Description: csv file with time series of temperature relative to 1986-2005 average 
+### - (units: degC, values: >=0)
+### - Data must start in 2000 or earlier and can be global or CONUS
+### - If global, must convert to CONUS temperature using the import_inputs() helper function
+### - Contains columns year, temp_C, scenario
 tempInputFile <- NULL
-# Description: csv file with time series of temperature relative to 1986-2005 average 
-# (units: degC, values: >=0)
-# data must start in 2000 or earlier and can be global or CONUS
-# If global --> must convert to CONUS temperature using the import_inputs() helper function
-# column 1 = 'year', column 2 = 'temp_C'
 
-temptypeflag <- 'global' 
-# Description: Use this to specify whether the input temperature is global or CONUS
-# import_inputs() will convert to global to CONUS temperature
-# Options: global (input is global T), conus (input is CONUS T)
+### * Temperature type flag
+### - Description: Use this to specify whether the input temperature is global or CONUS
+### - import_inputs() will convert to global to CONUS temperature
+### - Options: global (input is global T), conus (input is CONUS T)
+### - Default: defaults to "conus"
+temptypeflag <- "global" 
 
+### * Module flag
+### - Description: Use this to specify for which module to import inputs 
+### - Options: fredi/methane/sv 
+### - Default: Defaults to "fredi" if NULL
+moduleflag   <- "sv" 
 
-## Use the import_inputs() helper function to format the input trajectories for use in FrEDI
-inputs_list <- import_inputs(tempfile = tempInputFile)
-
+### Use the import_inputs() helper function to format the input trajectories for use in FrEDI
+inputs_list <- import_inputs(inputsList = list(
+    pop  = popInputFile,
+    temp = tempInputFile
+  ),
+  module = moduleflag
+)
+inputs_list |> glimpse()
 ```
 
 If no input files are specified, `run_fredi_sv()` will use default temperature and U.S. regional population projections. In this case, `run_fredi_sv()` will calculate annual projected sea level rise based on the default temperature change. 
@@ -89,45 +108,25 @@ Default population scenarios are based on UN Median Population projection ([Unit
 <br>
 
 Next, set `FrEDI_SV` runtime parameters
-```{r set_fredi_sv, include = TRUE, eval = FALSE}
 
-# Calculate the run_fredi_sv() results for a single impact sector
+```{r set_fredi_sv, include=TRUE, eval=FALSE, echo=TRUE, results='hold', message=TRUE}
+### Calculate the run_fredi_sv() results for a single impact sector
 
-# NOTE: the run_fredi_sv() module takes a few minutes to run because
-# the damages are calculated at the Census tract level and then 
-# aggregated to the regional level
+### NOTE: the run_fredi_sv() module takes a few minutes to run because
+### the damages are calculated at the Census tract level and then 
+### aggregated to the regional level
 
-# take formatted temperature vector from the output of the
-# import_inputs() helper function
- temp_input <- inputs_list$tempInput 
+### To see all available sectors, run: FrEDI::get_sv_sectorInfo()
 
-# To see all available sectors, run:
-# FrEDI::get_sv_sectorInfo()
-
-# Specify a specific sector
-sectorFlag = "Air Quality - Premature Mortality"
-  # Purpose:
-  #   Specify the SV sector to calculate (can only run one sector at once)
-  # Options: run FrEDI::get_sv_sectorInfo() to get a list of the 
-  #   possible sectors
-driverFlag <- temp_input
-  # Purpose:
-  #   Specify the temperature trajectory (up to 4) to use as an input. 
-  #   Temperature needs to be in degrees C, *CONUS* temperature, relative
-  #   to the 1986-2005 average baseline
-  #   column 1 = 'year','column 2 = 'scenario', column 3 = 'temp_C'
-  #   NOTE: if temperature is in global degrees, use the 
-  #   FrEDI::convertTemps() helper function to convert from global to CONUS
-popFlag <- NULL
-  # Purpose:
-  #   Specify the population trajectory to use as an input.
-  # column 1 = 'year', column 2 = 'region', column 3 = 'state', column 4 = 'postal', column 5 = 'state_pop'
-  # default = if null, uses default population trajectory
-silentFlag = TRUE
-  # Purpose:
-  #   Specify the level of messaging desired
-  # Options: TRUE/FALSE
-
+### Sector Flag: Specify a specific sector
+### - Purpose: Specify the SV sector to calculate (can only run one sector at once)
+### - Options: Run FrEDI::get_sv_sectorInfo() to get a list of the possible sectors
+sectorFlag  <- "Air Quality - Premature Mortality"
+  
+### Silent Flag
+### - Purpose: Specify the level of messaging desired
+### - Options: TRUE/FALSE
+silentFlag <- TRUE
 ```
 
 # Step 3. Run `FrEDI_SV` {#runFrEDI}
@@ -137,21 +136,23 @@ Default parameter options are used for any parameters that are not specified in 
 
 Note: `run_fredi_sv()` takes longer to run than the main module, `run_fredi()`, as SV damage calculations are conducted at finer spatial scales (e.g., U.S. Census tract vs. regional level).
 
-```{r run_fredi_sv, eval = FALSE, echo=TRUE, results = 'hold',message=TRUE}
+```{r run_fredi_sv, eval=FALSE, echo=TRUE, results='hold', message=TRUE}
+### Run FrEDI using inputs and parameters set in Step 2
+output_sv <- run_fredi_sv(
+  sector      = sectorFlag, 
+  inputsList  = inputs_list,
+  silent      = silentFlag
+) 
 
-#Run FrEDI using inputs and parameters set in Step #2
+### Glimpse results
+output_sv |> glimpse()
 
-output_df <- run_fredi_sv(sector      = sectorFlag, 
-                          driverInput = driverFlag, 
-                          popInput    = popFlag,
-                          silent      = silentFlag) 
+### Option: write output
+### Write Full Dataframe to CSV (or feather)
+# write.csv(output_sv, './output/example_output.csv')
 
-# Option: write output
-## Write Full Dataframe to CSV (or feather)
-# write.csv(output_df, './output/example_output.csv')
-
-#First five lines of output dataframe
-#output_df[1:5,]
+### First five lines of output dataframe
+# output_sv[1:5,]
 ```
 
 # Step 4. Analyze `FrEDI_SV` {#analyzeFrEDI}
