@@ -31,10 +31,12 @@ on:
         description: Update scenarios?
         required: true
         options:
-        - "GDP"
-        - "Population"
-        - "Temps & SLR"
-        - "O3, CH4, & NOx"
+        - no
+        - yes
+        # - "GDP"
+        # - "Population"
+        # - "Temps & SLR"
+        # - "O3, CH4, & NOx"
 
 jobs:
   compile_data:
@@ -66,11 +68,16 @@ jobs:
           Rscript -e '
             ###### Conditionals ######
             ### Which scenarios/documentation to update
-            do_docs  <- "yes"         %in% "${{ inputs.update_scenarios}}"
-            do_gdp   <- "GDP"         %in% "${{ inputs.update_scenarios}}"
-            do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
-            do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
-            do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
+            do_docs  <- "yes"         %in% "${{ inputs.update_docs}}"
+            do_data  <- "yes"         %in% "${{ inputs.update_scenarios}}"
+            do_gdp   <- do_data
+            do_pop   <- do_data
+            do_temp  <- do_data
+            do_o3    <- do_data
+            # do_gdp   <- "GDP"         %in% "${{ inputs.update_scenarios}}"
+            # do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
+            # do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
+            # do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
 
             ###### File Paths ######
             ### - Main repo path, FrEDI project path
