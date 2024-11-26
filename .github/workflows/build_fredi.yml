@@ -73,8 +73,8 @@ jobs:
             require(openxlsx)
             ###### Conditionals ######
             ### Which scenarios/documentation to update
-            do_docs  <- "yes"         %in% "${{ inputs.update_docs}}"
-            do_data  <- "yes"         %in% "${{ inputs.update_scenarios}}"
+            do_docs  <- "yes" %in% "${{ inputs.update_docs}}"
+            do_data  <- "yes" %in% "${{ inputs.update_scenarios}}"
             do_gdp   <- do_data
             do_pop   <- do_data
             do_temp  <- do_data
@@ -83,12 +83,14 @@ jobs:
             # do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
             # do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
             # do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
+            c(do_docs, do_data) |> print()
 
             ###### File Paths ######
             ### - Main repo path, FrEDI project path
             ### - Data path, scenario csv path
             rPath0   <- "."
-            pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+            # pPath0   <- rPath0 |> file.path("FrEDI")
             dPath0   <- rPath0 |> file.path("data" )
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
 
