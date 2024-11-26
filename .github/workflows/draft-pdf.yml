@@ -7,7 +7,7 @@
 
 
 on:
-  push:
+  workflow_dispatch:
     branches:
       - joss
 
