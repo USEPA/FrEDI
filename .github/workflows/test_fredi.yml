@@ -6,36 +6,17 @@
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
-name: 3. Test FrEDI Package
+name: 2a. Test FrEDI Package
 
-# on: [workflow_dispatch]
 on:
   workflow_dispatch:
     inputs:
-      run_tests:
+      ref_branch:
+        type: string
+        description: To which branch of FrEDI do you want to compare results)?
+      agg_types:
         type: choice
-        description: Run general tests?
-        required: true
-        options:
-        - no
-        - yes
-      figH_results:
-        type: choice
-        description: Fig H results?
-        required: true
-        options:
-        - no
-        - yes
-      make_appx_figs:
-        type: choice
-        description: Create appendix figures for report?
-        required: true
-        options:
-        - no
-        - yes
-      make_tots_figs:
-        type: choice
-        description: Make figures for impact type totals?
+        description: Aggregate across impact types?
         required: true
         options:
         - no
@@ -50,11 +31,12 @@ jobs:
     name: Load Package Code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Send input status
         run: |
-          echo "${{ inputs.run_tests }} ${{ inputs.figH_results }} ${{ inputs.make_appx_figs }} ${{ inputs.make_tots_figs }}"
+          echo "$${{ github.ref_name }} ${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
+
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -70,160 +52,73 @@ jobs:
             any::openxlsx
             any::devtools
 
-      - name: Install FrEDI
+      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from ref branch and get results
+      - name: Test results
         run: |
           Rscript -e '
-            devtools::install_github(
-              repo    = "https://github.com/USEPA/FrEDI",
-              ref     = "${{ github.ref_name }}",
-              subdir  = "FrEDI",
-              dependencies = FALSE,
-              upgrade = "never",
-              force   = TRUE,
-              type    = "source"
-            )
-            '
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
 
-      - name: Run tests & create figures
-        run: |
-          Rscript -e '
-          ### Main repo path, FrEDI project path, scripts path
-          rPath0   <- ".";
-          pPath0   <- rPath0 |> file.path("FrEDI")
-          sPath0   <- pPath0 |> file.path("scripts")
-          tPath0   <- pPath0 |> file.path("testing")
+            ### Where to save results
+            oPath0   <- pPath0 |> file.path("data_tests")
+            oFileNew <- oPath0 |> file.path("newResults.rda")
+            oFileRef <- oPath0 |> file.path("refResults.rda")
 
-          ### Load FrEDI
-          pPath0 |> devtools::load_all()
+            ### Check if path exists and, if not, create it
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
 
-          ### Load test code
-          tFiles0 <- tPath0 |> list.files(full.names=TRUE)
-          for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            ###### Action Arguments ######
+            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            newBranch <- "${{ github.ref_name   }}"
+            refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
+            aggTypes  <- "${{ inputs.agg_types  }}" == "true"
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
 
-          ### Load source
-          sPath0 |> file.path("create_DoW_results.R") |> source()
-
-          ### Which tests to do
-          do_tests <- "${{ inputs.run_tests      }}" == "true"
-          do_figH  <- "${{ inputs.figH_results   }}" == "true"
-          do_appx  <- "${{ inputs.make_appx_figs }}" == "true"
-          do_tots  <- "${{ inputs.make_tots_figs }}" == "true"
-          do_figs  <- do_appx | do_tots
-
-          ### Where to save results
-          oPath0   <- pPath0 |> file.path("data_tests")
-          oPath1   <- oPath0 |> file.path("general")
-          oPath2   <- oPath0 |> file.path("report_figures")
-
-          ### Whether paths exist
-          exists0  <- oPath0 |> dir.exists()
-          exists1  <- oPath1 |> dir.exists()
-          exists2  <- oPath2 |> dir.exists()
-
-          ### Check if path exists and, if not, create it
-          if(!exists0){ oPath0 |> dir.create(recursive = TRUE)}
-          if(!exists1){ oPath1 |> dir.create(recursive = TRUE)}
-          if(!exists2){ oPath2 |> dir.create(recursive = TRUE)}
-
-          ### Test results
-          if(do_tests){
+            ###### Run FrEDI for Reference Branch ######
+            ### Install FrEDI from ref branch
+            ### Load library
             ### Run FrEDI
-            results0 <- run_fredi()
+            devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
+            library(FrEDI)
+            dfRef    <- run_fredi(aggLevels=cAggLvls)
+            dfRef |> save(file=oFileRef)
 
-            ### Run tests
-            tests0   <- results0 |> general_fredi_test(
-              outPath   = oPath1,
-              save      = TRUE,
-              return    = TRUE,
-              overwrite = TRUE
-            )
+            ### Detach FrEDI package
+            package:FrEDI |> detach(unload=TRUE)
 
-            ### Create plot totals
-            listResults <- create_default_tablePlot()
-            save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
+            ###### Run FrEDI for New Branch ######
+            ### Install FrEDI from new branch
+            devtools::install_github(repo=urlRepo, ref=newBranch, dependencies=F, upgrade="never", force=T, type="source")
+            library(FrEDI)
+            dfNew    <- run_fredi(aggLevels=cAggLvls)
+            dfNew |> save(file=oFileNew)
+            "got here4" |> print()
 
-            ### Remove results
-            rm(exists0, results0, tests0, listResults, save0)
-          } ### End if(do_tests)
-
-          ### Create Fig H results
-          if(do_figH){
-            ### Figure H results
-            results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
-            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
-            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
-
-            ### Remove reslts
-            rm(results0, save0)
-          } ### End if(do_figH)
-
-          ### Create report figures
-          if(do_figs){
-            ### Load source
-            sPath0 |> file.path("create_DoW_results.R") |> source()
-
-            ### Create report figures
-            reports0 <- create_DoW_results(
-              outPath  = oPath2,
-              saveFile = TRUE,
-              loadCode = "project",
-              totals   = do_tots,
-              silent   = FALSE,
-              testing  = TRUE,
-              return   = FALSE,
-              fpath    = pPath0
-            )
-          } ### End if(do_figs)
+            ###### Test results ######
+            ### Load testing scripts
+            tFiles0 <- tPath0 |> list.files(full.names=TRUE)
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            ### Get test results
+            dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
+            "got here5" |> print()
           '
 
       - name: Upload Tests
-        if: |
-          inputs.run_tests == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Test Data
           path: |
-            ./FrEDI/data_tests/general/defaultScenarioTotals.rda
-            ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
-
-
-      - name: Upload FigH Results
-        if: |
-          inputs.figH_results == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: FigH results
-          path: |
-            ./FrEDI/data_tests/report_figures/
-
-
-      - name: Upload Report Appendix Figures
-        if: |
-          inputs.make_appx_figs == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: Report appendix figures & data
-          path: |
-            ./FrEDI/data_tests/report_figures/
-
-      - name: Upload Report Fig7 Figures
-        if: |
-          inputs.make_tots_figs == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: Fig7 report figures & data
-          path: |
-            ./FrEDI/data_tests/report_figures/
-#            ./FrEDI/data_tests/general/FigH_results.csv
-# #
-#       - name: Commit results
-#         run: |
-#           git config --local core.autocrlf false
-#           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-#           git config --local user.name "${{ github.actor }}"
-#           git add data/tmp_sysdata.rda
-#           git add data_tests/**.xlsx
-#           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
-#           git commit -a -m "Updated temporary system data and tests"
-#           git push
-
+            data_tests/*.rd*
+            data_tests/*.xlsx

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,11 +102,11 @@
 <li><p><strong>help</strong> and <strong>html</strong>. Contain documentation for functions available to the user, including function descriptions, lists of arguments and outputs, and examples. See <code>"html/00Index.html"</code> or the individual R help functions for more information about individual functions.</p></li>
 <li><p><strong>Meta</strong>. Contains RDS files (ending in <code>".rds"</code>) with information about the package contents.</p></li>
 <li><p><strong>extdata</strong>. <strong>extdata/scenarios</strong> Contains four CSV files for users to test the function for importing data. For more information on importing scenarios for use with <code><a href="run_fredi.html">run_fredi()</a></code>, refer to documentation for the function <code><a href="import_inputs.html">import_inputs()</a></code>.</p><ul><li><p><code>"GCAM_scenario.csv"</code> contains a set of temperature scenarios that can be used with FrEDI, including the default temperature scenario used by both <code><a href="run_fredi.html">run_fredi()</a></code> and <code><a href="run_fredi_sv.html">run_fredi_sv()</a></code>. Also see documentation for the <a href="gcamScenarios.html">gcamScenarios</a> dataset for more information.</p></li>
-<li><p><code>"State ICLUS Population.csv"</code> contains the default state population scenario used by <code><a href="run_fredi.html">run_fredi()</a></code> (see <a href="popScenario.html">popScenario</a> and popScenario_sv).</p></li>
+<li><p><code>"State ICLUS Population.csv"</code> contains the default state population scenario used by <code><a href="run_fredi.html">run_fredi()</a></code> (see popScenario and popScenario_sv).</p></li>
 <li><p><code>"slr_from_GCAM.csv"</code> contains global mean sea level rise heights in centimeters (created from the reference temperature scenario).</p></li>
 </ul></li>
 <li><p><strong>extdata/sv</strong> Contains files used by the <code>FrEDI</code> SV module to calculate impacts.</p></li>
-</ul><p>The <code>FrEDI</code> package contains a loadable dataset with default results <code>defaultResults</code>, which contains annual impacts produced by <code><a href="run_fredi.html">run_fredi()</a></code> for the with the default options and default scenarios (i.e., default temperature, GDP, and state population trajectories). Other loadable datasets provided by FrEDI are a set of driver scenarios (<a href="gcamScenarios.html">gcamScenarios</a>) and a state population scenario (<a href="popScenario.html">popScenario</a>) for use with <code><a href="run_fredi.html">run_fredi()</a></code> or <code><a href="run_fredi_sv.html">run_fredi_sv()</a></code>, which can be loaded into the workspace using the <code><a href="https://rdrr.io/r/utils/data.html" class="external-link">data()</a></code> function (e.g., <code>data(gcamScenarios)</code>).</p>
+</ul><p>The <code>FrEDI</code> package contains a loadable dataset with default results <code>defaultResults</code>, which contains annual impacts produced by <code><a href="run_fredi.html">run_fredi()</a></code> for the with the default options and default scenarios (i.e., default temperature, GDP, and state population trajectories). Other loadable datasets provided by FrEDI are a set of driver scenarios (<a href="gcamScenarios.html">gcamScenarios</a>) and a state population scenario (popScenario) for use with <code><a href="run_fredi.html">run_fredi()</a></code> or <code><a href="run_fredi_sv.html">run_fredi_sv()</a></code>, which can be loaded into the workspace using the <code><a href="https://rdrr.io/r/utils/data.html" class="external-link">data()</a></code> function (e.g., <code>data(gcamScenarios)</code>).</p>
 <p>Typical use will involve <code><a href="https://usepa.github.io/FrEDI">library(FrEDI)</a></code> or <code><a href="https://usepa.github.io/FrEDI">require(FrEDI)</a></code>.</p>
     </div>
     <div class="section level2">
@@ -120,9 +120,9 @@
     
 
 <p>FrEDI requires R (&gt;= 4.2.0).</p>
-<p>FrEDI depends on:</p><ul><li><p><a href="https://tidyverse.tidyverse.org/reference/tidyverse-package.html" class="external-link">tidyverse</a> (Easily Install and Load the 'Tidyverse'). The official documentation for <a href="https://tidyverse.tidyverse.org/reference/tidyverse-package.html" class="external-link">tidyverse</a> can be found <a href="https://cran.r-project.org/web/packages/tidyverse/index.html" class="external-link">here</a>. <a href="https://tidyverse.tidyverse.org/reference/tidyverse-package.html" class="external-link">tidyverse</a> can be installed using <code>install.packages("tidyverse")</code>, or see <a href="https://tidyverse.tidyverse.org/" class="external-link">link</a> for more information.</p></li>
-<li><p><a href="https://rpkgs.datanovia.com/ggpubr/reference/ggpubr-package.html" class="external-link">ggpubr</a> ('ggplot2' Based Publication Ready Plots). The official documentation for <a href="https://rpkgs.datanovia.com/ggpubr/reference/ggpubr-package.html" class="external-link">ggpubr</a> can be found <a href="https://cran.r-project.org/web/packages/ggpubr/index.html" class="external-link">here</a>. <a href="https://rpkgs.datanovia.com/ggpubr/reference/ggpubr-package.html" class="external-link">ggpubr</a> can be installed using <code>install.packages("ggpubr")</code>, or see <a href="https://rpkgs.datanovia.com/ggpubr/" class="external-link">link</a> for more information.</p></li>
-<li><p><a href="https://rdrr.io/pkg/openxlsx/man/openxlsx.html" class="external-link">openxlsx</a> (Read, Write and Edit <code>xlsx</code> Files). The official documentation for <a href="https://rdrr.io/pkg/openxlsx/man/openxlsx.html" class="external-link">openxlsx</a> can be found <a href="https://cran.r-project.org/web/packages/openxlsx/index.html" class="external-link">here</a>. <a href="https://rdrr.io/pkg/openxlsx/man/openxlsx.html" class="external-link">openxlsx</a> can be installed using <code>install.packages("openxlsx")</code>.</p></li>
+<p>FrEDI depends on:</p><ul><li><p>tidyverse (Easily Install and Load the 'Tidyverse'). The official documentation for tidyverse can be found <a href="https://cran.r-project.org/web/packages/tidyverse/index.html" class="external-link">here</a>. tidyverse can be installed using <code>install.packages("tidyverse")</code>, or see <a href="https://tidyverse.tidyverse.org/" class="external-link">link</a> for more information.</p></li>
+<li><p>ggpubr ('ggplot2' Based Publication Ready Plots). The official documentation for ggpubr can be found <a href="https://cran.r-project.org/web/packages/ggpubr/index.html" class="external-link">here</a>. ggpubr can be installed using <code>install.packages("ggpubr")</code>, or see <a href="https://rpkgs.datanovia.com/ggpubr/" class="external-link">link</a> for more information.</p></li>
+<li><p>openxlsx (Read, Write and Edit <code>xlsx</code> Files). The official documentation for openxlsx can be found <a href="https://cran.r-project.org/web/packages/openxlsx/index.html" class="external-link">here</a>. openxlsx can be installed using <code>install.packages("openxlsx")</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a></h2>
@@ -148,6 +148,7 @@
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p><strong>Maintainer</strong>: Corinne Hartin <a href="mailto:hartin.corinne@epa.gov">hartin.corinne@epa.gov</a> (<a href="https://orcid.org/0000-0003-1834-6539" class="external-link">ORCID</a>) (cahartin)</p>
 <p>Authors:</p><ul><li><p>Erin McDuffie <a href="mailto:mcduffie.erin.e@epa.gov">mcduffie.erin.e@epa.gov</a> (<a href="https://orcid.org/0000-0002-6845-6077" class="external-link">ORCID</a>) (emcduffie) [contributor]</p></li>
+<li><p>Marcus Sarofim <a href="mailto:mcduffie.erin.e@epa.gov">mcduffie.erin.e@epa.gov</a> (<a href="https://orcid.org/0000-0001-7753-1676" class="external-link">ORCID</a>) (emcduffie) [contributor]</p></li>
 <li><p>Karen Noiva (<a href="https://orcid.org/0000-0002-4412-5302" class="external-link">ORCID</a>) (knoiva-indecon) [contributor]</p></li>
 </ul><p>Other contributors:</p><ul><li><p>Tony Gardella (<a href="https://orcid.org/0000-0003-4380-3412" class="external-link">ORCID</a>) (tonygard-indecon) [contributor]</p></li>
 <li><p>Will Maddock (<a href="https://orcid.org/0000-0002-6107-0315" class="external-link">ORCID</a>) (maddockw) [contributor]</p></li>
@@ -159,11 +160,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Corinne Hartin, Erin McDuffie, Karen Noiva.</p>
+  <p>Developed by Corinne Hartin, Erin McDuffie, Marcus Sarofim, Karen Noiva.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | July 2023</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | August 2024</p>
 </div>
 
     </footer></div>

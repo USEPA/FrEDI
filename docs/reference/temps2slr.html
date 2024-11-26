@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,39 +120,24 @@
 <span class="r-in"><span><span class="co">### View example scenario names</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">scenariosPath</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "GCAM_scenario.csv"          "State ICLUS Population.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "slr_from_GCAM.csv"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "gcamDefault.csv"   "gcamScenarios.csv" "gdpDefault.csv"   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "popDefault.csv"   </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">### Temperature Scenario File Name</span></span></span>
 <span class="r-in"><span><span class="va">tempInputFile</span> <span class="op">&lt;-</span> <span class="va">scenariosPath</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"GCAM_scenario.csv"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">### Import example temperature scenario</span></span></span>
 <span class="r-in"><span><span class="va">example_inputsList</span> <span class="op">&lt;-</span> <span class="fu"><a href="import_inputs.html">import_inputs</a></span><span class="op">(</span>tempfile <span class="op">=</span> <span class="va">tempInputFile</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> In import_inputs():</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Loading data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	User specified tempfile...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 		Importing data from C:/Program Files/R/R-4.4.0/library/FrEDI/extdata/scenarios/GCAM_scenario.csv...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 		Data loaded.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Checking input values...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 		Checking input values for temp inputs...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 			Column "temp_C" not found in tempfile data!</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 			Looking for columns with matches to the string "temp"...1 match found!</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 			Using column "temp_C_global", and renaming to "temp_C"...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 		Values passed.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in import_inputs(tempfile = tempInputFile):</span> unused argument (tempfile = tempInputFile)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">### Extract the example temperature scenario data frame from the list</span></span></span>
 <span class="r-in"><span><span class="co">### Example has global temperatures in degrees Celsius</span></span></span>
 <span class="r-in"><span><span class="va">x_tempInput</span> <span class="op">&lt;-</span> <span class="va">example_inputsList</span><span class="op">$</span><span class="va">tempInput</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'example_inputsList' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">### Calculate global mean sea level rise in cm from global temperatures</span></span></span>
 <span class="r-in"><span><span class="va">x_slr</span> <span class="op">&lt;-</span> <span class="fu">temps2slr</span><span class="op">(</span>temps<span class="op">=</span><span class="va">x_tempInput</span><span class="op">$</span><span class="va">temp_C</span>, years<span class="op">=</span><span class="va">x_tempInput</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Warning: There are duplicate years in the inputs!</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Exiting...</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'x_tempInput' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -162,11 +147,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Corinne Hartin, Erin McDuffie, Karen Noiva.</p>
+  <p>Developed by Corinne Hartin, Erin McDuffie, Marcus Sarofim, Karen Noiva.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | July 2023</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | August 2024</p>
 </div>
 
     </footer></div>
