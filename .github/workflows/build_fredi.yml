@@ -73,8 +73,8 @@ jobs:
             require(openxlsx)
             ###### Conditionals ######
             ### Which scenarios/documentation to update
-            do_docs  <- "yes" %in% "${{ inputs.update_docs}}"
-            do_data  <- "yes" %in% "${{ inputs.update_scenarios}}"
+            do_docs  <- "true" %in% "${{ inputs.update_docs}}"
+            do_data  <- "true" %in% "${{ inputs.update_scenarios}}"
             do_gdp   <- do_data
             do_pop   <- do_data
             do_temp  <- do_data
