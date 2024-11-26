@@ -19,13 +19,6 @@ on:
         options:
         - no
         - yes
-#       update_results:
-#         type: choice
-#         description: Update default results?
-#         required: true
-#         options:
-#         - no
-#         - yes
       update_scenarios:
         type: multi-choice
         description: Update scenarios?
@@ -33,10 +26,17 @@ on:
         options:
         - no
         - yes
-        # - "GDP"
-        # - "Population"
-        # - "Temps & SLR"
-        # - "O3, CH4, & NOx"
+#         - "GDP"
+#         - "Population"
+#         - "Temp/SLR"
+#         - "O3/CH4/NOx"
+#       date_results:
+#         type: choice
+#         description: Update default results?
+#         required: true
+#         options:
+#         - no
+#         - yes
 
 jobs:
   compile_data:
