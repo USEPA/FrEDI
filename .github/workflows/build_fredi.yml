@@ -91,6 +91,7 @@ jobs:
             rPath0   <- "."
             pPath0   <- rPath0
             # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
             dPath0   <- rPath0 |> file.path("data" )
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
 
@@ -195,7 +196,8 @@ jobs:
           Rscript -e '
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
-            pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+            # pPath0   <- rPath0 |> file.path("FrEDI")
             oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
 
             # ###### Create Default Results ######
