@@ -1,4 +1,4 @@
-pandoc: 3.1.1
+pandoc: '3.2'
 pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
@@ -8,7 +8,7 @@ articles:
   Example2: Example2.html
   manual: manual.html
   References: References.html
-last_built: 2024-08-23T20:40Z
+last_built: 2024-11-26T00:24Z
 urls:
   reference: https://usepa.github.io/FrEDI/reference
   article: https://usepa.github.io/FrEDI/articles

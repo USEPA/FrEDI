@@ -176,7 +176,7 @@
 ###### run_fredi ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi <- function(
-  inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
+    inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
     sectorList = NULL, ### Vector of sectors to get results for
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
     elasticity = 1,     ### Override value for elasticity for economic values
@@ -201,6 +201,9 @@ run_fredi <- function(
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
   msgUser      <- !silent
+  msgN         <- "\n"
+  msg0         <- ""
+  msg1         <- msg0 |> paste0("\t")
 
   ### Model years and NPD (FrEDI past 2100)
   minYear      <- minYear0
@@ -294,17 +297,20 @@ run_fredi <- function(
   dfSectors    <- co_sectors |> filter((sector_label |> tolower()) %in% (sectorList |> tolower()))
   sectorIds    <- dfSectors  |> pull(sector_id)
   sectorLbls   <- dfSectors  |> pull(sector_label)
+  sectors0     <- co_sectors |> pull(sector_label) |> unique()
 
   ### Check sectors
   # sectorList |> print(); sectorLbls |> print()
   naSectors0   <- sectorList |> get_matches(y=sectorLbls, matches=F, type="values")
   ### Message the user
   if(naSectors0 |> length()){
-    naSectors0  <- "\"" |> paste0(naSectors0 |> paste(collapse= "\", \""), "\"")
-    msgSectors0 <- "\"" |> paste0(sectorLbls |> paste(collapse= "\", \""), "\"")
+    naSectors0  <- "'" |> paste0(naSectors0 |> paste(collapse="', '")) |> paste0("'")
+    msgSectors0 <- "'" |> paste0(sectors0   |> paste(collapse="', '")) |> paste0("'")
     1 |> get_msgPrefix(newline=T) |> paste0("Warning! Error in `sectorList`:") |> message()
-    2 |> get_msgPrefix() |> paste0("Impacts are not available for sectors: ", naSectors0) |> message()
-    2 |> get_msgPrefix(newline=T) |> paste0("Available sectors: ", msgSectors0) |> message()
+    2 |> get_msgPrefix() |> paste0("Impacts are not available for sectors: ") |> message()
+    3 |> get_msgPrefix() |> paste0(naSectors0) |> message()
+    2 |> get_msgPrefix(newline=T) |> paste0("Availabler sectors: ") |> message()
+    3 |> get_msgPrefix()|> paste0(msgSectors0) |> message()
     return()
   } ### End if(length(missing_sectors)>=1)
   ### Update in list
@@ -367,22 +373,32 @@ run_fredi <- function(
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  # inNames |> print()
-  # inputsList |> map(glimpse)
-  # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
-  inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-  ### Filter to values that are not NULL
-  inputsList   <- inputsList[inWhich]
-  inNames      <- inputsList |> names()
-  rm(inWhich)
-  ### Check which input names are in the user-provided list
-  inWhich      <- inNames %in% inNames0
-  inNames      <- inNames[inWhich]
-  inputsList   <- inputsList[inNames]
-  hasAnyInputs <- inNames |> length()
-  rm(inWhich)
-  # inNames |> print()
-
+  inLength     <- inputsList |> length()
+  hasNames     <- inNames    |> length()
+  if(hasNames) {
+    # inNames      <- inputsList |> names()
+    # inNames |> print()
+    # inputsList |> map(glimpse)
+    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    ### Filter to values that are not NULL
+    inputsList   <- inputsList[inWhich]
+    inNames      <- inputsList |> names()
+    rm(inWhich)
+    ### Check which input names are in the user-provided list
+    inWhich      <- inNames %in% inNames0
+    inNames      <- inNames[inWhich]
+    inputsList   <- inputsList[inNames]
+    hasAnyInputs <- inNames |> length()
+    rm(inWhich)
+    # inNames |> print()
+  } else if (inLength) {
+    paste0(msg1) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
+    msgN |> paste0(msg1) |> paste0("Exiting...") |> message()
+    return()
+  } else {
+    hasAnyInputs <- FALSE
+  } ### End if(!hasInputs)
 
 
   ###### ** Check Inputs ######
@@ -552,7 +568,7 @@ run_fredi <- function(
 
 
 
-  ###### Format Results ######
+  ###### Refactor Data ######
   ### Add in model info
   paste0("Formatting results", "...") |> message()
 
@@ -630,10 +646,11 @@ run_fredi <- function(
   # return(df_results)
 
 
-  ###### ** Aggregation ######
+  ###### Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(doAgg) {
-    # doAgg |> print()
+    paste0("Aggregating impacts", "...") |> message()
+    # aggLevels |> length(); doAgg |> print()
     group0     <- groupCols0
     df_results <- df_results |> aggregate_impacts(
       aggLevels   = aggLevels,
@@ -643,7 +660,7 @@ run_fredi <- function(
   } ### End if(doAgg)
 
 
-
+  ###### Format Results ######
   ###### ** Arrange Columns ######
   ### Convert levels to character
   ### Order the rows, then order the columns

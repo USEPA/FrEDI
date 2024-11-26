@@ -1,13 +1,21 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/master/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
-on:
-  push:
-    branches: [main, master]
-  release:
-    types: [published]
-  workflow_dispatch:
+name: 6. Deploy github.io
 
-name: pkgdown
+on:
+  # push:
+  #   branches:
+  #     - main
+  #     - master
+  #   release:
+  #   types: [published]
+  workflow_dispatch:
+    branches:
+      - main
+      - master
+    release:
+    types: [published]
+
 
 jobs:
   pkgdown:

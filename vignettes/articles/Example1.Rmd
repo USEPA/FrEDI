@@ -1,6 +1,6 @@
 ---
 title: "Example #1"
-date: "August, 2024"
+date: "November 2024"
 description: >
   Running & Analyzing results from FrEDI's default scenario.
 #output: rmarkdown::html_vignette
@@ -13,7 +13,11 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+require(kableExtra)
+require(FrEDI)
 ```
+
+
 
 # Running FrEDI with Default Parameters
 
@@ -37,15 +41,15 @@ For more information about `FrEDI`, see the [About](About.html) page and [FrEDI 
 When installing for the first time, see [Installing & Running FrEDI](manual.html) page.
 
 Load package
-```{r load_FrEDI, message = FALSE,results = 'hide'}
-library(FrEDI)
+```{r load_FrEDI, message=FALSE, results='hide'}
+require(FrEDI)
 ```
 
 After successfully [installing `FrEDI`](manual.html), documentation for `FrEDI` functions can be accessed in the same way as for other `R` packages. 
 
 For an overview of `FrEDI`'s user-defined functions, type `library(help="FrEDI")` into an `R` console (this command will show documentation for `FrEDI` even if the package is not installed).
 
-For documentation for a specific function, type `help("*functionName*", package="FrEDI")` into an `R` console, where *functionName* is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). 
+For documentation for a specific function, type `help("*functionName*", package="FrEDI")` into an `R` console, where `*functionName*` is the name of one of the functions in `FrEDI` (e.g., `help("aggregate_impacts", package="FrEDI")`). Alternatively, use the syntax `?FrEDI::*functionName*` (e.g., `?FrEDI::run_fredi()`).
 
 If `FrEDI` has been installed, users can also search for function-specific documentation in RStudio through the [**Help** window](https://www.r-project.org/help.html). Move the focus to the **Help** window using the keyboard shortcut `Ctrl+3` or toggle the search field in **Help** using `Ctrl+Alt+F1`. Documentation for each function includes examples. 
 
@@ -58,60 +62,69 @@ First, use this chunk to specify & format input projections. Either provide path
 Use this chunk to specify the input trajectories (temperature, population, GDP) and runtime parameters for `FrEDI`.
 
 ```{r setup_fredi_input, results = 'hold', message=FALSE }
-# To run FrEDI for more than one scenario, the code below can be
-# adapted into a loop to format the inputs for each scenario. 
+### To run FrEDI for more than one scenario, the code below can be
+### adapted into a loop to format the inputs for each scenario. 
 
-#***********************************************
-#1. Specify & Format Input Trajectories (temperature, population, U.S. GDP)
+###***********************************************
+### 1. Specify & Format Input Trajectories (temperature, population, U.S. GDP)
 
-## Input Files
-tempInputFile <- NULL
-# Description: csv file with time series of temperature relative to 1986-2005 average 
-# (units: degC, values: >=0)
-# data must start in 2000 or earlier and can be global or CONUS
-# If global --> must convert to CONUS temperature using the import_inputs() helper function
-# column 1 = 'year', column 2 = 'temp_C'
-
-slrInputFile <- NULL 
-# Description: csv file with time series of global mean sea level rise relative to 2000
-# (units: cm, values: >= 0 and <= 250)
-# data must start in 2000 or earlier
-# column 1 = 'year', column 2 = 'slr_cm'
-# If NULL - slr is calculated from the input temperature trajectory
-
+### Input Files
+### * GDP
+### - Description: csv file with time series of U.S. Gross Domestic Product (units: 2015$, values: >= 0) 
+### - data must start in 2010 or earlier
+### - Must have columns "year", "gdp_usd"
+### - If NULL - use default GDP trajectory
 gdpInputFile <- NULL
-# Description: csv file with time series of U.S. Gross Domestic Product (units: 2015$, values: >= 0) 
-# data must start in 2010 or earlier
-# column 1 = 'year', column 2 = 'gdp_usd' 
-# If NULL - use default GDP trajectory
 
+### * Population
+### - Description: csv file with time series of annual U.S. population (values >= 0) 
+### - Data must start in 2010 or earlier
+### - Must have columns "year" and "pop"; other columns may be required, depending on the popArea argument flag
+### - If NULL - use default population trajectory (from ICLUS)
 popInputFile <- NULL
-# Description: csv file with time series of annual U.S. population (values >= 0) 
-# data must start in 2010 or earlier
-# column 1 = 'year', column 2 = 'pop', column 3 = depends on "popArea"
-# If NULL - use default population trajectory (from ICLUS)
 
+### * Temperature
+### - Description: csv file with time series of temperature relative to 1986-2005 average 
+### - (units: degC, values: >=0)
+### - data must start in 2000 or earlier and can be global or CONUS
+### - If global --> must convert to CONUS temperature using the import_inputs() helper function
+### - Must have columns "year", "temp_C"
+tempInputFile <- NULL
 
-## Input Trajectory parameters
-popAreaflag = 'state'   
-# Description: Use this to specify the geographical scale of the population data
-# Options: "state","regional","national".
-# For more information, see `?import_inputs()` for more information
+### * SLR
+### - Description: csv file with time series of global mean sea level rise relative to 2000
+### - (units: cm, values: >= 0 and <= 250)
+### - data must start in 2000 or earlier
+### - Must have columns "year", "slr_cm"
+### - If NULL - slr is calculated from the input temperature trajectory
+slrInputFile <- NULL 
 
-temptypeflag <- 'global' 
-# Description: Use this to specify whether the input temperature is global or CONUS
-# import_inputs() will convert to global to CONUS temperature
-# Options: global (input is global T), conus (input is CONUS T)
+### Input Trajectory Parameters
+### * Population area flag
+### - Description: Use this to specify the geographical scale of the population data
+### - Options: "state","regional","national".
+### - For more information, see `?import_inputs()` for more information
+popAreaflag  <- "state"   
 
+### * Temperature type flag
+### - Description: Use this to specify whether the input temperature is global or CONUS
+### - import_inputs() will convert to global to CONUS temperature
+### - Options: global (input is global T), conus (input is CONUS T)
+### - Default: defaults to "conus"
+temptypeflag <- "global" 
 
-## Use the import_inputs() helper function to format the input trajectories for use in FrEDI
-inputs_list <- import_inputs(tempfile = tempInputFile,
-                             slrfile = slrInputFile,
-                             popfile = popInputFile,
-                             gdpfile = gdpInputFile,
-                             temptype = temptypeflag,
-                             popArea = popAreaflag)
-
+### Use the import_inputs() helper function to format the input trajectories for use in FrEDI
+inputs_list <- import_inputs(
+  inputsList=list(
+    temp = tempInputFile,
+    slr  = slrInputFile,
+    gdp  = gdpInputFile,
+    pop  = popInputFile
+  ),
+  temptype = temptypeflag,
+  popArea  = popAreaflag
+) ### End import_inputs
+inputs_list |> glimpse()
 ```
 
 If no input files are specified, `run_fredi()` will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi()` will calculate annual projected sea level rise based on the default temperature change. 
@@ -123,57 +136,55 @@ Default population scenarios are based on UN Median Population projection ([Unit
 Next, set `FrEDI` runtime parameters
 
 ```{r setup_fredi_parameters, echo=TRUE, results = 'hold', message=FALSE }
-thru2300Flag = FALSE
-# Purpose: 
-#   Specify whether to run FrEDI through 2100 (default) or extend to 2300
-# Default: FALSE (will run to 2100)
+### Thru2300 Flag
+### - Purpose: Specify whether to run FrEDI through 2100 (default) or extend to 2300
+### - Default: FALSE (will run to 2100)
+thru2300Flag <-  FALSE
 
-SectorListFlag <- NULL  
-# Purpose: 
-#   Specify the vector of sectors to calculate results for
-# Default: report output for all sectors
-# See FrEDI:get_sectorInfo() for list of all sectors
+### Sector list flag
+### - Purpose: Specify the vector of sectors for which to calculate results
+### - Default: Report output for all sectors
+### - See FrEDI::get_sectorInfo() for list of all sectors
+sectorListFlag <- NULL  
 
-aggLevelFlag <- c('national','modelaverage','impactyear')
-# Purpose: 
-#   Specify the desired level of results aggregation. For example,
-#   to report national total results across all underlying climate-model 
-#   damage functions, set the flag to c('national','modelaverage')
-# Options: at least one from c('national', 'modelaverage', 'impactyear',
-#   'impacttype', 'all'), or "none". 
-# Default: c('national', 'modelaverage', 'impactyear','impacttype')
+### Aggregation level flag
+### - Purpose: Specify the desired level of results aggregation. For example,
+###   to report national total results across all underlying climate-model 
+###   damage functions, set the flag to c("national","modelaverage")
+### - Options: at least one from c("national", "modelaverage", "impactyear",
+###   "impacttype", "all"), or "none". 
+### - Default: c("national", "modelaverage", "impactyear","impacttype")
+aggLevelFlag <- c("national", "modelaverage", "impactyear")
 
+### Maximum year flag
+### - Purpose: Specify the last year of the analysis 
+### - Default: 2100
 maxYearFlag <- 2100
-# Purpose: 
-#   Specify the last year of the analysis 
-# Default: 2100
 
+### Elasticity flag
+### - Purpose: Specify the income elasticity used to adjust the Value of a
+###   Statistical Life (VSL)
+### Options: any numeric value
+### Default: 1
 elasticityFlag <- 1   
-# Purpose: 
-#   Specify the income elasticity used to adjust the Value of a
-#   Statistical Life (VSL)
-# Options: any numeric value
-# Default: 1
 
+### Output list flag
+### - Purpose: Specify whether to return input arguments in addition to results data frame
+### - Options: TRUE/FALSE. 
+### - Default: FALSE
 outputListFlag <- FALSE
-# Purpose:
-#   Specify whether to return input arguments in addition to results data frame
-# Options: TRUE/FALSE. 
-# Default: FALSE
 
+### All columns flag
+### - Purpose: Specify whether to include physical and economic multipliers (used in testing)
+### - Options: TRUE/FALSE. 
+### - Default: FALSE
 allColsFlag <- TRUE
-# Purpose:
-#   Specify whether to include physical and economic multipliers (used in testing)
-# Options: TRUE/FALSE. 
-# Default: FALSE
 
+### Silent flag
+### - Purpose: Specify the level of messaging to the user
+### - Options: TRUE/FALSE. 
+### - Default: TRUE
 silentFlag <- TRUE       
-# Purpose:
-#   Specify the level of messaging to the user
-# Options: TRUE/FALSE. 
-# Default: TRUE
-
-
 ```
 
 <br>
@@ -183,28 +194,54 @@ Run `FrEDI` using the main `run_fredi()` function
 
 Default parameter options are used for any parameters that are not specified in `run_fredi()`. 
 
-```{r run_fredi, echo=TRUE, results = 'hold',message=TRUE}
+```{r run_fredi, echo=TRUE, results="hold", message=TRUE}
+### Run FrEDI using inputs and parameters set in Step #2
+output_df <- run_fredi(
+  inputsList = inputs_list, 
+  sectorList = sectorListFlag,
+  # sectorList = "Asphalt Roads",
+  aggLevels  = aggLevelFlag,
+  elasticity = elasticityFlag,
+  maxYear    = maxYearFlag,
+  thru2300   = thru2300Flag,
+  outputList = outputListFlag,
+  allCols    = allColsFlag,
+  silent     = silentFlag
+) ### End run_fredi
+# output_df |> glimpse()
+output_df |> pull(model) |> unique()
+```
 
-#Run FrEDI using inputs and parameters set in Step #2
+```{r filter_fredi, echo=TRUE, results="hold", message=TRUE}
+### Filter to specific year
+c_years     <-  c(2100)
 
-output_df <- run_fredi(inputsList = inputs_list, 
-                       sectorList = SectorListFlag,
-                       aggLevels  = aggLevelFlag,
-                       elasticity = elasticityFlag,
-                       maxYear    = maxYearFlag,
-                       thru2300   = thru2300Flag,
-                       outputList = outputListFlag,
-                       allCols    = allColsFlag,
-                       silent     = silentFlag
-) 
+### Filter to specific values:
+### - Filter to primary sectors
+### - Filter to average models/SLR scenario interpolations
+### - Filter to specified years
+df_primary <- output_df |>
+  filter(sectorprimary == 1, includeaggregate >= 1) |>
+  filter(model %in% c("Average", "Interpolation"))|>
+  filter(year %in% c_years)
 
-# Option: write output
-## Write Full Dataframe to CSV (or feather)
+### Aggregate across impact types for each sector, calculate billions and round values to nearest dollar
+### - Convert to billions of dollars
+### - Round values to nearest dollar
+df_sumTypes <- df_primary |> 
+  aggregate_impacts(
+    aggLevels = c("impacttype"), 
+    columns   = c("annual_impacts")
+  )
+
+### Option: write output
+### Write Full Dataframe to CSV (or feather)
 # write.csv(output_df, './output/example_output.csv')
 
-#First five lines of output dataframe
-#output_df[1:5,]
+### First five lines of output dataframe
+# output_df[1:5,]
 ```
+
 
 <br>
 
@@ -215,134 +252,110 @@ The following chunks provide three examples options for how to analyze the raw o
 **Disclaimer: These results only provide an illustrative example and should *NOT* be used for further analysis.**
 
 ## Example 1
+
 Extract national average of economic damages (in billions of dollars in 2015$) for all `FrEDI` sectors for a specified year
 
-Output of this chunk includes a snapshot of a subset of the resulting dataframe
-
-*Note: Use the `sectorprimary ==1` and `includeaggregate >=1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, 
-see the FrEDI Technical Documentation (Chapter 2) and FrEDI::run_fredi() documentation. 
+The output of this chunk includes a snapshot of a subset of the resulting dataframe.
+* Note: Use the `sectorprimary == 1` and `includeaggregate >= 1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, see the FrEDI Technical Documentation (Chapter 2) and `FrEDI::run_fredi()` documentation. 
 
 ```{r, example1, echo=TRUE, warning=FALSE, message=FALSE}
+### Specify groups
+groups1     <- c("sector", "region", "year")
+sumCol1     <- c("annual_impacts")
+select1     <- groups1 |> c(sumCol1)
 
-#specify year
-c_years = c(2100)
+### Filter to specific values:
+### - Filter for national aggregate results averaged across all GCMs
+### - Filter to specified years
+### Select specific columns
+df_filter1  <- df_sumTypes |> 
+  filter(region == "National Total") |>
+  select(all_of(select1)) |>
+  rename("billions_2015$" = annual_impacts) |>
+  mutate(`billions_2015$` = `billions_2015$` / 1e9) |>
+  mutate_at(c("billions_2015$"), round, 2)
 
-df_filter <- output_df %>%
-  # filter for primary sectors and variants (included to avoid 
-  #  double counting final impacts)
-  filter(sectorprimary ==1,
-         includeaggregate >=1) %>%
-  # use helper function to aggregate across the impact types of 
-  #  each sector
-  aggregate_impacts(aggLevels = 'impactType') %>%
-  # filter for national aggregate results averaged across all GCMs, 
-  #  for the specified year
-  filter(model %in% c('Average','Interpolation'),
-         region == "National Total",
-         year %in% c_years) %>%
-  # convert to billions of dollars
-  mutate(annual_impacts = annual_impacts /1e9) %>% 
-  # round results
-  mutate(across(annual_impacts, round, 0)) %>%
-  # select (and rename) relevant columns
-  select('sector','region','year','annual_impacts') %>%
-  rename('billions_2015$' = annual_impacts) 
-
-
-#Display first 10 sectors
-library('kableExtra')
-kable(df_filter[1:10,], 
-      caption = 'Example *Subset* of 2100 Annual National Sectoral Climate-Driven Impacts') %>%
+### Display first 10 sectors
+df_filter1[1:10,] |> 
+  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Climate-Driven Impacts") |>
   kable_styling(font_size = 12, full_width = F)
-
 ```
 
 ## Example 2
 
-Extract national average of physical damages for all `FrEDI` sectors that include physical impacts, for a specified year
+Extract national average of physical damages for all `FrEDI` sectors that include physical impacts, for a specified year:
 
-Output of this chunk includes a snapshot of a subset of the resulting dataframe
-
-*Note: Use the sectorprimary ==1 and includeaggregate >=1 flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants.For recommendations on aggregating impacts across sectors, 
-see the FrEDI Technical Documentation (Chapter 2) and FrEDI::run_fredi() documentation. 
+* The 0utput of this chunk includes a snapshot of a subset of the resulting dataframe.
+* Note: Use the `sectorprimary == 1` and `includeaggregate >= 1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, see the FrEDI Technical Documentation (Chapter 2) and `FrEDI::run_fredi()` documentation. 
 
 ```{r, example2, echo=TRUE, warning=FALSE, message=FALSE}
+### Specify groups
+groups2     <- c("sector", "impactType", "physicalmeasure", "physical_impacts", "region", "year")
+sumCol2     <- c("physical_impacts")
+select2     <- groups2  |> c(sumCol2)
 
-#specify year
-c_years = c(2100)
+### Filter to specific values:
+### - Filter for national aggregate results averaged across all GCMs
+### - Filter to specified years
+### Select specific columns
+df_filter2 <- df_primary |>
+  filter(region == "National Total") |>
+  filter(!(is.na(physicalmeasure))) |>
+  mutate_at(c(sumCol2), round, 0) |>
+  select(all_of(select2))
 
-df_filter <- output_df %>%
-  # filter for primary sectors and variants (included to avoid 
-  #  double counting final impacts)
-  filter(sectorprimary ==1,
-         includeaggregate >=1) %>%
-  # filter for national aggregate results averaged across all GCMs
-  #  and only include sectors that include physical impacts
-  filter(model %in% c('Average','Interpolation'),
-         region == "National Total",
-         year %in% c_years,
-         !(is.na(physicalmeasure))) %>%
-  # round results
-  mutate(across(c('physical_impacts'), round, 0)) %>%
-  # select relevant columns to display
-  select('sector','region','year','physicalmeasure',
-         'impactType','physical_impacts')
-
-#display first 10 rows
-kable(df_filter[c(1,6:9,14),], 
-      caption = 'Example *Subset* of 2100 Annual National Sectoral Climate-Driven Physical Impacts') %>%
+### Display first 10 rows
+df_filter2[c(1, 6:9, 14),] |> 
+  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Climate-Driven Physical Impacts") |>
   kable_styling(font_size = 12, full_width = F)
-
 ```
 
 ## Example 3
-Extract state economic impacts for `FrEDI` sectors for a specified year
+Extract state economic impacts for `FrEDI` sectors for a specified year:
 
-Output of this chunk includes a snapshot of a subset of the resulting dataframe
-
-*Note: Use the sectorprimary ==1 and includeaggregate >=1 flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, 
-see the FrEDI Technical Documentation (Chapter 2) and FrEDI::run_fredi() documentation. 
+* The output of this chunk includes a snapshot of a subset of the resulting dataframe.
+* Note: Use the `sectorprimary == 1` and `includeaggregate >= 1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, see the FrEDI Technical Documentation (Chapter 2) and `FrEDI::run_fredi()` documentation. 
 
 ```{r, example3, echo=TRUE, warning=FALSE, message=FALSE}
+### Specify groups
+groups3     <- c("sector", "state", "year")
+joinCols3   <- c("state", "year")
+sumCol3     <- c("annual_impacts")
+select3     <- groups3  |> c(sumCol3)
 
-#specify year
-c_years = c(2100)
+### Filter to specific values:
+### - Filter for national aggregate results averaged across all GCMs
+### - Filter to specified years
+### Select specific columns
+df_filter3 <- df_sumTypes |>
+  filter(!(region == "National Total")) |>
+  group_by_at(c(groups3)) |>
+  summarize_at(c(sumCol3), sum, na.rm=T) |> ungroup() |> 
+  ###  SEE RECOMMENDATIONS FOR AGGREGATION in FrEDI TECHNICAL DOCUMENTATION ##
+  (function(df0){
+    df1 <- df0 |> 
+      filter(sector == "Suicide") |> 
+      select(-c("sector")) |>
+      rename(impacts_suicide=annual_impacts)
+    df0 <- df0 |> left_join(df1, by=joinCols3)
+    df0 <- df0 |> mutate(impacts_suicide = case_when(impacts_suicide |> is.na() ~ 0, .default=impacts_suicide))
+    df0 <- df0 |> mutate(annual_impacts = case_when(
+      sector == "ATS Temperature-Related Mortality" ~ annual_impacts - impacts_suicide,
+      .default = annual_impacts
+    ))
+    df0 <- df0 |> select(-c("impacts_suicide"))
+    return(df0)
+  })() |>
+  group_by_at(c(joinCols3)) |>
+  summarize_at(c(sumCol3), sum, na.rm=T) |> ungroup() |> 
+  rename("billions_2015$" = annual_impacts) |>
+  mutate(`billions_2015$` = `billions_2015$` / 1e9) |>
+  mutate_at(c("billions_2015$"), round, 2); df_filter3 |> glimpse()
 
-#filter and aggregate data, assign to aggregate categories
-df_filter <- output_df %>%
-  # filter for primary sectors and variants (included to avoid 
-  #  double counting final impacts)
-  filter(sectorprimary ==1,
-         includeaggregate >=1) %>%
-  # use helper function to aggregate across the impact types of 
-  #  each sector
-  aggregate_impacts(aggLevels = 'impactType') %>%
-  # filter for regional results, averaged across all GCMs, 
-  #  for the specified year
-  filter(model %in% c('Average','Interpolation'),
-         !(region == "National Total"),
-         year %in% c_years) %>%
-  # convert to billions (2015$)
-  mutate(annual_impacts = annual_impacts /1e9) %>%
-  # round results
-  mutate(across(c('annual_impacts'), round, 0)) %>%
-  # sum across all sectors for each state
-  group_by_at(.vars = c('state','year')) %>%
-  ##  SEE RECOMMENDATIONS FOR AGGREGATION in FrEDI TECHNICAL DOCUMENTATION ##
-  mutate(annual_impacts = case_when(sector == 'ATS Temperature-Related Mortality' ~ 
-                             annual_impacts - annual_impacts[sector == 'Suicide'],
-                             .default = annual_impacts)) %>%
-  summarize_at(c("annual_impacts"), sum, na.rm=T) %>%
-  ungroup %>%
-  # select (and rename) relevant columns
-  select('state','year','annual_impacts')%>%
-  rename('billions_2015$' = annual_impacts)
-
-
-kable(df_filter[1:10,], 
-      caption = 'Example 2100 Annual Climate-Driven Damages, by State') %>%
+### Display first 10 rows
+df_filter3[1:10,] |> 
+  kable(caption = "Example 2100 Annual Climate-Driven Damages, by State") |>
   kable_styling(font_size = 12, full_width = F)
-
 ```
 
 

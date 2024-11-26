@@ -49,7 +49,7 @@
 #'
 #' @examples
 #' ### Run SV Module with defaults without specifying sector
-#' df_sv <- run_fredi_sv()
+#' # df_sv <- run_fredi_sv()
 #'
 #' ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
 #' get_sv_sectorInfo()
@@ -70,13 +70,13 @@
 #' data(popDefault)
 #'
 #' ### Run SV Module for "Extreme Temperature" with custom population and temperature scenarios
-#' df_sv <- run_fredi_sv(sector = "Extreme Temperature", inputsList = list(pop=popDefault, temp=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Extreme Temperature", inputsList=list(pop=popDefault, temp=gcamScenarios)
 #'
 #' ### Run SV Module for "Coastal Properties" with custom population and SLR scenarios
-#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popDefault, slr=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList=list(pop=popDefault, slr=gcamScenarios)
 #'
 #' ### Run SV Module for "Coastal Properties" with custom population and temperature scenarios
-#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList = list(pop=popDefault, temp=gcamScenarios)
+#' df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList=list(pop=popDefault, temp=gcamScenarios)
 #'
 #'
 #'
@@ -106,10 +106,10 @@ run_fredi_sv <- function(
     .testing    = FALSE
 ){
   ###### Set up the environment ######
-  pkgPath     <- NULL
-  pkgPath     <- (pkgPath |> is.null()) |> ifelse(system.file(package="FrEDI"), pkgPath);
-  rDataType   <- "rds"
-  impactsPath <- pkgPath |> file.path("extdata", "sv", "impactLists")
+  pkgPath       <- NULL
+  pkgPath       <- (pkgPath |> is.null()) |> ifelse(system.file(package="FrEDI"), pkgPath);
+  rDataType     <- "rds"
+  impactsPath   <- pkgPath |> file.path("extdata", "sv", "impactLists")
 
   ###### ** Load Data Objects ######
   ### Get FrEDI data objects
@@ -128,20 +128,20 @@ run_fredi_sv <- function(
 
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
-  minYear  <- minYear0
-  maxYear  <- maxYear0
-  yearsBy5 <- minYear |> seq(maxYear, by=5)
+  minYear    <- minYear0
+  maxYear    <- maxYear0
+  yearsBy5   <- minYear |> seq(maxYear, by=5)
 
   ### Testing
-  save    <- .testing |> ifelse(FALSE, save)
+  save       <- .testing |> ifelse(FALSE, save)
 
   ### Level of messaging (default is to message the user)
-  silent  <- (silent |> is.null()) |> ifelse(T, silent)
-  msgUser <- !silent
-  msg0    <- ""
-  msg1    <- msg0 |> paste0("\t")
-  msg2    <- msg1 |> paste0("\t")
-  msg3    <- msg2 |> paste0("\t")
+  silent     <- (silent |> is.null()) |> ifelse(T, silent)
+  msgUser    <- !silent
+  msg0       <- ""
+  msg1       <- msg0 |> paste0("\t")
+  msg2       <- msg1 |> paste0("\t")
+  msg3       <- msg2 |> paste0("\t")
 
   ###### ** State Columns ######
   byState    <- TRUE
@@ -239,23 +239,38 @@ run_fredi_sv <- function(
   idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
     df0 |> names() |> get_matches(y=valCols0, matches=F)
   }) |> set_names(inNames0)
-  valCols0 |> print(); idCols0 |> print()
+  # valCols0 |> print(); idCols0 |> print()
 
   ###### ** Valid Inputs & Input Info ######
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-  ### Filter to values that are not NULL
-  inputsList   <- inputsList[inWhich]
-  inNames      <- inputsList |> names()
-  rm(inWhich)
-  ### Check which input names are in the user-provided list
-  inWhich      <- inNames %in% inNames0
-  inNames      <- inNames[inWhich]
-  inputsList   <- inputsList[inNames]
-  hasAnyInputs <- inNames |> length()
-  rm(inWhich)
+  inLength     <- inputsList |> length()
+  hasNames     <- inNames    |> length()
+  if(hasNames) {
+    # inNames      <- inputsList |> names()
+    # inNames |> print()
+    # inputsList |> map(glimpse)
+    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    ### Filter to values that are not NULL
+    inputsList   <- inputsList[inWhich]
+    inNames      <- inputsList |> names()
+    rm(inWhich)
+    ### Check which input names are in the user-provided list
+    inWhich      <- inNames %in% inNames0
+    inNames      <- inNames[inWhich]
+    inputsList   <- inputsList[inNames]
+    hasAnyInputs <- inNames |> length()
+    rm(inWhich)
+    # inNames |> print()
+  } else if (inLength) {
+    paste0(msg1) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
+    msgN |> paste0(msg1) |> paste0("Exiting...") |> message()
+    return()
+  } else {
+    hasAnyInputs <- FALSE
+  } ### End if(!hasInputs)
 
 
   ###### ** Check Inputs ######

@@ -6,8 +6,7 @@
 \usage{
 run_fredi_sv(
   sector = NULL,
-  driverInput = NULL,
-  popInput = NULL,
+  inputsList = list(pop = NULL, temp = NULL, slr = NULL),
   silent = TRUE,
   .testing = FALSE
 )
@@ -15,18 +14,24 @@ run_fredi_sv(
 \arguments{
 \item{sector}{A character string indicating the sector for which the FrEDI SV module should calculate impacts (see \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} for a list of available sectors).}
 
-\item{driverInput}{A data frame of up to four custom scenarios for drivers (temperature or global mean sea level rise). \code{driverInput} requires a data frame with columns of \code{"year"} and \code{"scenario"}. The data frame must also include a third column: \code{"temp_C"} for temperature-driven sectors (containing temperature values in degrees Celsius of warming for the contiguous U.S.) or \code{"slr_cm"} for sea level rise (SLR)-driven sectors (containing values for global mean sea level rise in centimeters). Run \code{get_sv_sectorInfo(gcmOnly=TRUE)} to see temperature-driven sectors in the SV module and \code{get_sv_sectorInfo(slrOnly=TRUE)} to see SLR-driven scenarios. Users can also pass a data frame with all four columns (\code{"year"}, \code{"scenario"}, \code{"temp_C"}, and \code{"slr_cm"}), in which case \code{\link[=run_fredi_sv]{run_fredi_sv()}} determines whether to use the \code{"temp_C"} or \code{"slr_cm"} column as the driver trajectory based on the specified sector. Driver inputs for all scenarios should start in the year 2000 or earlier. All scenarios must include at least two non-missing values  (especially values before or at 2000 and at or after 2100). If any required columns are missing, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will use the default temperature or sea level rise scenario from \code{\link[=run_fredi]{run_fredi()}}. If the data frame passed to \code{driverInput} has more than four unique scenarios, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will only run the first four scenarios.}
+\item{silent}{A logical (\code{TRUE/FALSE}) value indicating the level of messaging desired by the user (defaults to \code{silent=TRUE})}
 
-\item{popInput}{The input population scenario requires a data frame object with a single scenario of state-level population values.
+\item{inputsList=list(pop=NULL, temp=NULL, slr=NULL)}{A list with named elements (\code{pop}, \code{temp}, and/or \code{slr}), each containing data frames of custom scenarios for state-level population, temperature, and/or global mean sea level rise (GMSL) trajectories, respectively, over a continuous period. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
-\item The population scenario must have five columns with names \code{"year"}, \code{"region"}, \code{"state"}, \code{"postal"}, and \code{"state_pop"} containing the year, the NCA region name, the state name, the postal code abbreviation (e.g., "ME" for "Maine") for the state, and the state population, respectively.
-\item \code{popInput} only accepts a a single scenario, in contrast to \code{driverInput}. In other words, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses the same population scenario for any and all driver scenarios passed to \code{driverInput}.
-\item If the user does not specify an input scenario for population (i.e., \code{popInput = NULL}, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses a default population scenario.
+\item \strong{pop}. The input population scenario requires a data frame object with a single scenario of population values for each of the 48 U.S. states and the District of Columbia comprising the contiguous U.S. (CONUS).
+\itemize{
+\item The population scenario must have five columns with names \code{"region"}, \code{"state"}, \code{"postal"}, \code{"year"}, and \code{"_pop"} containing the NCA region name (\code{"Midwest"}, \code{"Northeast"}, \code{"Northern Plains"}, \code{"Northwest"}, \code{"Southeast"}, \code{"Southern Plains"}, or \code{"Southwest"}), the state name, the two-letter postal code abbreviation for the state (e.g., \code{"ME"} for Maine), the year, and the state population, respectively.
+\item The input population scenario can only contain a single scenario, in contrast to values for temperature or SLR inputs. In other words, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses the same population scenario when running any and all of the temperature or SLR scenarios passed to \code{run_fredi_sv()}.
+\item If the user does not specify an input scenario for population (i.e., \code{popInput = NULL}, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses a default population scenario (see documentation for \link{popScenario}).
 \item Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (2100).
 \item Population values must be greater than or equal to zero.
+}
+\item \strong{temp} or \strong{slr}. The input temperature or SLR scenario should be a data frame containing one or more custom scenarios. These inputs should be formulated similarly to those for \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=import_inputs]{import_inputs()}}, with an additional column (\code{scenario}) indicating the unique scenario identifier. Temperature and/or SLR input scenarios must have at least one non-missing value in the year 2000 or earlier and at least one non-missing value in or after the final analysis year (2100).
+\itemize{
+\item \strong{temp}. Temperature inputs are used by \code{run_fredi_sv()} with temperature-driven sectors; run \code{get_sv_sectorInfo(gcmOnly=TRUE)} to get a list of the temperature-driven sectors available for the SV module. Temperature inputs require a data frame with columns of \code{year}, \code{temp_C}, and \code{scenario}, respectively containing the year associated with an observation, temperature values for CONUS in degrees Celsius of warming relative to a 1995 baseline (where 1995 is the central year of a 1986-2005 baseline period -- i.e., values should start at zero in the year 1995), and a unique scenario identifier. If no temperature scenario is specified (i.e., \code{inputsList$temp} is \code{NULL}) when running a temperature-driven sector, \code{run_fredi_sv()} will use a default temperature scenario (see \link{FrEDI:gcamScenarios}).
+\item \strong{slr}. SLR inputs are used by \code{run_fredi_sv()} with sea level rise-driven sectors; run \code{get_sv_sectorInfo(slrOnly=TRUE)} to get a list of the SLR-driven sectors available for the SV module. SLR inputs require a data frame with columns of \code{year}, \code{slr_cm}, and \code{scenario}, respectively containing the global mean sea level rise in centimeters relative to a 2000 baseline (i.e., values should start at zero in the year 2000), and a unique scenario identifier. If no SLR scenario is specified (i.e., \code{inputsList$slr} is \code{NULL}) when running a temperature-driven sector: if a user has supplied a temperature scenario (i.e., \code{inputsList$temp} is not \code{NULL}), \code{run_fredi_sv()} will calculate sea level rise values from the temperature inputs using the \code{\link[=temps2slr]{temps2slr()}} function; if no temperature scenario is provided, \code{run_fredi_sv} will use a default SLR scenario (see \link{FrEDI:gcamScenarios}).
+}
 }}
-
-\item{silent}{A logical (\code{TRUE/FALSE}) value indicating the level of messaging desired by the user (defaults to \code{silent=TRUE}).}
 }
 \value{
 The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
@@ -40,28 +45,12 @@ The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame obj
 Users can run \code{\link[=run_fredi_sv]{run_fredi_sv()}} to generate annual physical impacts for SV groups for individual sectors. When running \code{\link[=run_fredi_sv]{run_fredi_sv()}}, users must specify one of the sectors in the SV module; use \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} for a list of available sectors.
 
 \code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population and climate (temperature and SLR) trajectories or use \code{\link[=run_fredi_sv]{run_fredi_sv()}} to run custom scenarios. Running \code{\link[=run_fredi_sv]{run_fredi_sv()}} with custom climate scenarios requires passing a data frame of scenarios to the \code{driverInput} argument. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can also be run with a custom population scenario by passing a data frame of regional population trajectories to the \code{popInput} argument; unlike climate scenarios, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will only run a single scenario at a time.
-\itemize{
-\item \code{driverInput} can take a data frame containing up to four custom scenarios for drivers (temperature or global mean sea level rise). \code{driverInput} requires a data frame with columns of \code{"year"} and \code{"scenario"}. The data frame must also include a third column: \code{"temp_C"} for temperature-driven sectors (containing temperature values in degrees Celsius of warming for the contiguous U.S.) or \code{"slr_cm"} for sea level rise (SLR)-driven sectors (containing values for global mean sea level rise in centimeters). Run \code{get_sv_sectorInfo(gcmOnly = TRUE)} to see temperature-driven sectors in the SV module and \code{get_sv_sectorInfo(slrOnly = TRUE)} to see SLR-driven scenarios. Users can also pass a data frame with all four columns (\code{"year"}, \code{"scenario"}, \code{"temp_C"}, and \code{"slr_cm"}), in which case \code{\link[=run_fredi_sv]{run_fredi_sv()}} determines whether to use the \code{"temp_C"} or \code{"slr_cm"} column as the driver trajectory based on the specified sector. If any required columns are missing, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will use the default temperature or sea level rise scenario from \code{\link[=run_fredi]{run_fredi()}}. If the data frame passed to \code{driverInput} has more than four unique scenarios, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will only run the first four scenarios.
-\itemize{
-\item Temperature inputs must be temperature change in degrees Celsius for the contiguous U.S. (use \code{\link[=convertTemps]{convertTemps()}} to convert global temperatures to CONUS temperatures before passing to \code{driverInput}) relative to a 1995 baseline (where 1995 is the central year of a 1986-2005 baseline period; values should start at zero in the year 1995).
-\item Sea level rise inputs must be in centimeters relative to a 2000 baseline (i.e., values should start at zero in the year 2000). Driver inputs for all scenarios should start in the year 2000 or earlier. All scenarios must include at least two non-missing values  (especially values before or at 2000 and at or after 2100).
-}
-\item The input population scenario requires a data frame object with a single scenario of state-level population values.
-\itemize{
-\item The population scenario must have five columns with names \code{"year"}, \code{"region"}, \code{"state"}, \code{"postal"}, and \code{"state_pop"} containing the year, the NCA region name, the state name, the postal code abbreviation (e.g., "ME" for "Maine") for the state, and the state population, respectively.
-\item \code{popInput} only accepts a a single scenario, in contrast to \code{driverInput}. In other words, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses the same population scenario for any and all driver scenarios passed to \code{driverInput}.
-\item If the user does not specify an input scenario for population (i.e., \code{popInput = NULL}, \code{\link[=run_fredi_sv]{run_fredi_sv()}} uses a default population scenario.
-\item Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (2100).
-\item Population values must be greater than or equal to zero.
-The default regional population scenario is drawn from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Note that the FrEDI SV default population scenario differs from the default population scenario used by \code{\link[=run_fredi]{run_fredi()}}.
-}
-}
 
 The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
 }
 \examples{
 ### Run SV Module with defaults without specifying sector
-df_sv <- run_fredi_sv()
+# df_sv <- run_fredi_sv()
 
 ### Return a character vector with the names of all of the sectors in the FrEDI SV Module:
 get_sv_sectorInfo()
@@ -76,13 +65,21 @@ df_sv <- run_fredi_sv(sector="Coastal Properties")
 df_sv <- run_fredi_sv(sector="Extreme Temperature")
 
 ### Load temperature scenarios
-load(gcamScenarios)
+data(gcamScenarios)
 
 ### Load population scenario
-load(popScenario)
+data(popDefault)
 
 ### Run SV Module for "Extreme Temperature" with custom population and temperature scenarios
-df_sv <- run_fredi_sv(sector = "Extreme Temperature", driverInput = gcamScenarios, popInput = popScenario)
+df_sv <- run_fredi_sv(sector = "Extreme Temperature", inputsList=list(pop=popDefault, temp=gcamScenarios)
+
+### Run SV Module for "Coastal Properties" with custom population and SLR scenarios
+df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList=list(pop=popDefault, slr=gcamScenarios)
+
+### Run SV Module for "Coastal Properties" with custom population and temperature scenarios
+df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList=list(pop=popDefault, temp=gcamScenarios)
+
+
 
 }
 \references{

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
           
           <code><a href="aggregate_impacts.html">aggregate_impacts()</a></code> 
         </dt>
-        <dd>Summarize and aggregate impacts from <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi.html">run_fredi()</a></code> (calculate national totals, average across models, sum impact types, and interpolate between impact year estimates)</dd>
+        <dd>Summarize and aggregate impacts from <code><a href="../reference/run_fredi.html">run_fredi()</a></code> (calculate national totals, average across models, sum impact types, and interpolate between impact year estimates)</dd>
       </dl><dl><dt>
           
           <code><a href="convertTemps.html">convertTemps()</a></code> 
@@ -90,14 +90,14 @@
         <dd>Convert contiguous U.S. (CONUS) temperatures to global temperatures or vice versa</dd>
       </dl><dl><dt>
           
-          <code><a href="defaultResults.html">defaultResults</a></code> 
-        </dt>
-        <dd>Default outputs of <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi.html">run_fredi()</a></code> A dataframe containing the default outputs of <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi.html">run_fredi()</a></code></dd>
-      </dl><dl><dt>
-          
           <code><a href="gcamScenarios.html">gcamScenarios</a></code> 
         </dt>
-        <dd>Six driver scenarios that can be passed as inputs to <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi.html">run_fredi()</a></code> and <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi_sv.html">run_fredi_sv()</a></code></dd>
+        <dd>Six driver scenarios that can be passed as inputs to <code><a href="../reference/run_fredi.html">run_fredi()</a></code> and <code><a href="../reference/run_fredi_sv.html">run_fredi_sv()</a></code></dd>
+      </dl><dl><dt>
+          
+          <code><a href="gdpDefault.html">gdpDefault</a></code> 
+        </dt>
+        <dd>Scenario with values for U.S. Gross Domestic Product (GDP), which can be passed as an input to <code><a href="../reference/run_fredi.html">run_fredi()</a></code> or <code><a href="../reference/run_fredi_methane.html">run_fredi_methane()</a></code>.</dd>
       </dl><dl><dt>
           
           <code><a href="get_sectorInfo.html">get_sectorInfo()</a></code> 
@@ -107,7 +107,7 @@
           
           <code><a href="get_sv_sectorInfo.html">get_sv_sectorInfo()</a></code> 
         </dt>
-        <dd>Retrieve a character vector of sectors available in the FrEDI Social Vulnerability (SV) module (<a href="https://usepa.github.io/FrEDI/reference/run_fredi_sv.html">run_fredi_sv</a>) or a data frame with SV sectors and additional information.</dd>
+        <dd>Retrieve a character vector of sectors available in the FrEDI Social Vulnerability (SV) module (run_fredi_sv) or a data frame with SV sectors and additional information.</dd>
       </dl><dl><dt>
           
           <code><a href="import_inputs.html">import_inputs()</a></code> 
@@ -115,14 +115,19 @@
         <dd>Import custom scenarios for temperature, global mean sea level rise (GMSL), population, and GDP from user-specified file names</dd>
       </dl><dl><dt>
           
-          <code><a href="popScenario.html">popScenario</a></code> 
+          <code><a href="popDefault.html">popDefault</a></code> 
         </dt>
-        <dd>Population scenario to use as an input to <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi.html">run_fredi()</a></code> and <code><a href="https://usepa.github.io/FrEDI/reference/run_fredi_sv.html">run_fredi_sv()</a></code></dd>
+        <dd>U.S. state population scenario, which can be passed as an input to <code><a href="../reference/run_fredi.html">run_fredi()</a></code>, <code><a href="../reference/run_fredi_sv.html">run_fredi_sv()</a></code>, and/or <code>FrEDI:run_fredi_methane()</code>.</dd>
       </dl><dl><dt>
           
           <code><a href="run_fredi.html">run_fredi()</a></code> 
         </dt>
         <dd>Project annual average climate change impacts throughout the 21st century for available sectors</dd>
+      </dl><dl><dt>
+          
+          <code><a href="run_fredi_methane.html">run_fredi_methane()</a></code> 
+        </dt>
+        <dd>Project annual average impacts from methane, NOx, and ozone.</dd>
       </dl><dl><dt>
           
           <code><a href="run_fredi_sv.html">run_fredi_sv()</a></code> 

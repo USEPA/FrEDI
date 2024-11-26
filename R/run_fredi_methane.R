@@ -295,19 +295,32 @@ run_fredi_methane <- function(
   ### Figure out which inputs are not null, and filter to that list
   ### inputsList Names
   inNames      <- inputsList |> names()
-  # inNames |> print(); inputsList |> map(glimpse)
-  inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-  ### Filter to values that are not NULL
-  inputsList   <- inputsList[inWhich]
-  inNames      <- inputsList |> names()
-  rm(inWhich)
-  ### Check which input names are in the user-provided list
-  inWhich      <- inNames %in% inNames0
-  inNames      <- inNames[inWhich]
-  inputsList   <- inputsList[inNames]
-  hasAnyInputs <- inNames |> length()
-  rm(inWhich)
-  # inNames |> print()
+  inLength     <- inputsList |> length()
+  hasNames     <- inNames    |> length()
+  if(hasNames) {
+    # inNames      <- inputsList |> names()
+    # inNames |> print()
+    # inputsList |> map(glimpse)
+    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    ### Filter to values that are not NULL
+    inputsList   <- inputsList[inWhich]
+    inNames      <- inputsList |> names()
+    rm(inWhich)
+    ### Check which input names are in the user-provided list
+    inWhich      <- inNames %in% inNames0
+    inNames      <- inNames[inWhich]
+    inputsList   <- inputsList[inNames]
+    hasAnyInputs <- inNames |> length()
+    rm(inWhich)
+    # inNames |> print()
+  } else if (inLength) {
+    paste0(msg1) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
+    msgN |> paste0(msg1) |> paste0("Exiting...") |> message()
+    return()
+  } else {
+    hasAnyInputs <- FALSE
+  } ### End if(!hasInputs)
 
 
   ### Need scenario for CH4 & NOX or O3:

@@ -35,7 +35,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
+          echo "$${{ github.ref_name }} ${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
 
 
       - name: Setup R
@@ -78,17 +78,21 @@ jobs:
             urlRepo   <- "https://github.com/USEPA/FrEDI"
             newBranch <- "${{ github.ref_name   }}"
             refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
             aggTypes  <- "${{ inputs.agg_types  }}" == "true"
-            if(aggTypes) cAggLvls  <- "all"
-            else         cAggLvls  <- c("national", "modelaverage", "impactyear")
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
 
             ###### Run FrEDI for Reference Branch ######
             ### Install FrEDI from ref branch
             ### Load library
             ### Run FrEDI
-            devtools::install_github(repo=urlRepo, ref=refBranch, dependencies=F, upgrade="never", force=T, type="source")
+            devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
-            dfRef    <- run_fredi(allLevels=cAggLvls)
+            dfRef    <- run_fredi(aggLevels=cAggLvls)
             dfRef |> save(file=oFileRef)
 
             ### Detach FrEDI package
@@ -98,8 +102,9 @@ jobs:
             ### Install FrEDI from new branch
             devtools::install_github(repo=urlRepo, ref=newBranch, dependencies=F, upgrade="never", force=T, type="source")
             library(FrEDI)
-            dfNew    <- run_fredi(allLevels=cAggLvls)
+            dfNew    <- run_fredi(aggLevels=cAggLvls)
             dfNew |> save(file=oFileNew)
+            "got here4" |> print()
 
             ###### Test results ######
             ### Load testing scripts
@@ -107,7 +112,8 @@ jobs:
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
             ### Get test results
             dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
-            '
+            "got here5" |> print()
+          '
 
       - name: Upload Tests
         uses: actions/upload-artifact@v4

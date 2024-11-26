@@ -429,7 +429,8 @@ aggregate_impacts <- function(
 
   ###### ** Model Averages ######
   ### Average values across models
-  modTypes0    <- df_agg[["model_type"]]
+  # modTypes0    <- df_agg[["model_type"]]
+  modTypes0    <- df_agg |> pull(model_type) |> unique() |> tolower()
   has_modTypes <- modTypes0 |> length()
   has_gcm      <- has_modTypes |> ifelse("gcm" %in% modTypes0, FALSE)
   if(aveModels & has_gcm){
@@ -438,7 +439,7 @@ aggregate_impacts <- function(
     ### Ungroup first
     df_agg        <- df_agg |> ungroup()
     ### Group by columns
-    group0        <- groupByCols |> get_matches(y=c("model", yearCol0), matches=F)
+    group0        <- groupByCols |> get_matches(y="model" |> c(yearCol0), matches=F)
     group0        <- group0 |> c("year")
     ### Separate model types
     df_gcm        <- df_agg |> filter(model_type |> tolower() == "gcm")

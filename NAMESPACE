@@ -2,9 +2,11 @@
 
 export(aggregate_impacts)
 export(convertTemps)
+export(get_matches)
 export(get_sectorInfo)
 export(get_sv_sectorInfo)
 export(import_inputs)
 export(run_fredi)
+export(run_fredi_methane)
 export(run_fredi_sv)
 export(temps2slr)
