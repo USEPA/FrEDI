@@ -66,6 +66,10 @@ jobs:
       - name: Update Scenarios
         run: |
           Rscript -e '
+            require(tidyverse)
+            require(devtools)
+            require(ggpubr)
+            require(openxlsx)
             ###### Conditionals ######
             ### Which scenarios/documentation to update
             do_docs  <- "yes"         %in% "${{ inputs.update_docs}}"
