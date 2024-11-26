@@ -31,10 +31,10 @@ on:
         description: Update scenarios?
         required: true
         options:
-        - GDP
-        - Population
-        - Temps & SLR
-        - O3, CH4, & NOx
+        - "GDP"
+        - "Population"
+        - "Temps & SLR"
+        - "O3, CH4, & NOx"
 
 jobs:
   compile_data:
