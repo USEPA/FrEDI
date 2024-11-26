@@ -20,12 +20,13 @@ on:
         - no
         - yes
       update_scenarios:
-        type: multi-choice
+        type: choice
         description: Update scenarios?
         required: true
         options:
         - no
         - yes
+
 #         - "GDP"
 #         - "Population"
 #         - "Temp/SLR"
