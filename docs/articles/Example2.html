@@ -28,7 +28,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">FrEDI</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">4.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Example #2</h1>
             
-            <h4 data-toc-skip class="date">August, 2024</h4>
+            <h4 data-toc-skip class="date">November 2024</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USEPA/FrEDI/blob/HEAD/vignettes/articles/Example2.Rmd" class="external-link"><code>vignettes/articles/Example2.Rmd</code></a></small>
       <div class="d-none name"><code>Example2.Rmd</code></div>
@@ -134,17 +134,7 @@ Documentation</a></p>
 <p>When installing for the first time, see <a href="manual.html">Installing &amp; Running FrEDI</a> page.</p>
 <p>Load package</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/FrEDI">FrEDI</a></span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Warning: package 'tidyverse' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'ggplot2' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'tibble' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'tidyr' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'readr' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'purrr' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'dplyr' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'stringr' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'forcats' was built under R version 4.4.1</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: package 'lubridate' was built under R version 4.4.1</span></span></code></pre>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/FrEDI">FrEDI</a></span><span class="op">)</span></span></code></pre></div>
 <p>After successfully <a href="manual.html">installing
 <code>FrEDI</code></a>, documentation for <code>FrEDI</code> functions
 can be accessed in the same way as for other <code>R</code>
@@ -155,9 +145,11 @@ command will show documentation for <code>FrEDI</code> even if the
 package is not installed).</p>
 <p>For documentation for a specific function, type
 <code>help("*functionName*", package="FrEDI")</code> into an
-<code>R</code> console, where <em>functionName</em> is the name of one
-of the functions in <code>FrEDI</code> (e.g.,
-<code><a href="../reference/aggregate_impacts.html">help("aggregate_impacts", package="FrEDI")</a></code>).</p>
+<code>R</code> console, where <code>*functionName*</code> is the name of
+one of the functions in <code>FrEDI</code> (e.g.,
+<code><a href="../reference/aggregate_impacts.html">help("aggregate_impacts", package="FrEDI")</a></code>). Alternatively,
+use the syntax <code>?FrEDI::*functionName*</code> (e.g.,
+<code>?FrEDI::run_fredi_sv()</code>).</p>
 <p>If <code>FrEDI</code> has been installed, users can also search for
 function-specific documentation in RStudio through the <a href="https://www.r-project.org/help.html" class="external-link"><strong>Help</strong>
 window</a>. Move the focus to the <strong>Help</strong> window using the
@@ -174,29 +166,50 @@ Either provide paths to specific files, or set to <code>NULL</code> to
 use default projections for each variable</p>
 <p>Use this chunk to specify the input trajectories (temperature,
 population, GDP) and runtime parameters for <code>FrEDI_SV</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># To run FrEDI_SV for more than one scenario, the code below can be</span></span>
-<span><span class="co"># adapted into a loop to format the inputs for each scenario. </span></span>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">### To run FrEDI_SV for more than one scenario, the code below can be</span></span>
+<span><span class="co">### adapted into a loop to format the inputs for each scenario. </span></span>
 <span></span>
-<span><span class="co">#***********************************************</span></span>
-<span><span class="co">#1. Specify &amp; Format Input Trajectories (temperature, population, U.S. GDP)</span></span>
+<span><span class="co">###***********************************************</span></span>
+<span><span class="co">### 1. Specify &amp; Format Input Trajectories (temperature, population, U.S. GDP)</span></span>
 <span></span>
-<span><span class="co">## Input Files</span></span>
+<span><span class="co">### Input Files</span></span>
+<span><span class="co">### Population input file</span></span>
+<span><span class="co">### - Purpose: Specify the population trajectory to use as an input.</span></span>
+<span><span class="co">### - Requires columns year, region, state, postal, and pop</span></span>
+<span><span class="co">### - Default: if null, uses default population trajectory</span></span>
+<span><span class="va">popInputFile</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span></span>
+<span><span class="co">### * Temperature input file</span></span>
+<span><span class="co">### - Description: csv file with time series of temperature relative to 1986-2005 average </span></span>
+<span><span class="co">### - (units: degC, values: &gt;=0)</span></span>
+<span><span class="co">### - Data must start in 2000 or earlier and can be global or CONUS</span></span>
+<span><span class="co">### - If global, must convert to CONUS temperature using the import_inputs() helper function</span></span>
+<span><span class="co">### - Contains columns year, temp_C, scenario</span></span>
 <span><span class="va">tempInputFile</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
-<span><span class="co"># Description: csv file with time series of temperature relative to 1986-2005 average </span></span>
-<span><span class="co"># (units: degC, values: &gt;=0)</span></span>
-<span><span class="co"># data must start in 2000 or earlier and can be global or CONUS</span></span>
-<span><span class="co"># If global --&gt; must convert to CONUS temperature using the import_inputs() helper function</span></span>
-<span><span class="co"># column 1 = 'year', column 2 = 'temp_C'</span></span>
 <span></span>
-<span><span class="va">temptypeflag</span> <span class="op">&lt;-</span> <span class="st">'global'</span> </span>
-<span><span class="co"># Description: Use this to specify whether the input temperature is global or CONUS</span></span>
-<span><span class="co"># import_inputs() will convert to global to CONUS temperature</span></span>
-<span><span class="co"># Options: global (input is global T), conus (input is CONUS T)</span></span>
+<span><span class="co">### * Temperature type flag</span></span>
+<span><span class="co">### - Description: Use this to specify whether the input temperature is global or CONUS</span></span>
+<span><span class="co">### - import_inputs() will convert to global to CONUS temperature</span></span>
+<span><span class="co">### - Options: global (input is global T), conus (input is CONUS T)</span></span>
+<span><span class="co">### - Default: defaults to "conus"</span></span>
+<span><span class="va">temptypeflag</span> <span class="op">&lt;-</span> <span class="st">"global"</span> </span>
 <span></span>
+<span><span class="co">### * Module flag</span></span>
+<span><span class="co">### - Description: Use this to specify for which module to import inputs </span></span>
+<span><span class="co">### - Options: fredi/methane/sv </span></span>
+<span><span class="co">### - Default: Defaults to "fredi" if NULL</span></span>
+<span><span class="va">moduleflag</span>   <span class="op">&lt;-</span> <span class="st">"sv"</span> </span>
 <span></span>
-<span><span class="co">## Use the import_inputs() helper function to format the input trajectories for use in FrEDI</span></span>
-<span><span class="va">inputs_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_inputs.html">import_inputs</a></span><span class="op">(</span>tempfile <span class="op">=</span> <span class="va">tempInputFile</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">### Use the import_inputs() helper function to format the input trajectories for use in FrEDI</span></span>
+<span><span class="va">inputs_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_inputs.html">import_inputs</a></span><span class="op">(</span>inputsList <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    pop  <span class="op">=</span> <span class="va">popInputFile</span>,</span>
+<span>    temp <span class="op">=</span> <span class="va">tempInputFile</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  module <span class="op">=</span> <span class="va">moduleflag</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">inputs_list</span> <span class="op">|&gt;</span> <span class="fu">glimpse</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##  list()</span></span></code></pre>
 <p>If no input files are specified, <code><a href="../reference/run_fredi_sv.html">run_fredi_sv()</a></code> will use
 default temperature and U.S. regional population projections. In this
 case, <code><a href="../reference/run_fredi_sv.html">run_fredi_sv()</a></code> will calculate annual projected sea
@@ -211,43 +224,24 @@ U.S. temperature in the year 2090 are 438 million, and 3.4°C
 respectively.</p>
 <p><br></p>
 <p>Next, set <code>FrEDI_SV</code> runtime parameters</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Calculate the run_fredi_sv() results for a single impact sector</span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">### Calculate the run_fredi_sv() results for a single impact sector</span></span>
 <span></span>
-<span><span class="co"># NOTE: the run_fredi_sv() module takes a few minutes to run because</span></span>
-<span><span class="co"># the damages are calculated at the Census tract level and then </span></span>
-<span><span class="co"># aggregated to the regional level</span></span>
+<span><span class="co">### NOTE: the run_fredi_sv() module takes a few minutes to run because</span></span>
+<span><span class="co">### the damages are calculated at the Census tract level and then </span></span>
+<span><span class="co">### aggregated to the regional level</span></span>
 <span></span>
-<span><span class="co"># take formatted temperature vector from the output of the</span></span>
-<span><span class="co"># import_inputs() helper function</span></span>
-<span> <span class="va">temp_input</span> <span class="op">&lt;-</span> <span class="va">inputs_list</span><span class="op">$</span><span class="va">tempInput</span> </span>
+<span><span class="co">### To see all available sectors, run: FrEDI::get_sv_sectorInfo()</span></span>
 <span></span>
-<span><span class="co"># To see all available sectors, run:</span></span>
-<span><span class="co"># FrEDI::get_sv_sectorInfo()</span></span>
-<span></span>
-<span><span class="co"># Specify a specific sector</span></span>
-<span><span class="va">sectorFlag</span> <span class="op">=</span> <span class="st">"Air Quality - Premature Mortality"</span></span>
-<span>  <span class="co"># Purpose:</span></span>
-<span>  <span class="co">#   Specify the SV sector to calculate (can only run one sector at once)</span></span>
-<span>  <span class="co"># Options: run FrEDI::get_sv_sectorInfo() to get a list of the </span></span>
-<span>  <span class="co">#   possible sectors</span></span>
-<span><span class="va">driverFlag</span> <span class="op">&lt;-</span> <span class="va">temp_input</span></span>
-<span>  <span class="co"># Purpose:</span></span>
-<span>  <span class="co">#   Specify the temperature trajectory (up to 4) to use as an input. </span></span>
-<span>  <span class="co">#   Temperature needs to be in degrees C, *CONUS* temperature, relative</span></span>
-<span>  <span class="co">#   to the 1986-2005 average baseline</span></span>
-<span>  <span class="co">#   column 1 = 'year','column 2 = 'scenario', column 3 = 'temp_C'</span></span>
-<span>  <span class="co">#   NOTE: if temperature is in global degrees, use the </span></span>
-<span>  <span class="co">#   FrEDI::convertTemps() helper function to convert from global to CONUS</span></span>
-<span><span class="va">popFlag</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
-<span>  <span class="co"># Purpose:</span></span>
-<span>  <span class="co">#   Specify the population trajectory to use as an input.</span></span>
-<span>  <span class="co"># column 1 = 'year', column 2 = 'region', column 3 = 'state', column 4 = 'postal', column 5 = 'state_pop'</span></span>
-<span>  <span class="co"># default = if null, uses default population trajectory</span></span>
-<span><span class="va">silentFlag</span> <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>  <span class="co"># Purpose:</span></span>
-<span>  <span class="co">#   Specify the level of messaging desired</span></span>
-<span>  <span class="co"># Options: TRUE/FALSE</span></span></code></pre></div>
+<span><span class="co">### Sector Flag: Specify a specific sector</span></span>
+<span><span class="co">### - Purpose: Specify the SV sector to calculate (can only run one sector at once)</span></span>
+<span><span class="co">### - Options: Run FrEDI::get_sv_sectorInfo() to get a list of the possible sectors</span></span>
+<span><span class="va">sectorFlag</span>  <span class="op">&lt;-</span> <span class="st">"Air Quality - Premature Mortality"</span></span>
+<span>  </span>
+<span><span class="co">### Silent Flag</span></span>
+<span><span class="co">### - Purpose: Specify the level of messaging desired</span></span>
+<span><span class="co">### - Options: TRUE/FALSE</span></span>
+<span><span class="va">silentFlag</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="runFrEDI">Step 3. Run <code>FrEDI_SV</code><a class="anchor" aria-label="anchor" href="#runFrEDI"></a>
@@ -260,20 +254,23 @@ specified in <code><a href="../reference/run_fredi_sv.html">run_fredi_sv()</a></
 module, <code><a href="../reference/run_fredi.html">run_fredi()</a></code>, as SV damage calculations are
 conducted at finer spatial scales (e.g., U.S. Census tract vs. regional
 level).</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#Run FrEDI using inputs and parameters set in Step #2</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">### Run FrEDI using inputs and parameters set in Step 2</span></span>
+<span><span class="va">output_sv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_fredi_sv.html">run_fredi_sv</a></span><span class="op">(</span></span>
+<span>  sector      <span class="op">=</span> <span class="va">sectorFlag</span>, </span>
+<span>  inputsList  <span class="op">=</span> <span class="va">inputs_list</span>,</span>
+<span>  silent      <span class="op">=</span> <span class="va">silentFlag</span></span>
+<span><span class="op">)</span> </span>
 <span></span>
-<span><span class="va">output_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_fredi_sv.html">run_fredi_sv</a></span><span class="op">(</span>sector      <span class="op">=</span> <span class="va">sectorFlag</span>, </span>
-<span>                          driverInput <span class="op">=</span> <span class="va">driverFlag</span>, </span>
-<span>                          popInput    <span class="op">=</span> <span class="va">popFlag</span>,</span>
-<span>                          silent      <span class="op">=</span> <span class="va">silentFlag</span><span class="op">)</span> </span>
+<span><span class="co">### Glimpse results</span></span>
+<span><span class="va">output_sv</span> <span class="op">|&gt;</span> <span class="fu">glimpse</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Option: write output</span></span>
-<span><span class="co">## Write Full Dataframe to CSV (or feather)</span></span>
-<span><span class="co"># write.csv(output_df, './output/example_output.csv')</span></span>
+<span><span class="co">### Option: write output</span></span>
+<span><span class="co">### Write Full Dataframe to CSV (or feather)</span></span>
+<span><span class="co"># write.csv(output_sv, './output/example_output.csv')</span></span>
 <span></span>
-<span><span class="co">#First five lines of output dataframe</span></span>
-<span><span class="co">#output_df[1:5,]</span></span></code></pre></div>
+<span><span class="co">### First five lines of output dataframe</span></span>
+<span><span class="co"># output_sv[1:5,]</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="analyzeFrEDI">Step 4. Analyze <code>FrEDI_SV</code><a class="anchor" aria-label="anchor" href="#analyzeFrEDI"></a>
@@ -294,11 +291,11 @@ questions.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Corinne Hartin, Erin McDuffie, Karen Noiva.</p>
+  <p>Developed by Corinne Hartin, Erin McDuffie, Marcus Sarofim, Karen Noiva.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | July 2023</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9. | August 2024</p>
 </div>
 
     </footer>
