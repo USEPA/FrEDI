@@ -1,0 +1,54 @@
+---
+title: "Documentation & Applications"
+date: "October, 2023"
+description: >
+  FrEDI publications and previous applications.
+output: rmarkdown::html_vignette
+#output: github_document
+vignette: >
+  %\VignetteIndexEntry{Documentation & Applications}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "../../man/figures/",
+  out.width = "100%",
+  fig.align="center"
+)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Documentation
+
+<br>
+
+**Publications**
+<br>
+
+Hartin C., E.E. McDuffie, K. Novia, M. Sarofim, B. Parthum, J. Martinich, S. Barr, J. Neumann, J. Willwerth, & A. Fawcett. Advancing the estimates of future climate impacts within the United States, 2023, Earth System Dynamics, https://esd.copernicus.org/articles/14/1015/2023/ 
+
+Sarofim, M.C., Martinich, J., Neumann, J.E. et al. A temperature binning approach for multi-sector climate impact analysis. Climatic Change 165, 22 2021, https://doi.org/10.1007/s10584-021-03048-6
+<br>
+<br>
+
+**Technical Documentation**
+<br>
+
+FrEDI Technical Documentation and Appendxi:https://www.epa.gov/cira/about-fredi 
+
+<br>
+
+---
+
+# Example Applications
+
+The Framework for Evaluating Impacts and Damages (FrEDI) has been used to explore climate-related impacts to the United States under a variety of future scenarios. For example applications of FrEDI, including recent peer-reviewed literature studies, as well as links to several recent documents that have included analyses or U.S. impact results informed by FrEDI output, see: https://www.epa.gov/cira/fredi-publications-and-applications
+
+<br>

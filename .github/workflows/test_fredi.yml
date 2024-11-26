@@ -1,0 +1,124 @@
+### https://github.com/actions/upload-artifact
+### https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows/
+### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
+### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### For uploading artifacts:
+###     "path:" is the output path where Pandoc will write the compiled PDF.
+###      Note, this should be the same directory as the input paper.md
+name: 2a. Test FrEDI Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref_branch:
+        type: string
+        description: To which branch of FrEDI do you want to compare results)?
+      agg_types:
+        type: choice
+        description: Aggregate across impact types?
+        required: true
+        options:
+        - no
+        - yes
+
+jobs:
+  compile_data:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    name: Load Package Code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send input status
+        run: |
+          echo "$${{ github.ref_name }} ${{ inputs.ref_branch }} ${{ inputs.agg_types }}"
+
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Setup R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          cache-version: 1
+          packages: |
+            any::tidyverse
+            any::ggpubr
+            any::openxlsx
+            any::devtools
+
+      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from ref branch and get results
+      - name: Test results
+        run: |
+          Rscript -e '
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
+
+            ### Where to save results
+            oPath0   <- pPath0 |> file.path("data_tests")
+            oFileNew <- oPath0 |> file.path("newResults.rda")
+            oFileRef <- oPath0 |> file.path("refResults.rda")
+
+            ### Check if path exists and, if not, create it
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+
+            ###### Action Arguments ######
+            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            newBranch <- "${{ github.ref_name   }}"
+            refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
+            aggTypes  <- "${{ inputs.agg_types  }}" == "true"
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
+
+            ###### Run FrEDI for Reference Branch ######
+            ### Install FrEDI from ref branch
+            ### Load library
+            ### Run FrEDI
+            devtools::install_github(repo=urlRepo, ref=refBranch, subdir="FrEDI", dependencies=F, upgrade="never", force=T, type="source")
+            library(FrEDI)
+            dfRef    <- run_fredi(aggLevels=cAggLvls)
+            dfRef |> save(file=oFileRef)
+
+            ### Detach FrEDI package
+            package:FrEDI |> detach(unload=TRUE)
+
+            ###### Run FrEDI for New Branch ######
+            ### Install FrEDI from new branch
+            devtools::install_github(repo=urlRepo, ref=newBranch, dependencies=F, upgrade="never", force=T, type="source")
+            library(FrEDI)
+            dfNew    <- run_fredi(aggLevels=cAggLvls)
+            dfNew |> save(file=oFileNew)
+            "got here4" |> print()
+
+            ###### Test results ######
+            ### Load testing scripts
+            tFiles0 <- tPath0 |> list.files(full.names=TRUE)
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            ### Get test results
+            dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
+            "got here5" |> print()
+          '
+
+      - name: Upload Tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test Data
+          path: |
+            data_tests/*.rd*
+            data_tests/*.xlsx

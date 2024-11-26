@@ -1,0 +1,43 @@
+name: 1c. Update SV ImpactsList Data (as needed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_branch:
+        type: string
+        description: From which data-only branch of FrEDI_data to pull in data (e.g., entering "state_initial" will pull from the "data_only_branch_state_initial" branch on FrEDI_data)?
+      sv_impact_type:
+        type: choice
+        description: Indicate which SV impact list data object to update
+        options:
+          - impactsList_airQuality
+          - impactsList_coastalProp
+          - impactsList_extremeTemp
+          - impactsList_htf
+          - impactsList_labor
+          - impactsList_roads
+
+### git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git data_only_branch_${{ github.event.inputs.data_branch }} --allow-unrelated-histories
+jobs:
+  get_data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Commit results
+        run: |
+          branch1="data_only_branch_"
+          branch2="${{ github.event.inputs.data_branch }}"
+          branch0="${branch1}${branch2}"
+          echo branch0
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git pull --depth=1 --ff https://github.com/USEPA/FrEDI_Data.git "$branch0" --allow-unrelated-histories
+          mv -f data_new/sv/impactsLists/${{ github.event.inputs.sv_impact_type }}*.rd* inst/extdata/sv/impactLists/
+          rm -r data_new/
+          git branch --show-current
+          git add inst/extdata/sv/impactLists/*
+          git rm -r data_new/
+          git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
+          git status
+          git commit -am "updated ${{ github.event.inputs.sv_impact_type }} impact list data from FrEDI_Data"
+          git push
