@@ -49,6 +49,7 @@ jobs:
             any::devtools
             any::zoo
             any::pkgdown
+            any::kableExtra
 
       - name: Build documentation
         run: |
@@ -58,8 +59,10 @@ jobs:
             require(pkgdown)
             rPath0   <- ".";
             docPath0 <- rPath0 |> file.path("docs")
-            build_site_github_pages(lazy=TRUE, dest_dir=docPath0, clean=FALSE)
-            '
+            # pkgdown::build_site_github_pages(lazy=TRUE, dest_dir=docPath0, clean=FALSE, new_process=FALSE)
+            pkgdown::build_site_github_pages(lazy=TRUE, clean=TRUE, new_process=TRUE)
+          '
+
       - name: Commit results
         run: |
           git config --local core.autocrlf false
