@@ -6,16 +6,16 @@ fun_manual_colors <- function(x=1){
   colorVals <- "#" |> paste0(colorVals)
   return(colorVals)
 }
-### Get column values from a tibble
-get_column_values <- function(
-    df0,    ### Tibble
-    col0,   ### Column
-    unique0 = FALSE ### Unique values
-){
-  vals0 <- df0[[col0]]
-  if(unique0){vals0 <- vals0 |> unique()}
-  return(vals0)
-} ### End get_column_values
+# ### Get column values from a tibble
+# get_column_values <- function(
+#     df0,    ### Tibble
+#     col0,   ### Column
+#     unique0 = FALSE ### Unique values
+# ){
+#   vals0 <- df0[[col0]]
+#   if(unique0){vals0 <- vals0 |> unique()}
+#   return(vals0)
+# } ### End get_column_values
 
 ### Function to create note for figures
 create_fig_scale_note <- function(
@@ -276,6 +276,7 @@ run_scenario <- function(
     df0,      ### Data frame with scenario info
     fredi     = TRUE,
     sectors   = FrEDI::get_sectorInfo(), ### Which sectors
+    years     = c(2090), ### Years to which to filter results
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
     aggLevels = c("modelaverage", "national"),
@@ -290,8 +291,8 @@ run_scenario <- function(
   # agg0 |> print()
 
   ### File names and info
-  fType0 <- "rda"
-  fName0 <- "integer_results_byType" |> paste0("_", scenario0)
+  fType0     <- "rda"
+  fName0     <- "integer_results_byType" |> paste0("_", scenario0)
   # fName0 <- fName0 |> paste0(".", fType0)
 
   ### Filter to scenario
@@ -315,6 +316,10 @@ run_scenario <- function(
   mutate0   <- c("temp_C_conus", "temp_C_global", "slr_cm")
   df0       <- df0 |> mutate_at(vars(mutate0), as.numeric)
 
+  ### Filter to years
+  doYears   <- !(years |> is.null())
+  if(doYears) df0 <- df0 |> filter(year %in% years)
+
   ### Save results
   if(save) {
     ### Message user
@@ -334,6 +339,7 @@ run_scenarios <- function(
     col0      = "scenario", ### Scenario column
     fredi     = TRUE,
     sectors   = FrEDI::get_sectorInfo(), ### Which sectors
+    years     = c(2090), ### Years to which to filter results
     aggLevels = c("modelaverage", "national"),
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
@@ -346,48 +352,51 @@ run_scenarios <- function(
   # nScenarios <- scenarios0 |> length()
 
   ### Iterate over the scenarios
-  # list0  <- scenarios0 |> map(function(.x){
-  #   paste0("Running scenario ", which(scenarios0 == .x), "/" , nScenarios, "...") |> message()
-  #   df_x <- run_scenario(
-  #     .x,
+  results0   <- scenarios0 |> map(
+    run_scenario,
+    df0       = df0,
+    fredi     = fredi,
+    sectors   = sectors,
+    years     = years,
+    aggLevels = aggLevels,
+    scenCols  = scenCols,
+    joinCols  = joinCols,
+    save      = save,
+    return    = return,
+    outPath   = outPath
+    ) |> bind_rows()
+
+  ### Return
+  return(results0)
+  # list0       <- list()
+  # for(scenario_i in scenarios0) {
+  #   # ### Message user
+  #   # "Running scenario " |> paste0((scenarios0 == scenario_i) |> which(), "/" , nScenarios, "...") |> message()
+  #   ### Run scenario
+  #   df_i <- scenario_i |> run_scenario(
   #     df0       = df0,
   #     fredi     = fredi,
   #     sectors   = sectors,
   #     aggLevels = aggLevels,
   #     scenCols  = scenCols,
-  #     joinCols  = joinCols
-  #   ) ### End run_scenario(.x)
-  #   return(df_x)
-  # }) ### End function(.x), walk
-  list0  <- list()
-  for(scenario_i in scenarios0) {
-    # ### Message user
-    # "Running scenario " |> paste0((scenarios0 == scenario_i) |> which(), "/" , nScenarios, "...") |> message()
-    ### Run scenario
-    df_i <- scenario_i |> run_scenario(
-      df0       = df0,
-      fredi     = fredi,
-      sectors   = sectors,
-      aggLevels = aggLevels,
-      scenCols  = scenCols,
-      joinCols  = joinCols,
-      save      = save,
-      return    = return,
-      outPath   = outPath
-    ) ### End run_scenario(scenario_i)
-    ### Add scenario to list
-    list0[[scenario_i]] <- df_i
-    ### Drop values
-    rm(scenario_i, df_i)
-  } ### for(scenario_i in scenarios0)
-  rm(df0)
-
-  ### Bind values into a list
-  df0    <- list0 |> bind_rows()
-  rm(list0)
-
-  ### Return
-  return(df0)
+  #     joinCols  = joinCols,
+  #     save      = save,
+  #     return    = return,
+  #     outPath   = outPath
+  #   ) ### End run_scenario(scenario_i)
+  #   ### Add scenario to list
+  #   list0[[scenario_i]] <- df_i
+  #   ### Drop values
+  #   rm(scenario_i, df_i)
+  # } ### for(scenario_i in scenarios0)
+  # rm(df0)
+  #
+  # ### Bind values into a list
+  # df0    <- list0 |> bind_rows()
+  # rm(list0)
+  #
+  # ### Return
+  # return(df0)
 } ### End run_scenarios
 
 
@@ -563,9 +572,11 @@ sum_impacts_byDoW_years <- function(
 
 ### Get SLR impacts from FrEDI data
 get_fig7_slrDataObj <- function(
-    drivers=TRUE, ### Whether to return drivers
-    impacts=TRUE  ### Whether to return impacts
-    ){
+    drivers = TRUE, ### Whether to return drivers
+    impacts = TRUE
+    # impacts = TRUE, ### Whether to return impacts
+    # years   = c(2050, 2090),
+){
   ###### Initialize Return List ######
   list0     <- list()
 
@@ -636,15 +647,18 @@ get_fig7_slrDataObj <- function(
     rm(select0, rename0, rename1)
 
     ### Add values for 0cm, 300 cm
-    slrCm     <- slrCm  %>% (function(y){
+    slrCm     <- slrCm  |> (function(y){
       y    <- y |> mutate(model = model |> as.character())
       y300 <- y |> filter(model=="250cm") |> mutate(model="300cm")
       y    <- y |> rbind(y300)
       return(y)
-    })
+    })()
 
     ### Mutate labels & levels
     slrCm     <- slrCm |> mutate(model = model |> factor(levels=slrLevels, labels=slrLabels))
+
+    ### Filter to specific years
+    slrCm     <- slrCm |> filter(year %in% years)
 
     ### Arrange values
     arrange0  <- c("model", "year")
@@ -670,7 +684,7 @@ get_fig7_slrDataObj <- function(
     mutate0   <- slrImp |> names() |> (function(y1, y2=exclude0){y1[!(y1 %in% y2)]})()
     slrImp    <- slrImp |> mutate_at(c(mutate0), as.character)
     slrImp    <- slrImp |> mutate(model = model |> factor(levels=slrLevels, labels=slrLabels))
-    rm("exclude0", "mutate0")
+    rm(exclude0, mutate0)
 
     ### Join with sector-variant data
     drop0     <- c("sector_id", "variant_id")
@@ -690,6 +704,7 @@ get_fig7_slrDataObj <- function(
 
     ### Mutate specific values
     slrImp    <- slrImp |> (function(y){
+      y     <- y |> filter(!(model %in% c("0 cm")))
       yLo   <- y |> filter(model=="30 cm" ) |> mutate(annual_impacts=0) |> mutate(model="0 cm")
       yHi   <- y |> filter(model=="250 cm") |> mutate(model="300 cm")
       y     <- yLo |> rbind(y) |> rbind(yHi)
@@ -699,6 +714,9 @@ get_fig7_slrDataObj <- function(
     ### Mutate labels & levels
     slrImp    <- slrImp |> mutate(model = model |> as.character())
     slrImp    <- slrImp |> mutate(model = model |> factor(levels=slrLabels, labels=slrLabels))
+
+    ### Filter to specific years
+    slrImp    <- slrImp |> filter(year %in% years)
 
     ### Arrange values
     arrange0  <- c("sector", "variant", "impactType", "impactYear", "region", "model_type", "model", "year")
