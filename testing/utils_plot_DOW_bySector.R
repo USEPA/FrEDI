@@ -1,5 +1,4 @@
-
-###### plot_DOW_bySector ######
+###### plot_DOW_bySector
 ### Get plot_DOW_byModelType_sector
 plot_DOW_bySector <- function(
     sector0,           ### Plot index number
@@ -9,7 +8,8 @@ plot_DOW_bySector <- function(
     yCol     = "yCol", ### Y-Column,
     xInfo    = NULL  , ### xScale...outputs of get_colScale
     refPlot  = F     , ### Whether to do a ref plot
-    nTicks   = 5,
+    nTicks   = 5     ,
+    repo0    = "FrEDI",
     options  = list(
       title      = "Impacts by Degrees of Warming",
       # subtitle   = NULL,
@@ -21,68 +21,98 @@ plot_DOW_bySector <- function(
       theme      = NULL
     )
 ){
-  ###### Data ######
+  ###### Format Data ######
   df0        <- df0  |> filter(sector==sector0)
-  type0      <- df0[["model_type"]] |> unique()
-  do_gcm     <- (type0 |> tolower()) == "gcm"
-  ###### Sector info ######
+  type0      <- df0  |> pull(model_type) |> unique()
+  typeLC0    <- type0 |> tolower()
+  do_gcm     <- "gcm" %in% typeLC0
+  do_slr     <- "slr" %in% typeLC0
+
+  ###### Axis Scales & Breaks ######
+  ###### ** Sector Info ######
   info0      <- infoList0[["sectorInfo"]] |> filter(sector==sector0)
   index0     <- info0[["sector_order"]][1]
   row0       <- info0[["plotRow"     ]][1]
   col0       <- info0[["plotCol"     ]][1]
-  ###### Breaks info ######
+
   ###### ** X Breaks ######
-  do_xInfo   <- is.null(xInfo)
-  if(do_xInfo){xInfo <- df0 |> get_colScale(col0 = xCol, nTicks=nTicks)}
-  x_scale    <- xInfo[["scale" ]]
-  x_p10      <- xInfo[["p10"   ]]
+  do_xInfo   <- xInfo |> is.null()
+  if(do_xInfo) xInfo <- df0 |> get_colScale(col0=xCol, nTicks=nTicks)
   x_denom    <- xInfo[["denom" ]]
   x_breaks   <- xInfo[["breaks"]]
   x_limits   <- xInfo[["limits"]]
-  # x_scale |> print()
   # x_breaks |> print()
   ###### ** Y Breaks ######
-  y_info     <- infoList0[["minMax"]] |> filter(plotRow == row0)
-  y_info     <- y_info |> mutate(sector=sector0)
-  y_info     <- y_info |> get_colScale(col0="summary_value", nTicks=nTicks)
-  # y_info     <- y_info |> get_colScale(col0="summary_value", nTicks=nTicks)
+  yInfo      <- infoList0[["minMax"]] |> filter(plotRow == row0)
+  yInfo      <- yInfo |> mutate(sector=sector0)
+  yInfo      <- yInfo |> get_colScale(col0="summary_value", nTicks=nTicks)
+  # yInfo      <- yInfo |> get_colScale(col0="summary_value", nTicks=nTicks)
   ### Additional info
-  y_scale    <- y_info[["scale" ]]
-  # y_scale |> names() |> print()
-  y_p10      <- y_info[["p10"   ]]
-  y_denom    <- y_info[["denom" ]]
-  y_breaks   <- y_info[["breaks"]]
-  y_limits   <- y_info[["limits"]]
-  y_label    <- y_info[["label" ]]
-  # y_label |> print()
-  # y_breaks |> print()
-  # ### Labeling
-  y_prelabel <- (y_label == "") |> ifelse("", ", ")
-  # y_label    <- "" |> paste0("(", y_label, y_prelabel, ")")
-  y_label    <- y_label |> paste0(y_prelabel, "$2015")
-  # y_p10 |> print(); y_denom |> print(); y_breaks |> print()
+  y_p10      <- yInfo[["p10"   ]]
+  y_denom    <- yInfo[["denom" ]]
+  y_breaks   <- yInfo[["breaks"]]
+  y_limits   <- yInfo[["limits"]]
+  y_label    <- yInfo[["label" ]]
+  # # y_label |> print(); y_breaks |> print()
+  # # ### Labeling
+  # y_prelabel <- (y_label == "") |> ifelse("", ", ")
+  # # y_label    <- "" |> paste0("(", y_label, y_prelabel, ")")
+  # y_label    <- y_label |> paste0(y_prelabel, "$2015")
+  # # y_p10 |> print(); y_denom |> print(); y_breaks |> print()
 
-  ###### Mutate Data ######
-  # x_denom |> print(); y_denom |> print()
-  df0[[xCol]] <- df0[[xCol]] / x_denom
-  df0[[yCol]] <- df0[[yCol]] / y_denom
-
-  ###### Plot Options ######
-  theme0      <- options[["theme"      ]]
-  margins0    <- options[["margins"    ]]
-  mUnit0      <- options[["marginsUnit"]]
-  xTitle0     <- options[["xTitle"     ]]
-  yTitle0     <- options[["yTitle"     ]]
-  yTitle0     <- y_label
-  lgdTitle0   <- options[["lgdTitle"   ]]
-  ggtitle0    <- options[["title"      ]]
-  subtitle0   <- sector0
+  ###### Plot Setup ######
+  ###### ** Plot Options ######
+  # plotOpts0   <- typeLC0 |> get_scaledImpactPlotTitles(options=options)
+  plotOpts0   <- typeLC0 |> get_scaledImpactPlotTitles(options=options, repo0=repo0)
+  title0      <- plotOpts0[["title"     ]]
+  xTitle      <- plotOpts0[["xTitle"    ]]
+  yTitle      <- plotOpts0[["yTitle"    ]]
+  lgdLbl      <- plotOpts0[["lgdTitle"  ]]
+  lgdPos      <- plotOpts0[["lgdPos"    ]]
+  heights     <- plotOpts0[["heights"   ]]
+  margins     <- plotOpts0[["margins"   ]]
+  mUnit       <- plotOpts0[["marginUnit"]]
+  theme0      <- plotOpts0[["theme"     ]]
+  nameBrk     <- plotOpts0[["nameBreak" ]]
+  # xTitle |> print()
   ### Has plot options
   hasTheme    <- !is.null(theme0  )
   hasMargins  <- !is.null(margins0)
   hasMUnits   <- !is.null(mUnit0  )
-  ### If units or no
-  if(!hasMUnits){mUnit0 <- "cm"}
+  ### Overwrite some values
+  # yTitle0     <- y_label
+  subtitle0   <- sector0
+
+  ###### ** Plot Aesthetics ######
+  ###### ** Titles
+  # title0    <- impType0
+  # subtitle0 <- variant0
+  title0    <- "Impact Type: " |> paste0(impType0)
+  subtitle0 <- "Variant: "     |> paste0(variant0)
+  ###### ** Aesthetics
+  ### Text size
+  titleSize <- 11
+  subSize   <- 10
+  axisSize  <- 9
+  ### Text orientation
+  hjust0    <- 0.5
+  ### Geom alpha
+  alpha0    <- 0.80
+  ### Legend position,  direction, title position, and nrows
+  ### Legend position = bottom if refPlot; otherwise, don't show
+  # lgdPos0   <- "bottom"
+  lgdPos0   <- refPlot |> ifelse("bottom", "none")
+  lgdDir0   <- "vertical"
+  lgdTit0   <- "left"
+  lgdNrow   <- 3
+  ### Theme: whether to do black and white
+  doBW      <- theme0 == "bw"
+
+  ###### ** Legend Scales ######
+  shapeLvls <- df0 |> pull(model) |> unique() |> sort()
+  numShapes <- shapeLvls |> length()
+  shapeVals <- 1:numShapes
+  colorVals <- fun_manual_colors()
 
   ###### Add in Model info ######
   if(do_gcm)  {
@@ -101,106 +131,145 @@ plot_DOW_bySector <- function(
     rm(join0)
   } ### if(do_gcm)
 
-  ###### Create the plot ######
+  ###### Split Data ######
+  ### Split the data into values for plotting lines, dashed lines, and points
   # # df0 |> names() |> print()
   # # df0 |> glimpse()
-  # plot0       <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
-  # # plot0       <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], group=interaction(sector, model)))
-
-  ### Add Geoms
-  # plot0       <- plot0 + geom_line (aes(color = model))
-  # # plot0       <- plot0 + geom_point(aes(color = model))
-  # plot0       <- plot0 + geom_point(aes(color = model, shape=model))
-  if(do_gcm){
-    ### Separate GCM values
+  if (do_gcm) {
     ### Plot these values as lines
-    df0_1  <- df0 |> filter((driverValue <= maxUnitValue) )#| maxUnitValue >=6)#maxUnitValue < 6 &
+    df0_1  <- df0 |> filter((driverValue <= maxUnitValue))
+    ### Plot these values as dashed lines
+    df0_2  <- df0 |> filter((driverValue >= maxUnitValue))
+  } else {
+    ### Plot these values as lines
+    df0_1  <- df0
     ### Plot these values as points
-    df0_2  <- df0 |> filter((driverValue >= maxUnitValue)) # maxUnitValue <= 6 &
-    ### Initialize plot
-    plot0  <- ggplot()
-    ### Plot values as lines
-    plot0  <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.80)
-    ### Plot values as points (dashed lines)
-    plot0  <- plot0 + geom_line(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
-    #plot0  <- plot0 + geom_point(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]], shape = .data[["model"]]), alpha=0.65)
-  } else{
-    ### Initialize plot
-    plot0  <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
-    ### Add geoms
-    plot0  <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.80)
-    #plot0  <- plot0 + geom_line(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
-    # plot0  <- plot0 + geom_point(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]], shape = model), alpha=0.65)
+    df0_2  <- df0 |> filter(year %in% x_breaks)
   } ### End if(do_gcm)
 
-  ### Add Scales
-  # # plot0       <- plot0 + scale_color_discrete(lgdTitle0)
-  # # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
-  # shapeLvls   <- df0[["model"]] |> unique() |> sort()
-  # numShapes   <- shapeLvls |> length()
-  # shapeVals   <- c(1:numShapes)
-  # # shapeLvls |> print()
-  # plot0       <- plot0 + scale_shape_discrete(lgdTitle0)
-  # plot0       <- plot0 + scale_shape_manual(lgdTitle0, breaks=shapeLvls, values=shapeVals)
-  colorVals   <- fun_manual_colors()
-  cBreaks     <- df0 |> pull(model) |> unique() |> sort()
-  plot0       <- plot0 + scale_color_manual(lgdTitle0, values=colorVals, breaks = cBreaks)
-  plot0       <- plot0 + scale_x_continuous(xTitle0, limits = x_limits, breaks = x_breaks)
-  plot0       <- plot0 + scale_y_continuous(yTitle0, limits = y_limits, breaks = y_breaks)
 
-  ###### Add titles ######
+  ###### Create Plot ######
+  ###### ** Initialize Plot #####
+  # ### Initialize plot
+  # ### GCM Plot
+  # plot0     <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.80)
+  # plot0     <- plot0 + geom_line(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
+  # ### SLR plot
+  # plot0     <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
+  # plot0     <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.80)
+  ### Initialize plot
+  # plot0     <- ggplot()
+  # plot0     <- df0 |> ggplot()
+  plot0     <- df0_1 |> ggplot(aes(
+    x     = .data[[xCol]],
+    y     = .data[[yCol]],
+    color = .data[["model"]]
+  )) ### End aes/ggplot
+
+  ###### ** Plot First Set ######
+  ### Add geomline
+  # plot0     <- plot0 + geom_line (
+  #   data = df0_1, aes(
+  #     x     = .data[[xCol]],
+  #     y     = .data[[yCol]],
+  #     color = .data[["model"]]
+  #   ), ### End aes
+  #   alpha=alpha0
+  # ) ### End geom_point
+  plot0  <- plot0 + geom_line (alpha=alpha0)
+
+  ###### ** Plot Second Set ######
+  ### If GCM: plot second set of values as dashed lines
+  ### If SLR: plot second set of values as points
+  if(do_gcm) {
+    plot0  <- plot0 + geom_line (
+      data = df0_2, aes(
+        x     = .data[[xCol]],
+        y     = .data[[yCol]],
+        color = .data[["model"]]
+      ), ### End aes
+      linetype = "dashed",
+      alpha    = alpha0
+      # alpha    = alpha0 - 10
+    ) ### End geom_line
+  } else{
+    plot0  <- plot0 + geom_point(
+      data = df0_2, aes(
+        x     = .data[[xCol]],
+        y     = .data[[yCol]],
+        color = .data[["model"]],
+        shape = .data[["model"]]
+      ), ### End aes
+      alpha = alpha0
+    ) ### End geom_point
+  } ### End if(do_gcm)
+  ### Remove data
+  rm(df0_1, df0_2)
+
+  ###### ** Plot Title ######
+  ### Add title
   plot0       <- plot0 + ggtitle(ggtitle0, subtitle0)
-  # plot0       <- plot0 + theme(panel.background = element_rect(fill="white"))
-  # plot0       <- plot0 + theme(panel.grid = element_line(color="lightgrey"))
-  # plot0       <- plot0 + theme(axis.line = element_line(color="lightgrey"))
-  plot0       <- plot0 + theme(plot.title    = element_text(hjust = 0.5, size=12))
-  plot0       <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=9))
+  ### Add title aesthetics
+  plot0       <- plot0 + theme(plot.title    = element_text(hjust=hjust0, size=12))
+  plot0       <- plot0 + theme(plot.subtitle = element_text(hjust=hjust0, size=9))
 
-  ###### Format Plot ######
-  ### Legend position = bottom if refPlot; otherwise, don't show
-  lgdPos0     <- refPlot |> ifelse("bottom", "none")
-  plot0       <- plot0 + theme(legend.box = "vertical")
-  plot0       <- plot0 + guides(color = guide_legend(title.position="left", ncol=4, byrow=TRUE))
-  plot0       <- plot0 + guides(shape = guide_legend(title.position="left", ncol=3, byrow=TRUE))
-  # plot0       <- plot0 + theme(legend.direction = "vertical")
-  plot0       <- plot0 + theme(legend.position = lgdPos0)
-  plot0       <- plot0 + theme(plot.title   = element_blank())
+  ###### ** Plot Axes ######
+  ### Add axes
+  yTitle0     <- y_label
+  plot0       <- plot0 + scale_x_continuous(xTitle0, limits=x_limits, breaks=x_breaks)
+  plot0       <- plot0 + scale_y_continuous(y_label, limits=y_limits, breaks=y_breaks)
+  ### Add axes aesthetics
   plot0       <- plot0 + theme(axis.title   = element_text(size=8))
+
+  ###### ** Plot Legend ######
+  ### Add legend scales
+  plot0       <- plot0 + scale_color_manual(lgdTitle0, values=colorVals, breaks=shapeLvls)
+  ### Add legend aesthetics
+  plot0       <- plot0 + theme(legend.box = lgdDir0)
+  plot0       <- plot0 + theme(legend.position = lgdPos0)
+  plot0       <- plot0 + guides(color = guide_legend(title.position=lgdTit0, ncol=lgdNrow, byrow=TRUE))
+  plot0       <- plot0 + guides(shape = guide_legend(title.position=lgdTit0, ncol=lgdNrow, byrow=TRUE))
+
+  ###### ** Drop elements ######
+  plot0       <- plot0 + theme(plot.title   = element_blank())
   plot0       <- plot0 + theme(axis.title.x = element_blank())
+
   ###### If plotIndex>1, remove some plot elements
   ###### White out axis text if column > 1
-  if(col0 > 1){
+  if (col0 > 1) {
     plot0 <- plot0 + theme(axis.text.y  = element_text(color="white"))
     plot0 <- plot0 + theme(axis.title.y = element_text(color="white"))
     plot0 <- plot0 + theme(axis.title.x = element_blank())
   } ### End if(col0 > 1)
 
-
-  ### Theme
+  ###### ** Add Theme ######
   if(hasTheme){
     # theme0 |> print()
-    if(theme0=="bw"){plot0 <- plot0 + theme_bw()}
-    else            {plot0 <- plot0 + theme0    }
+    doBW <- theme0 == "bw"
+    if (doBW) plot0 <- plot0 + theme_bw()
+    else      plot0 <- plot0 + theme0
   } ### End if(hasTheme)
-  ### Margins
-  if(hasMargins){
+
+  ###### ** Add Margins ######
+  if (hasMargins) {
     # margins0 |> print(); mUnit0 |> print()
     margin0 <- margin(
-      t    = margins0[1],  # Top margin
-      r    = margins0[2],  # Right margin
-      b    = margins0[3],  # Bottom margin
-      l    = margins0[4],  # Left margin
+      t    = margins0[1],  ### Top margin
+      r    = margins0[2],  ### Right margin
+      b    = margins0[3],  ### Bottom margin
+      l    = margins0[4],  ### Left margin
       unit = mUnit0
-    )
+    ) ### End margin
     ### Add to plot
     plot0 <- plot0 + theme(plot.margin = margin0)
   } ### End if(hasMargins)
 
+  ###### Return ######
   ### Return the plots
   return(plot0)
 }
 
-
+###### End of Script ######
 
 
 

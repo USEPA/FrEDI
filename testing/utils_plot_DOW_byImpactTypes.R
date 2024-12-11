@@ -1,4 +1,4 @@
-###### plot_DOW_byImpactType ######
+###### plot_DOW_byImpactType
 ### This function plots degrees of warming by sector, variant, impact year, and type
 plot_DOW_byImpactTypes <- function(
     data,
@@ -8,6 +8,8 @@ plot_DOW_byImpactTypes <- function(
     modelType = "GCM",
     nTicks    = 5,
     silent    = TRUE,
+    silent    = TRUE,
+    repo0     = "FrEDI",
     options   = list(
       title      = "Impacts by Degrees of Warming",
       # subtitle   = NULL,
@@ -22,14 +24,20 @@ plot_DOW_byImpactTypes <- function(
 ){
   ###### Messaging ######
   print_msg <- !silent
-  if(print_msg){ "Running plot_DOW_byImpactType()..." |> message()}
+  if(print_msg) "Running plot_DOW_byImpactType()..." |> message()
+
+  ###### Values ######
   ### Model Type
-  # modelType %>% print
-  do_gcm    <- "gcm" %in% (modelType |> tolower())
-  do_slr    <- "slr" %in% (modelType |> tolower())
+  # type0 |> print()
+  typeLC0   <- type0 |> tolower()
+  repo0     <- repo0 |> tolower()
+  do_gcm    <- "gcm" %in% typeLC0
+  do_slr    <- "slr" %in% typeLC0
   # modelType |> print(); do_gcm |> print(); do_slr |> print()
 
+
   ###### Format Data ######
+  ###### ** Filter Data ######
   ### Filter to sector and convert to data frame
   # data |> glimpse()
   # data[["sector"]] |> unique() |> print(); modelType |> print()
@@ -39,122 +47,74 @@ plot_DOW_byImpactTypes <- function(
   df0       <- df0 |> filter(sector     == sector0  )
   # df0 |> glimpse()
 
-  ###### Defaults ######
-  ### Defaults
-  def_titles  <- list(GCM="Impacts by Degrees of Warming", SLR="Impacts by GMSL (cm)")
-  def_xTitles <- list(GCM=expression("Degrees of Warming (°C)"), SLR="GMSL (cm)")
-  def_lgdLbls <- list(GCM="Model", SLR="Scenario")
-  def_margins <- list(GCM=c(0, 0, .15, 0), SLR=c(0, .2, .15, 0))
-  ### Defaults: Default Heights Below
-  def_title   <- do_gcm |> ifelse(def_titles [["GCM"]], def_titles [["SLR"]])
-  def_xTitle  <- do_gcm |> ifelse(def_xTitles[["GCM"]], def_xTitles[["SLR"]])
-  def_margin  <- do_gcm |> ifelse(def_margins[["GCM"]], def_margins[["SLR"]])
-  def_lgdLbl  <- do_gcm |> ifelse(def_lgdLbls[["GCM"]], def_lgdLbls[["SLR"]])
-  def_lgdPos  <- "top"
-  def_yTitle  <- "Impacts ($2015)"
-  def_mUnit   <- "cm"
-  def_theme   <- NULL
-  def_nameBrk <- 18
-  ### Values
-  title0      <- options[["title"     ]]
-  xTitle      <- options[["xTitle"    ]]
-  yTitle      <- options[["yTitle"    ]]
-  lgdLbl      <- options[["lgdTitle"  ]]
-  lgdPos      <- options[["lgdPos"    ]]
-  heights     <- options[["heights"   ]]
-  margins     <- options[["margins"   ]]
-  mUnit       <- options[["marginUnit"]]
-  theme0      <- options[["theme"     ]]
-  nameBrk     <- options[["nameBreak" ]]
-  # xTitle |> print()
-  ### Plot options
-  hasTitle    <- !(is.null(title0 ))
-  hasXTitle   <- !(is.null(xTitle ))
-  hasYTitle   <- !(is.null(yTitle ))
-  hasLgdLbl   <- !(is.null(lgdLbl ))
-  hasLgdPos   <- !(is.null(lgdPos ))
-  hasHeights  <- !(is.null(heights))
-  hasMargins  <- !(is.null(margins))
-  hasMUnits   <- !(is.null(mUnit  ))
-  hasTheme    <- !(is.null(theme0 ))
-  hasNameBrk  <- !(is.null(nameBrk))
-  ### Values: Height Values Below
-  if(!hasTitle  ){title0  <- def_title  }
-  if(!hasXTitle ){xTitle  <- def_xTitle }
-  if(!hasYTitle ){yTitle  <- def_yTitle }
-  if(!hasLgdLbl ){lgdLbl  <- def_lgdLbl }
-  if(!hasMargins){margins <- def_margin }
-  if(!hasMUnits ){mUnit   <- def_mUnit  }
-  if(!hasTheme  ){theme0  <- def_theme  }
-  if(!hasNameBrk){nameBrk <- def_nameBrk}
-  # title0 |> print(); def_xTitle |> print()
-  # xTitle |> print()
-  ### Update plot options
-  plotOpts0    <- list(
-    title      = title0,
-    xTitle     = xTitle,
-    yTitle     = yTitle,
-    lgdTitle   = lgdLbl,
-    margins    = margins,
-    marginUnit = mUnit,
-    theme      = theme0
-  )
-
-  ###### Get Sector Info ######
+  ###### ** Sector Info ######
+  ### Get sector info
   # df0 |> glimpse()
-  infoList0     <- df0 |> get_sector_plotInfo(yCol=yCol, byType=TRUE, silent=silent)
-  df_info       <- infoList0[["sectorInfo"]]
-  df_minMax     <- infoList0[["minMax"    ]]
-  nRow          <- infoList0[["nRow"      ]]
-  nCol          <- infoList0[["nCol"      ]]
+  infoList0  <- df0 |> get_sector_plotInfo(yCol=yCol, byType=TRUE, silent=silent)
+  df_info    <- infoList0[["sectorInfo"]]
+  df_minMax  <- infoList0[["minMax"    ]]
+  nRow       <- infoList0[["nRow"      ]]
+  nCol       <- infoList0[["nCol"      ]]
   ### Unique values
-  c_sectors     <- infoList0[["cSectors" ]]
-  c_impYears    <- infoList0[["cImpYears"]]
-  c_variants    <- infoList0[["cVariants"]]
-  c_impTypes    <- infoList0[["cImpTypes"]]
-  c_models      <- df0[["model"]] |> unique()
+  c_sectors  <- infoList0[["cSectors" ]]
+  c_impYears <- infoList0[["cImpYears"]]
+  c_variants <- infoList0[["cVariants"]]
+  c_impTypes <- infoList0[["cImpTypes"]]
+  c_models   <- df0[["model"]] |> unique()
   ### Numbers
-  n_sectors     <- c_sectors  |> length()
-  n_impYears    <- c_impYears |> length()
-  n_variants    <- c_variants |> length()
-  n_impTypes    <- c_impTypes |> length()
-  n_models      <- c_models   |> length()
+  n_sectors  <- c_sectors  |> length()
+  n_impYears <- c_impYears |> length()
+  n_variants <- c_variants |> length()
+  n_impTypes <- c_impTypes |> length()
+  n_models   <- c_models   |> length()
   # c_impYears |> print(); c_impTypes |> print(); c_variants |> print()
   # n_impYears |> print(); n_impTypes |> print(); n_variants |> print()
 
-  ###### Factor Model ######
-  df0 <- df0 |> mutate(model = model |> factor(levels=c_models))
+  ###### ** Factor Model ######
+  ### Factor model levels
+  df0        <- df0 |> mutate(model = model |> factor(levels=c_models))
 
-  ###### Plot Title Info ######
-  ### Default for now
-  # x_denom <- y_denom <- 1
 
-  ###### Get X Breaks ######
-  if(xCol == "year"){
-    x_limits <- c(2010, 2090)
-    x_breaks <- seq(x_limits[1] - 10, x_limits[2] + 10, by = 20)
-    x_denom  <- 1
-    x_info   <- NULL
-    # x_info   <- list()
-    # x_info[["denom" ]] <- x_denom
-    # x_info[["breaks"]] <- x_breaks
-    # x_info[["limits"]] <- x_limits
-  } ### End if(xCol == "year")
-  else              {
-    x_info     <- df0 |> get_colScale(col0=xCol, nTicks = 5)
-    x_scale    <- x_info[["scale" ]]
-    x_p10      <- x_info[["p10"   ]]
-    x_denom    <- x_info[["denom" ]]
-    x_breaks   <- x_info[["breaks"]]
-    x_limits   <- x_info[["limits"]]
-  } ### End else(xCol == "year")
+  ###### Plot Setup ######
+  ###### ** X Breaks ######
+  do_xInfo   <- xInfo |> is.null()
+  if(do_xInfo) {
+    xInfo <- xInfo |> getXAxisScale(
+      xCol    = xCol,
+      maxYear = 2100,
+      yrUnit  = 20,
+      nTicks  = nTicks
+    ) ### End getXAxisScale
+  } ### End if(do_xInfo)
+  ### Assign to objects
+  x_limits   <- xInfo[["limits"]]
+  x_breaks   <- xInfo[["breaks"]]
+  x_denom    <- xInfo[["denom" ]]
 
-  # ###### Format Sector Names ######
-  # refSectors <- df0[["sector"]] |> unique()
-  # newSectors <- refSectors |> format_sectorNames(thresh0 = nameBrk)
-  # df0        <- df0 |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
+  ###### ** Plot Options ######
+  # plotOpts0   <- typeLC0 |> get_scaledImpactPlotTitles(options=options)
+  plotOpts0   <- typeLC0 |> get_scaledImpactPlotTitles(options=options, repo0=repo0)
+  title0      <- plotOpts0[["title"     ]]
+  xTitle      <- plotOpts0[["xTitle"    ]]
+  yTitle      <- plotOpts0[["yTitle"    ]]
+  lgdLbl      <- plotOpts0[["lgdTitle"  ]]
+  lgdPos      <- plotOpts0[["lgdPos"    ]]
+  heights     <- plotOpts0[["heights"   ]]
+  margins     <- plotOpts0[["margins"   ]]
+  mUnit       <- plotOpts0[["marginUnit"]]
+  theme0      <- plotOpts0[["theme"     ]]
+  nameBrk     <- plotOpts0[["nameBreak" ]]
+  # xTitle |> print()
+  ### Conditionals
+  hasLgdPos   <- !(lgdPos  |> is.null())
+  hasMargins  <- !(margins |> is.null())
+  hasTheme    <- !(theme0  |> is.null())
+  hasNameBrk  <- !(nameBrk |> is.null())
+  # xTitle |> print()
+
 
   ###### Reference Plot ######
+  ###### ** Create Reference Plot ######
   ### Reference plots
   refPlot0   <- df0 |> plot_DOW_byImpactType(
     sector0   = sector0,
@@ -162,13 +122,13 @@ plot_DOW_byImpactTypes <- function(
     impType0  = c_impTypes[1],
     variant0  = c_variants[1],
     infoList0 = infoList0, ### Dataframe with sector info...output from get_sector_plotInfo
-    xCol      = xCol,   ### X-Column,
-    yCol      = yCol,   ### Y-Column,
-    xInfo     = x_info, ### xScale...outputs of get_colScale
-    refPlot   = TRUE, ### Whether to do a ref plot
+    xCol      = xCol  , ### X-Column,
+    yCol      = yCol  , ### Y-Column,
+    xInfo     = xInfo, ### xScale...outputs of get_colScale
+    refPlot   = TRUE  , ### Whether to do a ref plot
     silent    = silent,
     options   = plotOpts0
-  )
+  ) ### End plot_DOW_byImpactType
   # refPlot0 |> print()
 
   ### Add guide to legend
@@ -176,14 +136,16 @@ plot_DOW_byImpactTypes <- function(
     n_variants <= 1 ~ 2 ,
     n_variants == 2 ~ 3,
     .default = 4
-  )
+  ) ### End case_when
   # lgdCols |> print()
+
+  ### Add guides to reference plot
   refPlot0  <- refPlot0 + guides(color=guide_legend(ncol=lgdCols))
 
-  ###### Common Plot Elements ######
+  ###### ** Common Plot Elements ######
+  ### Get common plot elements from reference plot
   spacer0   <- ggplot() + theme_void()
   legend0   <- refPlot0 |> ggpubr::get_legend()
-  # # "got here..." |> print()
   grobLgd0  <- ggarrange(plotlist=list(legend=legend0))
 
   ###### Create Plot List ######
@@ -194,30 +156,28 @@ plot_DOW_byImpactTypes <- function(
       ### Figure out min/max across all variants for an impact type to get the y-scale
       listVars_j <- c_variants |> map(function(variant_k){
         ###### ** Create variant plot ######
-        # ref0   <- (n_impYears > 1) |> ifelse(TRUE, FALSE)
         plot_k <- df0 |> plot_DOW_byImpactType(
           sector0   = sector0,
           impYear0  = impYear_i,
           impType0  = impType_j,
           variant0  = variant_k,
           infoList0 = infoList0, ### Dataframe with sector info...output from get_sector_plotInfo
-          xCol      = xCol,   ### X-Column,
-          yCol      = yCol,   ### Y-Column,
-          xInfo     = x_info, ### xScale...outputs of get_colScale
-          refPlot   = FALSE,  ### Whether to do a ref plot
-          # refPlot   = ref0,   ### Whether to do a ref plot
+          xCol      = xCol  , ### X-Column,
+          yCol      = yCol  , ### Y-Column,
+          xInfo     = xInfo , ### xScale...outputs of get_colScale
+          refPlot   = FALSE , ### Whether to do a ref plot
           silent    = silent,
           options   = plotOpts0
-        )
+        ) ### End plot_DOW_byImpactType
 
         ### White out impact type label
         plot_k <- plot_k + theme(plot.title = element_text(color="white"))
         ### Add spacer to the right
         list_k <- list(plot=plot_k, spacer1=spacer0)
-        grid_k <- ggarrange(plotlist=list_k, nrow=1, ncol=2, common.legend=T, legend="none", widths =c(1, 0.1))
+        grid_k <- ggarrange(plotlist=list_k, nrow=1, ncol=2, common.legend=T, legend="none", widths=c(1, 0.1))
         ### Add spacer to the left
         list_k <- list(spacer1=spacer0, plot=grid_k)
-        grid_k <- ggarrange(plotlist=list_k, nrow=1, ncol=2, common.legend=T, legend="none", widths =c(0.1, 1))
+        grid_k <- ggarrange(plotlist=list_k, nrow=1, ncol=2, common.legend=T, legend="none", widths=c(0.1, 1))
         # "got here..." |> print()
         ### Return plot
         return(grid_k)
@@ -226,7 +186,6 @@ plot_DOW_byImpactTypes <- function(
       ### Name the plots
       listVars_j  <- listVars_j |> set_names(c_variants)
       # return(listVars_j)
-      # "got here1..." |> print()
 
       ### Arrange the other plots in a grid
       plotGrid_j <- ggarrange(plotlist=listVars_j, nrow=1, ncol=nCol, common.legend=T, legend="none")
@@ -251,14 +210,12 @@ plot_DOW_byImpactTypes <- function(
     ### Name the plots
     # listTypes_i |> length() |> print(); c_impTypes |> print()
     listTypes_i <- listTypes_i |> set_names(c_impTypes)
-    # "got here3..." |> print()
     # return(listTypes_i)
 
     ### Arrange plot list
     plotGrid_i   <- ggarrange(plotlist=listTypes_i, ncol=1, nrow=nRow, common.legend=T, legend="none")
 
     ### Add spacer to the top
-    # "got here2..." |> print()
     yearTitle_i <- "Impact Year: " |> paste0(impYear_i)
     grobYear_i  <- text_grob(yearTitle_i, face="plain", size=13)
     plotList_i  <- list(spacer1=spacer0, plot=plotGrid_i)
@@ -269,25 +226,17 @@ plot_DOW_byImpactTypes <- function(
     h_spacer1  <- 0.05
     h_spacer2  <- 0.05
     h_plots    <- n_impTypes * (1 + 0.07)
-    # h_legend   <- 0.75 / n_impTypes
-    # h_legend   <- case_when(
-    #   n_impTypes = 1 ~ 0.5,
-    #   n_impTypes > 3 ,
-    #   0.5
-    #   )
     h_legend   <- 0.5
     h_spacers  <- c(h_spacer1, h_plots, h_spacer1, h_legend, h_spacer1/4)
     ### Add Plot Title & Y Title
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=legend0)
     # plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, legend=grobLgd0)
     plotList_i <- list(spacer1=spacer0, plot=plotGrid_i, spacer2=spacer0, legend=grobLgd0, spacer1=spacer0)
-    # plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=2, ncol=1, common.legend=T, legend="none", heights=c(0.1, n_impTypes, 0.25))
     plotGrid_i <- ggarrange(plotlist=plotList_i, nrow=5, ncol=1, legend="none", heights=h_spacers)
     title0_i   <- sector0
     grobTit_i  <- text_grob(title0_i, color="black", size=12, face="bold", hjust=0.5)
     plotYTit_i <- text_grob(yTitle  , color="black", rot =90)
     plotGrid_i <- plotGrid_i |> annotate_figure(top=grobTit_i, left=plotYTit_i)
-    # "got here4..." |> print()
     # return(plotGrid_i)
 
     ### Add Note
@@ -310,3 +259,5 @@ plot_DOW_byImpactTypes <- function(
   if(print_msg) message("Finished.")
   return(listYears0)
 }
+
+###### End Script ######

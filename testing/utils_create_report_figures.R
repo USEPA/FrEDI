@@ -1,21 +1,175 @@
+### Defaults
+### Function to create data frame with info
+scaledImpactPlotTitles <- function(
+    x = 1
+    # repo0 = "FrEDI" ### Which repo to get defaults for
+){
+  # # ### Tibble
+  # # df0 <- tibble(modelType = c("gcm", "slr"))
+  # # df0 <- df0 |> mutate(model_type = modelType |> toupper())
+  # # df0 <- df0 |> mutate(title      = c("Scaled Impacts by Degrees of Warming", "Scaled Impacts by Year"))
+  # # df0 <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"Year\""))
+  # # df0 <- df0 |> mutate(yTitle     = c("Scaled Impacts"))
+  # # df0 <- df0 |> mutate(lgdLbl     = c("Model", "Scenario"))
+  # # df0 <- df0 |> mutate(lgdPos     = c("top"))
+  # # df0 <- df0 |> mutate(margins    = c("c(0, 0, .15, 0)", "c(0, .2, .15, 0)"))
+  # # df0 <- df0 |> mutate(marginUnit = c("cm"))
+  # # df0 <- df0 |> mutate(nameBrk    = c(18))
+  # # return(df0)
+  #
+  # ### Defaults depend on repo
+  # repo0     <- repo0 |> tolower()
+  # doFrEDI   <- "fredi" %in% repo0
+  # ### Titles
+  # gcmTitle  <- doFrEDI |> ifelse("Impacts by Degrees of Warming", "Scaled Impacts by Degrees of Warming")
+  # slrTitle  <- doFrEDI |> ifelse("Impacts by GMSL (cm)", "Scaled Impacts by Year")
+  # ### Axis titles
+  # gcmXTitle <- "expression(\"Degrees of Warming (°C)\")"
+  # slrXTitle <- doFrEDI |> ifelse("\"GMSL (cm)\"", "\"Year\"")
+  # YTitle    <- doFrEDI |> ifelse("Impacts ($2015)", "Scaled Impacts")
+  # ### Legend labels
+  # gcmLgdLbl <- "Model"
+  # slrLgdLbl <- doFrEDI |> ifelse("Year", "Scenario")
+  #
+  # ### Tibble
+  # ### Titles
+  # df0     <- tibble(modelType = c("gcm", "slr"))
+  # df0     <- df0 |> mutate(model_type = modelType |> toupper())
+  # df0     <- df0 |> mutate(title      = c(gcmTitle , slrTitle))
+  # df0     <- df0 |> mutate(xTitle     = c(gcmXTitle, slrXTitle))
+  # df0     <- df0 |> mutate(yTitle     = c(YTitle))
+  # df0     <- df0 |> mutate(xTitle     = c(gcmLgdLbl, slrLgdLbl))
+  ### Tibble for FrEDI Data
+  ### - Titles
+  df0     <- tibble(modelType = c("gcm", "slr"))
+  df0     <- df0 |> mutate(repo       = "FrEDI Data")
+  df0     <- df0 |> mutate(title      = c("Scaled Impacts by Degrees of Warming", "Scaled Impacts by Year"))
+  df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"Year\""))
+  df0     <- df0 |> mutate(yTitle     = c("Scaled Impacts"))
+  df0     <- df0 |> mutate(lgdLbl     = c("Model", "Scenario"))
+  ### - Other info
+  df0     <- df0 |> mutate(lgdPos     = c("top"))
+  df0     <- df0 |> mutate(margins    = c("c(0, 0, .15, 0)", "c(0, .2, .15, 0)"))
+  df0     <- df0 |> mutate(marginUnit = c("cm"))
+  df0     <- df0 |> mutate(nameBrk    = c(16))
+
+  ### Tibble for FrEDI
+  ### - Titles
+  df1     <- tibble(modelType = c("gcm", "slr"))
+  df1     <- df1 |> mutate(repo       = "FrEDI")
+  df1     <- df1 |> mutate(title      = c("Impacts by Degrees of Warming", "Impacts by GMSL (cm)"))
+  df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"GMSL (cm)\""))
+  df1     <- df1 |> mutate(yTitle     = c("Impacts ($2015)"))
+  df1     <- df1 |> mutate(lgdLbl     = c("Model", "Year"))
+  ### - Other info
+  df1     <- df1 |> mutate(lgdPos     = c("top"))
+  df1     <- df1 |> mutate(margins    = c("c(0, 0, .15, 0)", "c(0, .2, .15, 0)"))
+  df1     <- df1 |> mutate(marginUnit = c("cm"))
+  df1     <- df1 |> mutate(nameBrk    = c(16))
+
+  ### Bind data
+  df0     <- df0 |> rbind(df1)
+}
+
+### Function to get plot labels
+get_scaledImpactPlotTitles <- function(
+    type0   = "gcm" ,  ### or "slr"
+    options = list(),  ### List of options
+    # # col0    = "title", ### Or modelType, model_type, title, xTitle, lgdLbl, margins0
+    repo0   = "FrEDI", ### Which repo to get defaults for
+    df0     = scaledImpactPlotTitles() ### Tibble with options
+){
+  ### Values
+  type0     <- type0 |> tolower()
+  repo0     <- repo0 |> tolower()
+  ### Filter to data
+  df0       <- df0   |> filter(modelType %in% type0)
+  df0       <- df0   |> filter((repo |> tolower()) %in% repo0)
+  ### Convert data to list
+  list0     <- df0   |> as.list()
+  listNames <- list0 |> names()
+  ### Parse data
+  list0[["xTitle" ]] <- parse(text=list0[["xTitle" ]])
+  list0[["margins"]] <- parse(text=list0[["margins"]])
+  list0[["theme"  ]] <- NULL
+  ### Update data with list
+  hasOpts   <- options |> map(function(x){x |> length() & !(x |> is.null())}) |> unlist() |> which()
+  options   <- options[hasOpts]
+  optNames  <- options  |> names()
+  doOpts    <- optNames |> length()
+  if(doOpts) {
+    for(name_i in optNames) {
+      do_i <- name_i %in% listNames
+      if(do_i) {
+        list0[[name_i]] <- options[[name_i]]
+      } ### End if(do_i)
+    } ### End for(name_i in optNames)
+  } ### End if(doOpts)
+
+  ### Return
+  return(list0)
+}
+
+### Function to get scales for plots
+### getAxesScales
+getXAxisScale <- function(
+    info0   = NULL,
+    xCol    = "driverValue",
+    years   = seq(2000, 2100),
+    # maxYear = 2100,
+    yrUnit  = 20,
+    nTicks  = 5 ### Number of tick marks to break scale into
+){
+  ### Initialize list
+  list0     <- list()
+
+  ### Conditionals
+  doInfo    <- !(list0 |> is.null())
+  doYear    <- "year"        %in% xCol
+  doDrivers <- "driverValue" %in% xCol
+
+  ### Limits
+  if(doInfo) {
+    if(doYear) {
+      # limits0 <- c(2000, maxYear) |> sort()
+      # min0    <- limits0 |> min()
+      # max0    <- limits0 |> max()
+      min0    <- years |> min()
+      max0    <- years |> max()
+      limits0 <- c(min0, max0)
+      breaks0 <- seq(min0 - 10, max0 + 10, by=yrUnit)
+      denom0  <- 1
+    } else if(doDrivers) {
+      limits0 <- c(-1, 11)
+      breaks0 <- seq(0, 10, by=2)
+      denom0  <- 1
+    } else {
+      info0   <- df0 |> get_colScale(col0=xCol, nTicks=nTicks)
+      limits0 <- info0[["limits"]]
+      breaks0 <- info0[["breaks"]]
+      denom0  <- info0[["denom" ]]
+    } ### End if(doYear)
+  }  else{
+    limits0 <- info0[["limits"]]
+    breaks0 <- info0[["breaks"]]
+    denom0  <- info0[["denom" ]]
+  } ### End if(do_xInfo)
+
+  ### Update list
+  list0[["limits"]] <- limits0
+  list0[["breaks"]] <- breaks0
+  list0[["denom" ]] <- denom0
+
+  ### Return values
+  return(list0)
+}
+
 ### Function to get manual colors for regions, states in a region, or models
 fun_manual_colors <- function(x=1){
-  # colorVals <- c("D81B60", "FF792D", "4E94E4", "735EA0", "67032F", "49D4F5", "D082CD", "68A796")
-  # colorVals <- c("D81B60", "B38ADA", "FB9358", "2EAD8A", "49D4F5", "6B7682", "893620", "2C5EB7")
   colorVals <- c("FF5291", "D8B8F7", "7D2E19", "4BD886", "F97E39", "A952EC", "639BFF", "386D79")
   colorVals <- "#" |> paste0(colorVals)
   return(colorVals)
 }
-# ### Get column values from a tibble
-# get_column_values <- function(
-#     df0,    ### Tibble
-#     col0,   ### Column
-#     unique0 = FALSE ### Unique values
-# ){
-#   vals0 <- df0[[col0]]
-#   if(unique0){vals0 <- vals0 |> unique()}
-#   return(vals0)
-# } ### End get_column_values
 
 ### Function to create note for figures
 create_fig_scale_note <- function(
@@ -54,9 +208,8 @@ sum_with_na <- function(
   group0 <- group0 |> c(threshCol) |> unique()
   sum0   <- c(col0, "is_NA")
   df0    <- df0 |>
-    group_by_at (.vars = c(group0)) |>
-    summarize_at(.vars = c(sum0), sum, na.rm = T) |>
-    ungroup()
+    group_by_at (c(group0)) |>
+    summarize_at(c(sum0), sum, na.rm = T) |> ungroup()
 
   ### Check NA values
   df0    <- df0 |> mutate(is_NA = case_when(
@@ -368,35 +521,6 @@ run_scenarios <- function(
 
   ### Return
   return(results0)
-  # list0       <- list()
-  # for(scenario_i in scenarios0) {
-  #   # ### Message user
-  #   # "Running scenario " |> paste0((scenarios0 == scenario_i) |> which(), "/" , nScenarios, "...") |> message()
-  #   ### Run scenario
-  #   df_i <- scenario_i |> run_scenario(
-  #     df0       = df0,
-  #     fredi     = fredi,
-  #     sectors   = sectors,
-  #     aggLevels = aggLevels,
-  #     scenCols  = scenCols,
-  #     joinCols  = joinCols,
-  #     save      = save,
-  #     return    = return,
-  #     outPath   = outPath
-  #   ) ### End run_scenario(scenario_i)
-  #   ### Add scenario to list
-  #   list0[[scenario_i]] <- df_i
-  #   ### Drop values
-  #   rm(scenario_i, df_i)
-  # } ### for(scenario_i in scenarios0)
-  # rm(df0)
-  #
-  # ### Bind values into a list
-  # df0    <- list0 |> bind_rows()
-  # rm(list0)
-  #
-  # ### Return
-  # return(df0)
 } ### End run_scenarios
 
 
@@ -1130,73 +1254,86 @@ plot_slr_scenarios <- function(
   years0     <- seq(2000, 2300, by=25)
   slrDrivers <- slrDrivers |> filter(!(model %in% c("0 cm", "300 cm")))
   dfPoints   <- slrDrivers |> filter(year %in% years0)
-
-
+  ### Create plot
   plot0      <- slrDrivers |> ggplot() +
     geom_line(aes(x=year, y=slr_cm, color = model)) +
     geom_point(data=dfPoints, aes(x=year, y=slr_cm, color = model, shape=model))
-
+  ### Add color/shape scales
   plot0      <- plot0 +
     scale_color_discrete(subTitle0) +
     scale_shape_discrete(subTitle0) +
     theme(legend.position = "bottom")
-
+  ### Add axis scales
   plot0      <- plot0 +
     scale_x_continuous("Year") +
     scale_y_continuous("GMSL (cm)")
-
-  plot0      <- plot0 +
-    ggtitle(title0, subTitle0) +
-    theme(plot.title       = element_text(hjust = 0.5, size=14)) +
-    theme(plot.subtitle    = element_text(hjust = 0.5, size=11))
+  ### Add title
+  plot0      <- plot0 + ggtitle(title0, subTitle0)
+  plot0      <- plot0 + theme(plot.title    = element_text(hjust=0.5, size=14))
+  plot0      <- plot0 + theme(plot.subtitle = element_text(hjust = 0.5, size=11))
 
   ### Return
   return(plot0)
 } ### End plot_slr_scenarios
 
 ### Function to do some initial summarization
-create_default_tablePlot <- function(x=1){
+create_default_tablePlot <- function(
+    years0 = seq(2010, 2090, by=10),
+    yCol0  = "annual_impacts"
+){
   ### Run FrEDI
   results0 <- FrEDI::run_fredi()
   # results0 |> glimpse()
 
   ### Filter to values used to report
+  filter0  <- c("Interpolation", "Average")
+  region0  <- "National Total"
   results0 <- results0 |>
-    filter(model %in% c("Interpolation", "Average")) |>
+    filter(model %in% filter0) |>
     filter(includeaggregate >= 1) |>
     filter(sectorprimary == 1) |>
-    filter(region == "National Total")
+    filter(region %in% region0)
   results0 |> glimpse()
+  rm(filter0, region0)
 
   ### Summarize results for specific years
+  select0  <- c("sector", "variant", "year") |> c(yCol0)
   table0   <- results0 |>
-    filter(year %in% seq(2010, 2090, by=10)) |>
-    select(c("sector", "variant", "year", "annual_impacts")) |>
-    spread(key="year", value="annual_impacts")
+    filter(year %in% years0) |>
+    select(all_of(select0)) |>
+    pivot_wider(
+      names_from  = "year",
+      values_from = "annual_impacts"
+    ) ### End pivot_wider
 
   ### Summarize results over all years
+  ### Then arrange and add row number
+  group0   <- c("sector")
+  sum0     <- yCol0
   totals0  <- results0 |>
-    group_by_at(c("sector")) |>
-    summarize_at(c("annual_impacts"), sum, na.rm=T) |>
-    ungroup()
-  totals0  <- totals0|>
-    arrange_at(c("annual_impacts")) |>
+    group_by_at(c(group0)) |>
+    summarize_at(c(sum0), sum, na.rm=T) |> ungroup()
+  totals0  <- totals0 |>
+    arrange_at(c(sum0)) |>
     mutate(order=row_number())
+  rm(group0, sum0)
 
   ### Factor results
-  results0 <- results0 |> mutate(sector_order  = sector |> factor(levels=totals0[["sector"]]))
-  results0 <- results0 |> mutate(sector_factor = sector |> factor(levels=totals0[["sector"]]))
+  levels0  <- totals0  |> pull(sector)
+  results0 <- results0 |> mutate(sector_order  = sector |> factor(levels=levels0))
+  results0 <- results0 |> mutate(sector_factor = sector |> factor(levels=levels0))
+
   ### Arrange
   arrange0 <- c("sector_factor", "variant",  "year")
   results0 <- results0 |> arrange_at(c(arrange0))
 
   ### Create plot
   plot0    <- results0 |>
-    ggplot(aes(x=year, y=annual_impacts/10**12)) +
-    geom_area(aes(fill=sector_factor), color="#212121", alpha = 0.75) +
+    ggplot(aes(x=year, y=annual_impacts/1e12)) +
+    geom_area(aes(fill=sector_factor), color="#212121", alpha=0.75) +
     scale_fill_discrete("Sector") +
-    scale_y_continuous("Impacts (Trillions, $2015)") +
-    scale_x_continuous("Year", breaks=seq(2010, 2090, by=20)) +
+    scale_y_continuous ("Impacts (Trillions, $2015)") +
+    scale_x_continuous ("Year", breaks=seq(2010, 2090, by=20)) +
     guides(color=guide_legend(ncol=2), fill=guide_legend(ncol=2)) +
     theme(legend.position = "bottom")
 

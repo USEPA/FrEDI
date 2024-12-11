@@ -163,7 +163,8 @@ run_constantTempScenarios <- function(
   if(do_gcm) {
     if(testing|do_msg) "Running integer scenarios..." |> message()
     aggLvls0       <- c("modelaverage", "national")
-    df_int_byType  <- inputs_df_int |> run_scenarios(
+    df_int_byType  <- inputs_df_int |>
+      run_scenarios(
       col0      = "scenario",
       fredi     = TRUE,
       # sectors   = sectors,

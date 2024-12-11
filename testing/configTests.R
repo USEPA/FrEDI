@@ -16,7 +16,6 @@ dataInfo_test <- function(
     save     = TRUE, ### Whether to save results to file
     return   = TRUE  ### Whether to return results
 ) {
-  #dataList <- list_reshapeData
   ###### List Info ######
   ### List names
   ### Length of list and list names
@@ -28,11 +27,11 @@ dataInfo_test <- function(
   ###### List Object Types ######
   ### Get info on object types and add names
   ### Simplify list of types
-  # cTypes    <- c("data.frame", "list", "character", "numeric")
-  listTypes <- listNames |> map(~ (dataList[[.]] |> class()))
   ### Add names back to list
-  listTypes <- listTypes |> set_names(listNames)
-  # listTypes[1] |> print
+  # cTypes    <- c("data.frame", "list", "character", "numeric")
+  listTypes <- listNames |>
+    map(~ (dataList[[.]] |> class())) |>
+    set_names(listNames)
   ### Simplify types
   listTypes <- listNames |> map(~ case_when(
     ("data.frame" %in% listTypes[[.]]) ~ "data.frame",
@@ -40,11 +39,7 @@ dataInfo_test <- function(
     ("character"  %in% listTypes[[.]]) ~ "character",
     ("numeric"    %in% listTypes[[.]]) ~ "numeric",
     TRUE ~ "N/A"
-  ))
-  ### Add names back to list
-  listTypes <- listTypes |> set_names(listNames)
-  # listTypes <- listTypes |> (function(x){names(x) <- listNames; return(x)})()
-  # c(length(listTypes), names(listTypes) |> length) |> print()
+  )) |> set_names(listNames)
 
   ###### Initial Table Info ######
   ### Initialize table of info...make methods specific to class
@@ -52,37 +47,39 @@ dataInfo_test <- function(
   df_info   <- tibble(table = listNames)
   df_info   <- df_info |> mutate(itemClass = listTypes |> unlist())
 
-  ### Count number of columns in each table
-  ### Count number of rows in each table
-  ### Count number of distinct rows in each table
-  ### Count number of missing values
-
+  ### In each table, count number of: columns, rows, distinct rows, and
+  ###   - Columns
+  ###   - Rows
+  ###   - Distinct rows
+  ###   - Number of columns with all missing values
   ### Expressions
-  num_cols    <- listNames |> map(~ .x |> fun_nCol(a=listTypes, b=dataList)) |> unlist()
-  num_rows    <- listNames |> map(~ .x |> fun_nRow(a=listTypes, b=dataList)) |> unlist()
-  unique_rows <- listNames |> map(~ .x |> fun_nUnq(a=listTypes, b=dataList)) |> unlist()
-  cols_wAllNA <- listNames |> map(~ .x |> fun_nNna(a=listTypes, b=dataList)) |> unlist()
+  nCols0    <- list(z=listNames, a=listTypes, b=dataList) |> pmap(fun_nCol ) |> unlist()
+  nRows0    <- list(z=listNames, a=listTypes, b=dataList) |> pmap(fun_nRow ) |> unlist()
+  unique0   <- list(z=listNames, a=listTypes, b=dataList) |> pmap(fun_nUnq ) |> unlist()
+  allNACols <- list(z=listNames, a=listTypes, b=dataList) |> pmap(fun_allNA) |> unlist()
+  # allNACols |> print()
 
   ### Add to df_info
-  df_info   <- df_info |> mutate(num_cols    = num_cols)
-  df_info   <- df_info |> mutate(num_rows    = num_rows)
-  df_info   <- df_info |> mutate(unique_rows = unique_rows)
+  df_info   <- df_info |> mutate(num_cols    = nCols0 )
+  df_info   <- df_info |> mutate(num_rows    = nRows0 )
+  df_info   <- df_info |> mutate(unique_rows = unique0)
   df_info   <- df_info |> mutate(cols_wAllNA = cols_wAllNA)
 
   ###### Check Tests ######
   ### Check number of columns with some non-missing values is equal to the number of columns
-  df_info   <- df_info |> mutate(na_flag  =   1 * (cols_wAllNA > 0))
+  df_info   <- df_info |> mutate(na_flag = 1 * (cols_wAllNA > 0))
   #### Check if each table has duplicate values: Number of rows should equal number of unique rows
   ### List of tables to make exceptions for
-  except0   <- c("data_scaledImpacts")
+  # except0   <- c("data_scaledImpacts")
+  except0   <- c()
   df_info   <- df_info |> mutate(has_dups = case_when(
+    table %in% except0 ~ F,
     itemClass == "list" ~ F,
-    num_rows == unique_rows ~ F,
-    table %in% except0 ~ F
+    .default = !(num_rows == unique_rows)
   )) ### End mutate/case)when
   ### Check whether all tests are passed
   df_info   <- df_info |> mutate(passed   = case_when(
-    itemClass == "list" ~ T,
+    # itemClass == "list" ~ T,
     has_dups == T | na_flag == T ~ F,
     has_dups == F & na_flag == F ~ T
   )) ### End mutate/case)when
@@ -93,7 +90,7 @@ dataInfo_test <- function(
   rm(except0, mutate0)
 
   ### Print Out tables if there are any values that don't pass
-  df_flags  <- df_info  |> filter(passed==0)
+  df_flags  <- df_info  |> filter(passed == 0)
   numFlags  <- df_flags |> nrow()
   hasFlags  <- numFlags > 0
 
@@ -111,12 +108,11 @@ dataInfo_test <- function(
     "Saving data checks" |> paste0("...") |> message()
     outDir    <- outPath |> file.path("data_tests")
     outExt    <- "." |> paste0("csv")
-    # csvName   <- "loadData_tests"
     csvName   <- csvName |> paste0(outExt)
-    outFile   <- outDir |> file.path(csvName)
+    outFile   <- outDir  |> file.path(csvName)
     rm(outExt, csvName)
     ### Check if outDir exists and, if not, create one
-    odExists  <- outDir |> dir.exists()
+    odExists  <- outDir  |> dir.exists()
     if(!odExists){outDir |> dir.create(showWarnings = F)}
     rm(odExists)
     ## Save the test results
