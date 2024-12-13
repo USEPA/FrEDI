@@ -79,7 +79,7 @@ get_sv_sectorInfo <- function(
   move0      <- c("modelType", "driverUnit")
   sectorInfo <- sectorInfo |> left_join(svSectorInfo, by=c(join0))
   sectorInfo <- sectorInfo |> relocate(all_of(move0), .after=all_of(join0))
-  sectorInfo <- sectorInfo |> arrange_at(vars(join0))
+  sectorInfo <- sectorInfo |> arrange_at(c(join0))
 
   ### GCM or SLR
   doFilter   <- (gcmOnly | slrOnly)
@@ -281,9 +281,6 @@ calc_tractImpacts <- function(
   drop0       <- c("children", "highRiskLabor")
   rename0     <- c(weightCol)
   renameTo    <- c("popWeight")
-  # x_impacts   <- x_impacts |> mutate(popWeight = x_impacts[[weightsCol]])
-  # x_impacts |> glimpse()
-  # x_impacts   <- x_impacts |> rename_at(vars(rename0), ~renameTo)
   x_impacts[["popWeight"]]   <- x_impacts[[weightCol]]
   x_impacts   <- x_impacts |> select(-any_of(drop0))
   rm(drop0, rename0, renameTo)
@@ -305,14 +302,11 @@ calc_tractImpacts <- function(
   mutate0     <- c()
   if(do_plus65) mutate0 <- mutate0 |> c(svPlus65)
   if(do_noHS  ) mutate0 <- mutate0 |> c(svNoHS)
-  # if     (sector=="Air Quality - Childhood Asthma"   ) {mutate0 <- c("sv_noHS", "sv_plus65")}
-  # else if(sector=="Air Quality - Premature Mortality") {mutate0 <- c("sv_plus65")}
-  # else                                                 {mutate0 <- c()}
-  x_impacts   <- x_impacts |> mutate_at(vars(mutate0), function(z){0})
+  x_impacts   <- x_impacts |> mutate_at(c(mutate0), function(z){0})
   rm(svPlus65, svNoHS, do_plus65, do_noHS, mutate0)
 
   ######  National Terciles ######
-  if(msgUser) {msg1 |> paste0("Calculating national terciles...") |> message()}
+  if(msgUser) msg1 |> paste0("Calculating national terciles...") |> message()
   ### Columns
   groupsNat0    <- c("year")
   tractNat0     <- c("national_highRiskTract")
@@ -323,17 +317,17 @@ calc_tractImpacts <- function(
   select0         <- c(groupsNat0, scaledImpact0)
   quants_national <- x_impacts       |> select(all_of(select0))
   quants_national <- quants_national |>
-    group_by_at (vars(groupsNat0)) |>
-    summarize_at(vars(scaledImpact0), calc_terciles) |> ungroup()
-  if(.testing){quants_national |> filter(year==2050) |> glimpse()}
+    group_by_at (c(groupsNat0)) |>
+    summarize_at(c(scaledImpact0), calc_terciles) |> ungroup()
+  if(.testing) quants_national |> filter(year==2050) |> glimpse()
   rm(select0)
 
   ### Rename column
-  quants_national <- quants_national |> rename_at(vars(scaledImpact0), ~c(cutoffNat0))
+  quants_national <- quants_national |> rename_at(c(scaledImpact0), ~c(cutoffNat0))
 
   ### Join with national quantiles
   if(msgUser) {msg2 |> paste0("Joining national terciles to tract-level data...") |> message()}
-  x_impacts <- x_impacts |> left_join(quants_national, by=c(groupsNat0))
+  x_impacts <- x_impacts |> left_join(quants_national, by=cgroupsNat0)
   rm(quants_national)
 
   ### Figure out which tracts are high risk
@@ -353,17 +347,17 @@ calc_tractImpacts <- function(
   select0          <- c(groupsReg0, scaledImpact0)
   quants_regional  <- x_impacts |> select(all_of(select0))
   quants_regional  <- quants_regional |>
-    group_by_at (vars(groupsReg0)) |>
-    summarize_at(vars(scaledImpact0), calc_terciles) |> ungroup()
-  if(.testing){quants_regional |> filter(year==2050) |> glimpse()}
+    group_by_at (c(groupsReg0)) |>
+    summarize_at(c(scaledImpact0), calc_terciles) |> ungroup()
+  if(.testing) quants_regional |> filter(year==2050) |> glimpse()
   rm(select0)
 
   ### Rename column
-  quants_regional <- quants_regional |> rename_at(vars(scaledImpact0), ~c(cutoffReg0))
+  quants_regional <- quants_regional |> rename_at(c(scaledImpact0), ~c(cutoffReg0))
 
   ### Join with regional quantiles
   if(msgUser){msg2 |> paste0("Joining regional terciles to tract-level data...") |> message()}
-  x_impacts <- x_impacts |> left_join(quants_regional, by = c(groupsReg0))
+  x_impacts <- x_impacts |> left_join(quants_regional, by=groupsReg0)
   rm(quants_regional)
 
   ### Regional High Risk Tracts
@@ -424,14 +418,14 @@ calc_tractImpacts <- function(
     # groupCols0   <- c("region", "state", "postal", "svGroupType", "driverUnit", "driverValue", "year")
     ### Group by the grouping columns and summarize the summary columns
     x_impacts    <- x_impacts |>
-      group_by_at (vars(groupCols0)) |>
-      summarize_at(vars(sumCols0), sum, na.rm=T) |> ungroup()
+      group_by_at (c(groupCols0)) |>
+      summarize_at(c(sumCols0), sum, na.rm=T) |> ungroup()
 
     ### Select all of the relevant columns
     select0      <- c(groupCols0, sumCols0)
     x_impacts    <- x_impacts |> select(all_of(select0))
     ### Replace tract in summary names
-    x_impacts    <- x_impacts |> rename_at(vars(sumCols0), ~gsub("tract_", "", sumCols0));
+    x_impacts    <- x_impacts |> rename_at(c(sumCols0), ~gsub("tract_", "", sumCols0));
     rm(sumCols0, groupCols0, select0)
 
     ###### Average Rates ######
@@ -466,12 +460,12 @@ get_validGroups <- function(
   new0 <- c("svGroupType", "validGroups")
   ### Reshape svDemoInfo
   df0  <- df0 |> filter(colType %in% c("bipoc")) |> select(c(old0[1]))
-  df0  <- df0 |> rename_at(vars(old0[1]), ~c(new0[1]))
+  df0  <- df0 |> rename_at(c(old0[1]), ~c(new0[1]))
   # children, highRiskLabor, sv_plus65, none
   df0  <- df0 |> mutate(validGroups = "children, highRiskLabor, sv_plus65, none")
   ### Reshape svValidTypes
   df1  <- df1 |> select(c(new0[1], old0[2]))
-  df1  <- df1 |> rename_at(vars(old0[2]), ~c(new0[2]))
+  df1  <- df1 |> rename_at(c(old0[2]), ~c(new0[2]))
   ### Bind
   df0  <- df1 |> rbind(df0)
   rm(df1, old0, new0)

@@ -356,11 +356,12 @@ format_inputScenarios <- function(
   msg_i   <- hasInput0 |> ifelse(msg_i1, msg_i2)
 
   ### Info (need different info if calculating SLR from temperatures)
-  doSlr   <- name0 %in% c("slr") & "temp_C" %in% (df0 |> names())
+  doSlr   <- (name0 %in% c("slr")) & ("temp_C" %in% (df0 |> names()))
   name1   <- doSlr  |> ifelse("temp", name0)
   infoSlr <- info0  |> filter(inputName == "slr")
   info1   <- info0  |> filter(inputName == name1)
-  if(doSlr) {valCol0 <- info1  |> pull(valueCol)} else{valCol0 <- valCols0}
+  if(doSlr) valCol0 <- info1  |> pull(valueCol)
+  else      valCol0 <- valCols0
   yrRef0  <- info1  |> pull(ref_year)
 
   if(doSlr) 1 |> get_msgPrefix() |> paste0("Creating ", label0 , " scenario from user temperature scenario...") |> message()
@@ -394,29 +395,6 @@ format_inputScenarios <- function(
 
     ### If SLR, calculate SLR values from temperatures
     if(doSlr) {
-      # # "got here" |> print()
-      # ### - Get new info
-      # valCol0 <- infoSlr |> pull(valueCol)
-      # yrRef0  <- infoSlr |> pull(ref_year)
-      # ### - First, calculate global temps
-      # df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
-      # # ### - Then, zero out again
-      # # df0     <- df0 |> filter(year > yrRef0)
-      # # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~"temp_C")
-      # # df0     <- df0 |> rbind(df1)
-      # # rm(df1)
-      # ### - Then, zero out again
-      # df0     <- df0 |> filter(year > yrRef0)
-      # df1     <- df0 |> first() |> mutate(year = yrRef0) |> mutate_at(c(valCol0), function(x){0})
-      # df0     <- df0 |> rbind(df1)
-      # rm(df1)
-      # ### Then, calculate SLR heights
-      # df0     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
-      # ### - Then, zero out again
-      # df0     <- df0 |> filter(year > yrRef0)
-      # df1     <- tibble(year=yrRef0) |> mutate(y = 0) |> rename_at(c("y"), ~valCol0)
-      # df0     <- df0 |> rbind(df1)
-      # rm(df1)
       ### - First, calculate global temps
       df0     <- df0 |> mutate(temp_C = temp_C |> convertTemps(from="conus"))
       ### Then, calculate SLR heights

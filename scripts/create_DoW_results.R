@@ -121,10 +121,32 @@ create_DoW_results <- function(
   fig7theme      <- NULL
 
   ###### Format Sector Names
+  ### Filter to specific sectors
+  ### Sectors
+  sectors1       <-
+  sectorsLC0  <- sectors |> tolower(); rm(sectors)
+  doAll       <- "all" %in% sectorsLC0
+
+  if(doAll) {
+    plotResults <- plotResults
+  } else{
+    ### Sectors
+    sectors1     <- plotResults |> pull(sector) |> unique()
+    sectorsLC1   <- sectors1    |> tolower()
+    whichSectors <- sectorsLC1 %in% sectorsLC0
+    plotSectors  <- sectors1[whichSectors]
+    plotSectors |> print()
+    ### Filter sectors
+    plotResults <- plotResults |> filter(sector %in% plotSectors)
+  } ### End if(doAll)
+
   ### Check the sector names (for wrapping for Figure 7)
   # c_sectorNames  <- get_sectorInfo()
   c_sectorNames  <- sectors
   newSectorNames <- c_sectorNames |> format_sectorNames(thresh0 = breakChars)
+
+
+
   ### Message and save to list
   if(testing|do_msg) "Formatting sector names for plotting..." |> message()
   if(return0) resultsList[["sectorNames"]] <- c_sectorNames

@@ -63,7 +63,7 @@ dataInfo_test <- function(
   df_info   <- df_info |> mutate(num_cols    = nCols0 )
   df_info   <- df_info |> mutate(num_rows    = nRows0 )
   df_info   <- df_info |> mutate(unique_rows = unique0)
-  df_info   <- df_info |> mutate(cols_wAllNA = cols_wAllNA)
+  df_info   <- df_info |> mutate(cols_wAllNA = allNACols)
 
   ###### Check Tests ######
   ### Check number of columns with some non-missing values is equal to the number of columns

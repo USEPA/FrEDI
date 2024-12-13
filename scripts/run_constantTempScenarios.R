@@ -32,7 +32,6 @@ run_constantTempScenarios <- function(
     fpath    = "."  ,     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
     saveFile = TRUE ,     ### Save file
     outPath  = "." |> file.path("report_figures"),  ### Path to save results if saveFile == TRUE
-    img_dev  = "pdf",     ### Image device if saveFile == TRUE
     return   = TRUE       ### Whether to return list object
 ){
   # sectors  = FrEDI::get_sectorInfo() ### Which sectors
@@ -45,7 +44,6 @@ run_constantTempScenarios <- function(
   # fpath    = "."     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
   # saveFile = TRUE   ### Save file
   # outPath  = "." |> file.path("report_figures")  ### Path to save results if saveFile == TRUE
-  # img_dev  = "pdf"   ### Image device if saveFile == TRUE
   # return   = TRUE    ### Whether to return list object
   ###### Initial values ######
   ### Messaging
@@ -54,8 +52,9 @@ run_constantTempScenarios <- function(
   return0       <- return; rm(return)
   resultsList   <- list()
   ### How to load code
-  loadProject   <- "project" %in% (loadCode |> tolower())
-  loadPackage   <- "package" %in% (loadCode |> tolower())
+  loadCodeLC    <- loadCode |> tolower()
+  loadProject   <- "project" %in% loadCodeLC
+  loadPackage   <- "package" %in% loadCodeLC
   loadSource    <- !loadProject & !loadPackage
 
   ###### Set Up Environment ######
@@ -90,17 +89,49 @@ run_constantTempScenarios <- function(
   ### Load Custom functions if testing the package
   ### Otherwise, load functions from FrEDI
   # getFromNamespace("value", "FrEDI")
-  if      (loadProject) {projectPath |> devtools::load_all()}
-  else if (loadPackage) {require(FrEDI)}
-  else                  {codePath    |> loadCustomFunctions()}
+  if      (loadProject) projectPath |> devtools::load_all()
+  else if (loadPackage) require(FrEDI)
+  else                  codePath    |> loadCustomFunctions()
 
-  ###### ** Sectors ######
+  ###### Sectors ######
+  ###### ** Check Sectors ######
   ### Check which sectors are in which type
-  gcmSectors <- FrEDI::get_sectorInfo(gcmOnly=T)
-  slrSectors <- FrEDI::get_sectorInfo(slrOnly=T)
-  do_gcm     <- (sectors %in% gcmSectors) |> any()
-  do_slr     <- (sectors %in% slrSectors) |> any()
+  gcmSectors0   <- FrEDI::get_sectorInfo(gcmOnly=T)
+  slrSectors0   <- FrEDI::get_sectorInfo(slrOnly=T)
+  allSectors    <- c(gcmSectors0, slrSectors0)
+  sectors0      <- sectors
+  ### Lowercase, with spaces removed
+  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> str_replace_all(" ", "")
+  slrSectorsLC0 <- slrSectors0 |> tolower() |> str_replace_all(" ", "")
+  sectorsLC0    <- sectors0    |> tolower() |> str_replace_all(" ", "")
+  doAll         <- "all" %in% sectorsLC0
+  ### If doAll, use all the sectors. Otherwise, filter to specified sectors
+  if(doAll) {
+    gcmSectors <- gcmSectors0
+    slrSectors <- slrSectors0
+  } else{
+    ### Check which sectors are present
+    which_gcm  <- gcmSectorsLC0 %in% sectorsLC0
+    which_slr  <- slrSectorsLC0 %in% sectorsLC0
+    ### Filter to sectors
+    gcmSectors <- gcmSectors0[which_gcm]
+    slrSectors <- slrSectors0[which_slrgcm]
+  } ### End if(doAll)
+  ### Whether data objects present
+  has_gcm       <- !(gcmData |> is.null())
+  has_slr       <- !(slrData |> is.null())
+  ### Combine sectors and check whether there are any
+  sectors       <- c(gcmSectors, slrSectors)
+  any_gcm       <- gcmSectors |> length()
+  any_slr       <- slrSectors |> length()
+  ### Conditionals
+  do_gcm        <- has_gcm & any_gcm
+  do_slr        <- has_slr & any_slr
 
+  ###### ** Filter to Sectors ######
+  if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
+  if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
+  c(do_gcm, do_slr) |> print()
 
   ###### GCM Scenarios ######
   ###### ** Scenario Info ######
@@ -152,7 +183,7 @@ run_constantTempScenarios <- function(
     }) |> bind_rows()
     ### Glimpse, message, & save
     # if(return0) resultsList[["df_inputs"]] <- inputs_df_int
-    inputs_df_int |> save_data(fpath=outPath, fname=rda_byType, ftype="csv", row.names=F)
+    inputs_df_int |> save_data(fpath=outPath, fname=csv_inputs, ftype="csv", row.names=F)
     if(testing) inputs_df_int |> glimpse()
     # return(list(x=c_scen_con, y=c_scen_glo, z=inputs_df_int))
   } ### End if(do_gcm)
@@ -183,7 +214,8 @@ run_constantTempScenarios <- function(
     if(testing) df_int_byType |> glimpse()
     ### Save results
     if(do_msg & saveFile) paste0("Saving integer scenario results by type...") |> message()
-    if(saveFile) df_int_byType |> save_data(fpath=outPath, fname=rda_byType, ftype="rda")
+    if(saveFile) df_int_byType |> save_data(fpath=outPath, fname=rda_gcm, ftype="rda")
+    rm(df_int_byType)
   } ### End if(do_gcm)
 
   ###### SLR Results ######
@@ -203,9 +235,12 @@ run_constantTempScenarios <- function(
     ### Save results
     if(do_msg & saveFile) paste0("Saving SLR scenario results by type...") |> message()
     if(saveFile) ciraSLRData |> save_data(fpath=outPath, fname=rda_slr, ftype="rda")
+    rm(ciraSLRData)
   } ### End if do_slr
 
   ###### Return ######
-  return(resultsList)
+  gc()
+  if(return) return(resultsList)
+  else       return()
 } ### End function
 ###### End File ######

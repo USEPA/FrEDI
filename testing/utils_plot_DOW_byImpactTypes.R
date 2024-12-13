@@ -8,7 +8,6 @@ plot_DOW_byImpactTypes <- function(
     modelType = "GCM",
     nTicks    = 5,
     silent    = TRUE,
-    silent    = TRUE,
     repo0     = "FrEDI",
     options   = list(
       title      = "Impacts by Degrees of Warming",

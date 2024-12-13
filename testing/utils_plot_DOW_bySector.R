@@ -123,7 +123,7 @@ plot_DOW_bySector <- function(
     co_models <- "co_models" |> get_frediDataObj("frediData")
     co_models <- co_models |> filter((modelType |> tolower()) == "gcm")
     co_models <- co_models |> select(all_of(select0))
-    co_models <- co_models |> rename_at(vars(rename0), ~rename1)
+    co_models <- co_models |> rename_at(c(rename0), ~rename1)
     rm(select0, rename0, rename1)
     ### Join model info with df0
     join0     <- c("model")

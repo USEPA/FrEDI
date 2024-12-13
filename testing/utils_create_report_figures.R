@@ -257,11 +257,11 @@ format_values <- function(
 ){
   ### Pop columns
   if(byState){popCols <- c("state", "postal")} else{c()}
-  popCol <- byState |> ifelse("state_pop", "reg_pop")
+  popCol <- byState |> ifelse("pop", "pop")
   ### Columns
-  cols0 <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap", popCol, "annual_impacts")
+  cols0  <- c("driverValue", "gdp_usd", "national_pop", "gdp_percap", popCol, "annual_impacts")
   ### Mutate
-  df0 <- df0 |> mutate_at(vars(cols0), function(x){format(x, digits=digits)})
+  df0    <- df0 |> mutate_at(c(cols0), function(x){format(x, digits=digits)})
   return(df0)
 } ### End format_values()
 
@@ -348,7 +348,7 @@ get_scenario_inputsList <- function(
     else       {cTemp <- cTemp1}
     temp0   <- df0 |> select(all_of(cTemp))
     if(doTemp0){
-      temp0 <- temp0 |> rename_at(vars("temp_C_conus"), ~c("temp_C"))
+      temp0 <- temp0 |> rename_at(c("temp_C_conus"), ~c("temp_C"))
     } ### End if(doTemp0)
     list0[["tempInput"]] <- temp0
     rm(temp0)
@@ -384,7 +384,7 @@ run_fredi_scenario <- function(
     joinCols = c("year")
 ){
   ### Filter to scenario
-  df1     <- df0 |> select(c(all_of(scenCols))); rm(df0)
+  df1     <- df0 |> select(all_of(scenCols)); rm(df0)
   list1   <- df1 |> get_scenario_inputsList()
   ### Run FrEDI
   df2     <- FrEDI::run_fredi(inputsList=list1, sectorList=sectors, aggLevels="none")
@@ -393,6 +393,7 @@ run_fredi_scenario <- function(
   df2     <- df2 |> left_join(df1, by=c(joinCols))
   # df2 |> names() |> print();
   ### Return
+  gc()
   return(df2)
 } ### End run_fredi_scenario
 
@@ -406,19 +407,21 @@ agg_fredi_scenario <- function(
 ){
   ### Pop cols
   byState <- "state" %in% (df0 |> names())
-  if(byState){stateCols <- c("state", "postal")} else{stateCols <- c()}
-  popCol  <- byState |> ifelse("state_pop", "reg_pop")
+  if(byState) stateCols <- c("state", "postal")
+  else        stateCols <- c()
+  popCol  <- c("pop")
   ### Filter to grouping columns
-  drop0   <- scenCols[!(scenCols %in% joinCols)]
+  drop0   <- scenCols |> get_matches(y=joinCols, matches=F) [!(scenCols %in% joinCols)]
   ### Run FrEDI
   group0  <- c("sector", "variant", "impactType", "impactYear")
-  group0  <- group0 |> c("region", stateCols)
+  group0  <- group0 |> c("region") |> c(stateCols)
   group0  <- group0 |> c("model_type", "model")
   group0  <- group0 |> c("sectorprimary", "includeaggregate")
   group0  <- group0 |> c(drop0)
   df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels=aggLevels, groupByCols=group0)
   # df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels = aggLevels)
   ### Return
+  gc()
   return(df0)
 } ### End agg_fredi_scenario
 
@@ -438,7 +441,8 @@ run_scenario <- function(
     outPath   = "." |> file.path("report_figures")
 ){
   ### Values & conditions
-  agg0       <- !("none" %in% aggLevels)
+  aggLvlsLC  <- aggLevels |> tolower()
+  agg0       <- !("none" %in% aggLvlsLC)
   scenario0  <- scenario
   rm(scenario)
   # agg0 |> print()
@@ -467,7 +471,7 @@ run_scenario <- function(
 
   ### Format other values
   mutate0   <- c("temp_C_conus", "temp_C_global", "slr_cm")
-  df0       <- df0 |> mutate_at(vars(mutate0), as.numeric)
+  df0       <- df0 |> mutate_at(c(mutate0), as.numeric)
 
   ### Filter to years
   doYears   <- !(years |> is.null())
@@ -482,6 +486,7 @@ run_scenario <- function(
   } ### End if(saveFile)
 
   ### Return
+  gc()
   if(return) return(df0)
 } ### End function run_scenario
 
@@ -520,6 +525,7 @@ run_scenarios <- function(
     ) |> bind_rows()
 
   ### Return
+  gc()
   return(results0)
 } ### End run_scenarios
 
@@ -551,9 +557,9 @@ sum_impacts_byDoW <- function(
   ### Filter to includeaggregate>=1
   ### Filter to sector primary
   ### Filter to appropriate year
-  if(aggOnly){df0 <- df0 |> filter(includeaggregate>=1)}
-  if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
-  if(do_gcm ){df0 <- df0 |> filter(year == year0)}
+  if(aggOnly) df0 <- df0 |> filter(includeaggregate >= 1)
+  if(primary) df0 <- df0 |> filter(sectorprimary    == 1)
+  if(do_gcm ) df0 <- df0 |> filter(year == year0)
 
   ### Filter to scenarios
   ### Filter to appropriate models
@@ -563,39 +569,40 @@ sum_impacts_byDoW <- function(
   df0        <- df0 |> filter(impactYear %in% years0)
 
   ### Summarize by Degree of Warming
-  # list0      <- years0 %>% map(function(.z){
-  #   df_z <- df0 |> summarize_DOW_data(
-  #     year       = year0,
-  #     bySector   = bySector,
-  #     sumCol     = sumCol,
-  #     groupVars  = groupVars,
-  #     impactYear = .z,
-  #     silent     = silent
-  #   )
-  #   return(df_z)
-  # })
-  list0      <- list()
-  for(year_i in years0) {
-    ### Summarize DOW data
-    df_i <- df0 |> summarize_DOW_data(
+  list0      <- years0 |> map(function(.z){
+    df_z <- df0 |> summarize_DOW_data(
       year       = year0,
       bySector   = bySector,
       sumCol     = sumCol,
       groupVars  = groupVars,
-      impactYear = year_i,
+      impactYear = .z,
       silent     = silent
-    ) ### End summarize_DOW_data()
-    ### Add to list
-    list0[[year_i]] <- df_i
-    ### Drop values
-    rm(year_i, df_i)
-  } ### End for(year_i in years0)
+    ) ### End summarize_DOW_data
+    gc()
+    return(df_z)
+  })
+  # list0      <- list()
+  # for(year_i in years0) {
+  #   ### Summarize DOW data
+  #   df_i <- df0 |> summarize_DOW_data(
+  #     year       = year0,
+  #     bySector   = bySector,
+  #     sumCol     = sumCol,
+  #     groupVars  = groupVars,
+  #     impactYear = year_i,
+  #     silent     = silent
+  #   ) ### End summarize_DOW_data()
+  #   ### Add to list
+  #   list0[[year_i]] <- df_i
+  #   ### Drop values
+  #   rm(year_i, df_i)
+  # } ### End for(year_i in years0)
   rm(df0)
 
   ### Bind together
   ### Add summary year
   df0        <- list0 |> bind_rows()
-  df0        <- df0 |> mutate(summaryYear=year0)
+  df0        <- df0   |> mutate(summaryYear=year0)
   rm(list0)
 
   ### Adjust values
@@ -604,7 +611,7 @@ sum_impacts_byDoW <- function(
   ### Select columns
   # select0    <- c("sector", "region", "model_type", "model", "summaryYear", "driverValue", "annual_impacts", adjCol) |> unique()
   # df0        <- df0 |> relocate(c(all_of(select0)))
-  # df0 %>% glimpse()
+  # df0 |> glimpse()
 
   ### Return
   return(df0)
@@ -612,7 +619,7 @@ sum_impacts_byDoW <- function(
 
 ### Summarize results by degree of warming for multiple specified years
 sum_impacts_byDoW_years <- function(
-    df0, ### Outputs of sum_impactsByDegree
+    df0,       ### Outputs of sum_impactsByDegree
     scenarios,
     bySector    = FALSE,
     years       = c(2010, 2090),
@@ -632,55 +639,56 @@ sum_impacts_byDoW_years <- function(
 
   ### Filter to includeaggregate>=1
   ### Filter to sector primary
-  if(aggOnly){df0 <- df0 |> filter(includeaggregate>=1)}
-  if(primary){df0 <- df0 |> filter(sectorprimary   ==1)}
+  if(aggOnly) df0 <- df0 |> filter(includeaggregate >= 1)
+  if(primary) df0 <- df0 |> filter(sectorprimary    == 1)
 
   ### Run scenarios
   ### Get list
-  # list0   <- years |> map(function(.x){
-  #   "Summarizing values for " |> paste0((years == .x) |> which(), "/" , nYears, " years...") |> message()
-  #   df_x <- sum_impacts_byDoW(
-  #     df0         = df0,
-  #     scenarios   = scenarios,
-  #     bySector    = bySector,
-  #     sumCol      = sumCol,
-  #     groupVars   = groupVars,
-  #     impactYears = impactYears,
-  #     year        = .x,
-  #     models      = models,
-  #     aggOnly     = aggOnly,
-  #     adjVal      = adjVal,
-  #     adjCol      = adjCol,
-  #     silent      = silent
-  #   ) ### End sum_impactsByDegree
-  #   return(df_x)
-  # }) ### End walk
-  list0      <- list()
-  for(year_i in years0) {
-    ### Message user
-    "Summarizing values for " |> paste0((years == year_i) |> which(), "/" , nYears, " years...") |> message()
-
-    ### Summarize DOW data
-    df_i <- df0 |> sum_impacts_byDoW(
+  list0   <- years |> map(function(.x){
+    "Summarizing values for " |> paste0((years == .x) |> which(), "/" , nYears, " years...") |> message()
+    df_x <- sum_impacts_byDoW(
+      df0         = df0,
       scenarios   = scenarios,
       bySector    = bySector,
       sumCol      = sumCol,
       groupVars   = groupVars,
       impactYears = impactYears,
-      year        = year_i,
+      year        = .x,
       models      = models,
       aggOnly     = aggOnly,
       adjVal      = adjVal,
       adjCol      = adjCol,
       silent      = silent
-    ) ### End sum_impactsByDegree()
-
-    ### Add to list
-    list0[[year_i]] <- df_i
-
-    ### Drop values
-    rm(year_i, df_i)
-  } ### End for(year_i in years0)
+    ) ### End sum_impactsByDegree
+    gc()
+    return(df_x)
+  }) ### End map
+  # list0      <- list()
+  # for(year_i in years0) {
+  #   ### Message user
+  #   "Summarizing values for " |> paste0((years == year_i) |> which(), "/" , nYears, " years...") |> message()
+  #
+  #   ### Summarize DOW data
+  #   df_i <- df0 |> sum_impacts_byDoW(
+  #     scenarios   = scenarios,
+  #     bySector    = bySector,
+  #     sumCol      = sumCol,
+  #     groupVars   = groupVars,
+  #     impactYears = impactYears,
+  #     year        = year_i,
+  #     models      = models,
+  #     aggOnly     = aggOnly,
+  #     adjVal      = adjVal,
+  #     adjCol      = adjCol,
+  #     silent      = silent
+  #   ) ### End sum_impactsByDegree()
+  #
+  #   ### Add to list
+  #   list0[[year_i]] <- df_i
+  #
+  #   ### Drop values
+  #   rm(year_i, df_i)
+  # } ### End for(year_i in years0)
   rm(df0)
 
   ### Bind values together
@@ -688,9 +696,10 @@ sum_impacts_byDoW_years <- function(
   rm(list0)
 
   ### Convert to tibble
-  df0        <- df0 |> as_tibble()
+  # df0        <- df0 |> as_tibble()
 
   ### Return
+  gc()
   return(df0)
 } ### End sum_impacts_byDoW_years
 
@@ -714,18 +723,19 @@ get_fig7_slrDataObj <- function(
 
   ### SLR Driver values
   ### SLR Scaled impct values
-  if(drivers){slrCm  <- "slr_cm"     |> get_frediDataObj()}
-  if(impacts){slrImp <- "slrImpacts" |> get_frediDataObj(listSub="stateData")}
+  if(drivers) slrCm  <- "slr_cm"     |> get_frediDataObj()
+  if(impacts) slrImp <- "slrImpacts" |> get_frediDataObj(listSub="stateData")
 
   ###### SLR Models ######
   ### Format SLR Models
   slrRef    <- slrRef |> filter(modelType=="slr")
-  slrRef    <- slrRef |> rename_at(vars("model_label"), ~c("model"))
+  slrRef    <- slrRef |> rename_at(c("model_label"), ~c("model"))
 
   ###### Levels & Labels ######
   ### Initial levels & labels
-  slrLevels <- slrRef[["model_dot"]]
-  slrLabels <- slrRef[["model"]]
+  slrRef |> glimpse()
+  slrLevels <- slrRef |> pull(model_dot) |> unique()
+  slrLabels <- slrRef |> pull(model) |> unique()
   # slrRef[["model"]] |> print()
   ### Add ends to labels
   slrLevels <- c("0cm" , slrLevels, "300cm" )

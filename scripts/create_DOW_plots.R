@@ -85,56 +85,81 @@ create_DOW_plots <- function(
   ### Load Custom functions if testing the package
   ### Otherwise, load functions from FrEDI
   # getFromNamespace("value", "FrEDI")
-  if      (loadProject) {projectPath |> devtools::load_all()}
-  else if (loadPackage) {require(FrEDI)}
-  else                  {codePath    |> loadCustomFunctions()}
+  if      (loadProject) projectPath |> devtools::load_all()
+  else if (loadPackage) require(FrEDI)
+  else                  codePath    |> loadCustomFunctions()
 
   ###### ** Data options ######
-  ### Adjust c_digits for number of digits after zero when saving to file
-  ### Adjust c_years  for sequence of years to save to CSV
-  c_digits       <- 16
-  # c_years        <- seq(2010, 2090, by=5)
+  ### Adjust digits for number of digits after zero when saving to file
+  # digits      <- 16
 
   ###### ** Image options ######
   ### Set `fig7theme=NULL` for grey plot backgrounds or `fig7theme="bw"` to test code.
   ### Adjust breakChars for wrapping sector names in Fig 7
-  # img_dev      <- "pdf"
-  img_dev        <- img_dev
-  imgRes         <- 200
-  imgUnits       <- "in"
-  breakChars     <- 18
-  fig7theme      <- NULL
+  # img_dev       <- "pdf"
+  img_dev       <- img_dev
+  imgRes        <- 200
+  imgUnits      <- "in"
+  breakChars    <- 18
+  fig7theme     <- NULL
 
-  ###### ** Sectors ######
+  ###### Sectors ######
+  ###### ** Check Sectors ######
   ### Check which sectors are in which type
-  gcmSectors <- FrEDI::get_sectorInfo(gcmOnly=T)
-  has_gcm    <- !(gcmData |> is.null())
-  any_gcm    <- (sectors %in% gcmSectors) |> any()
-  do_gcm     <- has_gcm & any_gcm
+  gcmSectors0   <- FrEDI::get_sectorInfo(gcmOnly=T)
+  slrSectors0   <- FrEDI::get_sectorInfo(slrOnly=T)
+  allSectors    <- c(gcmSectors0, slrSectors0)
+  sectors0      <- sectors
+  ### Lowercase, with spaces removed
+  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> str_replace_all(" ", "")
+  slrSectorsLC0 <- slrSectors0 |> tolower() |> str_replace_all(" ", "")
+  sectorsLC0    <- sectors0    |> tolower() |> str_replace_all(" ", "")
+  doAll         <- "all" %in% sectorsLC0
+  ### If doAll, use all the sectors. Otherwise, filter to specified sectors
+  if(doAll) {
+    gcmSectors <- gcmSectors0
+    slrSectors <- slrSectors0
+  } else{
+    ### Check which sectors are present
+    which_gcm  <- gcmSectorsLC0 %in% sectorsLC0
+    which_slr  <- slrSectorsLC0 %in% sectorsLC0
+    ### Filter to sectors
+    gcmSectors <- gcmSectors0[which_gcm]
+    slrSectors <- slrSectors0[which_slrgcm]
+  } ### End if(doAll)
+  ### Whether data objects present
+  has_gcm       <- !(gcmData |> is.null())
+  has_slr       <- !(slrData |> is.null())
+  ### Combine sectors and check whether there are any
+  sectors       <- c(gcmSectors, slrSectors)
+  any_gcm       <- gcmSectors |> length()
+  any_slr       <- slrSectors |> length()
+  ### Conditionals
+  do_gcm        <- has_gcm & any_gcm
+  do_slr        <- has_slr & any_slr
 
-  slrSectors <- FrEDI::get_sectorInfo(slrOnly=T)
-  has_slr    <- !(gcmData |> is.null())
-  any_slr    <- (sectors %in% slrSectors) |> any()
-  do_slr     <- has_slr & any_slr
+  ###### ** Filter to Sectors ######
+  if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
+  if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
 
-  ###### Format Sector Names
+  ###### ** Format Sector Names
   ### Check the sector names (for wrapping for Figure 7)
-  # c_sectorNames  <- get_sectorInfo()
-  c_sectorNames  <- sectors
-  newSectorNames <- c_sectorNames |> format_sectorNames(thresh0 = breakChars)
+  # sectorNames  <- get_sectorInfo()
+  sectorNames   <- sectors
+  newSectors    <- sectorNames |> format_sectorNames(thresh0=breakChars)
   ### Message and save to list
   if(testing|do_msg) "Formatting sector names for plotting..." |> message()
-  if(return0) resultsList[["sectorNames"]] <- c_sectorNames
-  if(testing) c_sectorNames |> print(); newSectorNames |> print()
+  if(return0) resultsList[["sectorNames"]] <- sectorNames
+  if(testing) sectorNames |> print(); newSectors |> print()
 
 
   ###### GCM Figures ######
   # codePath  |> loadCustomFunctions()
   ###### ** National Combined ######
-  if(totals){
+  if(totals & do_gcm) {
     if(testing|do_msg) "Aggregating integer scenario GCM sector results..." |> message()
     #### Aggregate Impact Types, Impact Years
-    gcmData  <- gcmData |> run_scenarios(
+    gcmData  <- gcmData |> filter() |> run_scenarios(
       col0      = "scenario",
       fredi     = FALSE,
       aggLevels = c("impactyear", "impacttype"),
@@ -209,7 +234,7 @@ create_DOW_plots <- function(
     rm(plots_gcm)
   } ### End if(totals)
   ###### ** Appendix Figures ######
-  else {
+  else if(!totals & do_gcm) {
     ### Filter data
     gcmData <- gcmData |> filter(sector %in% sectors)
 
@@ -238,7 +263,7 @@ create_DOW_plots <- function(
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting GCM results by sector, impact type, degree of warming (DOW)..." |> message()
     plots_gcm <- sum_gcm |>
-      # filter(sector %in% c_sectorNames[c(10)]) |>
+      # filter(sector %in% sectorNames[c(10)]) |>
       filter(!(sector %in% c("Roads"))) |>
       plot_DoW_by_sector(
         models  = c("GCM"),
@@ -270,7 +295,7 @@ create_DOW_plots <- function(
 
   ###### SLR Results & Figures ######
   if(do_slr) {
-    ###### ** Format SLR Data ######
+    ### Format SLR Data
     ### Save to different objects
     ### Note that the SLR sectors have no multipliers or impact types
     # codePath  |> loadCustomFunctions()
@@ -307,7 +332,6 @@ create_DOW_plots <- function(
       scale_color_discrete("SLR Scenario")
     if(testing) plot_slr2 |> print()
 
-    ##### ** Plot Trajectories #####
     ### Plot the SLR trajectories
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting SLR scenarios..." |> message()
@@ -335,112 +359,111 @@ create_DOW_plots <- function(
         ) ### End options
       )  ### End save_image
     } ### End if(saveFile)
-
-
-    ###### ** National Combined ######
-    ###### ** -- Figure 7: DoW by Sector
-    ### SLR sectors separately:
-    ### - Filter to 2090 and 2050 values
-    ### - Calculate national totals
-    ### - Combine CIRA impacts and SLR trajectories
-    # codePath  |> loadCustomFunctions()
-    if(totals){
-      if(testing|do_msg) "Summarizing SLR results by sector, year, GMSL (cm)..." |> message()
-      sum_slr <- get_fig7_slrImpacts(
-        slrDrivers = slrHeights |> filter(year >= 2010, year <= 2090),
-        slrImpacts = slrImpacts |> filter(year >= 2010, year <= 2090),
-        bySector   = FALSE,
-        aggOnly    = aggOnly,
-        years      = slrYears,
-        adjVal     = 1/10**9, ### Factor to multiply by
-        adjCol     = "impact_billions"
-      ) ### End get_fig7_slrImpacts()
-      ### Glimpse
-      # if(return0) resultsList[["sum_slr"]] <- sum_slr
-      if(testing) sum_slr |> glimpse()
-      # sum_gcm |> glimpse()
-      ### Save
-      if(do_msg & saveFile) paste0("Saving summary of SLR results by sector, year, GMSL (cm)...") |> message()
-      if(saveFile) sum_slr |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
-
-      ###### ** -- Plots
-      ### Create the plots
-      # codePath  |> loadCustomFunctions()
-      if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
-      plots_slr  <- sum_slr |> plot_DoW(
-        types0     = c("SLR"), ### Model type: GCM or SLR
-        yCol       = "annual_impacts",
-        nCol       = 2,
-        thresh0    = breakChars
-      ) ### End plot_DoW()
-      ### Glimpse
-      # if(return0) resultsList[["plots_slr"]] <- plots_slr
-      if(testing) plots_slr[["SLR_all"]] |> print()
-      ### Save
-      if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
-      if(saveFile & saveFile){
-        ### Save plots as a data object
-        plots_slr |> save_data(fpath=outPath, fname=rda_plot_slr, ftype="rda")
-
-        ### Save plots as image files
-        plots_slr |> save_fig7_images(
-          modelType = "SLR", ### Or SLR
-          fpath     = outPath,
-          device    = img_dev,
-          units     = imgUnits
-        ) ### End save_fig7_images()
-      } ### End if(saveFile)
-    } ### if(totals)
-    ###### ** Appendix Figures ######
-    ### DoW By Type
-    # codePath  |> loadCustomFunctions()
-    else {
-      if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
-      sum_slr_byType <- get_fig7_slrImpacts(
-        slrDrivers  = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
-        slrImpacts  = slrImpacts |> filter(year >= 2010, year <= 2090),
-        bySector    = TRUE,
-        sumCol      = "annual_impacts",
-        adjVal      = 1/10**9, ### Factor to multiply by
-        adjCol      = "impact_billions"
-      ) ### End get_fig7_slrImpacts
-      ### Glimpse
-      # if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
-      if(testing) sum_slr_byType |> glimpse()
-      ### Save
-      if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by year...") |> message()
-      if(saveFile) sum_slr_byType |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
-
-      ### Create SLR plots
-      # codePath  |> loadCustomFunctions()
-      if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
-      plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
-        models  = c("SLR"),
-        xCol    = "year",
-        yCol    = "annual_impacts"
-      ) ### End plot_DoW_by_sector
-      ### Glimpse
-      # if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
-      if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
-      ### Save
-      if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
-      if(saveFile) {
-        ### Save plots as a data object
-        plots_slr_byType |> save_data(fpath=outPath, fname=rda_plot_slr, ftype="rda")
-
-        ### Save plots as image files
-        saved0 <- plots_slr_byType |> save_appendix_figures(
-          df0       = sum_slr_byType,
-          modelType = "SLR", ### Or SLR
-          fpath     = outPath,
-          device    = img_dev,
-          res       = imgRes,
-          units     = imgUnits
-        ) ### End save_appendix_figures
-      } ### End if(saveFile)
-    } ### else(totals)
-
   } ### End if do_slr
+
+  ###### ** National Combined ######
+  ###### ** -- Figure 7: DoW by Sector
+  ### SLR sectors separately:
+  ### - Filter to 2090 and 2050 values
+  ### - Calculate national totals
+  ### - Combine CIRA impacts and SLR trajectories
+  # codePath  |> loadCustomFunctions()
+  if(totals & do_slr) {
+    if(testing|do_msg) "Summarizing SLR results by sector, year, GMSL (cm)..." |> message()
+    sum_slr <- get_fig7_slrImpacts(
+      slrDrivers = slrHeights |> filter(year >= 2010, year <= 2090),
+      slrImpacts = slrImpacts |> filter(year >= 2010, year <= 2090),
+      bySector   = FALSE,
+      aggOnly    = aggOnly,
+      years      = slrYears,
+      adjVal     = 1/10**9, ### Factor to multiply by
+      adjCol     = "impact_billions"
+    ) ### End get_fig7_slrImpacts()
+    ### Glimpse
+    # if(return0) resultsList[["sum_slr"]] <- sum_slr
+    if(testing) sum_slr |> glimpse()
+    # sum_gcm |> glimpse()
+    ### Save
+    if(do_msg & saveFile) paste0("Saving summary of SLR results by sector, year, GMSL (cm)...") |> message()
+    if(saveFile) sum_slr |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
+
+    ###### ** -- Plots
+    ### Create the plots
+    # codePath  |> loadCustomFunctions()
+    if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
+    plots_slr  <- sum_slr |> plot_DoW(
+      types0     = c("SLR"), ### Model type: GCM or SLR
+      yCol       = "annual_impacts",
+      nCol       = 2,
+      thresh0    = breakChars
+    ) ### End plot_DoW()
+    ### Glimpse
+    # if(return0) resultsList[["plots_slr"]] <- plots_slr
+    if(testing) plots_slr[["SLR_all"]] |> print()
+    ### Save
+    if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
+    if(saveFile & saveFile){
+      ### Save plots as a data object
+      plots_slr |> save_data(fpath=outPath, fname=rda_plot_slr, ftype="rda")
+
+      ### Save plots as image files
+      plots_slr |> save_fig7_images(
+        modelType = "SLR", ### Or SLR
+        fpath     = outPath,
+        device    = img_dev,
+        units     = imgUnits
+      ) ### End save_fig7_images()
+    } ### End if(saveFile)
+  } ### if(totals)
+  ###### ** Appendix Figures ######
+  ### DoW By Type
+  # codePath  |> loadCustomFunctions()
+  else if(!totals & do_slr) {
+    if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
+    sum_slr_byType <- get_fig7_slrImpacts(
+      slrDrivers  = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
+      slrImpacts  = slrImpacts |> filter(year >= 2010, year <= 2090),
+      bySector    = TRUE,
+      sumCol      = "annual_impacts",
+      adjVal      = 1/10**9, ### Factor to multiply by
+      adjCol      = "impact_billions"
+    ) ### End get_fig7_slrImpacts
+    ### Glimpse
+    # if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
+    if(testing) sum_slr_byType |> glimpse()
+    ### Save
+    if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by year...") |> message()
+    if(saveFile) sum_slr_byType |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
+
+    ### Create SLR plots
+    # codePath  |> loadCustomFunctions()
+    if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
+    plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
+      models  = c("SLR"),
+      xCol    = "year",
+      yCol    = "annual_impacts"
+    ) ### End plot_DoW_by_sector
+    ### Glimpse
+    # if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
+    if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
+    ### Save
+    if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()
+    if(saveFile) {
+      ### Save plots as a data object
+      plots_slr_byType |> save_data(fpath=outPath, fname=rda_plot_slr, ftype="rda")
+
+      ### Save plots as image files
+      saved0 <- plots_slr_byType |> save_appendix_figures(
+        df0       = sum_slr_byType,
+        modelType = "SLR", ### Or SLR
+        fpath     = outPath,
+        device    = img_dev,
+        res       = imgRes,
+        units     = imgUnits
+      ) ### End save_appendix_figures
+    } ### End if(saveFile)
+  } ### else(totals)
+
 
   ###### Return ######
   return(resultsList)
