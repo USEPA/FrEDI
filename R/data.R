@@ -76,7 +76,7 @@
 #'
 #' To use `gdpDefault` as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element `gdp` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()] and/or [FrEDI:run_fredi_methane()], respectively, e.g.: `run_fredi(inputsList=list(gdp=gdpDefault))`. `gdpDefault` can also be combined with other provided scenarios (`gcamScenarios`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_methane()], and [FrEDI::import_inputs()].
 #'
-#' Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: conomic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
+#' Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: Economic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
 #'
 #' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
 #'
