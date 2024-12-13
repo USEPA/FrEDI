@@ -18,6 +18,7 @@ plot_DOW_bySector <- function(
       lgdTitle   = "Model",
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
+      nameBreak  = 18  , ### Sector name break
       theme      = NULL
     )
 ){
@@ -41,6 +42,7 @@ plot_DOW_bySector <- function(
   x_denom    <- xInfo[["denom" ]]
   x_breaks   <- xInfo[["breaks"]]
   x_limits   <- xInfo[["limits"]]
+  # x_breaks |> print()
   # x_breaks |> print()
   ###### ** Y Breaks ######
   yInfo      <- infoList0[["minMax"]] |> filter(plotRow == row0)
@@ -72,23 +74,23 @@ plot_DOW_bySector <- function(
   heights     <- plotOpts0[["heights"   ]]
   margins     <- plotOpts0[["margins"   ]]
   mUnit       <- plotOpts0[["marginUnit"]]
+  nameBrk     <- plotOpts0[["nameBrk"   ]]
   theme0      <- plotOpts0[["theme"     ]]
-  nameBrk     <- plotOpts0[["nameBreak" ]]
   # xTitle |> print()
   ### Has plot options
-  hasTheme    <- !is.null(theme0  )
-  hasMargins  <- !is.null(margins0)
-  hasMUnits   <- !is.null(mUnit0  )
+  hasTheme    <- !(theme0  |> is.null())
+  hasMargins  <- !(margins |> is.null())
+  hasMUnits   <- !(mUnit   |> is.null())
   ### Overwrite some values
   # yTitle0     <- y_label
-  subtitle0   <- sector0
+  subtitle0   <- sector0   |> format_sectorNames(thresh0=nameBrk)
 
   ###### ** Plot Aesthetics ######
   ###### ** Titles
   # title0    <- impType0
   # subtitle0 <- variant0
-  title0    <- "Impact Type: " |> paste0(impType0)
-  subtitle0 <- "Variant: "     |> paste0(variant0)
+  # title0    <- "Impact Type: " |> paste0(impType0)
+  # subtitle0 <- "Variant: "     |> paste0(variant0)
   ###### ** Aesthetics
   ### Text size
   titleSize <- 11
@@ -144,22 +146,14 @@ plot_DOW_bySector <- function(
     ### Plot these values as lines
     df0_1  <- df0
     ### Plot these values as points
-    df0_2  <- df0 |> filter(year %in% x_breaks)
+    df0_2  <- tibble()
+    # df0_2  <- df0 |> filter(year %in% x_breaks)
   } ### End if(do_gcm)
 
 
   ###### Create Plot ######
   ###### ** Initialize Plot #####
-  # ### Initialize plot
-  # ### GCM Plot
-  # plot0     <- plot0 + geom_line (data = df0_1, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), alpha=0.80)
-  # plot0     <- plot0 + geom_line(data = df0_2, aes(x = .data[[xCol]], y = .data[[yCol]], color=.data[["model"]]), linetype="dashed", alpha=0.65)
-  # ### SLR plot
-  # plot0     <- df0 |> ggplot(aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]))
-  # plot0     <- plot0 + geom_line (aes(x=.data[[xCol]], y=.data[[yCol]], color=.data[["model"]]), alpha=0.80)
-  ### Initialize plot
-  # plot0     <- ggplot()
-  # plot0     <- df0 |> ggplot()
+  # df0_1 |> glimpse()
   plot0     <- df0_1 |> ggplot(aes(
     x     = .data[[xCol]],
     y     = .data[[yCol]],
@@ -168,14 +162,6 @@ plot_DOW_bySector <- function(
 
   ###### ** Plot First Set ######
   ### Add geomline
-  # plot0     <- plot0 + geom_line (
-  #   data = df0_1, aes(
-  #     x     = .data[[xCol]],
-  #     y     = .data[[yCol]],
-  #     color = .data[["model"]]
-  #   ), ### End aes
-  #   alpha=alpha0
-  # ) ### End geom_point
   plot0  <- plot0 + geom_line (alpha=alpha0)
 
   ###### ** Plot Second Set ######
@@ -192,23 +178,13 @@ plot_DOW_bySector <- function(
       alpha    = alpha0
       # alpha    = alpha0 - 10
     ) ### End geom_line
-  } else{
-    plot0  <- plot0 + geom_point(
-      data = df0_2, aes(
-        x     = .data[[xCol]],
-        y     = .data[[yCol]],
-        color = .data[["model"]],
-        shape = .data[["model"]]
-      ), ### End aes
-      alpha = alpha0
-    ) ### End geom_point
   } ### End if(do_gcm)
   ### Remove data
   rm(df0_1, df0_2)
 
   ###### ** Plot Title ######
   ### Add title
-  plot0       <- plot0 + ggtitle(ggtitle0, subtitle0)
+  plot0       <- plot0 + ggtitle(title0, subtitle0)
   ### Add title aesthetics
   plot0       <- plot0 + theme(plot.title    = element_text(hjust=hjust0, size=12))
   plot0       <- plot0 + theme(plot.subtitle = element_text(hjust=hjust0, size=9))
@@ -216,14 +192,14 @@ plot_DOW_bySector <- function(
   ###### ** Plot Axes ######
   ### Add axes
   yTitle0     <- y_label
-  plot0       <- plot0 + scale_x_continuous(xTitle0, limits=x_limits, breaks=x_breaks)
+  plot0       <- plot0 + scale_x_continuous(xTitle, limits=x_limits, breaks=x_breaks)
   plot0       <- plot0 + scale_y_continuous(y_label, limits=y_limits, breaks=y_breaks)
   ### Add axes aesthetics
   plot0       <- plot0 + theme(axis.title   = element_text(size=8))
 
   ###### ** Plot Legend ######
   ### Add legend scales
-  plot0       <- plot0 + scale_color_manual(lgdTitle0, values=colorVals, breaks=shapeLvls)
+  plot0       <- plot0 + scale_color_manual(lgdLbl, values=colorVals, breaks=shapeLvls)
   ### Add legend aesthetics
   plot0       <- plot0 + theme(legend.box = lgdDir0)
   plot0       <- plot0 + theme(legend.position = lgdPos0)
@@ -252,13 +228,13 @@ plot_DOW_bySector <- function(
 
   ###### ** Add Margins ######
   if (hasMargins) {
-    # margins0 |> print(); mUnit0 |> print()
+    # margins |> print(); mUnit |> print()
     margin0 <- margin(
-      t    = margins0[1],  ### Top margin
-      r    = margins0[2],  ### Right margin
-      b    = margins0[3],  ### Bottom margin
-      l    = margins0[4],  ### Left margin
-      unit = mUnit0
+      t    = margins[1],  ### Top margin
+      r    = margins[2],  ### Right margin
+      b    = margins[3],  ### Bottom margin
+      l    = margins[4],  ### Left margin
+      unit = mUnit
     ) ### End margin
     ### Add to plot
     plot0 <- plot0 + theme(plot.margin = margin0)

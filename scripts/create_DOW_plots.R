@@ -10,6 +10,8 @@ require(ggpubr)
 ###### create_DOW_plots
 create_DOW_plots <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
+    gcmYears = c(2090),       ### Which years to report on for GCM sectors
+    slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     gcmData  = NULL ,     ### Dataframe with data for GCM sectors
     slrData  = NULL ,     ### Dataframe with data for SLR sectors
     totals   = FALSE,     ### Whether to do totals
@@ -111,9 +113,9 @@ create_DOW_plots <- function(
   allSectors    <- c(gcmSectors0, slrSectors0)
   sectors0      <- sectors
   ### Lowercase, with spaces removed
-  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> str_replace_all(" ", "")
-  slrSectorsLC0 <- slrSectors0 |> tolower() |> str_replace_all(" ", "")
-  sectorsLC0    <- sectors0    |> tolower() |> str_replace_all(" ", "")
+  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> trimws()
+  slrSectorsLC0 <- slrSectors0 |> tolower() |> trimws()
+  sectorsLC0    <- sectors0    |> tolower() |> trimws()
   doAll         <- "all" %in% sectorsLC0
   ### If doAll, use all the sectors. Otherwise, filter to specified sectors
   if(doAll) {
@@ -125,7 +127,7 @@ create_DOW_plots <- function(
     which_slr  <- slrSectorsLC0 %in% sectorsLC0
     ### Filter to sectors
     gcmSectors <- gcmSectors0[which_gcm]
-    slrSectors <- slrSectors0[which_slrgcm]
+    slrSectors <- slrSectors0[which_slr]
   } ### End if(doAll)
   ### Whether data objects present
   has_gcm       <- !(gcmData |> is.null())
@@ -137,20 +139,27 @@ create_DOW_plots <- function(
   ### Conditionals
   do_gcm        <- has_gcm & any_gcm
   do_slr        <- has_slr & any_slr
+  do_any        <- do_gcm | do_slr
+  c(do_gcm, do_slr, do_any) |> print()
 
   ###### ** Filter to Sectors ######
-  if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
-  if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
+  # if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
+  # if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
 
   ###### ** Format Sector Names
   ### Check the sector names (for wrapping for Figure 7)
-  # sectorNames  <- get_sectorInfo()
-  sectorNames   <- sectors
-  newSectors    <- sectorNames |> format_sectorNames(thresh0=breakChars)
-  ### Message and save to list
-  if(testing|do_msg) "Formatting sector names for plotting..." |> message()
-  if(return0) resultsList[["sectorNames"]] <- sectorNames
-  if(testing) sectorNames |> print(); newSectors |> print()
+  if(do_any) {
+    # sectorNames  <- get_sectorInfo()
+    sectorNames <- sectors
+    newSectors  <- sectorNames |> format_sectorNames(thresh0=breakChars)
+    # sectorNames <- tibble(sector = sectors)
+    # sectorNames <- sectorNames |> mutate(printName = sector |> format_sectorNames(thresh0=breakChars))
+    ### Message and save to list
+    if(testing|do_msg) "Formatting sector names for plotting..." |> message()
+    if(return0) resultsList[["sectorNames"]] <- sectorNames
+    if(testing) sectorNames |> print(); newSectors |> print()
+    # if(testing) sectorNames |> glimpse();
+  } ### End if(do_any)
 
 
   ###### GCM Figures ######
@@ -158,8 +167,10 @@ create_DOW_plots <- function(
   ###### ** National Combined ######
   if(totals & do_gcm) {
     if(testing|do_msg) "Aggregating integer scenario GCM sector results..." |> message()
+    #### Get data object
+    # gcmData  <- gcmData |>
     #### Aggregate Impact Types, Impact Years
-    gcmData  <- gcmData |> filter() |> run_scenarios(
+    gcmData  <- gcmData |> run_scenarios(
       col0      = "scenario",
       fredi     = FALSE,
       aggLevels = c("impactyear", "impacttype"),
@@ -169,7 +180,7 @@ create_DOW_plots <- function(
     ### Filter to national totals
     gcmData  <- gcmData |> filter(region %in% "National Total")
     ### Glimpse
-    # if(return0) resultsList[["gcm_totals"]] <- gcmData
+    if(return0) resultsList[["gcm_totals"]] <- gcmData
     if(testing) gcmData |> glimpse()
     if(do_msg & saveFile) paste0("Saving national GCM DOW results, aggregated across impact type and impact year...") |> message()
     ### Save 2090 summary table
@@ -193,7 +204,7 @@ create_DOW_plots <- function(
     ) ### End sum_impacts_byDoW_years
     rm(gcmData)
     ### Glimpse
-    # if(return0) resultsList[["sum_gcm"]] <- sum_gcm
+    if(return0) resultsList[["sum_gcm"]] <- sum_gcm
     if(testing) sum_gcm |> glimpse()
     if(do_msg & saveFile) paste0("Saving summary of GCM results by sector, degree of warming...") |> message()
     ### Save 2090 summary table
@@ -214,7 +225,7 @@ create_DOW_plots <- function(
     ) ### End plot_DoW
     rm(sum_gcm)
     ### Glimpse
-    # if(return0) resultsList[["plots_gcm"]] <- plots_gcm
+    if(return0) resultsList[["plots_gcm"]] <- plots_gcm
     if(testing) plots_gcm[["GCM_2090"]] |> print()
     ### Save
     # codePath  |> loadCustomFunctions()
@@ -251,7 +262,7 @@ create_DOW_plots <- function(
       silent      = TRUE
     ) ### End sum_impacts_byDoW_years
     ### Glimpse
-    # if(return0) resultsList[["sum_gcm"]] <- sum_gcm
+    if(return0) resultsList[["sum_gcm"]] <- sum_gcm
     if(testing) sum_gcm |> glimpse()
 
     ### Save summary table
@@ -270,7 +281,7 @@ create_DOW_plots <- function(
         yCol    = "annual_impacts"
       ) ### End plot_DoW_by_sector
     ### Glimpse
-    # if(return0) resultsList[["plots_gcm"]] <- plots_gcm
+    if(return0) resultsList[["plots_gcm"]] <- plots_gcm
     if(testing) plots_gcm$GCM$`Extreme Temperature_2010`[["2010"]] |> print()
 
     ### Save
@@ -299,7 +310,7 @@ create_DOW_plots <- function(
     ### Save to different objects
     ### Note that the SLR sectors have no multipliers or impact types
     # codePath  |> loadCustomFunctions()
-    slrImpacts <- slrData[["slrImp"]] |> filter(sector %in% sectors)
+    slrImpacts <- slrData[["slrImp"]]
     slrHeights <- slrData[["slrCm" ]]
     # if(return0) resultsList[["slrData"]] <- slrData
     if(testing) slrImpacts |> glimpse()
@@ -342,7 +353,7 @@ create_DOW_plots <- function(
       lgdTitle0 = "Sweet et al. SLR Scenario"
     ) ### End plot_slr_scenarios
     ### Glimpse
-    # if(return0) resultsList[["p_slrScenarios"]] <- p_slrScenarios
+    if(return0) resultsList[["p_slrScenarios"]] <- p_slrScenarios
     if(testing) p_slrScenarios |> print()
     ### Save file
     if(do_msg & saveFile) paste0("Saving plot of SLR scenarios...") |> message()
@@ -380,7 +391,7 @@ create_DOW_plots <- function(
       adjCol     = "impact_billions"
     ) ### End get_fig7_slrImpacts()
     ### Glimpse
-    # if(return0) resultsList[["sum_slr"]] <- sum_slr
+    if(return0) resultsList[["sum_slr"]] <- sum_slr
     if(testing) sum_slr |> glimpse()
     # sum_gcm |> glimpse()
     ### Save
@@ -392,13 +403,15 @@ create_DOW_plots <- function(
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
     plots_slr  <- sum_slr |> plot_DoW(
-      types0     = c("SLR"), ### Model type: GCM or SLR
-      yCol       = "annual_impacts",
-      nCol       = 2,
-      thresh0    = breakChars
+      types0  = c("SLR"), ### Model type: GCM or SLR
+      years0  = slrYears,
+      xCol    = "driverValue",
+      yCol    = "impact_billions",
+      nCol    = 2,
+      thresh0 = breakChars
     ) ### End plot_DoW()
     ### Glimpse
-    # if(return0) resultsList[["plots_slr"]] <- plots_slr
+    if(return0) resultsList[["plots_slr"]] <- plots_slr
     if(testing) plots_slr[["SLR_all"]] |> print()
     ### Save
     if(do_msg) paste0("Saving plots of SLR results by sector, year, GMSL (cm)...") |> message()
@@ -419,9 +432,12 @@ create_DOW_plots <- function(
   ### DoW By Type
   # codePath  |> loadCustomFunctions()
   else if(!totals & do_slr) {
+    ### Filter if !totals
+    slrImpacts <- slrImpacts |> filter(sector %in% sectors)
+
     if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
     sum_slr_byType <- get_fig7_slrImpacts(
-      slrDrivers  = ciraSLRData[["slrCm" ]] |> filter(year >= 2010, year <= 2090),
+      slrDrivers  = slrHeights |> filter(year >= 2010, year <= 2090),
       slrImpacts  = slrImpacts |> filter(year >= 2010, year <= 2090),
       bySector    = TRUE,
       sumCol      = "annual_impacts",
@@ -429,7 +445,7 @@ create_DOW_plots <- function(
       adjCol      = "impact_billions"
     ) ### End get_fig7_slrImpacts
     ### Glimpse
-    # if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
+    if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
     if(testing) sum_slr_byType |> glimpse()
     ### Save
     if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by year...") |> message()
@@ -444,7 +460,7 @@ create_DOW_plots <- function(
       yCol    = "annual_impacts"
     ) ### End plot_DoW_by_sector
     ### Glimpse
-    # if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
+    if(return0) resultsList[["plots_slr_byType"]] <- plots_slr_byType
     if(testing) plots_slr_byType$SLR$`Coastal Properties_all`[[1]] |> print()
     ### Save
     if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by sector, impact type, GMSL (cm)...") |> message()

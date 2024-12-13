@@ -1727,8 +1727,8 @@ calc_impacts_fredi <- function(
   ### Physical impacts = physScalar * scaled_impacts
   ### Annual impacts = phys-econ scalar value by the scaled impacts
   # df0 |> glimpse()
-  df0         <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
-  df0         <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
+  df0      <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
+  df0      <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
   # df0 |> nrow() |> print()
 
   ### Return

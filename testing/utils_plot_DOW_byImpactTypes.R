@@ -101,8 +101,8 @@ plot_DOW_byImpactTypes <- function(
   heights     <- plotOpts0[["heights"   ]]
   margins     <- plotOpts0[["margins"   ]]
   mUnit       <- plotOpts0[["marginUnit"]]
+  nameBrk     <- plotOpts0[["nameBrk"   ]]
   theme0      <- plotOpts0[["theme"     ]]
-  nameBrk     <- plotOpts0[["nameBreak" ]]
   # xTitle |> print()
   ### Conditionals
   hasLgdPos   <- !(lgdPos  |> is.null())

@@ -4,6 +4,7 @@ format_sectorNames <- function(
     names0, ### Sector names
     thresh0 = 18
 ){
+  if(thresh0 |> is.null()) thresh0 <- 18
   names0 <- names0 |> as.character()
   names1 <- names0 |> map(fun_getLineBreaks, thresh=thresh0)
   names1 <- names1 |> unlist() |> trimws()
@@ -18,7 +19,7 @@ fun_hasStringValue <- function(
 ){
   ### Check if null
   isNull0 <- str0 |> is.null()
-  naStr0  <- (!isNull0) |> ifelse(str0 |> is.na(), TRUE)
+  naStr0  <- isNull0 |> ifelse(TRUE, str0 |> is.na())
   hasStr0 <- (!(isNull0 & naStr0)) |> ifelse(!(str0==""), FALSE)
   ### Return
   return(hasStr0)
@@ -68,6 +69,7 @@ fun_compareStrings <- function(
   ### Check if word is in new
   cond1     <- no_sub_x
   cond2     <- !no_sub_x & no_word_x
+  # c(cond1, cond2) |> print()
   # cond2     <- !no_sub_x & !no_word_x
   if       (cond1){
     sub_x       <- word_x
@@ -185,10 +187,11 @@ fun_compareStrings <- function(
 
     if(no_tmp_x) tmp_char <- 0
     else         tmp_char <- tmp_x |> nchar()
-    tmp_diff <- thresh - tmp_char
 
+    tmp_diff <- thresh - tmp_char
     cond_1    <- tmp_diff >= 0 & tmp_diff <= 1
     cond_2    <- tmp_diff < 0
+
     if       (cond_1) {
       new_x  <- c(new_x, tmp_x) |> paste(collapse="\n")
       sub_x  <- NULL

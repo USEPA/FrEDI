@@ -29,7 +29,7 @@ plot_DOW_byModelType <- function(
   ###### Values ######
   ### Model Type
   # type0 |> print()
-  typeLC0   <- type0 |> tolower()
+  typeLC0   <- modelType |> tolower()
   repo0     <- repo0 |> tolower()
   do_gcm    <- "gcm" %in% typeLC0
   do_slr    <- "slr" %in% typeLC0
@@ -55,8 +55,8 @@ plot_DOW_byModelType <- function(
   heights     <- plotOpts0[["heights"   ]]
   margins     <- plotOpts0[["margins"   ]]
   mUnit       <- plotOpts0[["marginUnit"]]
+  nameBrk     <- plotOpts0[["nameBrk"   ]]
   theme0      <- plotOpts0[["theme"     ]]
-  nameBrk     <- plotOpts0[["nameBreak" ]]
   # xTitle |> print()
   ### Conditionals
   hasLgdPos   <- !(lgdPos  |> is.null())
@@ -66,9 +66,10 @@ plot_DOW_byModelType <- function(
   # xTitle |> print()
 
   ######  ** Format Sector Names ######
-  refSectors <- df_x |> pull(sector) |> unique()
-  newSectors <- refSectors |> format_sectorNames(thresh0=nameBrk)
-  df_x       <- df_x |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
+  # refSectors <- df_x |> pull(sector) |> unique()
+  # # refSectors |> print()
+  # newSectors <- refSectors |> format_sectorNames(thresh0=nameBrk)
+  # df_x       <- df_x |> mutate(sector = sector |> factor(levels=refSectors, labels=newSectors))
 
   ###### ** Get Sector Info ######
   infoList0  <- df_x |> get_sector_plotInfo(yCol=yCol, nCol=nCol, silent=silent)
@@ -103,6 +104,7 @@ plot_DOW_byModelType <- function(
       nTicks    = nTicks, ### Number of tick marks in scale
       options   = plotOpts0
     ) ### End plot_DOW_bySector
+    # plot_x |> print()
     ### Return the plots
     return(plot_x)
   })
@@ -128,11 +130,12 @@ plot_DOW_byModelType <- function(
 
   ###### ** Common Plot Elements ######
   ### Get common plot elements from reference plot
-  # title |> print(); yTitle |> print(); xTitle |> print()
+  title0 |> print(); yTitle |> print(); xTitle |> print()
   plot_spacer   <- ggplot() + theme_void()
-  plot_title    <- text_grob(title , color = "black", face = "bold", size = 14, hjust=0.5)
-  plot_yTitle   <- text_grob(yTitle, color = "black", rot  = 90)
-  plot_xTitle   <- text_grob(xTitle, color = "black")
+  plot_title    <- text_grob(title0, color="black", face="bold", size =14, hjust=0.5)
+  plot_yTitle   <- text_grob(yTitle, color="black", rot=90)
+  plot_xTitle   <- text_grob(xTitle, color="black")
+  plot_xTitle |> print()
   plot_legend   <- refPlot_x |> ggpubr::get_legend()
   # return(list(plots=plotList_x, lgd=plot_legend))
   plotList0     <- list(plots=plotList_x, lgd=plot_legend)
@@ -151,19 +154,16 @@ plot_DOW_byModelType <- function(
   ###### ** Arrange Main Grid ######
   ### Arrange main grid and add plot_xTitle
   ### Add spacer and add plot_yTitle
-  main_grid      <- ggarrange(plotlist=plotList_x, ncol=nCol, nrow=nRow, legend="none", align="h", common.legend=T)
-  # main_grid      <- main_grid |> annotate_figure(left = plot_yTitle, bottom = plot_xTitle)
-  main_grid      <- main_grid |> annotate_figure(bottom = plot_xTitle)
+  main_grid     <- ggarrange(plotlist=plotList_x, ncol=nCol, nrow=nRow, legend="none", align="h", common.legend=T)
+  main_grid     <- main_grid |> annotate_figure(bottom=plot_xTitle)
   ### Add spacer
-  plotList0      <- list(x=plot_spacer, y=main_grid, z=plot_spacer)
-  main_grid      <- ggarrange(plotlist=plotList0, ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2))
-  main_grid      <- main_grid |> annotate_figure(left = plot_yTitle)
-  # main_list      <- list(spacer=plot_spacer, plots=main_grid, lgd = plotList0[["lgd"]])
-
-  ###### ** Add Legend ######
-  plotList0      <- list( x=plot_spacer, y=main_grid, w=plot_spacer, z=plot_legend, u=plot_spacer)
-  main_plot      <- ggarrange(plotlist=plotList0, ncol=1, heights=c(0.2, nRow + 1, 0.1, 1, 0.1))
-  main_plot      <- main_plot |> annotate_figure(top=plot_title)
+  plotList0     <- list(x=plot_spacer, y=main_grid, z=plot_spacer)
+  main_grid     <- ggarrange(plotlist=plotList0, ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2))
+  main_grid     <- main_grid |> annotate_figure(left=plot_yTitle)
+  ### Add Legend
+  plotList0     <- list(x=plot_spacer, y=main_grid, w=plot_spacer, z=plot_legend, u=plot_spacer)
+  main_plot     <- ggarrange(plotlist=plotList0, ncol=1, heights=c(0.2, nRow + 1, 0.1, 1, 0.1))
+  main_plot     <- main_plot |> annotate_figure(top=plot_title)
 
   ###### Return ######
   ### Return

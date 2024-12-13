@@ -76,15 +76,15 @@ run_constantTempScenarios <- function(
   rda_slr       <- "slr_DOW_results_byType"
 
   ###### ** Load Code ######
-  ### Custom function to load code from a specified path
-  # codeFiles <- codePath |> list.files(pattern=".R", full.names = T); codeFiles |> basename()
-  # for(code_i in codeFiles){code_i |> source()}
-  # projectPath |> file.path("R") |> loadCustomFunctions(pattern="utils_report|utils_plot|utils_save|utils_summarize")
-  loadCustomFunctions <- function(fpath=".", local=FALSE, pattern="utils_report|utils_plot|utils_save|utils_summarize|utils_create"){
-    xFiles <- fpath |> list.files(pattern=pattern, full.names=T)
-    xFiles |> basename() |> print()
-    for(x_i in xFiles){x_i |> source(local=local)}
-  } ### loadCustomFunctions
+  # ### Custom function to load code from a specified path
+  # # codeFiles <- codePath |> list.files(pattern=".R", full.names = T); codeFiles |> basename()
+  # # for(code_i in codeFiles){code_i |> source()}
+  # # projectPath |> file.path("R") |> loadCustomFunctions(pattern="utils_report|utils_plot|utils_save|utils_summarize")
+  # loadCustomFunctions <- function(fpath=".", local=FALSE, pattern="utils_report|utils_plot|utils_save|utils_summarize|utils_create"){
+  #   xFiles <- fpath |> list.files(pattern=pattern, full.names=T)
+  #   xFiles |> basename() |> print()
+  #   for(x_i in xFiles){x_i |> source(local=local)}
+  # } ### loadCustomFunctions
 
   ### Load Custom functions if testing the package
   ### Otherwise, load functions from FrEDI
@@ -101,9 +101,9 @@ run_constantTempScenarios <- function(
   allSectors    <- c(gcmSectors0, slrSectors0)
   sectors0      <- sectors
   ### Lowercase, with spaces removed
-  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> str_replace_all(" ", "")
-  slrSectorsLC0 <- slrSectors0 |> tolower() |> str_replace_all(" ", "")
-  sectorsLC0    <- sectors0    |> tolower() |> str_replace_all(" ", "")
+  gcmSectorsLC0 <- gcmSectors0 |> tolower() |> trimws()
+  slrSectorsLC0 <- slrSectors0 |> tolower() |> trimws()
+  sectorsLC0    <- sectors0    |> tolower() |> trimws()
   doAll         <- "all" %in% sectorsLC0
   ### If doAll, use all the sectors. Otherwise, filter to specified sectors
   if(doAll) {
@@ -115,22 +115,15 @@ run_constantTempScenarios <- function(
     which_slr  <- slrSectorsLC0 %in% sectorsLC0
     ### Filter to sectors
     gcmSectors <- gcmSectors0[which_gcm]
-    slrSectors <- slrSectors0[which_slrgcm]
+    slrSectors <- slrSectors0[which_slr]
   } ### End if(doAll)
-  ### Whether data objects present
-  has_gcm       <- !(gcmData |> is.null())
-  has_slr       <- !(slrData |> is.null())
   ### Combine sectors and check whether there are any
   sectors       <- c(gcmSectors, slrSectors)
   any_gcm       <- gcmSectors |> length()
   any_slr       <- slrSectors |> length()
   ### Conditionals
-  do_gcm        <- has_gcm & any_gcm
-  do_slr        <- has_slr & any_slr
-
-  ###### ** Filter to Sectors ######
-  if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
-  if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
+  do_gcm        <- any_gcm
+  do_slr        <- any_slr
   c(do_gcm, do_slr) |> print()
 
   ###### GCM Scenarios ######
@@ -210,7 +203,7 @@ run_constantTempScenarios <- function(
     rm(aggLvls0)
 
     ### Glimpse results
-    # if(return0) resultsList[["df_int_byType"]] <- df_int_byType
+    if(return0) resultsList[["df_int_byType"]] <- df_int_byType
     if(testing) df_int_byType |> glimpse()
     ### Save results
     if(do_msg & saveFile) paste0("Saving integer scenario results by type...") |> message()
@@ -226,10 +219,10 @@ run_constantTempScenarios <- function(
     ### Note that the SLR sectors have no multipliers or impact types
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Formatting SLR scenario model data..." |> message()
-    ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T)
-    # ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T, years=slrYears)
+    # ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T)
+    ciraSLRData    <- get_fig7_slrDataObj(drivers=T, impacts=T, years=slrYears)
     ### Glimpse
-    # if(return0) resultsList[["ciraSLRData"]] <- ciraSLRData
+    if(return0) resultsList[["ciraSLRData"]] <- ciraSLRData
     if(testing) ciraSLRData[["slrImp"]] |> glimpse()
     if(testing) ciraSLRData[["slrCm" ]] |> glimpse()
     ### Save results
@@ -240,7 +233,7 @@ run_constantTempScenarios <- function(
 
   ###### Return ######
   gc()
-  if(return) return(resultsList)
-  else       return()
+  if(return0) return(resultsList)
+  else        return()
 } ### End function
 ###### End File ######
