@@ -292,12 +292,13 @@ create_DOW_plots <- function(
 
       ### Save plots as image files
       saved0 <- plots_gcm |> save_appendix_figures(
-        df0       = sum_gcm,
-        modelType = "GCM", ### Or SLR
-        fpath     = outPath,
-        device    = img_dev,
-        res       = imgRes,
-        units     = imgUnits
+        df0     = sum_gcm,
+        typeCol = "model_type",
+        type0   = "GCM",
+        fpath   = outPath,
+        device  = img_dev,
+        res     = imgRes,
+        units   = imgUnits
       ) ### End save_appendix_figures
     } ### End if(saveFile)
     rm(sum_gcm, plots_gcm)
@@ -402,12 +403,14 @@ create_DOW_plots <- function(
     ### Create the plots
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting SLR results by sector, year, GMSL (cm)..." |> message()
-    plots_slr  <- sum_slr |> plot_DoW(
+    nSectors   <- sum_slr  |> pull(sector) |> unique() |> length()
+    nCols0     <- nSectors %% 4
+    plots_slr  <- sum_slr  |> plot_DoW(
       types0  = c("SLR"), ### Model type: GCM or SLR
       years0  = slrYears,
       xCol    = "driverValue",
       yCol    = "impact_billions",
-      nCol    = 2,
+      nCol    = nCols0,
       thresh0 = breakChars
     ) ### End plot_DoW()
     ### Glimpse
@@ -433,28 +436,30 @@ create_DOW_plots <- function(
   # codePath  |> loadCustomFunctions()
   else if(!totals & do_slr) {
     ### Filter if !totals
+    sectors |> print()
     slrImpacts <- slrImpacts |> filter(sector %in% sectors)
 
     if(testing|do_msg) "Summarizing SLR results by sector, impact type, GMSL (cm)..." |> message()
-    sum_slr_byType <- get_fig7_slrImpacts(
-      slrDrivers  = slrHeights |> filter(year >= 2010, year <= 2090),
-      slrImpacts  = slrImpacts |> filter(year >= 2010, year <= 2090),
-      bySector    = TRUE,
-      sumCol      = "annual_impacts",
-      adjVal      = 1/10**9, ### Factor to multiply by
-      adjCol      = "impact_billions"
+    sum_slr <- get_fig7_slrImpacts(
+      slrDrivers = slrHeights |> filter(year >= 2010, year <= 2090),
+      slrImpacts = slrImpacts |> filter(year >= 2010, year <= 2090),
+      bySector   = TRUE,
+      aggOnly    = FALSE,
+      sumCol     = "annual_impacts",
+      adjVal     = 1/10**9, ### Factor to multiply by
+      adjCol     = "impact_billions"
     ) ### End get_fig7_slrImpacts
     ### Glimpse
-    if(return0) resultsList[["sum_slr_byType"]] <- sum_slr_byType
-    if(testing) sum_slr_byType |> glimpse()
+    if(return0) resultsList[["sum_slr"]] <- sum_slr
+    if(testing) sum_slr |> glimpse()
     ### Save
     if(do_msg & saveFile) paste0("Saving plot of SLR scenarios by year...") |> message()
-    if(saveFile) sum_slr_byType |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
+    if(saveFile) sum_slr |> save_data(fpath=outPath, fname=rda_data_slr, ftype="csv", row.names=F)
 
     ### Create SLR plots
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting SLR results by sector, impact type, GMSL (cm)..." |> message()
-    plots_slr_byType <- sum_slr_byType |> plot_DoW_by_sector(
+    plots_slr_byType <- sum_slr |> plot_DoW_by_sector(
       models  = c("SLR"),
       xCol    = "year",
       yCol    = "annual_impacts"
@@ -470,12 +475,13 @@ create_DOW_plots <- function(
 
       ### Save plots as image files
       saved0 <- plots_slr_byType |> save_appendix_figures(
-        df0       = sum_slr_byType,
-        modelType = "SLR", ### Or SLR
-        fpath     = outPath,
-        device    = img_dev,
-        res       = imgRes,
-        units     = imgUnits
+        df0     = sum_slr,
+        typeCol = "model_type",
+        type0   = "SLR",
+        fpath   = outPath,
+        device  = img_dev,
+        res     = imgRes,
+        units   = imgUnits
       ) ### End save_appendix_figures
     } ### End if(saveFile)
   } ### else(totals)
