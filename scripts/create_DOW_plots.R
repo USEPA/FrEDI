@@ -68,8 +68,8 @@ create_DOW_plots <- function(
 
   ### Plot and file names
   rda_data_tot  <- "gcm_DOW_totals"
-  rda_data_gcm  <- "gcm_DOW_results" |> paste(saveStr, sep="_")
-  rda_data_slr  <- "slr_DOW_results" |> paste(saveStr, sep="_")
+  rda_data_gcm  <- "gcm_results" |> paste(saveStr, sep="_")
+  rda_data_slr  <- "slr_results" |> paste(saveStr, sep="_")
   rda_plot_gcm  <- "gcm" |> paste(figStr, "plots", sep="_")
   rda_plot_slr  <- "slr" |> paste(figStr, "plots", sep="_")
 
@@ -196,7 +196,7 @@ create_DOW_plots <- function(
       bySector    = FALSE,
       sumCol      = "annual_impacts",
       impactYears = c("Interpolation"),
-      models      = c("GCM"),
+      models      = "GCM",
       aggOnly     = aggOnly,
       years       = gcmYears,
       adjVal      = 1/10**9, ### Factor to multiply by
@@ -217,7 +217,7 @@ create_DOW_plots <- function(
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Plotting GCM results by sector, degree of warming (DOW)..." |> message()
     plots_gcm  <- sum_gcm |> plot_DoW(
-      types0  = c("GCM"), ### Model type: GCM or SLR
+      types0  = "GCM", ### Model type: GCM or SLR
       years   = gcmYears,
       xCol    = "driverValue",
       yCol    = "annual_impacts",
@@ -409,7 +409,7 @@ create_DOW_plots <- function(
       types0  = c("SLR"), ### Model type: GCM or SLR
       years0  = slrYears,
       xCol    = "driverValue",
-      yCol    = "impact_billions",
+      yCol    = "annual_impacts",
       nCol    = nCols0,
       thresh0 = breakChars
     ) ### End plot_DoW()

@@ -293,8 +293,8 @@ jobs:
             if(doFigures) {
               ### Artifact paths
               artDir    <- oPath0  |> file.path("scenario_results")
-              gcmName   <- "gcm_DOW_results_byType" |> paste0(".", "rda")
-              slrName   <- "slr_DOW_results_byType" |> paste0(".", "rda")
+              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
+              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
               gcmPath   <- artDir  |> file.path(gcmName)
               slrPath   <- artDir  |> file.path(slrName)
               ### Initialize data

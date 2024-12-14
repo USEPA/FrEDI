@@ -72,8 +72,8 @@ run_constantTempScenarios <- function(
 
   ### Output file names
   csv_inputs    <- "DOW_scenarios"
-  rda_gcm       <- "gcm_DOW_results_byType"
-  rda_slr       <- "slr_DOW_results_byType"
+  rda_gcm       <- "gcm_DOW_scenario_results"
+  rda_slr       <- "slr_scenario_results"
 
   ###### ** Load Code ######
   # ### Custom function to load code from a specified path
