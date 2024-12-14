@@ -118,7 +118,7 @@ save_appendix_figures <- function(
     createDir = TRUE   ### Whether to create directory if it doesn't exist
 ){
   ### Create directory if it doesn't exist
-  fdir      <- fpath; rm("fpath")
+  fdir      <- fpath; rm(fpath)
   fdir      <- fdir |> file.path("images")
   created0  <- fdir |> check_and_create_path(createDir=createDir)
   ### Prepare data
@@ -148,9 +148,9 @@ save_appendix_figures <- function(
     # df0 |> glimpse()
 
     ### Unique sector values
-    c_types   <- df_x[["impactType"]] |> unique()
-    c_vars    <- df_x[["variant"   ]] |> unique()
-    c_models  <- df_x[["model"     ]] |> unique()
+    c_types   <- df_x |> pull(impactType) |> unique()
+    c_vars    <- df_x |> pull(variant) |> unique()
+    c_models  <- df_x |> pull(model) |> unique()
     # c_years |> print(); c_types |> print(); c_vars |> print();
 
     ### Number of values

@@ -8,6 +8,7 @@ plot_DOW_byImpactTypes <- function(
     modelType = "GCM",
     nTicks    = 5,
     silent    = TRUE,
+    years0    = c(2010:2100),
     repo0     = "FrEDI",
     options   = list(
       title      = "Impacts by Degrees of Warming",
@@ -19,7 +20,7 @@ plot_DOW_byImpactTypes <- function(
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
-    )
+    ) ### End options
 ){
   ###### Messaging ######
   print_msg <- !silent
@@ -28,8 +29,8 @@ plot_DOW_byImpactTypes <- function(
   ###### Values ######
   ### Model Type
   # type0 |> print()
-  typeLC0   <- type0 |> tolower()
-  repo0     <- repo0 |> tolower()
+  typeLC0   <- modelType |> tolower()
+  repo0     <- repo0     |> tolower()
   do_gcm    <- "gcm" %in% typeLC0
   do_slr    <- "slr" %in% typeLC0
   # modelType |> print(); do_gcm |> print(); do_slr |> print()
@@ -76,11 +77,11 @@ plot_DOW_byImpactTypes <- function(
 
   ###### Plot Setup ######
   ###### ** X Breaks ######
+  xInfo      <- NULL
   do_xInfo   <- xInfo |> is.null()
   if(do_xInfo) {
     xInfo <- xInfo |> getXAxisScale(
       xCol    = xCol,
-      maxYear = 2100,
       yrUnit  = 20,
       nTicks  = nTicks
     ) ### End getXAxisScale

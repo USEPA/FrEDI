@@ -20,7 +20,7 @@ plot_DOW_bySector <- function(
       marginUnit = "cm",
       nameBreak  = 18  , ### Sector name break
       theme      = NULL
-    )
+    ) ### End options
 ){
   ###### Format Data ######
   df0        <- df0  |> filter(sector==sector0)

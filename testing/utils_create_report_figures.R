@@ -9,7 +9,8 @@ scaledImpactPlotTitles <- function(
   df0     <- tibble(modelType = c("gcm", "slr"))
   df0     <- df0 |> mutate(repo       = "FrEDI Data")
   df0     <- df0 |> mutate(title      = c("Scaled Impacts by Degrees of Warming", "Scaled Impacts by Year"))
-  df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "Year"))
+  df0     <- df0 |> mutate(xTitle     = c("Degrees of Warming (°C)", "Year"))
+  # df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "Year"))
   # df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"Year\""))
   df0     <- df0 |> mutate(yTitle     = c("Scaled Impacts"))
   df0     <- df0 |> mutate(lgdLbl     = c("Model", "Scenario"))
@@ -24,7 +25,8 @@ scaledImpactPlotTitles <- function(
   df1     <- tibble(modelType = c("gcm", "slr"))
   df1     <- df1 |> mutate(repo       = "FrEDI")
   df1     <- df1 |> mutate(title      = c("Impacts by Degrees of Warming", "Impacts by GMSL (cm)"))
-  df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "GMSL (cm)"))
+  df1     <- df1 |> mutate(xTitle     = c("Degrees of Warming (°C)", "GMSL (cm)"))
+  # df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "GMSL (cm)"))
   # df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"GMSL (cm)\""))
   df1     <- df1 |> mutate(yTitle     = c("Impacts ($2015)"))
   df1     <- df1 |> mutate(lgdLbl     = c("Model", "Year"))
@@ -52,6 +54,8 @@ get_scaledImpactPlotTitles <- function(
   ### Values
   type0     <- type0 |> tolower()
   repo0     <- repo0 |> tolower()
+  ### Models
+  do_gcm    <- "gcm" %in% type0
   ### Filter to data
   df0       <- df0   |> filter(modelType %in% type0)
   df0       <- df0   |> filter((repo |> tolower()) %in% repo0)
@@ -60,7 +64,7 @@ get_scaledImpactPlotTitles <- function(
   list0     <- df0   |> as.list()
   listNames <- list0 |> names()
   ### Parse data
-  list0[["xTitle" ]] <- parse(text=list0[["xTitle" ]])
+  # if(do_gcm) list0[["xTitle" ]] <- parse(text=list0[["xTitle" ]])
   list0[["margins"]] <- parse(text=list0[["margins"]])
   list0[["theme"  ]] <- NULL
   ### If options are null, use list0

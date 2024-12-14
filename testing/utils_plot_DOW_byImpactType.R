@@ -13,6 +13,8 @@ plot_DOW_byImpactType <- function(
     refPlot = FALSE, ### Whether to do a ref plot
     nTicks  = 5,
     silent  = TRUE,
+    years0  = c(2010:2100),
+    repo0   = "FrEDI",
     options = list(
       title      = "Impacts by Degrees of Warming",
       # subtitle   = NULL,
@@ -22,11 +24,11 @@ plot_DOW_byImpactType <- function(
       margins    = c(0, 0, .15, 0),
       marginUnit = "cm",
       theme      = NULL
-    )
+    ) ### End options
 ){
   ###### Messaging ######
-  print_msg <- !silent
-  if(print_msg){ "Running plot_DOW_byImpactType()..." |> message()}
+  print_msg  <- !silent
+  if(print_msg) "Running plot_DOW_byImpactType()..." |> message()
 
   ###### Format Data ######
   ###### ** Filter Data ######
@@ -44,6 +46,8 @@ plot_DOW_byImpactType <- function(
   typeLC0    <- type0 |> tolower()
   do_gcm     <- "gcm" %in% typeLC0
   do_slr     <- "slr" %in% typeLC0
+  ### Whether to do marsh migration
+  doMarsh    <- (sector0 %in% "Marsh Migration (Primary)") | (impType0 %in% "Lost Marsh Area")
 
   ###### Axis Scales & Breaks ######
   ###### ** Sector Info ######
@@ -57,7 +61,6 @@ plot_DOW_byImpactType <- function(
   if(do_xInfo) {
     xInfo <- xInfo |> getXAxisScale(
       xCol    = xCol,
-      maxYear = 2100,
       yrUnit  = 20,
       nTicks  = nTicks
     ) ### End getXAxisScale
@@ -72,7 +75,7 @@ plot_DOW_byImpactType <- function(
   yInfo      <- infoList0[["minMax"]] |> filter(plotRow == row0)
   yInfo      <- yInfo |> mutate(sector=sector0)
   yInfo      <- yInfo |> get_colScale(col0="summary_value", nTicks=nTicks)
-  # yInfo      <- yInfo |> get_colScale(col0="summary_value", nTicks=nTicks)
+  # if(doMarsh) yInfo <- df0 |> get_colScale(col0="physical_impacts", nTicks=nTicks)
   ### Additional info
   y_p10      <- yInfo[["p10"   ]]
   y_denom    <- yInfo[["denom" ]]
@@ -149,6 +152,16 @@ plot_DOW_byImpactType <- function(
   shapeVals <- 1:numShapes
   colorVals <- fun_manual_colors()
 
+  ###### Special Cases ######
+  ### Plot Marsh Migration (Primary), Impact Type: "Lost Marsh Area" separately
+  # doMarsh   <- (sector0 %in% "Marsh Migration (Primary)") | (impType0 %in% "Lost Marsh Area")
+  # if(doMarsh) {
+  #   xTitle <- xTitle |> str_replace("Impacts", "Physical Impacts")
+  #   xTitle <- xTitle |> str_replace(", \\$2015", "")
+  #   xTitle |> print()
+  # } ### End if(doMarsh)
+
+
   ###### Add in Model info ######
   if(do_gcm)  {
     ### Get model info
@@ -183,8 +196,6 @@ plot_DOW_byImpactType <- function(
 
   ###### ** Initialize Plot #####
   ### Initialize plot
-  # plot0  <- ggplot()
-  # plot0  <- df0 |> ggplot()
   plot0  <- df0_1 |> ggplot(aes(
     x     = .data[[xCol]],
     y     = .data[[yCol]],
@@ -193,14 +204,6 @@ plot_DOW_byImpactType <- function(
 
   ###### ** Plot First Set ######
   ### Add geomline
-  # plot0  <- plot0 + geom_line (
-  #   data = df0_1, aes(
-  #     x     = .data[[xCol]],
-  #     y     = .data[[yCol]],
-  #     color = .data[["model"]]
-  #   ), ### End aes
-  #   alpha=alpha0
-  # ) ### End geom_point
   plot0  <- plot0 + geom_line (alpha=alpha0)
 
   ###### Plot Second Set ######
@@ -221,8 +224,7 @@ plot_DOW_byImpactType <- function(
       data = df0_2, aes(
         x     = .data[[xCol]],
         y     = .data[[yCol]],
-        color = .data[["model"]],
-        shape = .data[["model"]]
+        color = .data[["model"]]
       ), ### End aes
       alpha = alpha0
     ) ### End geom_point

@@ -130,12 +130,12 @@ plot_DOW_byModelType <- function(
 
   ###### ** Common Plot Elements ######
   ### Get common plot elements from reference plot
-  title0 |> print(); yTitle |> print(); xTitle |> print()
+  # title0 |> print(); yTitle |> print(); xTitle |> print()
   plot_spacer   <- ggplot() + theme_void()
   plot_title    <- text_grob(title0, color="black", face="bold", size =14, hjust=0.5)
   plot_yTitle   <- text_grob(yTitle, color="black", rot=90)
   plot_xTitle   <- text_grob(xTitle, color="black")
-  plot_xTitle |> print()
+  # plot_xTitle |> print()
   plot_legend   <- refPlot_x |> ggpubr::get_legend()
   # return(list(plots=plotList_x, lgd=plot_legend))
   plotList0     <- list(plots=plotList_x, lgd=plot_legend)
