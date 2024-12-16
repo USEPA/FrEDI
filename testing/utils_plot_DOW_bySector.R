@@ -153,7 +153,7 @@ plot_DOW_bySector <- function(
 
   ###### Create Plot ######
   ###### ** Initialize Plot #####
-  # df0_1 |> glimpse()
+  df0_1 |> glimpse()
   plot0     <- df0_1 |> ggplot(aes(
     x     = .data[[xCol]],
     y     = .data[[yCol]],

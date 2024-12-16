@@ -17,8 +17,8 @@ summarize_DOW_data <- function(
   ###### Prep data #######
   ### Keep only observations for specified reference year
   ### Drop model averages
-  # data      <- data |> filter(model!="Average")
-  data      <- data |> filter(model %in% c("Average", "Model Average"))
+  data      <- data |> filter(model!="Average")
+  # data      <- data |> filter(model %in% c("Average", "Model Average"))
 
   #### Filter to specific year
   ref_year  <- year
@@ -27,10 +27,11 @@ summarize_DOW_data <- function(
   n_years   <- c_years |> length()
 
   ### Standardize the column name
-  drop0     <- sumCol
-  data[["yCol"]] <- data[[sumCol]]
-  # data |> names() |> print()
-  data      <- data |> select(-all_of(drop0))
+  # drop0     <- sumCol
+  # data[["yCol"]] <- data[[sumCol]]
+  # # data |> names() |> print()
+  # data      <- data |> select(-all_of(drop0))
+  data      <- data |> rename_at(c(sumCol), ~c("yCol"))
   data      <- data |> mutate(is_NA = yCol |> is.na())
   rm(drop0)
 
@@ -61,13 +62,15 @@ summarize_DOW_data <- function(
 
   ### Main group vars
   main_groupVars <- c("sector", "model_type", "model", "driverValue")
-  which_main     <- (main_groupVars %in% names0) |> which()
-  main_groupVars <- main_groupVars[which_main]
+  # which_main     <- (main_groupVars %in% names0) |> which()
+  # main_groupVars <- main_groupVars[which_main]
+  main_groupVars <- main_groupVars |> get_matches(y=names0, matches=T)
 
   ### Figure out which factor columns are in the data
-  groupVars      <- groupVars
-  which_other    <- (groupVars %in% names0) |> which()
-  groupVars      <- groupVars[which_other]
+  # groupVars      <- groupVars
+  # which_other    <- (groupVars %in% names0) |> which()
+  # groupVars      <- groupVars[which_other]
+  groupVars      <- groupVars |> get_matches(y=names0, matches=T)
   # data |> nrow() |> print()
 
   ###### Summarize by Region ######
@@ -97,7 +100,8 @@ summarize_DOW_data <- function(
   ###### Summarize by Impact Type ######
   ### Impact Type
   if(doImpTypes){
-    impTypeGroups0 <- c(groupVars[which(groupVars!="impactType")])
+    # impTypeGroups0 <- c(groupVars[which(groupVars!="impactType")])
+    impTypeGroups0 <- groupVars |> get_matches(y="impactType", matches=F)
     impTypeGroups0 <- impTypeGroups0 |> c(main_groupVars) |> c("region") |> unique()
     # impTypeGroups0 |> print()
     #### Count number of impact types
@@ -161,17 +165,13 @@ summarize_DOW_data <- function(
       })()
     } ### End if n_impTypes > 1
   } ### End if impactType in data
-  # "got here" |> print()
-  # data |> filter(!is.na(yCol)) |> nrow() |> print()
 
   ###### Summarize By Sector ######
   all_group_vars <- c(main_groupVars, groupVars)
-  # all_group_vars |> print()
-  c_regions      <- data |> pull(region) |> unique() #; c_regions |> print()
+  c_regions      <- data |> pull(region) |> unique()
   n_regions      <- c_regions |> length()
-  # c_regions |> print()
-  # n_regions |> print()
   group0 <- all_group_vars
+  # c_regions |> print(); n_regions |> print()
 
   ### Summarize national values
   group0 <- group0 |> c("threshold") |> unique()
@@ -194,11 +194,11 @@ summarize_DOW_data <- function(
   # data |> filter(is.na(yCol)) |> nrow() |> print()
 
   ###### Return ######
-  drop0  <- c("yCol")
-  data[[sumCol]] <- data[["yCol"]]
   # data |> glimpse()
-  # data |> names() |> print()
-  data   <- data |> select(-all_of(drop0))
+  # drop0  <- c("yCol")
+  # data[[sumCol]] <- data[["yCol"]]
+  # data   <- data |> select(-all_of(drop0))
+  data   <- data |> rename_at(c("yCol"), ~sumCol)
   return(data)
 }
 
