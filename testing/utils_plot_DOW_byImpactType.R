@@ -73,7 +73,7 @@ plot_DOW_byImpactType <- function(
 
   ###### ** Y-Breaks ######
   yInfo      <- infoList0[["minMax"]] |> filter(plotRow == row0)
-  yInfo      <- yInfo |> mutate(sector=sector0)
+  yInfo      <- yInfo |> mutate(sector = sector0)
   yInfo      <- yInfo |> get_colScale(col0="summary_value", nTicks=nTicks)
   # if(doMarsh) yInfo <- df0 |> get_colScale(col0="physical_impacts", nTicks=nTicks)
   ### Additional info

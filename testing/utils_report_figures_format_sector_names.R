@@ -28,9 +28,9 @@ fun_hasStringValue <- function(
 ###### check_str1_in_str2 ######
 ### Function to check if one string is present in another
 check_str2_in_str1 <- function(
-    string =NULL,
-    pattern=NULL,
-    default=TRUE
+    string  = NULL,
+    pattern = NULL,
+    default = TRUE
 ){
   ### Check that string values exist
   hasStr1  <- fun_hasStringValue(str0=string)
@@ -170,7 +170,7 @@ fun_compareStrings <- function(
         sub_x  <- sub_x
         word_x <- word_x
       } else          {
-        sub_x  <- c(sub_x, word_x) |> paste(collapse = " ")
+        sub_x  <- c(sub_x, word_x) |> paste(collapse=" ")
         word_x <- word_x
       } ### End else(wordInSub_x)
     } ### End else(subInNew_x)
@@ -252,6 +252,7 @@ fun_getLineBreaks <- function(
     df_x       <- df_x |> mutate(word1  = word0 |> substr(start=start0, stop=end0))
     df_x       <- df_x |> mutate(nChar  = word1 |> nchar())
     # df_x |> print()
+
     ####### Figure out where to put new line characters ######
     ### x_new is new x, x_sub is temporary combination
     ### Initialize x_sub and x_new
@@ -356,7 +357,7 @@ standardize_lines <- function(
     ### Get number of new lines
     y_findLines  <- gregexpr(pattern = newline, y) #; x_findLines
     y_numLines   <- y_findLines[[1]] |> length() ### ; numSplit0
-    y_numLines   <- ifelse(y_findLines[[1]][1] == -1, 0, y_numLines)
+    y_numLines   <- (y_findLines[[1]][1] == -1) |> ifelse(0, y_numLines)
     return(y_numLines)
   }) |> unlist()
 

@@ -257,6 +257,7 @@ create_DOW_plots <- function(
       bySector    = TRUE,
       sumCol      = "annual_impacts",
       impactYears = c("N/A", "2010", "2090"),
+      years       = gcmYears,
       models      = c("GCM"),
       adjVal      = 1/10**9, ### Factor to multiply by
       adjCol      = "impact_billions",

@@ -418,7 +418,7 @@ run_scenario <- function(
     df0,      ### Data frame with scenario info
     fredi     = TRUE,
     sectors   = FrEDI::get_sectorInfo(), ### Which sectors
-    years     = c(2090), ### Years to which to filter results
+    years     = c(2010, 2090), ### Years to which to filter results
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
     aggLevels = c("modelaverage", "national"),
@@ -484,7 +484,7 @@ run_scenarios <- function(
     col0      = "scenario", ### Scenario column
     fredi     = TRUE,
     sectors   = FrEDI::get_sectorInfo(), ### Which sectors
-    years     = c(2090), ### Years to which to filter results
+    years     = c(2010, 2090), ### Years to which to filter results
     aggLevels = c("modelaverage", "national"),
     scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
     joinCols  = c("year"),
@@ -526,7 +526,7 @@ sum_impacts_byDoW <- function(
     models      = c("GCM", "SLR"),
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
-    impactYears = c("Interpolation", "NA", "2010", "2090"),
+    impactYears = c("Interpolation", "N/A", "2010", "2090"),
     aggOnly     = FALSE,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions",
@@ -539,7 +539,8 @@ sum_impacts_byDoW <- function(
   year0      <- year
   rm(scenarios)
 
-  do_gcm     <- "gcm" %in% (models |> tolower())
+  modelsLC0  <- models |> tolower()
+  do_gcm     <- "gcm" %in% modelsLC0
 
   ### Filter to includeaggregate>=1
   ### Filter to sector primary
@@ -547,13 +548,20 @@ sum_impacts_byDoW <- function(
   if(aggOnly) df0 <- df0 |> filter(includeaggregate >= 1)
   if(primary) df0 <- df0 |> filter(sectorprimary    == 1)
   if(do_gcm ) df0 <- df0 |> filter(year == year0)
+  # "got here2" |> print()
+  # df0 |> glimpse()
 
   ### Filter to scenarios
   ### Filter to appropriate models
   ### Filter to appropriate impact years
+  # scenarios0 |> print(); df0 |> pull(scenario) |> unique() |> print()
+  # modelsLC0 |> print(); df0 |> pull(model_type) |> unique() |> print()
+  # years0 |> print(); df0 |> pull(impactYear) |> unique() |> print()
   df0        <- df0 |> filter(scenario %in% scenarios0)
-  df0        <- df0 |> filter(model_type %in% models)
+  df0        <- df0 |> filter((model_type |> tolower()) %in% modelsLC0)
   df0        <- df0 |> filter(impactYear %in% years0)
+  # "got here3" |> print()
+  # df0 |> glimpse()
 
   ### Summarize by Degree of Warming
   list0      <- years0 |> map(function(.z){
@@ -577,7 +585,8 @@ sum_impacts_byDoW <- function(
   rm(list0)
 
   ### Adjust values
-  df0[[adjCol]] <- df0[["annual_impacts"]] * adjVal
+  # df0[[adjCol]] <- df0[["annual_impacts"]] * adjVal
+  df0[[adjCol]] <- df0[[sumCol]] * adjVal
 
   ### Select columns
   # select0    <- c("sector", "region", "model_type", "model", "summaryYear", "driverValue", "annual_impacts", adjCol) |> unique()
@@ -593,11 +602,11 @@ sum_impacts_byDoW_years <- function(
     df0,       ### Outputs of sum_impactsByDegree
     scenarios,
     bySector    = FALSE,
-    years       = c(2090),
+    years       = c(2010, 2090),
     models      = c("GCM", "SLR"),
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
-    impactYears = c("Interpolation", "NA", "2010", "2090"),
+    impactYears = c("Interpolation", "N/A", "2010", "2090"),
     aggOnly     = FALSE,
     adjVal      = 1/10**9, ### Factor to multiply by
     adjCol      = "impact_billions",
@@ -612,6 +621,8 @@ sum_impacts_byDoW_years <- function(
   ### Filter to sector primary
   if(aggOnly) df0 <- df0 |> filter(includeaggregate >= 1)
   if(primary) df0 <- df0 |> filter(sectorprimary    == 1)
+  # "got here1" |> print()
+  # df0 |> glimpse()
 
   ### Run scenarios
   ### Get list
@@ -634,32 +645,6 @@ sum_impacts_byDoW_years <- function(
     gc()
     return(df_x)
   }) ### End map
-  # list0      <- list()
-  # for(year_i in years0) {
-  #   ### Message user
-  #   "Summarizing values for " |> paste0((years0 == year_i) |> which(), "/" , nYears, " years...") |> message()
-  #
-  #   ### Summarize DOW data
-  #   df_i <- df0 |> sum_impacts_byDoW(
-  #     scenarios   = scenarios,
-  #     bySector    = bySector,
-  #     sumCol      = sumCol,
-  #     groupVars   = groupVars,
-  #     impactYears = impactYears,
-  #     year        = year_i,
-  #     models      = models,
-  #     aggOnly     = aggOnly,
-  #     adjVal      = adjVal,
-  #     adjCol      = adjCol,
-  #     silent      = silent
-  #   ) ### End sum_impactsByDegree()
-  #
-  #   ### Add to list
-  #   list0[[year_i]] <- df_i
-  #
-  #   ### Drop values
-  #   rm(year_i, df_i)
-  # } ### End for(year_i in years0)
   rm(df0)
 
   ### Bind values together
@@ -915,7 +900,7 @@ get_fig7_slrImpacts <- function(
     bySector    = FALSE,
     sumCol      = "annual_impacts",
     # groupVars   = c("variant", "impactType", "impactYear"),
-    impactYears = c("Interpolation", "NA", "2010", "2090"),
+    impactYears = c("Interpolation", "N/A", "2010", "2090"),
     aggOnly    = TRUE, ### Whether to filter to includeaggregate>=1
     years      = c(2050, 2090),
     adjVal     = 1/10**9, ### Factor to multiply by
@@ -1226,11 +1211,12 @@ plot_DoW_by_sector <- function(
 
   ### Model Type Checks
   typeLC0    <- models |> tolower()
-  do_gcm     <- "gcm" %in% models
-  do_slr     <- "slr" %in% models
+  do_gcm     <- "gcm" %in% typeLC0
+  do_slr     <- "slr" %in% typeLC0
 
   ### Dataframe to iterate over
   df_types   <- models |> fun_create_df_types(years0=years0, bySector=TRUE, df0=df0)
+  df_types |> glimpse()
 
   ### Get list
   list0      <- list()
@@ -1249,23 +1235,32 @@ plot_DoW_by_sector <- function(
       x1_j     <- types_i[["sector"]][row_j]
       x2_j     <- types_i[["year"  ]][row_j]
       x_j      <- types_i[["label" ]][row_j]
-      x_j |> print()
+      # x_j |> print()
 
       ### Get type and condition
       type_j   <- types_i[["model_type"]][row_j]
       do_gcm_j <- "gcm" %in% (type_j |> tolower())
 
       ### Filter to sector
+      # x1_j |> print(); df0  |> pull(sector) |> unique() |> print()
       df_j     <- df0  |> filter(sector == x1_j)
+      x2_j |> print(); df0  |> pull(summaryYear) |> unique() |> print()
+      df0  |> pull(impactYear) |> unique() |> print()
+      "got here1" |> print()
+      df_j |> glimpse()
 
       ### If do_gcm, filter to appropriate years
+
       if(do_gcm_j){
-        yrs_j  <- "NA" |> c(x2_j)
+        yrs_j  <- "N/A" |> c(x2_j) |> unique()
+        yrs_j |> print()
         df_j   <- df_j |> filter(summaryYear == x2_j)
         df_j   <- df_j |> filter(impactYear %in% yrs_j)
         # df_j |> years0()
         rm(yrs_j)
       } ### End if(do_gcm_j)
+      "got here2" |> print()
+      df_j |> glimpse()
 
       ### Plot j
       plot_j  <- df_j |> plot_DOW_byImpactTypes(
