@@ -3,9 +3,9 @@
 ###### Load Packages
 require(tidyverse)
 require(ggpubr)
+require(FrEDI)
 # require(arrow)
 # require(cowplot)
-# require(FrEDI)
 
 ###### create_DOW_plots
 create_DOW_plots <- function(
@@ -167,8 +167,8 @@ create_DOW_plots <- function(
   ###### ** National Combined ######
   if(totals & do_gcm) {
     if(testing|do_msg) "Aggregating integer scenario GCM sector results..." |> message()
-    #### Get data object
-    # gcmData  <- gcmData |>
+    #### Get #### Get scenarios
+    scenarios0 <- gcmData |> pull(scenario) |> unique()
     #### Aggregate Impact Types, Impact Years
     gcmData  <- gcmData |> run_scenarios(
       col0      = "scenario",
@@ -192,7 +192,7 @@ create_DOW_plots <- function(
     # codePath  |> loadCustomFunctions()
     if(testing|do_msg) "Summarizing GCM results by sector, degree of warming (DOW)..." |> message()
     sum_gcm <- gcmData |> sum_impacts_byDoW_years(
-      scenarios   = c_scen_con,
+      scenarios   = scenarios0,
       bySector    = FALSE,
       sumCol      = "annual_impacts",
       impactYears = c("Interpolation"),
@@ -211,7 +211,7 @@ create_DOW_plots <- function(
     if(saveFile) sum_gcm |> save_data(fpath=outPath, fname=rda_data_gcm, ftype="csv", row.names=F)
     # return(list(x=c_scen_con, y=c_scen_glo, z=gcmData, w=sum_gcm))
 
-    ###### ** -- -- Plots
+    ###### ** -- Plots
     #### Create plots
     ### Scale isn't the same across sectors
     # codePath  |> loadCustomFunctions()
@@ -246,13 +246,14 @@ create_DOW_plots <- function(
   } ### End if(totals)
   ###### ** Appendix Figures ######
   else if(!totals & do_gcm) {
+    #### Get scenarios
+    scenarios0 <- gcmData |> pull(scenario) |> unique()
     ### Filter data
     gcmData <- gcmData |> filter(sector %in% sectors)
-
     ### Message user
     if(testing|do_msg) "Summarizing GCM results by sector, impact type, degree of warming (DOW)..." |> message()
     sum_gcm <- gcmData |> sum_impacts_byDoW_years(
-      scenarios   = c_scen_con,
+      scenarios   = scenarios0,
       bySector    = TRUE,
       sumCol      = "annual_impacts",
       impactYears = c("NA", "2010", "2090"),
