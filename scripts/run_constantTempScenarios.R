@@ -3,9 +3,9 @@
 ###### Load Packages
 require(tidyverse)
 require(ggpubr)
+require(FrEDI)
 # require(arrow)
 # require(cowplot)
-# require(FrEDI)
 
 ###### create_DoW_results
 run_constantTempScenarios <- function(
@@ -166,14 +166,22 @@ run_constantTempScenarios <- function(
   ### Message
   if(do_gcm) {
     if(testing|do_msg) "Creating tibble of integer scenarios..." |> print()
-    ### Create constant temp scenarios
-    inputs_df_int  <- df_scenarios |> nrow() |> seq_len() |> map(function(.i, df_i=df_scenarios[.i,]){
-      create_constant_temp_scenario(
-        temp0 = df_i[["temp_C"  ]],
-        type0 = df_i[["tempType"]],
-        scen0 = df_i[["scenario"]]
-      ) ### End create_constant_temp_scenario
-    }) |> bind_rows()
+    # ### Create constant temp scenarios
+    # inputs_df_int  <- df_scenarios |> nrow() |> seq_len() |> map(function(.i, df_i=df_scenarios[.i,]){
+    #   create_constant_temp_scenario(
+    #     temp0 = df_i[["temp_C"  ]],
+    #     type0 = df_i[["tempType"]],
+    #     scen0 = df_i[["scenario"]]
+    #   ) ### End create_constant_temp_scenario
+    # }) |> bind_rows()
+    inputs_df_int  <- df_scenarios |> (function(df0){
+        renameAt0 <- c("temp_C", "tempType", "scenario")
+        renameTo0 <- c("temp0", "type0", "scen0")
+        df0       <- df0 |> rename_at(c(renameAt0), ~renameTo0)
+        df0       <- df0 |> select(all_of(renameTo0))
+      })()
+    inputs_df_int <- inputs_df_int |> as.list()
+    inputs_df_int <- inputs_df_int |> pmap(create_constant_temp_scenario) |> bind_rows()
     ### Glimpse, message, & save
     # if(return0) resultsList[["df_inputs"]] <- inputs_df_int
     inputs_df_int |> save_data(fpath=outPath, fname=csv_inputs, ftype="csv", row.names=F)
@@ -188,6 +196,7 @@ run_constantTempScenarios <- function(
     if(testing|do_msg) "Running integer scenarios..." |> message()
     aggLvls0       <- c("modelaverage", "national")
     df_int_byType  <- inputs_df_int |>
+      # filter(scenario %in% "Other_Integer_1") |>
       run_scenarios(
       col0      = "scenario",
       fredi     = TRUE,
@@ -201,6 +210,9 @@ run_constantTempScenarios <- function(
       outPath   = outPath
     ) ### End run_scenarios
     rm(aggLvls0)
+
+    ### Drop SLR values
+    df_int_byType  <- df_int_byType |> filter(model_type %in% "GCM")
 
     ### Glimpse results
     if(return0) resultsList[["df_int_byType"]] <- df_int_byType
