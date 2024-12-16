@@ -294,8 +294,7 @@ create_constant_temp_scenario <- function(
 #### Get scenario inputs
 #### Get inputs list for a single scenario
 get_scenario_inputsList <- function(
-    df0,   ### Data
-    byState = TRUE
+    df0   ### Data
 ){
   ### df0 names
   names0  <- df0 |> names()
@@ -306,8 +305,8 @@ get_scenario_inputsList <- function(
   gdp0    <- NULL
   pop0    <- NULL
   ### Pop columns
-  if(byState){popCols <- c("state", "postal")} else{c()}
-  popCol <- byState |> ifelse("state_pop", "reg_pop")
+  popCols <- c("state", "postal")
+  popCol  <- c("pop")
   ### Columns for scenarios
   cTemp0  <- c("year", "temp_C_conus")
   cTemp1  <- c("year", "temp_C")
@@ -330,25 +329,25 @@ get_scenario_inputsList <- function(
     if(doTemp0){
       temp0 <- temp0 |> rename_at(c("temp_C_conus"), ~c("temp_C"))
     } ### End if(doTemp0)
-    list0[["tempInput"]] <- temp0
+    list0[["temp"]] <- temp0
     rm(temp0)
   } ### End if(doTemp)
 
   if(doSlr){
     slr0   <- df0 |> select(all_of(cSlr))
-    list0[["slrInput"]] <- slr0
+    list0[["slr"]] <- slr0
     rm(slr0)
   } ### End if(doSlr)
 
   if(doGdp){
     gdp0   <- df0 |> select(all_of(cGdp))
-    list0[["gdpInput"]] <- gdp0
+    list0[["gdp"]] <- gdp0
     rm(gdp0)
   } ### End if(doGdp)
 
   if(doPop){
     pop0   <- df0 |> select(all_of(cPop))
-    list0[["popInput"]] <- pop0
+    list0[["pop"]] <- pop0
     rm(pop0)
   } ### End if(doPop)
 
@@ -366,12 +365,17 @@ run_fredi_scenario <- function(
   ### Filter to scenario
   df1     <- df0 |> select(all_of(scenCols)); rm(df0)
   list1   <- df1 |> get_scenario_inputsList()
+  # list1$temp |> glimpse()
+
   ### Run FrEDI
   df2     <- FrEDI::run_fredi(inputsList=list1, sectorList=sectors, aggLevels="none")
+  # df2 |> pull(driverValue) |> unique() |> print()
+
   ### Join scenarios
   # df1 |> names() |> print();  df2 |> names() |> print();
   df2     <- df2 |> left_join(df1, by=c(joinCols))
   # df2 |> names() |> print();
+
   ### Return
   gc()
   return(df2)
@@ -400,6 +404,8 @@ agg_fredi_scenario <- function(
   group0  <- group0 |> c(drop0)
   df0     <- df0    |> FrEDI::aggregate_impacts(aggLevels=aggLevels, groupByCols=group0)
   # df0     <- df0 |> FrEDI::aggregate_impacts(aggLevels = aggLevels)
+  # df0 |> pull(driverValue) |> unique() |> print()
+
   ### Return
   gc()
   return(df0)
@@ -516,7 +522,7 @@ sum_impacts_byDoW <- function(
     df0,
     scenarios,
     bySector    = FALSE,
-    year        = 2010,
+    year        = 2090,
     models      = c("GCM", "SLR"),
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
@@ -562,22 +568,6 @@ sum_impacts_byDoW <- function(
     gc()
     return(df_z)
   })
-  # list0      <- list()
-  # for(year_i in years0) {
-  #   ### Summarize DOW data
-  #   df_i <- df0 |> summarize_DOW_data(
-  #     year       = year0,
-  #     bySector   = bySector,
-  #     sumCol     = sumCol,
-  #     groupVars  = groupVars,
-  #     impactYear = year_i,
-  #     silent     = silent
-  #   ) ### End summarize_DOW_data()
-  #   ### Add to list
-  #   list0[[year_i]] <- df_i
-  #   ### Drop values
-  #   rm(year_i, df_i)
-  # } ### End for(year_i in years0)
   rm(df0)
 
   ### Bind together
@@ -603,7 +593,7 @@ sum_impacts_byDoW_years <- function(
     df0,       ### Outputs of sum_impactsByDegree
     scenarios,
     bySector    = FALSE,
-    years       = c(2010, 2090),
+    years       = c(2090),
     models      = c("GCM", "SLR"),
     sumCol      = "annual_impacts",
     groupVars   = c("variant", "impactType", "impactYear"),
