@@ -62,6 +62,11 @@ plot_DOW_bySector <- function(
   # y_label    <- y_label |> paste0(y_prelabel, "$2015")
   # # y_p10 |> print(); y_denom |> print(); y_breaks |> print()
 
+  ###### ** Mutate Data ######
+  # x_denom |> print(); y_denom |> print()
+  # df0[[xCol]] <- df0[[xCol]] / x_denom
+  df0[[yCol]] <- df0[[yCol]] / y_denom
+
   ###### Plot Setup ######
   ###### ** Plot Options ######
   # plotOpts0   <- typeLC0 |> get_scaledImpactPlotTitles(options=options)
@@ -119,14 +124,14 @@ plot_DOW_bySector <- function(
   ###### Add in Model info ######
   if(do_gcm)  {
     ### Get model info
-    select0   <- c("model_id", "maxUnitValue")
-    rename0   <- c("model_id")
-    rename1   <- c("model")
+    renameAt0 <- c("model_label")
+    renameTo0 <- c("model")
+    select0   <- renameTo0   |> c("maxUnitValue")
     co_models <- "co_models" |> get_frediDataObj("frediData")
     co_models <- co_models |> filter((modelType |> tolower()) == "gcm")
+    co_models <- co_models |> rename_at(c(renameAt0), ~renameTo0)
     co_models <- co_models |> select(all_of(select0))
-    co_models <- co_models |> rename_at(c(rename0), ~rename1)
-    rm(select0, rename0, rename1)
+    rm(renameAt0, renameTo0, select0)
     ### Join model info with df0
     join0     <- c("model")
     df0       <- df0 |> left_join(co_models, by=c(join0))
@@ -142,6 +147,7 @@ plot_DOW_bySector <- function(
     df0_1  <- df0 |> filter((driverValue <= maxUnitValue))
     ### Plot these values as dashed lines
     df0_2  <- df0 |> filter((driverValue >= maxUnitValue))
+    # df0_1 |> glimpse(); df0_2 |> glimpse()
   } else {
     ### Plot these values as lines
     df0_1  <- df0
@@ -153,16 +159,17 @@ plot_DOW_bySector <- function(
 
   ###### Create Plot ######
   ###### ** Initialize Plot #####
-  df0_1 |> glimpse()
+  # df0_1 |> glimpse()
+  # plot0     <- ggplot()
   plot0     <- df0_1 |> ggplot(aes(
     x     = .data[[xCol]],
     y     = .data[[yCol]],
     color = .data[["model"]]
-  )) ### End aes/ggplot
+  )) + geom_line (alpha=alpha0) ### End aes/ggplot
 
   ###### ** Plot First Set ######
-  ### Add geomline
-  plot0  <- plot0 + geom_line (alpha=alpha0)
+  # ### Add geomline
+  # plot0  <- plot0 + geom_line (alpha=alpha0)
 
   ###### ** Plot Second Set ######
   ### If GCM: plot second set of values as dashed lines
@@ -191,9 +198,11 @@ plot_DOW_bySector <- function(
 
   ###### ** Plot Axes ######
   ### Add axes
+  # c(xTitle) |> print(); c(x_limits) |> print(); c(x_breaks) |> print();
+  # c(y_label) |> print(); c(y_limits) |> print(); c(y_breaks) |> print();
   yTitle0     <- y_label
   plot0       <- plot0 + scale_x_continuous(xTitle, limits=x_limits, breaks=x_breaks)
-  plot0       <- plot0 + scale_y_continuous(y_label, limits=y_limits, breaks=y_breaks)
+  plot0       <- plot0 + scale_y_continuous(yTitle0, limits=y_limits, breaks=y_breaks)
   ### Add axes aesthetics
   plot0       <- plot0 + theme(axis.title   = element_text(size=8))
 
