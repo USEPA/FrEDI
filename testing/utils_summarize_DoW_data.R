@@ -17,8 +17,9 @@ summarize_DOW_data <- function(
   ###### Prep data #######
   ### Keep only observations for specified reference year
   ### Drop model averages
-  data      <- data |> filter(model!="Average")
+  # data      <- data |> filter(model != "Average")
   # data      <- data |> filter(model %in% c("Average", "Model Average"))
+  data      <- data |> filter(!(model %in% c("Average", "Model Average")))
 
   #### Filter to specific year
   ref_year  <- year
@@ -31,9 +32,9 @@ summarize_DOW_data <- function(
   # data[["yCol"]] <- data[[sumCol]]
   # # data |> names() |> print()
   # data      <- data |> select(-all_of(drop0))
+  # rm(drop0)
   data      <- data |> rename_at(c(sumCol), ~c("yCol"))
   data      <- data |> mutate(is_NA = yCol |> is.na())
-  rm(drop0)
 
   #### Names
   names0      <- data |> names()
@@ -77,8 +78,8 @@ summarize_DOW_data <- function(
   ### Drop national totals if present
   hasNat         <- "National Total" %in% c_regions
   doNat          <- !hasNat
-  if(hasNat) data <- data |> filter(region=="National Total")
-  else       data <- data |> filter(region!="National Total")
+  if(hasNat) data <- data |> filter(region == "National Total")
+  else       data <- data |> filter(region != "National Total")
   # x_nat  <- x_nat |> mutate(region = "National Total")
 
   ###### Summarize by Impact Year ######
@@ -92,7 +93,7 @@ summarize_DOW_data <- function(
       if(print_msg) message("\t", "Using impact year ", impactYear, "...")
     } ### End if(multImpYears)
     ### Filter data
-    data       <- data |> filter(impactYear==impactYear0)
+    data       <- data |> filter(impactYear == impactYear0)
   } ### End if(hasImpYears)
   # "got here" |> print()
   # data |> filter(is.na(yCol)) |> nrow() |> print()
