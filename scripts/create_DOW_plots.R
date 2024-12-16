@@ -3,14 +3,14 @@
 ###### Load Packages
 require(tidyverse)
 require(ggpubr)
-require(FrEDI)
+# require(FrEDI)
 # require(arrow)
 # require(cowplot)
 
 ###### create_DOW_plots
 create_DOW_plots <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
-    gcmYears = c(2090),       ### Which years to report on for GCM sectors
+    gcmYears = c(2010, 2090), ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     gcmData  = NULL ,     ### Dataframe with data for GCM sectors
     slrData  = NULL ,     ### Dataframe with data for SLR sectors
@@ -146,7 +146,7 @@ create_DOW_plots <- function(
   # if(do_gcm) gcmData <- gcmData |> filter(sector %in% gcmSectors)
   # if(do_slr) slrData <- slrData |> filter(sector %in% slrSectors)
 
-  ###### ** Format Sector Names
+  ###### ** Format Sector Names ######
   ### Check the sector names (for wrapping for Figure 7)
   if(do_any) {
     # sectorNames  <- get_sectorInfo()
@@ -232,7 +232,7 @@ create_DOW_plots <- function(
     if(do_msg & saveFile) paste0("Saving plots of GCM results by sector, degree of warming...") |> message()
     if(saveFile){
       ### Save plots as Rdata
-      plots_gcm |> save_data(fpath=outPath, fname=rda_fig7_gcm, ftype="rda")
+      plots_gcm |> save_data(fpath=outPath, fname=rda_plot_gcm, ftype="rda")
 
       ### Save plots as image files
       saved0 <- plots_gcm |> save_fig7_images(
@@ -256,7 +256,7 @@ create_DOW_plots <- function(
       scenarios   = scenarios0,
       bySector    = TRUE,
       sumCol      = "annual_impacts",
-      impactYears = c("NA", "2010", "2090"),
+      impactYears = c("N/A", "2010", "2090"),
       models      = c("GCM"),
       adjVal      = 1/10**9, ### Factor to multiply by
       adjCol      = "impact_billions",
@@ -276,7 +276,7 @@ create_DOW_plots <- function(
     if(testing|do_msg) "Plotting GCM results by sector, impact type, degree of warming (DOW)..." |> message()
     plots_gcm <- sum_gcm |>
       # filter(sector %in% sectorNames[c(10)]) |>
-      filter(!(sector %in% c("Roads"))) |>
+      # filter(!(sector %in% c("Roads"))) |>
       plot_DoW_by_sector(
         models  = c("GCM"),
         yCol    = "annual_impacts"

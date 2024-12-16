@@ -271,7 +271,7 @@ jobs:
             if(doScenarios) {
               dfResults <- run_constantTempScenarios(
                 sectors  = sectors0,
-                gcmYears = c(2090),
+                gcmYears = c(2010, 2090),
                 slrYears = c(2050, 2090),
                 tempList = tempsList,
                 silent   = TRUE ,
@@ -339,10 +339,10 @@ jobs:
                   gcmData  = gcmData0,
                   slrData  = slrData0,
                   totals   = totals0,
+                  aggOnly  = totals0,
                   digits   = 16   ,
                   silent   = TRUE ,
                   testing  = TRUE ,
-                  aggOnly  = totals0,
                   loadCode = "project",
                   fpath    = "."  ,
                   saveFile = TRUE ,

@@ -3,14 +3,14 @@
 ###### Load Packages
 require(tidyverse)
 require(ggpubr)
-require(FrEDI)
+# require(FrEDI)
 # require(arrow)
 # require(cowplot)
 
 ###### create_DoW_results
 run_constantTempScenarios <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
-    gcmYears = c(2090),       ### Which years to report on for GCM sectors
+    gcmYears = c(2010, 2090), ### Which years to report on for GCM sectors
     slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     tempList = list(conus  = list(
       temps      = c(0:10),
@@ -200,7 +200,7 @@ run_constantTempScenarios <- function(
       run_scenarios(
       col0      = "scenario",
       fredi     = TRUE,
-      # sectors   = sectors,
+      sectors   = gcmSectors0,
       years     = gcmYears,
       aggLevels = aggLvls0,
       scenCols  = c("scenario", "year", "temp_C_conus", "temp_C_global", "slr_cm"),
