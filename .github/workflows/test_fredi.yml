@@ -110,33 +110,35 @@ jobs:
       #       )'
 
       ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
+      - name: Download all artifacts
+        if: |
+            ${{ ( inputs.dow_totals == 'true' ) ||
+              ( inputs.dow_totals == 'yes'  ) ||
+              ( inputs.dow_appendix == 'true' ) ||
+              ( inputs.dow_appendix == 'yes'  )
+            }}
+        id:   download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # github-token: ${{ GITHUB_PAT }}
+          run-id: ${{ inputs.workflow_id }}
+          path: .
+      # - run: |
+      #     pwd
+      #     ls -R ./data_tests
+      # ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
       # - name: Download all artifacts
-      #   if: |
-      #       ${{ ( inputs.dow_totals == 'true' ) ||
-      #         ( inputs.dow_totals == 'yes'  ) ||
-      #         ( inputs.dow_appendix == 'true' ) ||
-      #         ( inputs.dow_appendix == 'yes'  )
-      #       }}
       #   id:   download-artifact
       #   uses: actions/download-artifact@v4
       #   with:
       #     github-token: ${{ secrets.GITHUB_TOKEN }}
       #     # github-token: ${{ GITHUB_PAT }}
       #     run-id: ${{ inputs.workflow_id }}
-      #     path: .
-      #   - run: |
-      #     pwd
-      #     ls -R ./data_tests
-      ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
-      - name: Download all artifacts
-        id:   download-artifact
-        # uses: actions/download-artifact@v4
-        # with:
-        #   github-token: ${{ secrets.GITHUB_TOKEN }}
-        #   # github-token: ${{ GITHUB_PAT }}
-        #   run-id: ${{ inputs.workflow_id }}
-        #   path: ./data
-      - run: |
+      #     path: ./data
+
+      - name: Check artifacts
+        run: |
           pwd
           ls -R
 
