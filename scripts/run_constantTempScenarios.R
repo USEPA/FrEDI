@@ -2,8 +2,9 @@
 ### 2023.10.05: Renamed to create_DoW_results from create_report_figures
 ###### Load Packages
 require(tidyverse)
-require(ggpubr)
-# require(FrEDI)
+require(devtools)
+require(FrEDI)
+# require(ggpubr)
 # require(arrow)
 # require(cowplot)
 
@@ -25,9 +26,9 @@ run_constantTempScenarios <- function(
       prefix     = "preI_global"
     ) ### End global
     ), ### End tempList
+    aggOnly  = TRUE ,     ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     silent   = TRUE ,     ### Degree of messaging
     testing  = FALSE,     ### Whether to print out extra diagnostic values
-    aggOnly  = TRUE ,     ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     loadCode = "project", ### Whether to load code as source or devtools
     fpath    = "."  ,     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
     saveFile = TRUE ,     ### Save file

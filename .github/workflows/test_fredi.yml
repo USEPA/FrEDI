@@ -101,7 +101,7 @@ jobs:
           Rscript -e '
             devtools::install_github(
               repo         = "https://github.com/USEPA/FrEDI",
-              ref          = "${{ github.event.inputs.fredi_branch }}",
+              ref          = "${{ github.ref_name }}",
               dependencies = FALSE,
               upgrade      = "never",
               force        = TRUE,
@@ -244,6 +244,10 @@ jobs:
                 str_split(pattern=",") |> unlist() |>
                 trimws()
               sectors0 |> print()
+
+              ### Which years to report on for GCM, SLR sectors
+              gcmYears0 <- c(2010, 2090)
+              slrYears0 <- c(2050, 2090)
             } ### End if(doScenarios | doFigures)
 
             ###### Setup Scenarios ######
@@ -269,21 +273,23 @@ jobs:
             ###### Run Scenarios ######
             ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
             if(doScenarios) {
+              ### Run scenarios
               dfResults <- run_constantTempScenarios(
                 sectors  = sectors0,
-                gcmYears = c(2010, 2090),
-                slrYears = c(2050, 2090),
                 tempList = tempsList,
-                silent   = TRUE ,
-                testing  = FALSE,
+                gcmYears = gcmYears0,
+                slrYears = slrYears0,
                 aggOnly  = FALSE,
                 loadCode = "project",
+                silent   = TRUE ,
+                testing  = FALSE,
                 fpath    = pPath0,
                 saveFile = TRUE ,
                 outPath  = oPath0,
                 return   = FALSE
               ) ### End run_constantTempScenarios
-              "got here4" |> print()
+              "Finished running scenarios..." |> print()
+              oPath0 |> list.files() |> print()
               rm(dfResults)
             } ### End if(doScenarios)
 
@@ -291,6 +297,7 @@ jobs:
             ###### Create Plots ######
             ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
             if(doFigures) {
+
               ### Artifact paths
               artDir    <- oPath0  |> file.path("scenario_results")
               gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
@@ -334,13 +341,18 @@ jobs:
               ### gcmData=Dataframe with data for GCM sectors
               ### slrData=Dataframe with data for SLR sectors
               if(makePlots) {
-                dfPlots   <- create_DOW_plotsfunction(
+                ### Number of digits for formatting sector names
+                digits0   <- 16
+                ### Create plots
+                dfPlots   <- create_DOW_plots(
                   sectors  = sectors0,
                   gcmData  = gcmData0,
                   slrData  = slrData0,
+                  gcmYears = gcmYears0,
+                  slrYears = slrYears0,
                   totals   = totals0,
                   aggOnly  = totals0,
-                  digits   = 16   ,
+                  digits   = digits,
                   silent   = TRUE ,
                   testing  = TRUE ,
                   loadCode = "project",
@@ -351,7 +363,8 @@ jobs:
                   return   = FALSE
                 ) ### End create_DOW_plotsfunction
               } ### End if(makePlots)
-              "got here4" |> print()
+              "Finished creating figures..." |> print()
+              oPath0 |> list.files() |> print()
             } ### End if(doScenarios)
           '
 

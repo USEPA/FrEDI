@@ -2,23 +2,24 @@
 ### 2023.10.05: Renamed to create_DoW_results from create_report_figures
 ###### Load Packages
 require(tidyverse)
+require(devtools)
+require(FrEDI)
 require(ggpubr)
-# require(FrEDI)
 # require(arrow)
 # require(cowplot)
 
 ###### create_DOW_plots
 create_DOW_plots <- function(
     sectors  = FrEDI::get_sectorInfo(), ### Which sectors
-    gcmYears = c(2010, 2090), ### Which years to report on for GCM sectors
-    slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     gcmData  = NULL ,     ### Dataframe with data for GCM sectors
     slrData  = NULL ,     ### Dataframe with data for SLR sectors
+    gcmYears = c(2010, 2090), ### Which years to report on for GCM sectors
+    slrYears = c(2050, 2090), ### Which years to report on for SLR sectors
     totals   = FALSE,     ### Whether to do totals
+    aggOnly  = TRUE ,     ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     digits   = 16   ,     ### Number of digits in sector names for breaks
     silent   = TRUE ,     ### Degree of messaging
     testing  = FALSE,     ### Whether to print out extra diagnostic values
-    aggOnly  = TRUE ,     ### Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
     loadCode = "project", ### Whether to load code as source or devtools
     fpath    = "."  ,     ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
     saveFile = TRUE ,     ### Save file
