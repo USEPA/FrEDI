@@ -84,29 +84,29 @@ jobs:
           cache-version: 1
           packages: |
             any::tidyverse
-            any::ggpubr
-            any::openxlsx
             any::devtools
+            any::openxlsx
+            any::ggpubr
 
-      - name: Install FrEDI
-        if: |
-            ${{ ( inputs.dow_results == 'true' ) ||
-              ( inputs.dow_results == 'yes' ) ||
-              ( inputs.dow_totals == 'true' ) ||
-              ( inputs.dow_totals == 'yes'  ) ||
-              ( inputs.dow_appendix == 'true' ) ||
-              ( inputs.dow_appendix == 'yes'  )
-            }}
-        run: |
-          Rscript -e '
-            devtools::install_github(
-              repo         = "https://github.com/USEPA/FrEDI",
-              ref          = "${{ github.ref_name }}",
-              dependencies = FALSE,
-              upgrade      = "never",
-              force        = TRUE,
-              type         = "source"
-            )'
+      # - name: Install FrEDI
+      #   if: |
+      #       ${{ ( inputs.dow_results == 'true' ) ||
+      #         ( inputs.dow_results == 'yes' ) ||
+      #         ( inputs.dow_totals == 'true' ) ||
+      #         ( inputs.dow_totals == 'yes'  ) ||
+      #         ( inputs.dow_appendix == 'true' ) ||
+      #         ( inputs.dow_appendix == 'yes'  )
+      #       }}
+      #   run: |
+      #     Rscript -e '
+      #       devtools::install_github(
+      #         repo         = "https://github.com/USEPA/FrEDI",
+      #         ref          = "${{ github.ref_name }}",
+      #         dependencies = FALSE,
+      #         upgrade      = "never",
+      #         force        = TRUE,
+      #         type         = "source"
+      #       )'
 
       ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
       - name: Download all artifacts
@@ -157,7 +157,11 @@ jobs:
             doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
             doFigures   <- doSumFig | doAppFig
             totals0     <- doSumFig
-            sectors0    <- "${{ inputs.sector  }}"
+            sectors0    <- "${{ inputs.sector }}"
+
+            ### Which branches to install
+            installOld  <- doGenTests
+            installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
 
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
@@ -196,14 +200,16 @@ jobs:
 
             ###### Run FrEDI for Reference Branch ######
             ### Install FrEDI from ref branch
-            ### Load library
-            ### Run FrEDI
-            if(doGenTests) {
+            if(installOld) {
               devtools::install_github(
                 repo=urlRepo, ref=refBranch,
                 # subdir="FrEDI",
                 dependencies=F, upgrade="never", force=T, type="source"
               ) ### End install_github
+            } ### End if(installOld)
+
+            ### Load library, run FrEDI
+            if(doGenTests) {
               library(FrEDI)
               dfRef <- run_fredi(aggLevels=cAggLvls)
               dfRef |> save(file=oFileRef)
@@ -215,12 +221,16 @@ jobs:
 
             ###### Run FrEDI for New Branch ######
             ### Install FrEDI from new branch
-            devtools::install_github(
-              repo=urlRepo, ref=newBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
-            ) ### End install_github
-            library(FrEDI)
+            if(installNew) {
+              devtools::install_github(
+                repo=urlRepo, ref=newBranch,
+                dependencies=F, upgrade="never", force=T, type="source"
+              ) ### End install_github
+            } ### End if(installNew)
+
+            ### Load library, run FrEDI
             if(doGenTests) {
+              library(FrEDI)
               dfNew <- run_fredi(aggLevels=cAggLvls)
               dfNew |> save(file=oFileNew)
               "got here4" |> print()
@@ -230,9 +240,14 @@ jobs:
             ###### Run General Tests ######
             ### Get test results
             if(doGenTests) {
-              dfTests <- general_fredi_test(newOutputs=dfNew, refOutputs=dfRef, outPath=oPath0)
+              dfTests <- general_fredi_test(
+                newOutputs = dfNew,
+                refOutputs = dfRef,
+                outPath    = oPath0
+              ) ### End general_fredi_test
+              "Finished running general tests." |> print()
+              oPath0 |> list.files() |> print()
               rm(dfTests)
-              "got here5" |> print()
             } ### End if(doGenTests)
 
 
