@@ -153,237 +153,237 @@ jobs:
             require(openxlsx)
             require(ggpubr)
 
-            ### Arguments
-            doGenTests  <- "${{ inputs.do_compare   }}" %in% c("true", "yes")
-            doScenarios <- "${{ inputs.dow_results  }}" %in% c("true", "yes")
-            doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
-            doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
-            doFigures   <- doSumFig | doAppFig
-            totals0     <- doSumFig
-            sectors0    <- "${{ inputs.sector }}"
-
-            ### Which branches to install
-            installOld  <- doGenTests
-            installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
-
-            ###### Paths ######
-            ### Main repo path, FrEDI project path, scripts path
-            rPath0   <- ".";
-            # pPath0   <- rPath0 |> file.path("FrEDI")
-            pPath0   <- rPath0
-
-            ### Load scripts and testing functions
-            sPath0   <- pPath0 |> file.path("scripts")
-            tPath0   <- pPath0 |> file.path("testing")
-            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
-            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
-            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
-            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-
-            ### Where to save results
-            oPath0   <- pPath0 |> file.path("data_tests")
-            oFileNew <- oPath0 |> file.path("newResults.rda")
-            oFileRef <- oPath0 |> file.path("refResults.rda")
-
-            ### Check if path exists and, if not, create it
-            exists0  <- oPath0 |> dir.exists()
-            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
-
-            ###### Action Arguments ######
-            urlRepo   <- "https://github.com/USEPA/FrEDI"
-            newBranch <- "${{ github.ref_name   }}"
-            refBranch <- "${{ inputs.ref_branch }}"
-            c(newBranch, refBranch) |> print()
-            aggTypes  <- "${{ inputs.agg_types  }}" %in% c("true", "yes")
-            if(aggTypes) {
-              cAggLvls  <- "all"
-            } else {
-              cAggLvls  <- c("national", "modelaverage", "impactyear")
-            } ### End if(aggTypes)
-
-            ###### Run FrEDI for Reference Branch ######
-            ### Install FrEDI from ref branch
-            if(installOld) {
-              devtools::install_github(
-                repo=urlRepo, ref=refBranch,
-                # subdir="FrEDI",
-                dependencies=F, upgrade="never", force=T, type="source"
-              ) ### End install_github
-            } ### End if(installOld)
-
-            ### Load library, run FrEDI
-            if(doGenTests) {
-              library(FrEDI)
-              dfRef <- run_fredi(aggLevels=cAggLvls)
-              dfRef |> save(file=oFileRef)
-
-              ### Detach FrEDI package
-              package:FrEDI |> detach(unload=TRUE)
-            } ### End if(doGenTests)
-
-
-            ###### Run FrEDI for New Branch ######
-            ### Install FrEDI from new branch
-            if(installNew) {
-              devtools::install_github(
-                repo=urlRepo, ref=newBranch,
-                dependencies=F, upgrade="never", force=T, type="source"
-              ) ### End install_github
-            } ### End if(installNew)
-
-            ### Load library, run FrEDI
-            if(doGenTests) {
-              library(FrEDI)
-              dfNew <- run_fredi(aggLevels=cAggLvls)
-              dfNew |> save(file=oFileNew)
-              "got here4" |> print()
-            } ### End if(doGenTests)
-
-
-            ###### Run General Tests ######
-            ### Get test results
-            if(doGenTests) {
-              dfTests <- general_fredi_test(
-                newOutputs = dfNew,
-                refOutputs = dfRef,
-                outPath    = oPath0
-              ) ### End general_fredi_test
-              "Finished running general tests." |> print()
-              oPath0 |> list.files() |> print()
-              rm(dfTests)
-            } ### End if(doGenTests)
-
-
-            ###### Sectors ######
-            if(doScenarios | doFigures) {
-              ### Modify sectors
-              sectors0 |> print()
-              sectors0 <- sectors0 |>
-                str_split(pattern=",") |> unlist() |>
-                trimws()
-              sectors0 |> print()
-
-              ### Which years to report on for GCM, SLR sectors
-              gcmYears0 <- c(2010, 2090)
-              slrYears0 <- c(2050, 2090)
-            } ### End if(doScenarios | doFigures)
-
-            ###### Setup Scenarios ######
-            if(doScenarios) {
-              ### CONUS temps
-              conusTemps  <- list(
-                temps      = c(0:10),
-                tempLabels = c(0:10),
-                tempType   = "conus",
-                prefix     = "Other_Integer"
-              ) ### End list
-              ### Global temps
-              globalTemps <- list(
-                temps      = c(1.487, 2.198),
-                tempLabels = c(1.5, 2),
-                tempType   = "global",
-                prefix     = "preI_global"
-              ) ### End list
-              ### Temps list
-              tempsList   <- list(conus=conusTemps, global=globalTemps)
-            } ### End if(doScenarios)
-
-            ###### Run Scenarios ######
-            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
-            if(doScenarios) {
-              ### Run scenarios
-              dfResults <- run_constantTempScenarios(
-                sectors  = sectors0,
-                tempList = tempsList,
-                gcmYears = gcmYears0,
-                slrYears = slrYears0,
-                aggOnly  = FALSE,
-                loadCode = "project",
-                silent   = TRUE ,
-                testing  = FALSE,
-                fpath    = pPath0,
-                saveFile = TRUE ,
-                outPath  = oPath0,
-                return   = FALSE
-              ) ### End run_constantTempScenarios
-              "Finished running scenarios..." |> print()
-              oPath0 |> list.files() |> print()
-              rm(dfResults)
-            } ### End if(doScenarios)
-
-
-            ###### Create Plots ######
-            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
-            if(doFigures) {
-
-              ### Artifact paths
-              artDir    <- oPath0  |> file.path("scenario_results")
-              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
-              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
-              gcmPath   <- artDir  |> file.path(gcmName)
-              slrPath   <- artDir  |> file.path(slrName)
-              ### Initialize data
-              gcmData0  <- NULL
-              slrData0  <- NULL
-              ### Check if files exist
-              gcmExists <- gcmPath |> file.exists()
-              slrExists <- slrPath |> file.exists()
-              anyExist  <- c(gcmExists, slrExists) |> any()
-              oPath0  |> list.files() |> print();
-              artDir  |> list.files() |> print();
-              c(gcmPath, slrPath) |> print()
-
-              ### Load data
-              if(gcmExists) {
-                ### Try to load data
-                # gcmPath |> load()
-                gcmPath |> load(gcm_env <- new.env())
-                gcm_list <- gcm_env |> as.list() |> unlist(recursive=F)
-                gcmData0 <- gcm_list[["obj0"]]
-                gcmData0 |> glimpse()
-                rm(gcm_env, gcm_list)
-              } ### End if(gcmExists)
-              if(slrExists) {
-                # slrPath |> load()
-                slrPath |> load(slr_env <- new.env())
-                slr_list <- slr_env |> as.list()
-                slrData0 <- slr_list[["obj0"]]
-                slrData0 |> glimpse()
-                rm(slr_env, slr_list)
-              } ### End if(slrExists)
-
-              ### Whether to run the test
-              makePlots <- doFigures & anyExist
-              makePlots |> print()
-
-              ### gcmData=Dataframe with data for GCM sectors
-              ### slrData=Dataframe with data for SLR sectors
-              if(makePlots) {
-                ### Number of digits for formatting sector names
-                digits0   <- 16
-                ### Create plots
-                dfPlots   <- create_DOW_plots(
-                  sectors  = sectors0,
-                  gcmData  = gcmData0,
-                  slrData  = slrData0,
-                  gcmYears = gcmYears0,
-                  slrYears = slrYears0,
-                  totals   = totals0,
-                  aggOnly  = totals0,
-                  digits   = digits,
-                  silent   = TRUE ,
-                  testing  = TRUE ,
-                  loadCode = "project",
-                  fpath    = "."  ,
-                  saveFile = TRUE ,
-                  outPath  = oPath0,
-                  img_dev  = "pdf",
-                  return   = FALSE
-                ) ### End create_DOW_plotsfunction
-              } ### End if(makePlots)
-              "Finished creating figures..." |> print()
-              oPath0 |> list.files() |> print()
-            } ### End if(doScenarios)
+            # ### Arguments
+            # doGenTests  <- "${{ inputs.do_compare   }}" %in% c("true", "yes")
+            # doScenarios <- "${{ inputs.dow_results  }}" %in% c("true", "yes")
+            # doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
+            # doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
+            # doFigures   <- doSumFig | doAppFig
+            # totals0     <- doSumFig
+            # sectors0    <- "${{ inputs.sector }}"
+            #
+            # ### Which branches to install
+            # installOld  <- doGenTests
+            # installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
+            #
+            # ###### Paths ######
+            # ### Main repo path, FrEDI project path, scripts path
+            # rPath0   <- ".";
+            # # pPath0   <- rPath0 |> file.path("FrEDI")
+            # pPath0   <- rPath0
+            #
+            # ### Load scripts and testing functions
+            # sPath0   <- pPath0 |> file.path("scripts")
+            # tPath0   <- pPath0 |> file.path("testing")
+            # sFiles0  <- sPath0 |> list.files(full.names=TRUE)
+            # tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            # for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            #
+            # ### Where to save results
+            # oPath0   <- pPath0 |> file.path("data_tests")
+            # oFileNew <- oPath0 |> file.path("newResults.rda")
+            # oFileRef <- oPath0 |> file.path("refResults.rda")
+            #
+            # ### Check if path exists and, if not, create it
+            # exists0  <- oPath0 |> dir.exists()
+            # if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+            #
+            # ###### Action Arguments ######
+            # urlRepo   <- "https://github.com/USEPA/FrEDI"
+            # newBranch <- "${{ github.ref_name   }}"
+            # refBranch <- "${{ inputs.ref_branch }}"
+            # c(newBranch, refBranch) |> print()
+            # aggTypes  <- "${{ inputs.agg_types  }}" %in% c("true", "yes")
+            # if(aggTypes) {
+            #   cAggLvls  <- "all"
+            # } else {
+            #   cAggLvls  <- c("national", "modelaverage", "impactyear")
+            # } ### End if(aggTypes)
+            #
+            # ###### Run FrEDI for Reference Branch ######
+            # ### Install FrEDI from ref branch
+            # if(installOld) {
+            #   devtools::install_github(
+            #     repo=urlRepo, ref=refBranch,
+            #     # subdir="FrEDI",
+            #     dependencies=F, upgrade="never", force=T, type="source"
+            #   ) ### End install_github
+            # } ### End if(installOld)
+            #
+            # ### Load library, run FrEDI
+            # if(doGenTests) {
+            #   library(FrEDI)
+            #   dfRef <- run_fredi(aggLevels=cAggLvls)
+            #   dfRef |> save(file=oFileRef)
+            #
+            #   ### Detach FrEDI package
+            #   package:FrEDI |> detach(unload=TRUE)
+            # } ### End if(doGenTests)
+            #
+            #
+            # ###### Run FrEDI for New Branch ######
+            # ### Install FrEDI from new branch
+            # if(installNew) {
+            #   devtools::install_github(
+            #     repo=urlRepo, ref=newBranch,
+            #     dependencies=F, upgrade="never", force=T, type="source"
+            #   ) ### End install_github
+            # } ### End if(installNew)
+            #
+            # ### Load library, run FrEDI
+            # if(doGenTests) {
+            #   library(FrEDI)
+            #   dfNew <- run_fredi(aggLevels=cAggLvls)
+            #   dfNew |> save(file=oFileNew)
+            #   "got here4" |> print()
+            # } ### End if(doGenTests)
+            #
+            #
+            # ###### Run General Tests ######
+            # ### Get test results
+            # if(doGenTests) {
+            #   dfTests <- general_fredi_test(
+            #     newOutputs = dfNew,
+            #     refOutputs = dfRef,
+            #     outPath    = oPath0
+            #   ) ### End general_fredi_test
+            #   "Finished running general tests." |> print()
+            #   oPath0 |> list.files() |> print()
+            #   rm(dfTests)
+            # } ### End if(doGenTests)
+            #
+            #
+            # ###### Sectors ######
+            # if(doScenarios | doFigures) {
+            #   ### Modify sectors
+            #   sectors0 |> print()
+            #   sectors0 <- sectors0 |>
+            #     str_split(pattern=",") |> unlist() |>
+            #     trimws()
+            #   sectors0 |> print()
+            #
+            #   ### Which years to report on for GCM, SLR sectors
+            #   gcmYears0 <- c(2010, 2090)
+            #   slrYears0 <- c(2050, 2090)
+            # } ### End if(doScenarios | doFigures)
+            #
+            # ###### Setup Scenarios ######
+            # if(doScenarios) {
+            #   ### CONUS temps
+            #   conusTemps  <- list(
+            #     temps      = c(0:10),
+            #     tempLabels = c(0:10),
+            #     tempType   = "conus",
+            #     prefix     = "Other_Integer"
+            #   ) ### End list
+            #   ### Global temps
+            #   globalTemps <- list(
+            #     temps      = c(1.487, 2.198),
+            #     tempLabels = c(1.5, 2),
+            #     tempType   = "global",
+            #     prefix     = "preI_global"
+            #   ) ### End list
+            #   ### Temps list
+            #   tempsList   <- list(conus=conusTemps, global=globalTemps)
+            # } ### End if(doScenarios)
+            #
+            # ###### Run Scenarios ######
+            # ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            # if(doScenarios) {
+            #   ### Run scenarios
+            #   dfResults <- run_constantTempScenarios(
+            #     sectors  = sectors0,
+            #     tempList = tempsList,
+            #     gcmYears = gcmYears0,
+            #     slrYears = slrYears0,
+            #     aggOnly  = FALSE,
+            #     loadCode = "project",
+            #     silent   = TRUE ,
+            #     testing  = FALSE,
+            #     fpath    = pPath0,
+            #     saveFile = TRUE ,
+            #     outPath  = oPath0,
+            #     return   = FALSE
+            #   ) ### End run_constantTempScenarios
+            #   "Finished running scenarios..." |> print()
+            #   oPath0 |> list.files() |> print()
+            #   rm(dfResults)
+            # } ### End if(doScenarios)
+            #
+            #
+            # ###### Create Plots ######
+            # ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            # if(doFigures) {
+            #
+            #   ### Artifact paths
+            #   artDir    <- oPath0  |> file.path("scenario_results")
+            #   gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
+            #   slrName   <- "slr_scenario_results" |> paste0(".", "rda")
+            #   gcmPath   <- artDir  |> file.path(gcmName)
+            #   slrPath   <- artDir  |> file.path(slrName)
+            #   ### Initialize data
+            #   gcmData0  <- NULL
+            #   slrData0  <- NULL
+            #   ### Check if files exist
+            #   gcmExists <- gcmPath |> file.exists()
+            #   slrExists <- slrPath |> file.exists()
+            #   anyExist  <- c(gcmExists, slrExists) |> any()
+            #   oPath0  |> list.files() |> print();
+            #   artDir  |> list.files() |> print();
+            #   c(gcmPath, slrPath) |> print()
+            #
+            #   ### Load data
+            #   if(gcmExists) {
+            #     ### Try to load data
+            #     # gcmPath |> load()
+            #     gcmPath |> load(gcm_env <- new.env())
+            #     gcm_list <- gcm_env |> as.list() |> unlist(recursive=F)
+            #     gcmData0 <- gcm_list[["obj0"]]
+            #     gcmData0 |> glimpse()
+            #     rm(gcm_env, gcm_list)
+            #   } ### End if(gcmExists)
+            #   if(slrExists) {
+            #     # slrPath |> load()
+            #     slrPath |> load(slr_env <- new.env())
+            #     slr_list <- slr_env |> as.list()
+            #     slrData0 <- slr_list[["obj0"]]
+            #     slrData0 |> glimpse()
+            #     rm(slr_env, slr_list)
+            #   } ### End if(slrExists)
+            #
+            #   ### Whether to run the test
+            #   makePlots <- doFigures & anyExist
+            #   makePlots |> print()
+            #
+            #   ### gcmData=Dataframe with data for GCM sectors
+            #   ### slrData=Dataframe with data for SLR sectors
+            #   if(makePlots) {
+            #     ### Number of digits for formatting sector names
+            #     digits0   <- 16
+            #     ### Create plots
+            #     dfPlots   <- create_DOW_plots(
+            #       sectors  = sectors0,
+            #       gcmData  = gcmData0,
+            #       slrData  = slrData0,
+            #       gcmYears = gcmYears0,
+            #       slrYears = slrYears0,
+            #       totals   = totals0,
+            #       aggOnly  = totals0,
+            #       digits   = digits,
+            #       silent   = TRUE ,
+            #       testing  = TRUE ,
+            #       loadCode = "project",
+            #       fpath    = "."  ,
+            #       saveFile = TRUE ,
+            #       outPath  = oPath0,
+            #       img_dev  = "pdf",
+            #       return   = FALSE
+            #     ) ### End create_DOW_plotsfunction
+            #   } ### End if(makePlots)
+            #   "Finished creating figures..." |> print()
+            #   oPath0 |> list.files() |> print()
+            # } ### End if(doScenarios)
           '
 
       - name: Upload General Tests
