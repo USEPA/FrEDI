@@ -307,80 +307,8 @@ jobs:
 
             ###### Create Figures ######
             ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
-            if(doFigures) {
-              ### Artifact paths
-              artDir    <- oPath0  |> file.path("scenario_results")
-              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
-              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
-              gcmPath   <- artDir  |> file.path(gcmName)
-              slrPath   <- artDir  |> file.path(slrName)
-              ### Initialize data
-              gcmData0  <- NULL
-              slrData0  <- NULL
-              ### Check if files exist
-              gcmExists <- gcmPath |> file.exists()
-              slrExists <- slrPath |> file.exists()
-              anyExist  <- c(gcmExists, slrExists) |> any()
-              oPath0  |> list.files() |> print();
-              artDir  |> list.files() |> print();
-              c(gcmPath, slrPath) |> print()
+            if(doFigures) "Making figures..." |> print()
 
-              ### Load data
-              do_any    <- FALSE
-              if(gcmExists) {
-                ### Try to load data
-                # gcmPath |> load()
-                gcmPath |> load(gcm_env <- new.env())
-                gcm_list <- gcm_env |> as.list() |> unlist(recursive=F)
-                gcmData0 <- gcm_list[["obj0"]]
-                do_gcm   <- !(gcmData0 |> is.null())
-                do_any   <- do_any | do_gcm
-                gcmData0 |> glimpse()
-                rm(gcm_env, gcm_list)
-              } ### End if(gcmExists)
-              if(slrExists) {
-                # slrPath |> load()
-                slrPath |> load(slr_env <- new.env())
-                slr_list <- slr_env |> as.list()
-                slrData0 <- slr_list[["obj0"]]
-                do_slr   <- !(slrData0 |> is.null())
-                do_any   <- do_any | do_slr
-                slrData0 |> glimpse()
-                rm(slr_env, slr_list)
-              } ### End if(slrExists)
-
-              ### Whether to run the test
-              makePlots <- doFigures & anyExist & do_any
-              makePlots |> print()
-
-              ### gcmData=Dataframe with data for GCM sectors
-              ### slrData=Dataframe with data for SLR sectors
-              if(makePlots) {
-                ### Number of digits for formatting sector names
-                digits0   <- 16
-                ### Create plots
-                dfPlots   <- create_DOW_plots(
-                  sectors  = sectors0,
-                  gcmData  = gcmData0,
-                  slrData  = slrData0,
-                  gcmYears = gcmYears0,
-                  slrYears = slrYears0,
-                  totals   = doTotals,
-                  aggOnly  = doTotals,
-                  digits   = digits,
-                  silent   = TRUE ,
-                  testing  = FALSE,
-                  loadCode = "project",
-                  fpath    = "."  ,
-                  saveFile = TRUE ,
-                  outPath  = oPath0,
-                  img_dev  = "pdf",
-                  return   = FALSE
-                ) ### End create_DOW_plotsfunction
-              } ### End if(makePlots)
-              "Finished creating figures..." |> print()
-              oPath0 |> list.files() |> print()
-            } ### End if(doScenarios)
             "got here" |> print()
           '
 
