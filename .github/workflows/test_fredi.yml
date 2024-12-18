@@ -152,10 +152,12 @@ jobs:
         if: |
             ${{
               ( inputs.dow_totals == 'true' ) ||
-              ( inputs.dow_appendix == 'true')
+              ( inputs.dow_appendix == 'true' )
             }}
         run: |
           pwd
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_appendix = ${{ inputs.dow_appendix }}"
           # ls -R ./data
 
 
