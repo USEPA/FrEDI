@@ -149,7 +149,7 @@ jobs:
             sectors0    <- "${{ inputs.sector }}"
 
             ### Which branches to install
-            installOld  <- doGenTests
+            installRef  <- doGenTests
             installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
 
             ###### Paths ######
@@ -186,6 +186,61 @@ jobs:
             } else {
               cAggLvls  <- c("national", "modelaverage", "impactyear")
             } ### End if(aggTypes)
+
+            ###### Run FrEDI for Reference Branch ######
+            ### Install FrEDI from ref branch
+            if(installRef) {
+              devtools::install_github(
+                repo=urlRepo, ref=refBranch,
+                # subdir="FrEDI",
+                dependencies=F, upgrade="never", force=T, type="source"
+              ) ### End install_github
+            } ### End if(installRef)
+
+            ### Load library, run FrEDI
+            if(doGenTests) {
+              library(FrEDI)
+              dfRef <- run_fredi(aggLevels=cAggLvls)
+              dfRef |> save(file=oFileRef)
+              "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
+              oPath0 |> list.files() |> print()
+              ### Detach FrEDI package
+              package:FrEDI |> detach(unload=TRUE)
+            } ### End if(doGenTests)
+
+
+            ###### Run FrEDI for New Branch ######
+            ### Install FrEDI from new branch
+            if(installNew) {
+              devtools::install_github(
+                repo=urlRepo, ref=newBranch,
+                dependencies=F, upgrade="never", force=T, type="source"
+              ) ### End install_github
+            } ### End if(installNew)
+
+            ### Load library, run FrEDI
+            if(doGenTests) {
+              library(FrEDI)
+              dfNew <- run_fredi(aggLevels=cAggLvls)
+              dfNew |> save(file=oFileNew)
+              "Finished running FrEDI on " |> paste0(newBranch, " branch.") |> print()
+              oPath0 |> list.files() |> print()
+            } ### End if(doGenTests)
+
+
+            ###### Run General Tests ######
+            ### Get test results
+            if(doGenTests) {
+              dfTests <- general_fredi_test(
+                newOutputs = dfNew,
+                refOutputs = dfRef,
+                outPath    = oPath0
+              ) ### End general_fredi_test
+              "Finished running general tests." |> print()
+              oPath0 |> list.files() |> print()
+              rm(dfTests)
+            } ### End if(doGenTests)
+
 
             "got here" |> print()
           '
