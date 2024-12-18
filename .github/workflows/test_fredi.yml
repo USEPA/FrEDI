@@ -3,6 +3,7 @@
 ### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
 ### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
 ### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### Single line conditional can use ${{}} formulation. Multi-line conditional does not.
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
@@ -82,135 +83,85 @@ jobs:
           echo "sector       = ${{ inputs.sector }}"
           echo "workflow_id  = ${{ inputs.workflow_id }}"
 
-      # - name: Setup R
-      #   uses: r-lib/actions/setup-r@v2
-      #
-      # - name: Setup R package dependencies
-      #   uses: r-lib/actions/setup-r-dependencies@v2
-      #   with:
-      #     cache: true
-      #     cache-version: 1
-      #     packages: |
-      #       any::tidyverse
-      #       any::devtools
-      #       any::openxlsx
-      #       any::ggpubr
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Setup R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          cache-version: 1
+          packages: |
+            any::tidyverse
+            any::devtools
+            any::openxlsx
+            any::ggpubr
 
       ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
-      # - name: Download all artifacts
-      #   if: |
-      #       ${{ ( inputs.dow_totals == 'true' ) ||
-      #         ( inputs.dow_totals == 'yes'  ) ||
-      #         ( inputs.dow_appendix == 'true' ) ||
-      #         ( inputs.dow_appendix == 'yes'  )
-      #       }}
-      #   id:   download-artifact
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     # github-token: ${{ GITHUB_PAT }}
-      #     run-id: ${{ inputs.workflow_id }}
-      #     path: .
-
-      - name: Check if dow_totals is not true
-        if: ${{ !inputs.dow_totals }}
-        run: |
-          echo "dow_totals   = ${{ inputs.dow_totals }}"
-          echo "dow_totals is false. Proceeding with the task."
-
-      - name: Check if dow_totals is true
-        if: ${{ inputs.dow_totals }}
-        run: |
-          echo "dow_totals   = ${{ inputs.dow_totals }}"
-          echo "dow_totals is true. Proceeding with the task."
-
-      - name: Check if dow_totals is not true2
-        if: ${{ !(inputs.dow_totals == 'true') }}
-        run: |
-          echo "dow_totals   = ${{ inputs.dow_totals }}"
-          echo "dow_totals is false. Proceeding with the task."
-
-      - name: Check if dow_totals is true2
-        if: ${{ inputs.dow_totals == 'true'}}
-        run: |
-          echo "dow_totals   = ${{ inputs.dow_totals }}"
-          echo "dow_totals is true. Proceeding with the task."
-
-      - name: Check artifacts
-        if: ${{ inputs.dow_totals == 'true' || inputs.dow_appendix == 'true' }}
-        # if: |
-        #     ${{
-        #       ( inputs.dow_totals == 'true' ) ||
-        #       ( inputs.dow_appendix == 'true' )
-        #     }}
-        run: |
-          pwd
-          echo "dow_totals   = ${{ inputs.dow_totals }}"
-          echo "dow_appendix = ${{ inputs.dow_appendix }}"
-          echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
-          # ls -R ./data
-
-      - name: Check artifacts1
+      - name: Download all artifacts
         if: |
           inputs.dow_totals == 'true' ||
           inputs.dow_appendix == 'true'
-        # if: |
-        #   ${{
-        #       inputs.dow_totals == 'true' ||
-        #       inputs.dow_appendix == 'true'
-        #   }}
+        id:   download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+          path: .
+
+
+      - name: Check artifacts
+        # if: ${{ inputs.dow_totals == 'true' || inputs.dow_appendix == 'true' }}
+        if: |
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
         run: |
-          pwd
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_appendix = ${{ inputs.dow_appendix }}"
           echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
-          # ls -R ./data
+          echo "dow_totals | dow_appendix is true. Proceeding with the task."
+          ls -R ./data
 
 
+      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from ref branch and get results
+      - name: Test results
+        if: |
+          inputs.do_compare == 'true' ||
+          inputs.dow_results == 'true' ||
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
+        run: |
+          Rscript -e '
+            "got here" |> print()
+          '
 
-      # ### Install FrEDI from new branch and get results
-      # ### Install FrEDI from ref branch and get results
-      # - name: Test results
-      #   if: |
-      #       ${{ ( inputs.do_compare == 'true' ) ||
-      #         ( inputs.dow_results == 'true' ) ||
-      #         ( inputs.dow_totals == 'true' ) ||
-      #         ( inputs.dow_appendix == 'true' )
-      #       }}
-      #   run: |
-      #     Rscript -e '
-      #       "got here" |> print()
-      #     '
-      #
-      # - name: Upload General Tests
-      #   if: |
-      #     ${{ ( inputs.do_compare == 'true' ) ||
-      #       ( inputs.do_compare == 'yes' ) }}
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: general_tests
-      #     path: |
-      #       ./data_tests/*
-      #
-      # - name: Upload Scenario Results
-      #   if: |
-      #     ${{ ( inputs.dow_results == 'true' ) ||
-      #       ( inputs.dow_results == 'yes' ) }}
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: scenario_results
-      #     path: |
-      #       ./data_tests/*
-      #
-      #
-      # - name: Upload Report Figures
-      #   if: |
-      #       ${{ ( inputs.dow_totals == 'true' ) ||
-      #         ( inputs.dow_appendix == 'true' )
-      #       }}
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: report_figures
-      #     path: |
-      #       ./data_tests/*
+      - name: Upload General Tests
+        if: |
+          inputs.do_compare == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: general_tests
+          path: |
+            ./data_tests/*
+
+      - name: Upload Scenario Results
+        if: |
+          inputs.dow_results == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario_results
+          path: |
+            ./data_tests/*
+
+
+      - name: Upload Report Figures
+        if: |
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: report_figures
+          path: |
+            ./data_tests/*
 
