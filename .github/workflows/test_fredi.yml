@@ -328,30 +328,26 @@ jobs:
               artDir  |> list.files() |> print();
               c(gcmPath, slrPath) |> print()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+              ### Load data
+              do_any    <- FALSE
+              ### Check if GCM file exists and, if it does, load it
+              if(gcmExists) {
+                gcmPath |> load(gcm_env <- new.env())
+                gcmList  <- gcm_env |> as.list()
+                gcmData0 <- gcmList[["obj0"]]
+                do_gcm   <- !(gcmData0 |> is.null())
+                do_any   <- do_any | do_gcm
+                rm(gcm_env, gcmList)
+              } ### End if(gcmExists)
+              ### Check if SLR file exists and, if it does, load it
+              if(slrExists) {
+                slrPath |> load(slr_env <- new.env())
+                slrList  <- slr_env |> as.list()
+                slrData0 <- slrList[["obj0"]]
+                do_slr   <- !(slrData0 |> is.null())
+                do_any   <- do_any | do_slr
+                rm(slr_env, slrList)
+              } ### End if(slrExists)
 
             } ### End if(doFigures)
             "got here" |> print()
