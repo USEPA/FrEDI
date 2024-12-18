@@ -106,62 +106,68 @@ jobs:
       #     run-id: ${{ inputs.workflow_id }}
       #     path: .
 
+      - name: Check if dow_totals is true
+        if: ${{ inputs.dow_totals }}
+        run: |
+          echo "dow_totals is true. Proceeding with the task."
+
       - name: Check artifacts
         if: |
-            ${{ (( inputs.dow_totals == 'true' ) ||
-              ( inputs.dow_appendix == 'true' )) &&
-              ( inputs.do_compare != 'true' ) &&
-              ( inputs.dow_results != 'true' )
+            ${{
+              ( inputs.dow_totals == 'true' ) ||
+              ( inputs.dow_appendix == 'true') &&
+              ( inputs.do_compare == 'false' ) &&
+              ( inputs.dow_results == 'false' )
             }}
         run: |
           pwd
-          ls -R
+          ls -R ./data
 
 
 
-      ### Install FrEDI from new branch and get results
-      ### Install FrEDI from ref branch and get results
-      - name: Test results
-        if: |
-            ${{ ( inputs.do_compare == 'true' ) ||
-              ( inputs.dow_results == 'true' ) ||
-              ( inputs.dow_totals == 'true' ) ||
-              ( inputs.dow_appendix == 'true' )
-            }}
-        run: |
-          Rscript -e '
-            "got here" |> print()
-          '
-
-      - name: Upload General Tests
-        if: |
-          ${{ ( inputs.do_compare == 'true' ) ||
-            ( inputs.do_compare == 'yes' ) }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: general_tests
-          path: |
-            ./data_tests/*
-
-      - name: Upload Scenario Results
-        if: |
-          ${{ ( inputs.dow_results == 'true' ) ||
-            ( inputs.dow_results == 'yes' ) }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: scenario_results
-          path: |
-            ./data_tests/*
-
-
-      - name: Upload Report Figures
-        if: |
-            ${{ ( inputs.dow_totals == 'true' ) ||
-              ( inputs.dow_appendix == 'true' )
-            }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: report_figures
-          path: |
-            ./data_tests/*
+      # ### Install FrEDI from new branch and get results
+      # ### Install FrEDI from ref branch and get results
+      # - name: Test results
+      #   if: |
+      #       ${{ ( inputs.do_compare == 'true' ) ||
+      #         ( inputs.dow_results == 'true' ) ||
+      #         ( inputs.dow_totals == 'true' ) ||
+      #         ( inputs.dow_appendix == 'true' )
+      #       }}
+      #   run: |
+      #     Rscript -e '
+      #       "got here" |> print()
+      #     '
+      #
+      # - name: Upload General Tests
+      #   if: |
+      #     ${{ ( inputs.do_compare == 'true' ) ||
+      #       ( inputs.do_compare == 'yes' ) }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: general_tests
+      #     path: |
+      #       ./data_tests/*
+      #
+      # - name: Upload Scenario Results
+      #   if: |
+      #     ${{ ( inputs.dow_results == 'true' ) ||
+      #       ( inputs.dow_results == 'yes' ) }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: scenario_results
+      #     path: |
+      #       ./data_tests/*
+      #
+      #
+      # - name: Upload Report Figures
+      #   if: |
+      #       ${{ ( inputs.dow_totals == 'true' ) ||
+      #         ( inputs.dow_appendix == 'true' )
+      #       }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: report_figures
+      #     path: |
+      #       ./data_tests/*
 
