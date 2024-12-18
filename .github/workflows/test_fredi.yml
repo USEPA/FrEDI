@@ -307,8 +307,55 @@ jobs:
 
             ###### Create Figures ######
             ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
-            if(doFigures) "Making figures..." |> print()
+            # if(doFigures) "Making figures..." |> print()
+            if(doFigures) {
+              "Making figures..." |> print()
 
+              ### Artifact paths
+              artDir    <- oPath0  |> file.path("scenario_results")
+              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
+              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
+              gcmPath   <- artDir  |> file.path(gcmName)
+              slrPath   <- artDir  |> file.path(slrName)
+              ### Initialize data
+              gcmData0  <- NULL
+              slrData0  <- NULL
+              ### Check if files exist
+              gcmExists <- gcmPath |> file.exists()
+              slrExists <- slrPath |> file.exists()
+              anyExist  <- c(gcmExists, slrExists) |> any()
+              oPath0  |> list.files() |> print();
+              artDir  |> list.files() |> print();
+              c(gcmPath, slrPath) |> print()
+
+              ### Load data
+              do_any    <- FALSE
+              if(gcmExists) {
+                ### Try to load data
+                # gcmPath |> load()
+                gcmPath |> load(gcm_env <- new.env())
+                gcm_list <- gcm_env |> as.list() |> unlist(recursive=F)
+                gcmData0 <- gcm_list[["obj0"]]
+                do_gcm   <- !(gcmData0 |> is.null())
+                do_any   <- do_any | do_gcm
+                gcmData0 |> glimpse()
+                rm(gcm_env, gcm_list)
+              } ### End if(gcmExists)
+              if(slrExists) {
+                # slrPath |> load()
+                slrPath |> load(slr_env <- new.env())
+                slr_list <- slr_env |> as.list()
+                slrData0 <- slr_list[["obj0"]]
+                do_slr   <- !(slrData0 |> is.null())
+                do_any   <- do_any | do_slr
+                slrData0 |> glimpse()
+                rm(slr_env, slr_list)
+              } ### End if(slrExists)
+
+              ### Whether to run the test
+              makePlots <- doFigures & anyExist & do_any
+              makePlots |> print()
+            } ### End if(doFigures)
             "got here" |> print()
           '
 
