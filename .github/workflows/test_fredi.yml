@@ -124,25 +124,25 @@ jobs:
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is true. Proceeding with the task."
 
-      - name: Check if dow_totals is not "true"
+      - name: Check if dow_totals is not true2
         if: ${{ !(inputs.dow_totals == "true") }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is false. Proceeding with the task."
 
-      - name: Check if dow_totals is "true"
+      - name: Check if dow_totals is true2
         if: ${{ inputs.dow_totals == "true" }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is true. Proceeding with the task."
 
-      - name: Check if "dow_totals" is not "true"
+      - name: Check if dow_totals is not true3
         if: ${{ !("${{ inputs.dow_totals }}" == "true") }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is false. Proceeding with the task."
 
-      - name: Check if "dow_totals" is "true"
+      - name: Check if dow_totals is true3
         if: ${{ "${{ inputs.dow_totals }}" == "true" }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
