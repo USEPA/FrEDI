@@ -158,6 +158,7 @@ jobs:
           pwd
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_appendix = ${{ inputs.dow_appendix }}"
+          echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
           # ls -R ./data
 
 
