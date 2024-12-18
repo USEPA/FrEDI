@@ -112,7 +112,7 @@ jobs:
       #     run-id: ${{ inputs.workflow_id }}
       #     path: .
 
-      - name: Check if dow_totals is false
+      - name: Check if dow_totals is not true
         if: ${{ !inputs.dow_totals }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
@@ -120,6 +120,30 @@ jobs:
 
       - name: Check if dow_totals is true
         if: ${{ inputs.dow_totals }}
+        run: |
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_totals is true. Proceeding with the task."
+
+      - name: Check if dow_totals is not "true"
+        if: ${{ !(inputs.dow_totals == "true") }}
+        run: |
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_totals is false. Proceeding with the task."
+
+      - name: Check if dow_totals is "true"
+        if: ${{ inputs.dow_totals == "true" }}
+        run: |
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_totals is true. Proceeding with the task."
+
+      - name: Check if "dow_totals" is not "true"
+        if: ${{ !("${{ inputs.dow_totals }}" == "true") }}
+        run: |
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_totals is false. Proceeding with the task."
+
+      - name: Check if "dow_totals" is "true"
+        if: ${{ "${{ inputs.dow_totals }}" == "true" }}
         run: |
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is true. Proceeding with the task."
