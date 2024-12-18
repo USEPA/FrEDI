@@ -347,6 +347,38 @@ jobs:
                 do_any   <- do_any | do_slr
               } ### End if(slrExists)
 
+              ### Whether to run the test
+              makePlots <- doFigures & do_any
+              makePlots |> print()
+
+              ### gcmData=Dataframe with data for GCM sectors
+              ### slrData=Dataframe with data for SLR sectors
+              if(makePlots) {
+                ### Number of digits for formatting sector names
+                digits0   <- 16
+                ### Create plots
+                dfPlots   <- create_DOW_plots(
+                  sectors  = sectors0,
+                  gcmData  = gcmData0,
+                  slrData  = slrData0,
+                  gcmYears = gcmYears0,
+                  slrYears = slrYears0,
+                  totals   = doTotals,
+                  aggOnly  = doTotals,
+                  digits   = digits,
+                  silent   = TRUE ,
+                  testing  = FALSE,
+                  loadCode = "project",
+                  fpath    = "."  ,
+                  saveFile = TRUE ,
+                  outPath  = oPath0,
+                  img_dev  = "pdf",
+                  return   = FALSE
+                ) ### End create_DOW_plotsfunction
+              } ### End if(makePlots)
+              "Finished creating figures..." |> print()
+              oPath0 |> list.files() |> print()
+
             } ### End if(doFigures)
             "got here" |> print()
           '
