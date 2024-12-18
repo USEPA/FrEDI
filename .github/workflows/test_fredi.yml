@@ -133,6 +133,60 @@ jobs:
           inputs.dow_appendix == 'true'
         run: |
           Rscript -e '
+            ### Libraries
+            require(tidyverse)
+            require(devtools)
+            require(openxlsx)
+            require(ggpubr)
+
+            ### Arguments
+            doGenTests  <- "${{ inputs.do_compare   }}" %in% c("true", "yes")
+            doScenarios <- "${{ inputs.dow_results  }}" %in% c("true", "yes")
+            doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
+            doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
+            doFigures   <- doSumFig | doAppFig
+            totals0     <- doSumFig
+            sectors0    <- "${{ inputs.sector }}"
+
+            ### Which branches to install
+            installOld  <- doGenTests
+            installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
+
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+
+            ### Load scripts and testing functions
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
+            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+
+            ### Where to save results
+            oPath0   <- pPath0 |> file.path("data_tests")
+            oFileNew <- oPath0 |> file.path("newResults.rda")
+            oFileRef <- oPath0 |> file.path("refResults.rda")
+
+            ### Check if path exists and, if not, create it
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+
+            ###### Action Arguments ######
+            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            newBranch <- "${{ github.ref_name   }}"
+            refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
+            aggTypes  <- "${{ inputs.agg_types  }}" %in% c("true", "yes")
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
+
             "got here" |> print()
           '
 
