@@ -328,25 +328,32 @@ jobs:
               artDir  |> list.files() |> print();
               c(gcmPath, slrPath) |> print()
 
+              ### Function to load an object to a list
+              loadList <- function(path0){
+                  doLoad <- path0 |> file.exists()
+                  if(doLoad) {
+                    path0 |> load(new_env <- new.env())
+                    list0 <- new_env |> as.list()
+                    obj0  <- list0[["obj0"]]
+                    obj0 |> glimpse()
+                    rm(new_env, list0)
+                    return(obj0)
+                  } ### End if(doLoad)
+                }
+
               ### Load data
               do_any    <- FALSE
               ### Check if GCM file exists and, if it does, load it
               if(gcmExists) {
-                gcmPath |> load(gcm_env <- new.env())
-                gcmList  <- gcm_env |> as.list()
-                gcmData0 <- gcmList[["obj0"]]
+                gcmData0 <- gcmPath |> loadList()
                 do_gcm   <- !(gcmData0 |> is.null())
                 do_any   <- do_any | do_gcm
-                rm(gcm_env, gcmList)
               } ### End if(gcmExists)
               ### Check if SLR file exists and, if it does, load it
               if(slrExists) {
-                slrPath |> load(slr_env <- new.env())
-                slrList  <- slr_env |> as.list()
-                slrData0 <- slrList[["obj0"]]
+                slrData0 <- slrPath |> loadList()
                 do_slr   <- !(slrData0 |> is.null())
                 do_any   <- do_any | do_slr
-                rm(slr_env, slrList)
               } ### End if(slrExists)
 
             } ### End if(doFigures)
