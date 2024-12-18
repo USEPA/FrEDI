@@ -148,17 +148,15 @@ jobs:
       #     echo "dow_totals   = ${{ inputs.dow_totals }}"
       #     echo "dow_totals is true. Proceeding with the task."
 
-      # - name: Check artifacts
-      #   if: |
-      #       ${{
-      #         ( inputs.dow_totals == 'true' ) ||
-      #         ( inputs.dow_appendix == 'true') &&
-      #         ( inputs.do_compare == 'false' ) &&
-      #         ( inputs.dow_results == 'false' )
-      #       }}
-      #   run: |
-      #     pwd
-      #     ls -R ./data
+      - name: Check artifacts
+        if: |
+            ${{
+              ( inputs.dow_totals == 'true' ) ||
+              ( inputs.dow_appendix == 'true')
+            }}
+        run: |
+          pwd
+          # ls -R ./data
 
 
 
