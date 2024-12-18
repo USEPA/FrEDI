@@ -120,7 +120,7 @@ jobs:
           echo "dow_appendix = ${{ inputs.dow_appendix }}"
           echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
           echo "dow_totals | dow_appendix is true. Proceeding with the task."
-          ls -R ./data
+          ls -R ./scenario_results
 
 
       ### Install FrEDI from new branch and get results
@@ -145,7 +145,7 @@ jobs:
             doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
             doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
             doFigures   <- doSumFig | doAppFig
-            totals0     <- doSumFig
+            doTotals    <- doSumFig
             sectors0    <- "${{ inputs.sector }}"
 
             ### Which branches to install
@@ -365,11 +365,11 @@ jobs:
                   slrData  = slrData0,
                   gcmYears = gcmYears0,
                   slrYears = slrYears0,
-                  totals   = totals0,
-                  aggOnly  = totals0,
+                  totals   = doTotals,
+                  aggOnly  = doTotals,
                   digits   = digits,
                   silent   = TRUE ,
-                  testing  = TRUE ,
+                  testing  = FALSE,
                   loadCode = "project",
                   fpath    = "."  ,
                   saveFile = TRUE ,
