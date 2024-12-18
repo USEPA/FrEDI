@@ -150,7 +150,7 @@ jobs:
 
             ### Which branches to install
             installRef  <- doGenTests
-            installNew  <- doGenTests | doScenarios | doSumFig | doAppFig
+            installNew  <- doGenTests | doScenarios | doFigures
 
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
@@ -187,7 +187,10 @@ jobs:
               cAggLvls  <- c("national", "modelaverage", "impactyear")
             } ### End if(aggTypes)
 
-            ###### Run FrEDI for Reference Branch ######
+            ###### Compare Results ######
+            ### Compare results between branches
+
+            ###### ** Install FrEDI from Reference Branch ######
             ### Install FrEDI from ref branch
             if(installRef) {
               devtools::install_github(
@@ -197,6 +200,7 @@ jobs:
               ) ### End install_github
             } ### End if(installRef)
 
+            ###### ** Run FrEDI from Reference Branch ######
             ### Load library, run FrEDI
             if(doGenTests) {
               library(FrEDI)
@@ -208,8 +212,7 @@ jobs:
               package:FrEDI |> detach(unload=TRUE)
             } ### End if(doGenTests)
 
-
-            ###### Run FrEDI for New Branch ######
+            ###### ** Install FrEDI from New Branch ######
             ### Install FrEDI from new branch
             if(installNew) {
               devtools::install_github(
@@ -218,6 +221,7 @@ jobs:
               ) ### End install_github
             } ### End if(installNew)
 
+            ###### ** Run FrEDI from New Branch ######
             ### Load library, run FrEDI
             if(doGenTests) {
               library(FrEDI)
@@ -227,8 +231,7 @@ jobs:
               oPath0 |> list.files() |> print()
             } ### End if(doGenTests)
 
-
-            ###### Run General Tests ######
+            ###### ** Run General Tests ######
             ### Get test results
             if(doGenTests) {
               dfTests <- general_fredi_test(
@@ -242,6 +245,65 @@ jobs:
             } ### End if(doGenTests)
 
 
+            ###### Sectors & Years ######
+            if(doScenarios | doFigures) {
+              ### Format sector names
+              sectors0 |> print()
+              sectors0 <- sectors0 |>
+                str_split(pattern=",") |> unlist() |>
+                trimws()
+              sectors0 |> print()
+
+              ### Which years to report on for GCM, SLR sectors
+              gcmYears0 <- c(2010, 2090)
+              slrYears0 <- c(2050, 2090)
+            } ### End if(doScenarios | doFigures)
+
+
+            ###### Run Scenarios ######
+            ###### ** Setup Scenarios ######
+            if(doScenarios) {
+              ### CONUS temps
+              conusTemps  <- list(
+                temps      = c(0:10),
+                tempLabels = c(0:10),
+                tempType   = "conus",
+                prefix     = "Other_Integer"
+              ) ### End list
+              ### Global temps
+              globalTemps <- list(
+                temps      = c(1.487, 2.198),
+                tempLabels = c(1.5, 2),
+                tempType   = "global",
+                prefix     = "preI_global"
+              ) ### End list
+              ### Temps list
+              tempsList   <- list(conus=conusTemps, global=globalTemps)
+              rm(conusTemps, globalTemps)
+            } ### End if(doScenarios)
+
+            ###### ** Run Scenarios ######
+            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            if(doScenarios) {
+              ### Run scenarios
+              dfResults <- run_constantTempScenarios(
+                sectors  = sectors0,
+                tempList = tempsList,
+                gcmYears = gcmYears0,
+                slrYears = slrYears0,
+                aggOnly  = FALSE,
+                loadCode = "project",
+                silent   = TRUE ,
+                testing  = FALSE,
+                fpath    = pPath0,
+                saveFile = TRUE ,
+                outPath  = oPath0,
+                return   = FALSE
+              ) ### End run_constantTempScenarios
+              "Finished running scenarios..." |> print()
+              oPath0 |> list.files() |> print()
+              rm(dfResults)
+            } ### End if(doScenarios)
             "got here" |> print()
           '
 
