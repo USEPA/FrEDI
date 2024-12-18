@@ -136,18 +136,6 @@ jobs:
           echo "dow_totals   = ${{ inputs.dow_totals }}"
           echo "dow_totals is true. Proceeding with the task."
 
-      # - name: Check if dow_totals is not true3
-      #   if: ${{ !("${{ inputs.dow_totals }}" == "true") }}
-      #   run: |
-      #     echo "dow_totals   = ${{ inputs.dow_totals }}"
-      #     echo "dow_totals is false. Proceeding with the task."
-      #
-      # - name: Check if dow_totals is true3
-      #   if: ${{ "${{ inputs.dow_totals }}" == "true" }}
-      #   run: |
-      #     echo "dow_totals   = ${{ inputs.dow_totals }}"
-      #     echo "dow_totals is true. Proceeding with the task."
-
       - name: Check artifacts
         if: ${{ inputs.dow_totals == 'true' || inputs.dow_appendix == 'true' }}
         # if: |
@@ -155,6 +143,19 @@ jobs:
         #       ( inputs.dow_totals == 'true' ) ||
         #       ( inputs.dow_appendix == 'true' )
         #     }}
+        run: |
+          pwd
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_appendix = ${{ inputs.dow_appendix }}"
+          echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
+          # ls -R ./data
+
+      - name: Check artifacts1
+        if: |
+          ${{
+              inputs.dow_totals == 'true' ||
+              inputs.dow_appendix == 'true'
+          }}
         run: |
           pwd
           echo "dow_totals   = ${{ inputs.dow_totals }}"
