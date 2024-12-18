@@ -56,7 +56,7 @@ on:
       workflow_id:
         type: string
         description: Enter the run ID for the workflow from which to retrieve the scenario results
-        default: ""
+        default: 1
 
 jobs:
   compile_data:
@@ -89,43 +89,29 @@ jobs:
             any::openxlsx
             any::ggpubr
 
-      # - name: Install FrEDI
+      ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
+      # - name: Download all artifacts
       #   if: |
-      #       ${{ ( inputs.dow_results == 'true' ) ||
-      #         ( inputs.dow_results == 'yes' ) ||
-      #         ( inputs.dow_totals == 'true' ) ||
+      #       ${{ ( inputs.dow_totals == 'true' ) ||
       #         ( inputs.dow_totals == 'yes'  ) ||
       #         ( inputs.dow_appendix == 'true' ) ||
       #         ( inputs.dow_appendix == 'yes'  )
       #       }}
-      #   run: |
-      #     Rscript -e '
-      #       devtools::install_github(
-      #         repo         = "https://github.com/USEPA/FrEDI",
-      #         ref          = "${{ github.ref_name }}",
-      #         dependencies = FALSE,
-      #         upgrade      = "never",
-      #         force        = TRUE,
-      #         type         = "source"
-      #       )'
+      #   id:   download-artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     # github-token: ${{ GITHUB_PAT }}
+      #     run-id: ${{ inputs.workflow_id }}
+      #     path: .
 
-      ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
-      - name: Download all artifacts
+      - name: Check artifacts
         if: |
             ${{ ( inputs.dow_totals == 'true' ) ||
               ( inputs.dow_totals == 'yes'  ) ||
               ( inputs.dow_appendix == 'true' ) ||
               ( inputs.dow_appendix == 'yes'  )
             }}
-        id:   download-artifact
-        uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # github-token: ${{ GITHUB_PAT }}
-          run-id: ${{ inputs.workflow_id }}
-          path: .
-
-      - name: Check artifacts
         run: |
           pwd
           ls -R
