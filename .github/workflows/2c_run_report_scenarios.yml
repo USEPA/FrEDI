@@ -114,7 +114,7 @@ jobs:
             ### Format sector names
             sectors0 |> print()
             sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
-            sectorsLC0 <- sectorsLC0 |> tolower()
+            sectors0   <- sectors0 |> tolower()
             doAll      <- "all" %in% sectorsLC0
             doGcm      <- "gcm" %in% sectorsLC0
             doSlr      <- "slr" %in% sectorsLC0
