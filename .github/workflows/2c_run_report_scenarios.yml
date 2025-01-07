@@ -12,13 +12,13 @@ name: 2c. Run Report Scenarios
 on:
   workflow_dispatch:
     inputs:
-       doScenarios:
-         type: choice
-         description: Do you want to generate scenario results for report figures?
-         required: true
-         options:
-         - no
-         - yes
+      doScenarios:
+        type: choice
+        description: Do you want to generate scenario results for report figures?
+        required: true
+        options:
+        - no
+        - yes
       sector:
         type: string
         description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name
