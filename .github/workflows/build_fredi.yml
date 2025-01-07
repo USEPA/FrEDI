@@ -6,9 +6,38 @@
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
-name: Build FrEDI Package
+name: 4. Build FrEDI Package
 
-on: [workflow_dispatch]
+# on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      update_docs:
+        type: choice
+        description: Update documentation?
+        required: true
+        options:
+        - no
+        - yes
+      update_scenarios:
+        type: choice
+        description: Update scenarios?
+        required: true
+        options:
+        - no
+        - yes
+
+#         - "GDP"
+#         - "Population"
+#         - "Temp/SLR"
+#         - "O3/CH4/NOx"
+#       date_results:
+#         type: choice
+#         description: Update default results?
+#         required: true
+#         options:
+#         - no
+#         - yes
 
 jobs:
   compile_data:
@@ -19,7 +48,7 @@ jobs:
     name: Load Package Code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -35,44 +64,169 @@ jobs:
             any::openxlsx
             any::devtools
 
-
-      - name: Build Package
+      - name: Update Scenarios
         run: |
           Rscript -e '
-            ### Main repo path, FrEDI project path, scripts path
-            rPath0   <- ".";
-            pPath0   <- rPath0 |> file.path("FrEDI")
-            oPath0   <- pPath0 |> file.path("data", "defaultResults.rda")
+            require(tidyverse)
+            require(devtools)
+            require(ggpubr)
+            require(openxlsx)
+            ###### Conditionals ######
+            ### Which scenarios/documentation to update
+            do_docs  <- "true" %in% "${{ inputs.update_docs}}"
+            do_data  <- "true" %in% "${{ inputs.update_scenarios}}"
+            do_gdp   <- do_data
+            do_pop   <- do_data
+            do_temp  <- do_data
+            do_o3    <- do_data
+            # do_gdp   <- "GDP"         %in% "${{ inputs.update_scenarios}}"
+            # do_pop   <- "Pop"         %in% "${{ inputs.update_scenarios}}"
+            # do_temp  <- "Temps & SLR" %in% "${{ inputs.update_scenarios}}"
+            # do_o3    <- "${{ inputs.update_scenarios}}" |> str_detect(pattern="O3") |> any()
+            c(do_docs, do_data) |> print()
 
-            ###### Create Default Results ######
-            pPath0 |> devtools::load_all()
-            defaultResults <- run_fredi()
-            save(defaultResults, file=oPath0)
+            ###### File Paths ######
+            ### - Main repo path, FrEDI project path
+            ### - Data path, scenario csv path
+            rPath0   <- "."
+            dPath0   <- rPath0 |> file.path("data" )
+            cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
+
+
+            # ###### Update Scenarios ######
+            # ### GDP
+            # if(do_gdp) {
+            #   gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
+            #   fGdp          <- "gdpDefault"
+            #   dGdp          <- dPath0 |> paste0(fGdp, ".rda")
+            #   cGdp          <- cPath0 |> paste0(fGdp, ".csv")
+            #   gdpDefault |> save(file=dGdp)
+            #   gdpDefault |> write.csv(filename=cGdp, row.names=F)
+            #   rm(fGdp, dGdp, cGdp, gdpDefault)
+            # } ### End if(do_gdp)
+            #
+            # ### Population
+            # if(do_pop) {
+            #   popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
+            #   fPop          <- "popDefault"
+            #   dPop          <- dPath0 |> paste0(fPop, ".rda")
+            #   cPop          <- cPath0 |> paste0(fPop, ".csv")
+            #   popDefault |> save(file=dPop)
+            #   popDefault |> write.csv(filename=cPop, row.names=F)
+            #   rm(fPop, dPop, cPop, popDefault)
+            # } ### End if(do_pop)
+            #
+            # ### Temperature & CSV
+            # if(do_temp) {
+            #   gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
+            #   fTemps        <- "gcamScenarios"
+            #   dTemps        <- dPath0 |> paste0(fTemps, ".rda")
+            #   cTemps        <- cPath0 |> paste0(fTemps, ".csv")
+            #   gcamScenarios |> save(file=dTemps)
+            #   gcamScenarios |> write.csv(filename=cTemps, row.names=F)
+            #   rm(fTemps, dTemps, cTemps, gcamScenarios)
+            # } ### End if(do_temp)
+            #
+            # ### O3, CH4, and NOx
+            # if(do_o3) {
+            #   ### Ozone
+            #   select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
+            #   o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+            #   o3Default     <- o3Default |> select(all_of(select0))
+            #   rm(select0)
+            #
+            #   # ### Adjust the default scenario
+            #   # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+            #   # co_mods       <- co_mods   |> select(model, model_label)
+            #   # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
+            #   # o3Default     <- o3Default |> select(-model)
+            #   # o3Default     <- o3Default |> rename(model=model_label)
+            #   # o3Default     <- o3Default |> relocate(c("model"))
+            #
+            #   ### Save ozone
+            #   fO3           <- "o3Default"
+            #   dO3           <- dPath0 |> paste0(fO3, ".rda")
+            #   cO3           <- cPath0 |> paste0(fO3, ".csv")
+            #   o3Default |> save(file=dO3)
+            #   o3Default |> write.csv(filename=cO3, row.names=F)
+            #   rm(fO3, dO3, cO3, o3Default)
+            #
+            #   ### CH4
+            #   ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+            #   fCH4          <- "ch4Default"
+            #   dCH4          <- dPath0 |> paste0(fCH4, ".rda")
+            #   cCH4          <- cPath0 |> paste0(fCH4, ".csv")
+            #   ch4Default |> save(file=dCH4)
+            #   ch4Default |> write.csv(filename=cCH4, row.names=F)
+            #   rm(fCH4, dCH4, cCH4, ch4Default)
+            #
+            #   ### NOx
+            #   noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+            #   fNOx          <- "noxDefault"
+            #   dNOx          <- dPath0 |> paste0(fNOx, ".rda")
+            #   cNOx          <- cPath0 |> paste0(fNOx, ".csv")
+            #   noxDefault |> save(file=dNOx)
+            #   noxDefault |> write.csv(filename=cNOx, row.names=F)
+            #   rm(fNOx, dNOx, cNOx, noxDefault)
+            # } ### End if(do_o3)
+
 
             ###### Update Documentation ######
             ###### - Build Manual
             ###### - Add and build vignettes
             ###### - Generate Documentation
-            roxygen2::roxygenise(pPath0)
-            devtools::document(pkg = pPath0)
-            # devtools::build_manual(pkg = pPath0)
-            # devtools::build_vignettes(pkg = pPath0)
+            "got here1" |> print()
+            if(do_docs) {
+              roxygen2::roxygenise(rPath0)
+              "got here2" |> print()
+              devtools::document(pkg = rPath0)
+              "got here3" |> print()
+              # devtools::build_manual(pkg = rPath0)
+              # devtools::build_vignettes(pkg = rPath0)
+            } ### End if(do_docs)
 
             ###### Build Package ######
             ###### - Build Package but do not include vignettes
-            # devtools::build(pkg=pPath0, path=rPath0)
-
+            # devtools::build(pkg=rPath0, path=rPath0)
           '
 
 
+      - name: Build Package
+        run: |
+          Rscript -e '
+            ### Main repo path, FrEDI project path, scripts path
+            "got here4" |> print()
+            rPath0   <- ".";
+
+            # ###### Create Default Results ######
+            # oPath0   <- rPath0 |> file.path("data", "defaultResults.rda")
+            # rPath0 |> devtools::load_all()
+            # defaultResults <- run_fredi()
+            # save(defaultResults, file=oPath0)
+
+            ###### Update Documentation ######
+            ###### - Build Manual
+            ###### - Add and build vignettes
+            ###### - Generate Documentation
+            roxygen2::roxygenise(rPath0)
+            devtools::document(pkg = rPath0)
+            # devtools::build_manual(pkg = rPath0)
+            # devtools::build_vignettes(pkg = rPath0)
+
+            ###### Build Package ######
+            ###### - Build Package but do not include vignettes
+            # devtools::build(pkg=rPath0, path=rPath0)
+          '
+
+
+      ### git add data/defaultResults.rda
       - name: Commit results
         run: |
           git config --local core.autocrlf false
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name  "${{ github.actor }}"
-          git add FrEDI/data/defaultResults.rda
-          git add FrEDI/man/*.Rd
+          git add man/*.Rd
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
-          git commit -am "Updated documentation & default results"
+          git commit -am "Updated package documentation"
           git push
 

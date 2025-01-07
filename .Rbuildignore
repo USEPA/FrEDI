@@ -1,0 +1,15 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^doc$
+^Meta$
+^\..\.Rproj\.user$
+^.*\.Rhistory$
+^\.Rhistory\.user$
+^install$
+^data-raw$
+^_pkgdown\.yml$
+^\.\./docs$
+^pkgdown$
+^docs$
+^\.github$
+^\.github\workflows\*

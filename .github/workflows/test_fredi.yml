@@ -3,29 +3,62 @@
 ### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
 ### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
 ### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### Single line conditional can use ${{}} formulation. Multi-line conditional does not.
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
-name: Test FrEDI Package
+name: 2a. Test FrEDI Package
 
-# on: [workflow_dispatch]
 on:
   workflow_dispatch:
     inputs:
-      run_tests:
+      do_compare:
         type: choice
-        description: Run general tests
+        description: Do you want to compare FrEDI results with those from another branch?
         required: true
         options:
         - no
         - yes
-      make_figures:
+      ref_branch:
+        type: string
+        description: To which branch of FrEDI do you want to compare results)?
+        default: main
+      agg_types:
         type: choice
-        description: Create report figures
+        description: Aggregate across impact types?
         required: true
         options:
         - no
         - yes
+      dow_results:
+        type: choice
+        description: Do you want to generate scenario results for report figures?
+        required: true
+        options:
+        - no
+        - yes
+      dow_totals:
+        type: choice
+        description: Do you want to create a plot summarizing scenario results for all sectors?
+        required: true
+        options:
+        - no
+        - yes
+      dow_appendix:
+        type: choice
+        description: Do you want to create sector-specific appendix figures?
+        required: true
+        options:
+        - no
+        - yes
+      sector:
+        type: string
+        description: Which sectors do you want to run?
+        default: "all"
+      workflow_id:
+        type: string
+        description: Enter the run ID for the workflow from which to retrieve the scenario results
+        default: 1
 
 jobs:
   compile_data:
@@ -36,11 +69,19 @@ jobs:
     name: Load Package Code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Send input status
         run: |
-          echo "${{ inputs.run_tests }} ${{ inputs.make_figures }}"
+          echo "ref_name     = ${{ github.ref_name }}"
+          echo "ref_branch   = ${{ inputs.ref_branch }}"
+          echo "do_compare   = ${{ inputs.do_compare }}"
+          echo "agg_types    = ${{ inputs.agg_types }}"
+          echo "dow_results  = ${{ inputs.dow_results }}"
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_appendix = ${{ inputs.dow_appendix }}"
+          echo "sector       = ${{ inputs.sector }}"
+          echo "workflow_id  = ${{ inputs.workflow_id }}"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -52,128 +93,322 @@ jobs:
           cache-version: 1
           packages: |
             any::tidyverse
-            any::ggpubr
-            any::openxlsx
             any::devtools
+            any::openxlsx
+            any::ggpubr
 
-      - name: Install FrEDI
+      ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
+      - name: Download all artifacts
+        if: |
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
+        id:   download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+          path: .
+
+
+      - name: Check artifacts
+        # if: ${{ inputs.dow_totals == 'true' || inputs.dow_appendix == 'true' }}
+        if: |
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
+        run: |
+          echo "dow_totals   = ${{ inputs.dow_totals }}"
+          echo "dow_appendix = ${{ inputs.dow_appendix }}"
+          echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
+          echo "dow_totals | dow_appendix is true. Proceeding with the task."
+          ls -R ./scenario_results
+
+
+      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from ref branch and get results
+      - name: Test results
+        if: |
+          inputs.do_compare == 'true' ||
+          inputs.dow_results == 'true' ||
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
         run: |
           Rscript -e '
-            devtools::install_github(
-              repo    = "https://github.com/USEPA/FrEDI",
-              ref     = "${{ github.ref_name }}",
-              subdir  = "FrEDI",
-              dependencies = FALSE,
-              upgrade = "never",
-              force   = TRUE,
-              type    = "source"
-            )'
+            ### Libraries
+            require(tidyverse)
+            require(devtools)
+            require(openxlsx)
+            require(ggpubr)
 
-      - name: Run create_DoW_results
-        run: |
-          Rscript -e '
-          ### Which tests to do
-          do_tests <- "${{ inputs.run_tests    }}" == "true"
-          do_figs  <- "${{ inputs.make_figures }}" == "true"
+            ### Arguments
+            doGenTests  <- "${{ inputs.do_compare   }}" %in% c("true", "yes")
+            doScenarios <- "${{ inputs.dow_results  }}" %in% c("true", "yes")
+            doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
+            doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
+            doFigures   <- doSumFig | doAppFig
+            doTotals    <- doSumFig
+            sectors0    <- "${{ inputs.sector }}"
 
-          ### Main repo path, FrEDI project path, scripts path
-          rPath0   <- ".";
-          pPath0   <- rPath0 |> file.path("FrEDI")
-          sPath0   <- pPath0 |> file.path("scripts")
-          tPath0   <- pPath0 |> file.path("testing")
+            ### Which branches to install
+            installRef  <- doGenTests
+            installNew  <- doGenTests | doScenarios | doFigures
 
-          ### Load FrEDI
-          pPath0 |> devtools::load_all()
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
 
-          ### Load test code
-          tFiles0 <- tPath0 |> list.files(full.names=TRUE)
-          for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            ### Load scripts and testing functions
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
+            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
-          ### Where to save results
-          oPath0   <- pPath0 |> file.path("data_tests")
-          oPath1   <- oPath0 |> file.path("general")
-          oPath2   <- oPath0 |> file.path("report_figures")
-
-          ### Test results
-          if(do_tests){
-            ### Check if path exists and, if not, create it
-            exists0 <- oPath1 |> dir.exists()
-            if(!exists0){oPath1 |> dir.create(recursive = TRUE)}
-
-            ### Run FrEDI
-            results0 <- run_fredi()
-            ### Run tests
-            tests0   <- results0 |> general_fredi_test(
-              outPath   = oPath1,
-              save      = TRUE,
-              return    = TRUE,
-              overwrite = TRUE
-            )
-
-            ### Create plot totals
-            listResults <- create_default_tablePlot()
-            save0       <- listResults |> save(file= oPath1 |> file.path("defaultScenarioTotals.rda")) |> try()
-
-            ### Remove results
-            rm(results0, tests0, listResults)
-          }
-
-          ### Create report results
-          if(do_figs){
-            ### Load source
-            sPath0 |> file.path("create_DoW_results.R") |> source()
+            ### Where to save results
+            oPath0   <- pPath0 |> file.path("data_tests")
+            oFileNew <- oPath0 |> file.path("newResults.rda")
+            oFileRef <- oPath0 |> file.path("refResults.rda")
 
             ### Check if path exists and, if not, create it
-            exists0 <- oPath2 |> dir.exists()
-            if(!exists0){oPath2 |> dir.create(recursive = TRUE)}
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+
+            ###### Action Arguments ######
+            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            newBranch <- "${{ github.ref_name   }}"
+            refBranch <- "${{ inputs.ref_branch }}"
+            c(newBranch, refBranch) |> print()
+            aggTypes  <- "${{ inputs.agg_types  }}" %in% c("true", "yes")
+            if(aggTypes) {
+              cAggLvls  <- "all"
+            } else {
+              cAggLvls  <- c("national", "modelaverage", "impactyear")
+            } ### End if(aggTypes)
+
+            ###### Compare Results ######
+            ### Compare results between branches
+
+            ###### ** Install FrEDI from Reference Branch ######
+            ### Install FrEDI from ref branch
+            if(installRef) {
+              devtools::install_github(
+                repo=urlRepo, ref=refBranch,
+                # subdir="FrEDI",
+                dependencies=F, upgrade="never", force=T, type="source"
+              ) ### End install_github
+            } ### End if(installRef)
+
+            ###### ** Run FrEDI from Reference Branch ######
+            ### Load library, run FrEDI
+            if(doGenTests) {
+              library(FrEDI)
+              dfRef <- run_fredi(aggLevels=cAggLvls)
+              dfRef |> save(file=oFileRef)
+              "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
+              oPath0 |> list.files() |> print()
+              ### Detach FrEDI package
+              package:FrEDI |> detach(unload=TRUE)
+            } ### End if(doGenTests)
+
+            ###### ** Install FrEDI from New Branch ######
+            ### Install FrEDI from new branch
+            if(installNew) {
+              devtools::install_github(
+                repo=urlRepo, ref=newBranch,
+                dependencies=F, upgrade="never", force=T, type="source"
+              ) ### End install_github
+            } ### End if(installNew)
+
+            ###### ** Run FrEDI from New Branch ######
+            ### Load library, run FrEDI
+            if(doGenTests) {
+              library(FrEDI)
+              dfNew <- run_fredi(aggLevels=cAggLvls)
+              dfNew |> save(file=oFileNew)
+              "Finished running FrEDI on " |> paste0(newBranch, " branch.") |> print()
+              oPath0 |> list.files() |> print()
+            } ### End if(doGenTests)
+
+            ###### ** Run General Tests ######
+            ### Get test results
+            if(doGenTests) {
+              dfTests <- general_fredi_test(
+                newOutputs = dfNew,
+                refOutputs = dfRef,
+                outPath    = oPath0
+              ) ### End general_fredi_test
+              "Finished running general tests." |> print()
+              oPath0 |> list.files() |> print()
+              rm(dfTests)
+            } ### End if(doGenTests)
 
 
-            ### Create report figures
-            reports0 <- create_DoW_results(
-              outPath  = oPath2,
-              saveFile = TRUE,
-              loadCode = "project",
-              silent   = FALSE,
-              testing  = TRUE,
-              return   = FALSE,
-              fpath    = pPath0
-            )
+            ###### Sectors & Years ######
+            if(doScenarios | doFigures) {
+              ### Format sector names
+              sectors0 |> print()
+              sectors0 <- sectors0 |>
+                str_split(pattern=",") |> unlist() |>
+                trimws()
+              sectors0 |> print()
 
-            ### Figure H results
-            results0 <- run_fredi(aggLevels=c("modelaverage", "national", "impactYear"))
-            results0 <- results0 |> filter(year %in% seq(2010, 2090, by=5))
-            save0    <- results0 |> write.csv(file=oPath2 |> file.path("FigH_results.csv"), row.names=F) |> try()
-          }
+              ### Which years to report on for GCM, SLR sectors
+              gcmYears0 <- c(2010, 2090)
+              slrYears0 <- c(2050, 2090)
+            } ### End if(doScenarios | doFigures)
+
+
+            ###### Run Scenarios ######
+            ###### ** Setup Scenarios ######
+            if(doScenarios) {
+              ### CONUS temps
+              conusTemps  <- list(
+                temps      = c(0:10),
+                tempLabels = c(0:10),
+                tempType   = "conus",
+                prefix     = "Other_Integer"
+              ) ### End list
+              ### Global temps
+              globalTemps <- list(
+                temps      = c(1.487, 2.198),
+                tempLabels = c(1.5, 2),
+                tempType   = "global",
+                prefix     = "preI_global"
+              ) ### End list
+              ### Temps list
+              tempsList   <- list(conus=conusTemps, global=globalTemps)
+              rm(conusTemps, globalTemps)
+            } ### End if(doScenarios)
+
+            ###### ** Run Scenarios ######
+            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            if(doScenarios) {
+              ### Run scenarios
+              dfResults <- run_constantTempScenarios(
+                sectors  = sectors0,
+                tempList = tempsList,
+                gcmYears = gcmYears0,
+                slrYears = slrYears0,
+                aggOnly  = FALSE,
+                loadCode = "project",
+                silent   = TRUE ,
+                testing  = FALSE,
+                fpath    = pPath0,
+                saveFile = TRUE ,
+                outPath  = oPath0,
+                return   = FALSE
+              ) ### End run_constantTempScenarios
+              "Finished running scenarios..." |> print()
+              oPath0 |> list.files() |> print()
+              rm(dfResults)
+            } ### End if(doScenarios)
+
+            ###### Create Figures ######
+            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            # if(doFigures) "Making figures..." |> print()
+            if(doFigures) {
+              "Making figures..." |> print()
+
+              ### Artifact paths
+              artDir    <- pPath0  |> file.path("scenario_results")
+              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
+              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
+              gcmPath   <- artDir  |> file.path(gcmName)
+              slrPath   <- artDir  |> file.path(slrName)
+              ### Initialize data
+              gcmData0  <- NULL
+              slrData0  <- NULL
+              ### Check if files exist
+              gcmExists <- gcmPath |> file.exists()
+              slrExists <- slrPath |> file.exists()
+              anyExist  <- c(gcmExists, slrExists) |> any()
+              oPath0  |> list.files() |> print();
+              artDir  |> list.files() |> print();
+              c(gcmPath, slrPath) |> print()
+
+              ### Load data
+              do_any    <- FALSE
+              ### Check if GCM file exists and, if it does, load it
+              if(gcmExists) {
+                gcmPath |> load()
+                gcmData0 <- obj0
+                rm(obj0)
+                do_gcm   <- !(gcmData0 |> is.null())
+                do_any   <- do_any | do_gcm
+              } ### End if(gcmExists)
+              ### Check if SLR file exists and, if it does, load it
+              if(slrExists) {
+                slrPath |> load()
+                slrData0 <- obj0
+                rm(obj0)
+                do_slr   <- !(slrData0 |> is.null())
+                do_any   <- do_any | do_slr
+              } ### End if(slrExists)
+
+              ### Whether to run the test
+              makePlots <- doFigures & do_any
+              makePlots |> print()
+
+              ### gcmData=Dataframe with data for GCM sectors
+              ### slrData=Dataframe with data for SLR sectors
+              if(makePlots) {
+                ### Number of digits for formatting sector names
+                digits0   <- 16
+                ### Create plots
+                dfPlots   <- create_DOW_plots(
+                  sectors  = sectors0,
+                  gcmData  = gcmData0,
+                  slrData  = slrData0,
+                  gcmYears = gcmYears0,
+                  slrYears = slrYears0,
+                  totals   = doTotals,
+                  aggOnly  = doTotals,
+                  digits   = digits,
+                  silent   = TRUE ,
+                  testing  = FALSE,
+                  loadCode = "project",
+                  fpath    = "."  ,
+                  saveFile = TRUE ,
+                  outPath  = oPath0,
+                  img_dev  = "pdf",
+                  return   = FALSE
+                ) ### End create_DOW_plotsfunction
+              } ### End if(makePlots)
+              "Finished creating figures..." |> print()
+              oPath0 |> list.files() |> print()
+
+            } ### End if(doFigures)
+            "got here" |> print()
           '
 
-      - name: Upload Tests
+      - name: Upload General Tests
         if: |
-          inputs.run_tests == 'true'
-        uses: actions/upload-artifact@v3
+          inputs.do_compare == 'true'
+        uses: actions/upload-artifact@v4
         with:
-          name: Test Data
+          name: general_tests
           path: |
-            ./FrEDI/data_tests/general/defaultScenarioTotals.rda
-            ./FrEDI/data_tests/general/testResults_fredi_general.xlsx
+            ./data_tests/*
+
+      - name: Upload Scenario Results
+        if: |
+          inputs.dow_results == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario_results
+          path: |
+            ./data_tests/*
+
 
       - name: Upload Report Figures
         if: |
-          inputs.make_figures == 'true'
-        uses: actions/upload-artifact@v3
+          inputs.dow_totals == 'true' ||
+          inputs.dow_appendix == 'true'
+        uses: actions/upload-artifact@v4
         with:
-          name: Report Data
+          name: report_figures
           path: |
-            ./FrEDI/data_tests/report_figures/
-#            ./FrEDI/data_tests/general/FigH_results.csv
-# #
-#       - name: Commit results
-#         run: |
-#           git config --local core.autocrlf false
-#           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-#           git config --local user.name "${{ github.actor }}"
-#           git add data/tmp_sysdata.rda
-#           git add data_tests/**.xlsx
-#           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
-#           git commit -a -m "Updated temporary system data and tests"
-#           git push
+            ./data_tests/*
 
