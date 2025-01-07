@@ -118,10 +118,9 @@ jobs:
             doAll      <- "all" %in% sectorsLC0
             doGcm      <- "gcm" %in% sectorsLC0
             doSlr      <- "slr" %in% sectorsLC0
-            if     (doAll) sectors <- NULL
-            else if(doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T)
-            else if(doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T)
-            else           sectors <- sectors0
+            if     (doAll) sectors <- NULL else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
+            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T) else
+            sectors <- sectors0
             sectors |> print()
 
             ### Which years to report on for GCM, SLR sectors
