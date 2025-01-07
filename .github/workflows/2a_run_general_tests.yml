@@ -90,8 +90,7 @@ jobs:
             doTests   <- doCompare %in% c("true", "yes")
             aggAll    <- aggTypes  %in% c("true", "yes")
             ### If aggAll, aggregate, national, model averages, impact years
-            if (aggTypes) aggLevels <- c("all")
-            else          aggLevels <- c("national", "modelaverage", "impactyear")
+            if (aggTypes) aggLevels <- c("all") else aggLevels <- c("national", "modelaverage", "impactyear")
 
 
             ###### Paths ######
