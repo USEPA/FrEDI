@@ -176,7 +176,7 @@ jobs:
 
 
             ###### Compare Test results########
-            rmarkdown::render(input = "rmd_file",
+            rmarkdown::render(input = rmd_file,
                               output_dir = oPath0 )
 
             ###### Return ######
