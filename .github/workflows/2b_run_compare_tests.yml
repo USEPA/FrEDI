@@ -68,8 +68,8 @@ jobs:
             any::plotly
             any::glue
             any::ggpubr
-            any::gridExtra
             any::grid
+            any::gridExtra
             any::ggplot2
             any::lattice
             any::htmltools
