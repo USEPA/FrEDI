@@ -1226,7 +1226,7 @@ plot_DoW_by_sector <- function(
 
     ### Iterate over rows in types_i
     list_i    <- labels_i |> map(function(label_j, df1_j=df0, df2_j=df2_i){
-      "Creating plots for model type " |> paste0(label_j, "...") |> message()
+      "Creating plots for " |> paste0(label_j, "...") |> message()
       ### Get values
       df2_j    <- df2_j |> filter(label == label_j)
       x_j      <- df2_j |> pull(label ) |> unique()
