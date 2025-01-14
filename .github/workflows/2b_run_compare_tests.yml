@@ -113,8 +113,11 @@ jobs:
             tPath0    <- pPath0 |> file.path("testing")
             sFiles0   <- sPath0 |> list.files(full.names=TRUE)
             tFiles0   <- tPath0 |> list.files(full.names=TRUE)
+            rmd_file <- tFiles0[grepl(".Rmd",tFiles0)]
+            tFiles0 <- tFiles0[!grepl(".Rmd",tFiles0)]
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+
 
             ### Where to save results
             oPath0    <- pPath0 |> file.path("data_tests")
@@ -173,7 +176,6 @@ jobs:
 
 
             ###### Compare Test results########
-            rmd_file <- tFiles0[grepl(".Rmd",tFiles0)]
             rmarkdown::render(input = "rmd_file",
                               output_dir = oPath0 )
 
