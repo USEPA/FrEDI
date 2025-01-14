@@ -1150,8 +1150,7 @@ plot_DoW <- function(
   ### Initialize dataframe
   df_types   <- types0   |> fun_create_df_types(years0=years0)
   labels0    <- df_types |> pull(label) |> unique()
-  # "got here" |> print()
-  df_types |> glimpse()
+  # "got here" |> print(); df_types |> glimpse()
 
   ### Initialize list to iterate over
   list0      <- labels0 |> map(function(label_i, df1_i=df0, df2_i=df_types){
@@ -1216,7 +1215,7 @@ plot_DoW_by_sector <- function(
 
   ### Dataframe to iterate over
   df_types   <- models |> fun_create_df_types(years0=years0, bySector=TRUE, df0=df0)
-  df_types |> glimpse()
+  # df_types |> glimpse()
 
   ### Get list
   list0      <- typesLC0 |> map(function(model_i, df1_i=df0, df2_i=df_types){
@@ -1248,7 +1247,7 @@ plot_DoW_by_sector <- function(
       ### If do_gcm, filter to appropriate years
       if(do_gcm_j) {
         yrs_j  <- "N/A" |> c(x2_j) |> unique()
-        yrs_j |> print()
+        # yrs_j |> print()
         df_j   <- df_j |> filter(summaryYear == x2_j)
         df_j   <- df_j |> filter(impactYear %in% yrs_j)
         # df_j |> years0()
@@ -1272,7 +1271,7 @@ plot_DoW_by_sector <- function(
       } else{
         plot_j <- NA
       } ### if(do_j)
-      plot_j |> print()
+      # plot_j |> print()
 
       ### Return plot
       gc()
