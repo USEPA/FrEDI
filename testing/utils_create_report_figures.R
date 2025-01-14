@@ -11,7 +11,6 @@ scaledImpactPlotTitles <- function(
   df0     <- df0 |> mutate(title      = c("Scaled Impacts by Degrees of Warming", "Scaled Impacts by Year"))
   df0     <- df0 |> mutate(xTitle     = c("Degrees of Warming (°C)", "Year"))
   # df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "Year"))
-  # df0     <- df0 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"Year\""))
   df0     <- df0 |> mutate(yTitle     = c("Scaled Impacts"))
   df0     <- df0 |> mutate(lgdLbl     = c("Model", "Scenario"))
   ### - Other info
@@ -27,7 +26,6 @@ scaledImpactPlotTitles <- function(
   df1     <- df1 |> mutate(title      = c("Impacts by Degrees of Warming", "Impacts by GMSL (cm)"))
   df1     <- df1 |> mutate(xTitle     = c("Degrees of Warming (°C)", "GMSL (cm)"))
   # df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "GMSL (cm)"))
-  # df1     <- df1 |> mutate(xTitle     = c("expression(\"Degrees of Warming (°C)\")", "\"GMSL (cm)\""))
   df1     <- df1 |> mutate(yTitle     = c("Impacts ($2015)"))
   df1     <- df1 |> mutate(lgdLbl     = c("Model", "Year"))
   ### - Other info
@@ -71,7 +69,7 @@ get_scaledImpactPlotTitles <- function(
   ### Otherwise, update list with options
   nullOpts  <- (options |> is.null()) | !(options |> length())
   if(!nullOpts) {
-    hasOpts   <- options |> map(function(x){x |> length() & !(x |> is.null())}) |> unlist() |> which()
+    hasOpts   <- options  |> map(function(x){x |> length() & !(x |> is.null())}) |> unlist() |> which()
     options   <- options[hasOpts]
     optNames  <- options  |> names()
     doOpts    <- optNames |> length()
@@ -1145,23 +1143,26 @@ plot_DoW <- function(
     ) ### End options
 ){
   ### Model Type Checks
-  typeLC0    <- types0 |> tolower()
-  do_gcm     <- "gcm" %in% typeLC0
-  do_slr     <- "slr" %in% typeLC0
+  typesLC0   <- types0 |> tolower()
+  do_gcm     <- "gcm" %in% typesLC0
+  do_slr     <- "slr" %in% typesLC0
 
   ### Initialize dataframe
-  df_types   <- types0 |> fun_create_df_types(years0=years0)
+  df_types   <- types0   |> fun_create_df_types(years0=years0)
+  labels0    <- df_types |> pull(label) |> unique()
   # "got here" |> print()
-  # df_types |> years0()
+  df_types |> glimpse()
 
-
-  # ### Initialize list to iterate over
-  list0      <- list()
-  for(i in df_types |> nrow() |> seq_len()){
+  ### Initialize list to iterate over
+  list0      <- labels0 |> map(function(label_i, df1_i=df0, df2_i=df_types){
     ### Message user
-    x1_i   <- df_types[["model_type"]][i]
-    x2_i   <- df_types[["year"      ]][i]
-    x_i    <- df_types[["label"     ]][i]
+    "Creating plots for " |> paste0(label_i, "...") |> message()
+
+    ### Filter data
+    df2_i  <- df_types |> filter(label %in% label_i)
+    x1_i   <- df2_i |> pull(model_type) |> unique()
+    x2_i   <- df2_i |> pull(year      ) |> unique()
+    x_i    <- df2_i |> pull(label     ) |> unique()
     x_i |> print()
 
     ### Whether to do GCM
@@ -1169,7 +1170,7 @@ plot_DoW <- function(
     if(gcm_i) x2_i <- x2_i |> as.numeric()
 
     ### Plot by model year
-    plot_i <- df0 |> plot_DoW_by_modelYear(
+    plot_i <- df1_i |> plot_DoW_by_modelYear(
       type0      = x1_i,  ### Model type: GCM or SLR
       year0      = x2_i,  ### Year
       xCol       = xCol,
@@ -1180,11 +1181,10 @@ plot_DoW <- function(
       silent     = silent
     ) ### End plot_DoW_by_modelYear()
 
-    ### Add to list
-    list0[[x_i]] <- plot_i
-    rm(i, x1_i, x2_i, x_i, plot_i)
-  } ### End for(i in df_types |> nrow() |> seq_len())
-  rm(df0)
+    ### Return plot
+    gc()
+    return(plot_i)
+  }) |> set_names(labels0)
 
   ### Return
   return(list0)
@@ -1210,48 +1210,43 @@ plot_DoW_by_sector <- function(
   years0     <- c(2010, 2090)
 
   ### Model Type Checks
-  typeLC0    <- models |> tolower()
-  do_gcm     <- "gcm" %in% typeLC0
-  do_slr     <- "slr" %in% typeLC0
+  typesLC0   <- models |> tolower()
+  do_gcm     <- "gcm" %in% typesLC0
+  do_slr     <- "slr" %in% typesLC0
 
   ### Dataframe to iterate over
   df_types   <- models |> fun_create_df_types(years0=years0, bySector=TRUE, df0=df0)
   df_types |> glimpse()
 
   ### Get list
-  list0      <- list()
-  for(model_i in models){
+  list0      <- typesLC0 |> map(function(model_i, df1_i=df0, df2_i=df_types){
     ### Message user
     "Creating plots for model type " |> paste0(model_i, "...") |> message()
-
-    ### Filter tibbles
-    # df_i      <- df0      |> filter(model_type %in% model_i)
-    types_i   <- df_types |> filter(model_type %in% model_i)
+    df2_i    <- df2_i |> filter((model_type |> tolower()) %in% model_i)
+    labels_i <- df2_i |> pull(label) |> unique()
 
     ### Iterate over rows in types_i
-    list_i    <- list()
-    for(row_j in types_i |> nrow() |> seq_len()){
+    list_i    <- labels_i |> map(function(label_j, df1_j=df0, df2_j=df2_i){
+      "Creating plots for model type " |> paste0(label_j, "...") |> message()
       ### Get values
-      x1_j     <- types_i[["sector"]][row_j]
-      x2_j     <- types_i[["year"  ]][row_j]
-      x_j      <- types_i[["label" ]][row_j]
-      # x_j |> print()
+      df2_j    <- df2_j |> filter(label == label_j)
+      x_j      <- df2_j |> pull(label ) |> unique()
+      x1_j     <- df2_j |> pull(sector) |> unique()
+      x2_j     <- df2_j |> pull(year  ) |> unique()
 
       ### Get type and condition
-      type_j   <- types_i[["model_type"]][row_j]
+      type_j   <- df2_j |> pull(model_type)
       do_gcm_j <- "gcm" %in% (type_j |> tolower())
 
       ### Filter to sector
-      # x1_j |> print(); df0  |> pull(sector) |> unique() |> print()
-      df_j     <- df0  |> filter(sector == x1_j)
-      x2_j |> print(); df0  |> pull(summaryYear) |> unique() |> print()
-      df0  |> pull(impactYear) |> unique() |> print()
-      "got here1" |> print()
-      df_j |> glimpse()
+      # x1_j |> print(); df1_j |> pull(sector) |> unique() |> print()
+      # df1_j |> glimpse()
+      df_j     <- df1_j  |> filter(sector == x1_j)
+      # "got here1" |> print(); df_j |> glimpse()
+      # x2_j |> print(); df1_j |> pull(summaryYear) |> unique() |> print(); df1_j  |> pull(impactYear) |> unique() |> print()
 
       ### If do_gcm, filter to appropriate years
-
-      if(do_gcm_j){
+      if(do_gcm_j) {
         yrs_j  <- "N/A" |> c(x2_j) |> unique()
         yrs_j |> print()
         df_j   <- df_j |> filter(summaryYear == x2_j)
@@ -1259,36 +1254,39 @@ plot_DoW_by_sector <- function(
         # df_j |> years0()
         rm(yrs_j)
       } ### End if(do_gcm_j)
-      "got here2" |> print()
-      df_j |> glimpse()
+      # "got here2" |> print(); df_j |> glimpse()
 
-      ### Plot j
-      plot_j  <- df_j |> plot_DOW_byImpactTypes(
-        sector    = x1_j,
-        modelType = type_j,
-        yCol      = yCol,
-        xCol      = xCol,
-        silent    = TRUE,
-        options   = options
-      ) ### End plot_DOW_byImpactTypes()
-      # plot_j |> names() |> print()
+      ### Check if plot exists
+      do_j  <- df_j |> nrow()
+      if(do_j) {
+        ### Plot j
+        plot_j  <- df_j |> plot_DOW_byImpactTypes(
+          sector    = x1_j,
+          modelType = type_j,
+          yCol      = yCol,
+          xCol      = xCol,
+          silent    = TRUE,
+          options   = options
+        ) ### End plot_DOW_byImpactTypes()
+        # plot_j |> names() |> print()
+      } else{
+        plot_j <- NA
+      } ### if(do_j)
+      plot_j |> print()
 
-      ### Add plot to list
-      list_i[[x_j]] <- plot_j
+      ### Return plot
+      gc()
+      return(plot_j)
+    }) |> set_names(labels_i)
 
-      ### Remove values
-      rm(row_j, type_j, do_gcm_j, x1_j, x2_j, x_j, df_j, plot_j)
-    } ### End for(row_j in types_i)
-
-    ### Add list to list0
-    list0[[model_i]] <- list_i
-
-    ### Remove values
-    rm(model_i, types_i, list_i)
-  } ### End for(model_i in models)
+    ### Return list
+    gc()
+    return(list_i)
+  }) |> set_names(models)
 
 
   ### Return
+  gc()
   return(list0)
 } ### End plot_DoW_by_sector
 
