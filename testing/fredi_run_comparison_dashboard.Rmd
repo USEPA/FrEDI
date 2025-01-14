@@ -8,12 +8,6 @@ output:
 ---
 
 
-<style type="text/css">
-.main-container {
-  max-width: 100% !important;
-  margin: auto;
-}
-</style>
 ```{r loadPackages , include =FALSE}
 ### Packages
 require(tidyverse)
