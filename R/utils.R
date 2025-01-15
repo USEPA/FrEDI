@@ -551,21 +551,21 @@ update_popScalars <- function(
   df_gdp     <- df_pop
   df_gdp     <- df_gdp |> select(all_of(select0))
   df_gdp     <- df_gdp |> unique()
-  df_pop     <- df_pop |> rename_at(c(from0), ~to0)
+  df_gdp     <- df_gdp |> rename_at(c(from0), ~to0)
   df_gdp     <- df_gdp |> mutate(scalarName           = "gdp_percap")
   df_gdp     <- df_gdp |> mutate(scalarType           = "econScalar")
   df_gdp     <- df_gdp |> mutate(region               = "national")
   df_gdp     <- df_gdp |> mutate(state                = "N/A")
   df_gdp     <- df_gdp |> mutate(postal               = "N/A")
   df_gdp     <- df_gdp |> mutate(national_or_regional = "national")
-  rm(select0, to0)
+  rm(select0)
 
   ### Format population data
   ### - Select columns
   ### - Add additional scalar attributes
   ### - Rename column
   drop0      <- c("gdp_usd", "national_pop", "gdp_percap")
-  from0      <- c("gdp_percap")
+  from0      <- c("pop")
   df_pop     <- df_pop |> select(-any_of(drop0))
   df_pop     <- df_pop |> mutate(scalarName           = "reg_pop")
   df_pop     <- df_pop |> mutate(scalarType           = "physScalar")
