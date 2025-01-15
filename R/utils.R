@@ -534,26 +534,54 @@ update_popScalars <- function(
     popCol    = c("pop")
     # popCol    = c("state_pop")
 ){
-  ### Drop region population
-  df_scalars <- df_scalars |> filter(scalarName!="reg_pop")
+  ### Drop region population, gdp_percap
+  # df_scalars <- df_scalars |> filter(scalarName != "reg_pop")
+  filter0    <- c("scalarName")
+  vals0      <- c("reg_pop", "gdp_percap")
+  df_scalars <- df_scalars |> filter_at(c(filter0), function(x, y){!(x %in% y)})
+  rm(filter0, vals0)
+
+  ### Format GDP scenario:
+  ### - Select columns and get unique values
+  ### - Rename column
+  ### - Add additional scalar attributes
+  select0    <- c("gdp_percap", "year")
+  from0      <- c("gdp_percap")
+  to0        <- c("value")
+  df_gdp     <- df_pop
+  df_gdp     <- df_gdp |> select(all_of(select0))
+  df_gdp     <- df_gdp |> unique()
+  df_pop     <- df_pop |> rename_at(c(from0), ~to0)
+  df_gdp     <- df_gdp |> mutate(scalarName           = "gdp_percap")
+  df_gdp     <- df_gdp |> mutate(scalarType           = "econScalar")
+  df_gdp     <- df_gdp |> mutate(region               = "national")
+  df_gdp     <- df_gdp |> mutate(state                = "N/A")
+  df_gdp     <- df_gdp |> mutate(postal               = "N/A")
+  df_gdp     <- df_gdp |> mutate(national_or_regional = "national")
+  rm(select0, to0)
 
   ### Format population data
+  ### - Select columns
+  ### - Add additional scalar attributes
+  ### - Rename column
   drop0      <- c("gdp_usd", "national_pop", "gdp_percap")
+  from0      <- c("gdp_percap")
   df_pop     <- df_pop |> select(-any_of(drop0))
-
-  ### Add additional scalar attributes
   df_pop     <- df_pop |> mutate(scalarName           = "reg_pop")
   df_pop     <- df_pop |> mutate(scalarType           = "physScalar")
   df_pop     <- df_pop |> mutate(national_or_regional = "regional")
-  ### Rename column
-  df_pop     <- df_pop |> rename_at(c(popCol), ~"value")
+  df_pop     <- df_pop |> rename_at(c(from0), ~to0)
+  rm(drop0, from0, to0)
 
   ### Bind values to scalars
   # df_scalars |> glimpse(); df_pop |> glimpse()
+  df_scalars <- df_scalars |> rbind(df_gdp)
   df_scalars <- df_scalars |> rbind(df_pop)
+  rm(df_gdp, df_pop)
   # df_scalars |> glimpse();
 
   ### Return
+  gc()
   return(df_scalars)
 }
 
