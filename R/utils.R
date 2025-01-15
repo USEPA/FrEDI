@@ -538,7 +538,7 @@ update_popScalars <- function(
   # df_scalars <- df_scalars |> filter(scalarName != "reg_pop")
   filter0    <- c("scalarName")
   vals0      <- c("reg_pop", "gdp_percap")
-  df_scalars <- df_scalars |> filter_at(c(filter0), function(x, y){!(x %in% y)})
+  df_scalars <- df_scalars |> filter_at(c(filter0), function(x, y=vals0){!(x %in% y)})
   rm(filter0, vals0)
 
   ### Format GDP scenario:
