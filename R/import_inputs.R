@@ -159,7 +159,7 @@ import_inputs <- function(
 
 
   ##### Connect to FrEDI Database
-  db_file <- system.file("extdata", "sysdata.db", package = "FrEDI")
+  db_file <- system.file("extdata", "tmp_sysdata.db", package = "FrEDI")
   con <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_file)
 
 
