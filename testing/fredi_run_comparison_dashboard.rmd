@@ -284,7 +284,7 @@ old_dat_clean <- old_2300$results |>
              filter(model %in% c("Average", "Interpolation"))
 
 dat_clean <- old_dat_clean |>
-             left_join(new_dat_clean) |> 
+             full_join(new_dat_clean) |> 
              filter(year %in% c(2010,2020,2030,2040,2050,2060,2070,2080,2090,2100))
   
 
