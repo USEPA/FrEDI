@@ -106,14 +106,14 @@
 </h2>
 <p>The <strong>Framework for Evaluating Damages and Impacts
 (FrEDI)</strong> was developed to understand and communicate the
-potential physical and economic impacts of future climate change in the
+potential physical and economic impacts of future temperature change in the
 United States.</p>
 <p>FrEDI works by first taking user-defined projections of U.S.
 population, gross domestic product (GDP), and global (or CONUS) mean
 surface temperature change (relative to a 1986-2005 average baseline).
 When run, FrEDI draws upon underlying sector, state, and GCM-specific
 temperature-impact relationships to project the annual physical and
-economic impacts of climate change across multiple impact sectors, U.S.
+economic impacts across multiple impact sectors, U.S.
 states, and population groups across the contiguous U.S. (CONUS),
 through the end of the 21st century (and optionally through the year
 2300).</p>
@@ -130,7 +130,7 @@ Available at: <a href="https://www.epa.gov/cira/fredi" class="external-link uri"
 <div class="section level2">
 <h2 id="key-characteristics">Key Characteristics<a class="anchor" aria-label="anchor" href="#key-characteristics"></a>
 </h2>
-<p>FrEDI fills an important gap in assessing U.S. climate change impacts
+<p>FrEDI fills an important gap in assessing U.S. climate  impacts
 by:</p>
 <ol style="list-style-type: decimal">
 <li>Incorporating a broad range of impact studies into common analytic
@@ -138,13 +138,12 @@ framework</li>
 <li>Providing a robust, customizable, and fast tool to facilitate custom
 scenario analyses</li>
 <li>Providing a flexible framework that can readily incorporate new
-information, to ensure projections reflect the latest science on climate
-change impacts <br>
+information, to ensure projections reflect the latest science on climate impacts <br>
 </li>
 </ol>
 <p><strong>FrEDI draws upon a wide range of existing scientific
 literature.</strong> FrEDI currently draws upon over 30 existing
-peer-reviewed studies and climate change impact models and uses an
+peer-reviewed studies and impact models and uses an
 impacts-by-degree temperature binning approach <a href="https://link.springer.com/article/10.1007/s10584-021-03048-6" class="external-link">(Sarofim
 et al., 2021)</a>, to estimate the relationship between future degrees
 of warming and impacts across more than 20 impact category sectors (<a href="https://egusphere.copernicus.org/preprints/2023/egusphere-2023-114/" class="external-link">Hartin
@@ -175,14 +174,14 @@ natural variability and is therefore designed to quantify impacts, with
 the same level of accuracy, under any level of future temperature
 change.</p>
 <p><strong>FrEDI is continually improved to reflect the current state of
-climate change impact science.</strong> FrEDI currently includes
+impact science.</strong> FrEDI currently includes
 temperature-impact relationships for over 20 health, infrastructure,
 electricity, agriculture, recreation, and ecosystem-related sectors and
 includes the capacity to differentiate these sectoral impacts across
-multiple geographic regions within the U.S., demographics, and various
+multiple geographic regions within the U.S., populations, and various
 adaptation scenarios. As described in the <a href="https://www.epa.gov/cira/fredi/" class="external-link">Technical Documentation</a>,
 FrEDI is continually updated to incorporate new studies with the common
-framework to reflect the latest available science on climate change
+framework to reflect the latest available science on 
 impacts within U.S. borders. <br><br></p>
 <hr>
 </div>
@@ -198,7 +197,7 @@ described further on the <a href="manual.html">Getting Started</a>
 page.</p>
 <p>FrEDI also includes an <code><a href="../reference/run_fredi_sv.html">FrEDI::run_fredi_sv()</a></code> module,
 that has the added capability to compare the distribution of physical
-climate-driven impacts in six impact sectors across different population
+ impacts in six impact sectors across different population
 groups of concern within the U.S.</p>
 <p><br></p>
 <div class="section level3">
@@ -295,7 +294,7 @@ impacts. For more information, see <a href="Example1.html">Example
 <div class="section level4">
 <h4 id="fredi-regions">FrEDI Regions<a class="anchor" aria-label="anchor" href="#fredi-regions"></a>
 </h4>
-<p>FrEDI currently estimates climate-driven impacts that occur within
+<p>FrEDI currently estimates impacts that occur within
 the physical borders of 48 states plus the District of Columbia within
 the contiguous United States (CONUS). These states can be aggregated in
 regions (Southeast, Southern Plains, Southwest, Northwest, Northern
@@ -306,7 +305,7 @@ Assessment.</a></p>
 <div class="section level4">
 <h4 id="fredi-impact-sectors-units">FrEDI Impact Sectors &amp; Units<a class="anchor" aria-label="anchor" href="#fredi-impact-sectors-units"></a>
 </h4>
-<p>FrEDI currently projects monetized climate-driven impacts across more
+<p>FrEDI currently projects monetized impacts across more
 than 20 health, infrastructure, electricity, agriculture, recreation,
 and ecosystem-related sectors. FrEDI includes economic impacts (in units
 of $2015 USD) for all sectors and physical endpoints (e.g., morbidity,
@@ -331,7 +330,7 @@ underlying study). Other sectors, such as Agriculture
 (<code>CIL Agriculture</code>), include impact estimates derived from
 multiple damage functions that are associated with different conditions
 (e.g., estimates with and without CO<sub>2</sub> fertilization).</p>
-<p>FrEDI also calculates climate-driven impacts under different
+<p>FrEDI also calculates impacts under different
 adaptation assumptions, in select sectors. Adaptation options for the
 applicable sectors (e.g., Coastal Property, Roads, Rail) are also
 included as <code>variants</code>. The available adaptation options
@@ -377,9 +376,8 @@ calculate total impacts for that sector.</p>
 <div class="section level3">
 <h3 id="fredi-sv-module">FrEDI SV Module<a class="anchor" aria-label="anchor" href="#fredi-sv-module"></a>
 </h3>
-<p>The <code>FrEDI_SV</code> module can also assess the social
-vulnerability implications of the impacts of climate change from select
-sectors on specific population groups of concern. The basic structure,
+<p>The <code>FrEDI_SV</code> module can also assess the implications of the impacts of climate  from select
+sectors on specific population groups. The basic structure,
 specific methodology, and data for underlying <code>FrEDI_SV</code> are
 derived from EPA’s independently peer-reviewed September 2021 report,<a href="https://www.epa.gov/cira/social-vulnerability-report" class="external-link">Climate
 Change and Social Vulnerability in the United States: A Focus on Six
@@ -398,9 +396,9 @@ information on running <code>FrEDI_SV</code>.</p>
 <p>All results from the main module (<code><a href="../reference/run_fredi.html">FrEDI::run_fredi()</a></code>)
 are presented as net annual impacts, either in physical units or in
 $2015 US dollars.</p>
-<p>FrEDI evaluates both negative and positive effects of climate change.
-At the national level, net climate-driven damages outweigh the positive
-effects for all sectors. These reflect the climate-driven impacts that
+<p>FrEDI evaluates both negative and positive effects of temperature change.
+At the national level, net  damages outweigh the positive
+effects for all sectors. These reflect the impacts that
 have accrued from the baseline period through the given impact year.
 Presenting impacts in a specific year is consistent with the approach
 commonly used throughout the climate impact literature, including in the
@@ -409,16 +407,16 @@ Reports and the U.S National Climate Assessment (NCA).</p>
 <p>There are also important caveats to consider when interpreting FrEDI
 results, including but not limited to:</p>
 <ul>
-<li>FrEDI is not a comprehensive accounting of all climate-driven
+<li>FrEDI is not a comprehensive accounting of all
 impacts expected to occur within contiguous U.S. borders and does not
 currently include impacts occurring in AK, HI, or U.S. territories.</li>
 <li>FrEDI does not consider impacts to U.S. citizens residing outside of
-the U.S. or feedbacks of climate impacts elsewhere back to the U.S.
+the U.S. or feedbacks of impacts elsewhere back to the U.S.
 through trade, etc.</li>
 <li>There are additional uncertainties in FrEDI’s underlying
 temperature-impact relationships not fully captured by available variant
 options</li>
-<li>There are uncertainties in the climate drivers and the human
+<li>There are uncertainties in the drivers and the human
 responses to adapt to changes in those drivers</li>
 </ul>
 </div>
