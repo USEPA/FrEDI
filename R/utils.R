@@ -624,7 +624,7 @@ extend_slrScalars <- function(
 
   ###### Join Data & Scalar Info ######
   ### Join initial results & scalar info
-  join0      <- c("sector")
+  join0      <- c("sector","impactType")
   df0        <- df0 |> left_join(df_info, by=c(join0))
   rm(join0)
 
@@ -1175,7 +1175,8 @@ initialize_resultsDf <- function(
     rm(df_slr0)
 
     ### Get extended scalars
-    df_slr2    <- df_slr2 |> extend_slrScalars(
+    df_slr2    <- extend_slrScalars(
+      df0 = df_slr2,
       df_se      = df_se,
       df_scalars = df_scalars,
       elasticity = elasticity
