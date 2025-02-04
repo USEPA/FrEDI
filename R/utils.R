@@ -670,6 +670,17 @@ extend_slrScalars <- function(
   rm(rename0, rename1, select0, join0, df_mult0, df_adj0)
   # "got here1" |> print()
 
+  ###### CHECK for ECON Value "none" and add 1 #####
+  df0        <- df0 |> mutate(econAdjValue = case_when(
+                                 econAdjName == "none" ~ 1,
+                                  .default = econAdjValue
+                                  ),
+                              econMultiplierValue = case_when(
+                                econMultiplierName == "none" ~ 1,
+                                .default = econMultiplierValue
+                              ))
+
+
   ###### Economic Multiplier & Scalar ######
   ### Calculate econ scalar values
   df0        <- df0 |> mutate(econMultiplier = c1 * (econMultiplierValue / econAdjValue)**exp0)
@@ -711,6 +722,16 @@ extend_slrScalars <- function(
   df0        <- df0 |> left_join(df_adj0, by=c(join0))
   ### Drop values
   rm(rename0, rename1, select0, join0, df_phys0, df_adj0)
+
+  ###### CHECK for PHYS Value "none" and add 1 #####
+  df0        <- df0 |> mutate(physScalarValue = case_when(
+                                physScalarName== "none" ~ 1,
+                                    .default = physScalarValue
+                                  ),
+                              physAdjValue = case_when(
+                                physScalarName == "none" ~ 1,
+                                    .default = physAdjValue
+                              ))
 
   ###### Physical Scalar & Phys Econ Scalar ######
   ### Calculate econ scalar values
