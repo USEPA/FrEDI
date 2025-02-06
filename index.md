@@ -5,11 +5,10 @@ This repository is for FrEDI, the **Framework for Evaluating Damages and
 Impacts**, developed by the U.S. Environmental Protection Agency (EPA).
 
 FrEDI is an open-source, reduced form model that rapidly projects
-the impacts of climate change within the United States, under any custom
-temperature or policy pathway.
+the impacts within the United States, under any custom
+temperature.
 
-FrEDI was developed to fill an important gap in assessing U.S. climate
-change impacts by incorporating a broad range of impact studies into a
+FrEDI was developed to fill an important gap in assessing U.S. impacts by incorporating a broad range of impact studies into a
 common, open-source framework. This allows FrEDI to facilitate
 comparability across impact studies, with the flexibility of
 facilitating custom scenario analyses.
@@ -21,7 +20,7 @@ the relationship between future degrees of warming and impacts across
 more than 20 category sectors, 48 U.S. states plus the District of Columbia, 
 and population groups. When supplied with a user-defined temperature trajectory, 
 FrEDI then applies these temperature-impact relationships to rapidly project annual 
-climate change impacts and damages through the end of the 21st century. <br>
+impacts and damages through the end of the 21st century. <br>
 
 **Recommended Citation:** EPA 2024. Technical Documentation on the
 Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental
