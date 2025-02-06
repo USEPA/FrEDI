@@ -171,14 +171,13 @@ jobs:
             ### Format sector names
             sectors0 |> print()
             sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
-            sectorsLC0 <- sectorsLC0 |> tolower()
+            sectorsLC0 <- sectors0 |> tolower()
             doAll      <- "all" %in% sectorsLC0
             doGcm      <- "gcm" %in% sectorsLC0
             doSlr      <- "slr" %in% sectorsLC0
-            if     (doAll) sectors <- FrEDI::get_sectorInfo()
-            else if(doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T)
-            else if(doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T)
-            else           sectors <- sectors0
+            if     (doAll) sectors <- FrEDI::get_sectorInfo() else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
+            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T)  else
+            sectors <- sectors0
             sectors |> print()
 
             ### Format figure types

@@ -7,7 +7,7 @@
 ### For uploading artifacts:
 ###     "path:" is the output path where Pandoc will write the compiled PDF.
 ###      Note, this should be the same directory as the input paper.md
-name: 2a. Run General Tests
+name: 2b. Run Comparison
 
 on:
   workflow_dispatch:
@@ -64,8 +64,17 @@ jobs:
             any::devtools
             any::openxlsx
             any::ggpubr
-
-
+            any::tidyverse
+            any::plotly
+            any::glue
+            any::ggpubr
+            any::ggplot2
+            any::lattice
+            any::htmltools
+            any::ggh4x
+            any::kableExtra
+            any::rmarkdown
+            any::DT
       ### Install FrEDI from new branch and get results
       ### Install FrEDI from ref branch and get results
       - name: Test results
@@ -85,12 +94,12 @@ jobs:
             newBranch <- "${{ github.ref_name   }}"
             refBranch <- "${{ inputs.ref_branch }}"
 
-            ###### Format Inputs ######
+           ###### Format Inputs ######
             ### Conditionals
             doTests   <- doCompare %in% c("true", "yes")
             aggAll    <- aggTypes  %in% c("true", "yes")
             ### If aggAll, aggregate, national, model averages, impact years
-            if (aggTypes) aggLevels <- c("all") else aggLevels <- c("national", "modelaverage", "impactyear")
+            if (aggAll){ aggLevels <- c("all")} else{          aggLevels <- c("national", "modelaverage", "impactyear")}
 
 
             ###### Paths ######
@@ -109,10 +118,11 @@ jobs:
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
+
             ### Where to save results
             oPath0    <- pPath0 |> file.path("data_tests")
-            oFileNew  <- oPath0 |> file.path("newResults.rda")
-            oFileRef  <- oPath0 |> file.path("refResults.rda")
+            oFileNew  <- oPath0 |> file.path("newResults.rds")
+            oFileRef  <- oPath0 |> file.path("refResults.rds")
 
             ### Check if path exists and, if not, create it
             exists0   <- oPath0 |> dir.exists()
@@ -141,8 +151,8 @@ jobs:
             ### Load library, run FrEDI
             if(doTests) {
               library(FrEDI)
-              dfRef <- run_fredi(aggLevels=aggLevels)
-              dfRef |> save(file=oFileRef)
+              dfRef <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
+              dfRef |> saveRDS(file=oFileRef)
               "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
               oPath0 |> list.files() |> print()
               ### Detach FrEDI package
@@ -159,24 +169,15 @@ jobs:
             ###### ** Run FrEDI from New Branch ######
             ### Load library, run FrEDI
             library(FrEDI)
-            dfNew <- run_fredi(aggLevels=aggLevels)
-            dfNew |> save(file=oFileNew)
+            dfNew <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
+            dfNew |> saveRDS(file=oFileNew)
             "Finished running FrEDI on " |> paste0(newBranch, " branch.") |> print()
             oPath0 |> list.files() |> print()
 
-            ###### ** Run General Tests ######
-            ### Get test results
-            if(doTests) {
-              dfTests <- general_fredi_test(
-                newOutputs = dfNew,
-                refOutputs = dfRef,
-                outPath    = oPath0
-              ) ### End general_fredi_test
-              "Finished running general tests." |> print()
-              oPath0 |> list.files() |> print()
-              rm(dfTests)
-            } ### End if(doTests)
 
+            ###### Compare Test results########
+            rmarkdown::render(input = rmd_file,
+                              output_dir = oPath0 )
 
             ###### Return ######
             "Finished running R script." |> print()
