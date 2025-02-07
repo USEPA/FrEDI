@@ -10,9 +10,9 @@ on:
   #   release:
   #   types: [published]
   workflow_dispatch:
-    branches:
-      - main
-      - master
+    # branches:
+    #   - main
+    #   - master
     release:
     types: [published]
 
