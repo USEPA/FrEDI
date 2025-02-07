@@ -12,13 +12,6 @@ name: 2b. Run Comparison
 on:
   workflow_dispatch:
     inputs:
-      agg_types:
-        type: choice
-        description: Aggregate across impact types?
-        required: true
-        options:
-        - no
-        - yes
       doCompare:
         type: choice
         description: Do you want to compare FrEDI results with those from another branch?
@@ -75,7 +68,7 @@ jobs:
             any::kableExtra
             any::rmarkdown
             any::DT
-      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from comp branch and get results
       ### Install FrEDI from ref branch and get results
       - name: Test results
         # if: |
@@ -91,15 +84,15 @@ jobs:
             ###### Workflow Inputs ######
             aggTypes  <- "${{ inputs.agg_types  }}"
             doCompare <- "${{ inputs.doCompare  }}"
-            newBranch <- "${{ github.ref_name   }}"
+            compBranch <- "${{ github.ref_name   }}"
             refBranch <- "${{ inputs.ref_branch }}"
 
-           ###### Format Inputs ######
+            ###### Format Inputs ######
             ### Conditionals
             doTests   <- doCompare %in% c("true", "yes")
             aggAll    <- aggTypes  %in% c("true", "yes")
             ### If aggAll, aggregate, national, model averages, impact years
-            if (aggAll){ aggLevels <- c("all")} else{          aggLevels <- c("national", "modelaverage", "impactyear")}
+            if (aggAll){ aggLevels <- c("all")} else{aggLevels <- c("national", "modelaverage", "impactyear")}
 
 
             ###### Paths ######
@@ -113,15 +106,15 @@ jobs:
             tPath0    <- pPath0 |> file.path("testing")
             sFiles0   <- sPath0 |> list.files(full.names=TRUE)
             tFiles0   <- tPath0 |> list.files(full.names=TRUE)
-            rmd_file <- tFiles0[grepl(".Rmd",tFiles0)]
-            tFiles0 <- tFiles0[!grepl(".Rmd",tFiles0)]
+            rmd_file <- tFiles0[grepl(".rmd",tFiles0)]
+            tFiles0 <- tFiles0[!grepl(".rmd",tFiles0)]
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
 
             ### Where to save results
             oPath0    <- pPath0 |> file.path("data_tests")
-            oFileNew  <- oPath0 |> file.path("newResults.rds")
+            oFilecomp  <- oPath0 |> file.path("compResults.rds")
             oFileRef  <- oPath0 |> file.path("refResults.rds")
 
             ### Check if path exists and, if not, create it
@@ -130,7 +123,7 @@ jobs:
 
             ### Repo Info
             urlRepo   <- "https://github.com/USEPA/FrEDI"
-            c(newBranch, refBranch) |> print()
+            c(compBranch, refBranch) |> print()
 
 
 
@@ -159,25 +152,29 @@ jobs:
               package:FrEDI |> detach(unload=TRUE)
             } ### End if(doTests)
 
-            ###### ** Install FrEDI from New Branch ######
-            ### Install FrEDI from new branch
+            ###### ** Install FrEDI from comp Branch ######
+            ### Install FrEDI from comp branch
             devtools::install_github(
-              repo=urlRepo, ref=newBranch,
+              repo=urlRepo, ref=compBranch,
               dependencies=F, upgrade="never", force=T, type="source"
             ) ### End install_github
 
-            ###### ** Run FrEDI from New Branch ######
+            ###### ** Run FrEDI from comp Branch ######
             ### Load library, run FrEDI
             library(FrEDI)
-            dfNew <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
-            dfNew |> saveRDS(file=oFileNew)
-            "Finished running FrEDI on " |> paste0(newBranch, " branch.") |> print()
+            dfcomp <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
+            dfcomp |> saveRDS(file=oFilecomp)
+            "Finished running FrEDI on " |> paste0(compBranch, " branch.") |> print()
             oPath0 |> list.files() |> print()
 
 
             ###### Compare Test results########
             rmarkdown::render(input = rmd_file,
-                              output_dir = oPath0 )
+                              output_dir = oPath0,
+                              params = list(
+                              ref = refBranch,
+                              comp = compBranch
+                              ))
 
             ###### Return ######
             "Finished running R script." |> print()
