@@ -31,15 +31,15 @@ gdpDefault
 \details{
 To use \code{gdpDefault} as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element \code{gdp} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=run_fredi]{run_fredi()}} and/or \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, respectively, e.g.: \code{run_fredi(inputsList=list(gdp=gdpDefault))}. \code{gdpDefault} can also be combined with other provided scenarios (\code{gcamScenarios}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 
-Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: conomic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
+Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: Economic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
 
-EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+EPA. 2017. \url{DOI:10.13140/RG.2.2.14466.79045}.
 
 To use \code{ch4Default} as an input to the FrEDI Methane module, pass the data frame via the named element \code{ch4} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, e.g.: \code{run_fredi_methane(inputsList=list(ch4=ch4Default))}. \code{ch4Default} can also be combined with other provided scenarios (\code{gdpDefault}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 
-Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. FaIRv2.0.0: a generalized impulse response model for climate uncertainty and future scenario exploration, Geosci. Model Dev., 14, 3007--3036, https://doi.org/10.5194/gmd-14-3007-2021.
+Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. \url{https://doi.org/10.5194/gmd-14-3007-2021}.
 
-Nicholls, Z. R. J., Meinshausen, M., Lewis, J., Gieseke, R., Dommenget, D., Dorheim, K., Fan, C.-S., Fuglestvedt, J. S., Gasser, T., Goluke, U., Goodwin, P., Hartin, C., Hope, A. P., Kriegler, E., Leach, N., Marchegiani, D., McBride, L. A., Quilcaille, Y., Rogelj, J., Xie, Z. (2020). Reduced Complexity Model Intercomparison Project Phase 1: introduction and evaluation of global-mean temperature response. Geoscientific Model Development. 13. 5175-5190. 10.5194/gmd-13-5175-2020.
+Nicholls, Z. R. J., Meinshausen, M., Lewis, J., Gieseke, R., Dommenget, D., Dorheim, K., Fan, C.-S., Fuglestvedt, J. S., Gasser, T., Goluke, U., Goodwin, P., Hartin, C., Hope, A. P., Kriegler, E., Leach, N., Marchegiani, D., McBride, L. A., Quilcaille, Y., Rogelj, J., Xie, Z. (2020). \url{https://doi.org/10.5194/gmd-13-5175-2020}.
 
 Environmental Protection Agency (EPA). Forthcoming. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report, EPA, Washington, DC. Available at \url{https://epa.gov/cira/FrEDI/}.
 
