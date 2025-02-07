@@ -493,7 +493,7 @@ aggregate_impacts <- function(
     # df_national |> glimpse()
     df_national <- df_national |>
       group_by_at(c(group0)) |>
-      summarize_at(vars(sum0), sum, na.rm=T) |> ungroup()
+      summarize_at(c(sum0), sum, na.rm=T) |> ungroup()
     rm(sum0)
     ### Adjust non-missing values
     df_national <- df_national |> mutate(not_isNA = (not_isNA > 0) * 1)

@@ -4,6 +4,7 @@ format_sectorNames <- function(
     names0, ### Sector names
     thresh0 = 18
 ){
+  if(thresh0 |> is.null()) thresh0 <- 18
   names0 <- names0 |> as.character()
   names1 <- names0 |> map(fun_getLineBreaks, thresh=thresh0)
   names1 <- names1 |> unlist() |> trimws()
@@ -17,8 +18,8 @@ fun_hasStringValue <- function(
     str0 = NULL
 ){
   ### Check if null
-  isNull0 <- is.null(str0)
-  naStr0  <- (!isNull0) |> ifelse(str0 |> is.na(), TRUE)
+  isNull0 <- str0 |> is.null()
+  naStr0  <- isNull0 |> ifelse(TRUE, str0 |> is.na())
   hasStr0 <- (!(isNull0 & naStr0)) |> ifelse(!(str0==""), FALSE)
   ### Return
   return(hasStr0)
@@ -27,23 +28,23 @@ fun_hasStringValue <- function(
 ###### check_str1_in_str2 ######
 ### Function to check if one string is present in another
 check_str2_in_str1 <- function(
-    string =NULL,
-    pattern=NULL,
-    default=TRUE
+    string  = NULL,
+    pattern = NULL,
+    default = TRUE
 ){
   ### Check that string values exist
   hasStr1  <- fun_hasStringValue(str0=string)
   hasStr2  <- fun_hasStringValue(str0=pattern)
   hasBoth  <- hasStr1 & hasStr2
-  # bothChar <-
   ### Check value
-  if(hasBoth){
+  if (hasBoth) {
     # string |> print(); pattern |> print()
     match0  <- str_match(string=string, pattern=pattern)[1][1]
     isNa0   <- match0 |> is.na()
     match0  <- !isNa0
+  } else{
+    match0 <- default
   } ### End if(hasBoth)
-  else{match0 <- default}
   ### Return
   return(match0)
 } ### End check_str2_in_str1
@@ -68,22 +69,22 @@ fun_compareStrings <- function(
   ### Check if word is in new
   cond1     <- no_sub_x
   cond2     <- !no_sub_x & no_word_x
+  # c(cond1, cond2) |> print()
   # cond2     <- !no_sub_x & !no_word_x
-  if     (cond1){
+  if       (cond1){
     sub_x       <- word_x
     wordInSub_x <- TRUE
-  } ### End if (cond1)
-  else if(cond2){
-      sub_x       <- sub_x
-      wordInSub_x <- TRUE
-  } ### End else if(cond2)
-  else          {
+  } else if(cond2){
+    sub_x       <- sub_x
+    wordInSub_x <- TRUE
+  } else          {
     wordInSub_x <- check_str2_in_str1(string=sub_x, pattern=word_x)
-    if(!wordInSub_x){
+    if (!wordInSub_x) {
       sub_x       <- c(sub_x, word_x) |> paste(collapse=" ")
       wordInSub_x <- TRUE
+    } else            {
+      wordInSub_x <- FALSE
     } ### End if(!wordInSub_x)
-    else             {wordInSub_x <- FALSE}
   } ### End else
   rm(cond1, cond2)
 
@@ -113,21 +114,19 @@ fun_compareStrings <- function(
   ### Check if word is in new
   cond1     <- no_new_x
   cond2     <- !no_new_x & no_word_x
-  if     (cond1){
+  if        (cond1) {
     new_x       <- new_x
     wordInNew_x <- FALSE
-  } ### End if(cond1)
-  else if(cond2){
+  } else if (cond2) {
     word_x      <- NULL
     new_x       <- new_x
     wordInNew_x <- TRUE
-  } ### End else if(cond2)
-  else          {
+  } else            {
     ### Check if word is in new
     new_x       <- new_x
     word_x      <- word_x
     wordInNew_x <- check_str2_in_str1(string=new_x, pattern=word_x)
-  } ### End else
+  } ### End if(cond1)
   rm(cond1, cond2)
 
   ### Check values
@@ -138,52 +137,46 @@ fun_compareStrings <- function(
 
   #### What to do if wordInNew_x versus not
   cond1     <- wordInNew_x
-  if(cond1){
+  if(cond1) {
     new_x       <- new_x
     sub_x       <- NULL
     word_x      <- NULL
-  } ### End if(cond1)
-  else{
+  } else{
     ### Check if the sub is in x
-    if(no_sub_x){
+    if        (no_sub_x) {
       subInNew_x  <- T
       wordInSub_x <- F
-    } ### End if(no_sub_x)
-    else if(no_new_x){
+    } else if (no_new_x) {
       subInNew_x  <- F
       wordInSub_x <- check_str2_in_str1(string=sub_x, pattern=word_x)
-    } ### End else if(no_sub_x)
-    else{
+    } else               {
       subInNew_x  <- check_str2_in_str1(string=new_x, pattern=sub_x)
       wordInSub_x <- check_str2_in_str1(string=sub_x, pattern=word_x)
     } ### End else(no_sub_x)
     ### What to do about sub_x
-    if(subInNew_x){
-      if(wordInSub_x){
-        new_x       <- new_x
-        sub_x       <- NULL
-        word_x      <- NULL
-        sub_x       <- next_x
-      } ### End if(subInNew_x)
-      else{
-        new_x       <- new_x
-        sub_x       <- word_x
-        word_x      <- NULL
+    if(subInNew_x) {
+      if (wordInSub_x) {
+        new_x  <- new_x
+        sub_x  <- NULL
+        word_x <- NULL
+        sub_x  <- next_x
+      } else           {
+        new_x  <- new_x
+        sub_x  <- word_x
+        word_x <- NULL
       } ### End else(wordInSub_x)
-    } ### End if(subInNew_x)
-    else{
-      if(wordInSub_x){
-        sub_x       <- sub_x
-        word_x      <- word_x
-      } ### End if(wordInSub_x)
-      else           {
-        sub_x       <- c(sub_x, word_x) |> paste(collapse = " ")
-        word_x      <- word_x
+    } else        {
+      if(wordInSub_x) {
+        sub_x  <- sub_x
+        word_x <- word_x
+      } else          {
+        sub_x  <- c(sub_x, word_x) |> paste(collapse=" ")
+        word_x <- word_x
       } ### End else(wordInSub_x)
     } ### End else(subInNew_x)
 
-  ### Check values
-  no_new_x  <- !(new_x  |> fun_hasStringValue())
+    ### Check values
+    no_new_x  <- !(new_x  |> fun_hasStringValue())
     no_sub_x  <- !(sub_x  |> fun_hasStringValue())
     no_word_x <- !(word_x |> fun_hasStringValue())
 
@@ -192,35 +185,34 @@ fun_compareStrings <- function(
     # no_tmp_x  <- ifelse(is.null(tmp_x), T, ifelse(tmp_x  == "", T, F))
     no_tmp_x  <- !(tmp_x  |> fun_hasStringValue())
 
-    if(no_tmp_x){tmp_char <- 0}
-    else        {tmp_char <- tmp_x |> nchar()}
-    tmp_diff <- thresh - tmp_char
+    if(no_tmp_x) tmp_char <- 0
+    else         tmp_char <- tmp_x |> nchar()
 
+    tmp_diff <- thresh - tmp_char
     cond_1    <- tmp_diff >= 0 & tmp_diff <= 1
     cond_2    <- tmp_diff < 0
-    if(cond_1){
+
+    if       (cond_1) {
       new_x  <- c(new_x, tmp_x) |> paste(collapse="\n")
       sub_x  <- NULL
       word_x <- NULL
-    } ### End cond_1
-    else if(cond_2){
+    } else if(cond_2) {
       new_x  <- c(new_x, sub_x) |> paste(collapse="\n")
       sub_x  <- next_x
       word_x <- NULL
-    } ### End else if(cond_1)
-    else{
+    } else            {
       new_x  <- new_x
       sub_x  <- tmp_x
       word_x <- NULL
     } ### End else(cond_1)
-  }  ### End else(cond1)
+  } ### End else(cond1)
 
   ### Return
   return_list <- list(
     new  = new_x,
     sub  = sub_x,
     word = word_x
-  )
+  ) ### End list
   # return_list |> print()
   return(return_list)
 } ### End fun_compareStrings
@@ -229,27 +221,27 @@ fun_compareStrings <- function(
 ### Good for ED&S, not for ET & D or HTFT
 ### This function splits a sector name into lines based on a specified space and threshold number of characters
 fun_getLineBreaks <- function(
-    x, ### Character string to split
-    split = " ", ### Character string to split on
-    thresh = 16, ### Max size of character string
+    x,     ### Character string to split
+    split  = " ", ### Character string to split on
+    thresh = 16 , ### Max size of character string
     silent = T
 ){
   ###### Defaults ######
   ###### Get initial info about string
-  nchar_x      <- x |> nchar()
+  nchar_x   <- x |> nchar()
 
   ###### Find info about the split character
   ### Get number of characters
   ### Find instances of the split character
   ### Find number of instances of the split string
-  splitPos0   <- gregexpr(pattern = split, x) |> unlist()#; findSplit0
-  numSplit0   <- splitPos0 |> length() ### ; numSplit0
-  numWords0   <- numSplit0 + 1 ##; numWords0
-  hasSplit0   <- numSplit0 > 0
+  splitPos0 <- gregexpr(pattern = split, x) |> unlist()#; findSplit0
+  numSplit0 <- splitPos0 |> length() ### ; numSplit0
+  numWords0 <- numSplit0 + 1 ##; numWords0
+  hasSplit0 <- numSplit0 > 0
 
   ###### Return word if no splits found
-  x_new <- x
-  if(hasSplit0){
+  x_new     <- x
+  if(hasSplit0) {
     ###### Create a data frame with info ######
     ### Order of words, start and stop position, number of characters
     order0     <- 1:numWords0
@@ -260,6 +252,7 @@ fun_getLineBreaks <- function(
     df_x       <- df_x |> mutate(word1  = word0 |> substr(start=start0, stop=end0))
     df_x       <- df_x |> mutate(nChar  = word1 |> nchar())
     # df_x |> print()
+
     ####### Figure out where to put new line characters ######
     ### x_new is new x, x_sub is temporary combination
     ### Initialize x_sub and x_new
@@ -267,13 +260,13 @@ fun_getLineBreaks <- function(
     x_sub <- NULL
 
     ### Iterate over number of words
-    for(i in 1:numWords0){
+    for(i in 1:numWords0) {
       ### Get new word and number of characters
       word_i <- df_x[["word1"]][i]
       next_i <- NULL
       last_i <- i == numWords0
       ### Iterate until i < numWords0
-      if(!last_i){next_i  <- df_x[["word1"]][i + 1]}
+      if(!last_i) next_i  <- df_x[["word1"]][i + 1]
 
       compareStr_i <- fun_compareStrings(
         new_x  = x_new,
@@ -281,25 +274,25 @@ fun_getLineBreaks <- function(
         word_x = word_i,
         next_x = next_i,
         thresh = thresh
-      )
+      ) ### End fun_compareStrings
 
       x_new <- compareStr_i[["new"]]
       x_sub <- compareStr_i[["sub"]]
 
       ### Clear out sub
-      isNullSub <- is.null(x_sub)
+      isNullSub <- x_sub |> is.null()
       if(last_i & !isNullSub){
-          x_sep <- " "
-          x_tmp <- c(x_new, x_sub) |> paste(collapse=x_sep)
-          n_tmp <- x_tmp |> nchar()
-          if(n_tmp > thresh){x_sep <- "\n"}
-          x_new <- c(x_new, x_sub) |> paste(collapse=x_sep)
+        x_sep <- " "
+        x_tmp <- c(x_new, x_sub) |> paste(collapse=x_sep)
+        n_tmp <- x_tmp |> nchar()
+        if(n_tmp > thresh){x_sep <- "\n"}
+        x_new <- c(x_new, x_sub) |> paste(collapse=x_sep)
       } ### End if(last_i & !isNullSub)
     } ### End for(i in 1:numWords0)
-
+    ### return
     return(x_new)
   } ### End if(hasSplit0)
-
+  ### return
   return(x_new)
 } ### End fun_getLineBreaks
 
@@ -322,14 +315,16 @@ repCollapse <- function(
 ###### Get new sector line
 get_newSectorLine <- function(
     index0 = 1,
-    df0, ### df_words
-    maxLines0 ### Max number of lines
-    ){
+    df0      , ### df_words
+    maxLines0  ### Max number of lines
+){
   ### Number of lines
   lines_i   <- df0[["newlines"]][index0]
   word_i    <- df0[["word"    ]][index0]
   # df0[index0, ] |> print()
   add_i     <- maxLines0 - lines_i
+  add1_i    <- add_i %% 2
+  add2_i    <- add_i - add1_i
   ### Whether there are lines to add
   has_i     <- add_i > 0
   # word_i |> print(); lines_i |> print(); add_i |> print()
@@ -337,41 +332,28 @@ get_newSectorLine <- function(
   ### New word
   if(has_i){
     ### Lines to add
-    str_i   <- add_i |> repCollapse()
+    str_i   <- add_i  |> repCollapse()
+    str1_i  <- add1_i |> repCollapse()
+    str2_i  <- add2_i |> repCollapse()
     ### New string
-    word_i  <- str_i |> paste0(word_i)
+    # word_i  <- str_i |> paste0(word_i)
+    # word_i  <- str1_i |> paste0(word_i, str2_i)
+    word_i  <- str2_i |> paste0(word_i, str1_i)
   } ### End else
-  # ### New word
-  # if(has_i){new_i <- word_i}
-  # else     {
-  #   # add_i <- rep("\n", add_lines) |> paste(collapse="")
-  #   # new_word_i <- word_i |> paste0(add_line_i)
-  #   mod_i   <- add_i %% 2
-  #   ### Divisor
-  #   div_i0  <- (add_i / 2) |> floor()
-  #   ### Number of spacer lines to paste before & after
-  #   ### Add most new lines before
-  #   num_i1  <- (mod_i==0) |> ifelse(div_i, div_i + 1)
-  #   num_i2  <- div_i
-  #   ### Lines to add
-  #   str_i1  <- num_i1 |> repCollapse()
-  #   str_i2  <- num_i2 |> repCollapse()
-  #   ### New string
-  #   word_i  <- str_i1 |> paste0(word_i, str_i2)
-  # } ### End else
-
   # word_i|> print()
+  ### Return
   return(word_i)
 } ### End get_newSectorLine
 
 ###### standardize_lines ######
 ### This function standardizes lines breaks
 standardize_lines <- function(
-    x, ### Character vector of words
+    x,             ### Character vector of words
     newline = "\n" ### Character string to split on
 ){
   ###### Defaults ######
-  if(is.null(newline)){ newline <- "\n"}
+  hasLine    <- !(newline |> is.null())
+  if(!hasLine) newline <- "\n"
 
   ###### Info about data ######
   num_words  <- x |> length()
@@ -381,8 +363,7 @@ standardize_lines <- function(
     ### Get number of new lines
     y_findLines  <- gregexpr(pattern = newline, y) #; x_findLines
     y_numLines   <- y_findLines[[1]] |> length() ### ; numSplit0
-
-    y_numLines   <- ifelse(y_findLines[[1]][1] == -1, 0, y_numLines)
+    y_numLines   <- (y_findLines[[1]][1] == -1) |> ifelse(0, y_numLines)
     return(y_numLines)
   }) |> unlist()
 
@@ -396,8 +377,9 @@ standardize_lines <- function(
     x_i <- i |> get_newSectorLine(
       df0       = df_words,
       maxLines0 = max_numLines
-    )
+    ) ### End get_newSectorLine
     # x_i|> print()
+    ### Return
     return(x_i)
   }) |> unlist()
   ### Return

@@ -1,16 +1,9 @@
-###### get_p10Labels ######
-### Get power of 10 labels
-get_p10Labels <- function(
-    values,
-    type0 = c("p10") ### Power 10, power 1000, "p1000"
+###### Get a tibble with power of 10 labels
+get_p10Tibble <- function(
+    max0=21
 ){
-  ### Data tible
-  vals0 <- values; rm("values")
-  # dfx   <- tibble(value=vals0, type=type0)
-  dfx   <- tibble(value=vals0)
-  dfx   <- dfx |> rename_at(.vars=c("value"), ~c(type0))
   ### Tibble to match to
-  c_p10 <- seq(0, 21)
+  c_p10 <- seq(0, max0)
   df0   <- tibble(p10=c_p10)
   df0   <- df0 |> mutate(p1000 = p10 %/% 3)
   df0   <- df0 |> mutate(p1000 = p10 %/% 3)
@@ -23,14 +16,41 @@ get_p10Labels <- function(
     p1000 >= 5 & p1000 < 6 ~ "Quadillions",
     p1000 >= 6 & p1000 < 7 ~ "Quintillions",
     .default = ""
-  ))
-  ### Join data
+  )) ### End case_when/mutate
+  return(df0)
+}
+
+###### get_p10Labels
+### Get power of 10 labels
+get_p10Labels <- function(
+    values,
+    type0  = c("p10"), ### Power 10, power 1000, "p1000"
+    p10max = 21        ### Max power
+){
+  ### Values
+  vals0   <- values
+  rm(values)
+
+  ### Get tibble of values
+  dfx     <- tibble(value=vals0)
+  hasVals <- dfx |> nrow()
+  if(!hasVals) {
+    dfx   <- dfx |> mutate(value=1)
+  } ### End if(!hasVals)
+
+  ### Tibble with power10 labels
+  df0   <- p10max |> get_p10Tibble()
+
+  ### Rename columns
+  ### Join data with power10 info
+  dfx   <- dfx |> rename_at(c("value"), ~c(type0))
   dfx   <- dfx |> left_join(df0, by=c(type0))
+
   ### Return
   return(dfx)
 }
 
-###### fun_getScale ######
+###### fun_getScale
 ### This function creates a set of breaks for a particular column
 ### It returns a list of breaks, the power of 10, and the limits
 fun_getScale <- function(
@@ -38,159 +58,189 @@ fun_getScale <- function(
     scaleCol = "driverValue",
     nTicks   = 5
 ){
-  ###### Defaults ######
-  # if(is.null(scaleCol)) scaleCol <- "driverValue"
-  ### Default is not to zero out in case there are negative numbers
-  # if(is.null(zero))     zero <- F
-  # if(is.null(nTicks)){nTicks <- 5}
+  ###### Check Values ######
+  data    <- data
+  xVals   <- data  |> pull(all_of(scaleCol))
+  naVals  <- xVals |> is.na()
+  nVals   <- xVals[!naVals] |> length()
+  hasVals <- nVals
 
   ###### Min/Max Values ######
-  data <- data
-  xMin <- data[[scaleCol]] |> min(na.rm=T)
-  xMax <- data[[scaleCol]] |> max(na.rm=T)
-  # c(xMin, xMax)|> print()
+  if(hasVals) {
+    ### Calculate values
+    xMin      <- xVals |> min(na.rm=T)
+    xMax      <- xVals |> max(na.rm=T)
+    limits    <- c(xMin, xMax)
+    # c(xMin, xMax)|> print()
 
-  ### Set minimum to zero unless the minimum is less than zero
-  ### Does the series have negative values? If not, zero out.
-  # zero     <- ifelse(lowValue < 0, F, zero)
-  if(xMin > 0){xMin <- 0}
-  if(xMax < 0){xMax <- 0}
+    ### Set minimum to zero unless the minimum is less than zero
+    ### If the values are all negative, set the maximum to zero.
+    if(xMin > 0) xMin <- 0
+    if(xMax < 0) xMax <- 0
+    limits    <- c(xMin, xMax)
 
-  ###### Bounds
-  bound_min <- xMin |> floor()
-  bound_max <- xMax |> ceiling()
+    ### Bounds
+    bound_min <- xMin |> floor  ()
+    bound_max <- xMax |> ceiling()
 
-  ###### Min/Max Tibble ######
-  ### Limit names, values, bounds, etc
-  df_minMax <- tibble(
-    name  = c("min", "max"),
-    value = c(xMin, xMax),
-    bound = c(bound_min, bound_max),
-    boundType = c("floor", "ceiling")
-  )
+    ### Min/Max Tibble
+    ### Limit names, values, bounds, etc
+    df_minMax <- tibble(
+      name      = c("min", "max"),
+      value     = c(xMin, xMax),
+      bound     = c(bound_min, bound_max),
+      boundType = c("floor", "ceiling")
+    ) |> mutate(hasVal = !(value |> is.na()))
 
-  ###### Log10 Values ######
-  ### Absolute value, Power of 10 and y-scale info
-  df_minMax <- df_minMax |> mutate(bound_abs = bound |> abs())
-  ### Calculate log 10 and replace values of infinity with 0
-  df_minMax <- df_minMax |> mutate(log10 = bound_abs |> log10())
-  df_minMax <- df_minMax |> mutate(log10 = log10 |> abs())
-  df_minMax <- df_minMax |> mutate(log10 = log10 |> na_if(Inf))
-  df_minMax <- df_minMax |> mutate(log10 = log10 |> replace_na(0))
+    ###### Absolute Bounds
+    df_minMax <- df_minMax |> mutate(bound_abs = bound |> abs())
 
-  ###### Power-10 Values ######
-  ### Then get the floor of the log10 value
-  df_minMax <- df_minMax |> mutate(p10   = log10 |> floor())
-  df_minMax <- df_minMax |> mutate(p1000 = log10 |> floor())
-  ### Get maximum power of 10, then scale to zero for negative numbers
-  ### Integer division of power of 10 by 3 to get number of thousands
-  ### Then get the modulus of the thousands
-  x_p10Max  <- df_minMax[["p10"]] |> max(na.rm=T)
-  x_p1000   <- x_p10Max  %/% 3
-  x_mod1000 <- x_p10Max  %% 3
+    ###### Log10 Values
+    ### Absolute value, Power of 10 and y-scale info
+    df_minMax <- df_minMax |> mutate(log10 = bound_abs)
 
-  # df_minMax |> print(); x_p1000 |> print()
+    ### Calculate log 10 and replace values of infinity with 0
+    df_minMax <- df_minMax |> mutate(log10 = bound_abs |> log10())
+    df_minMax <- df_minMax |> mutate(log10 = log10 |> abs())
+    df_minMax <- df_minMax |> mutate(log10 = log10 |> na_if(Inf))
+    df_minMax <- df_minMax |> mutate(log10 = log10 |> replace_na(0))
 
-  # df_minMax$value|> print()
-  # df_minMax$bound_abs|> print()
-  # x_p1000|> print()
-  ### Rounded bounded values (round to 1 essentially)
-  divideByPower         <- x_p10Max - 1
-  minMax_scaled         <- df_minMax[["value"]] / 10**divideByPower
-  bound_scaled_min      <- minMax_scaled[1] |> floor()
-  bound_scaled_max      <- minMax_scaled[2] |> ceiling()
-  bounds_scaled_rounded <- c(bound_scaled_min, bound_scaled_max)
-  bounds_rounded        <- bounds_scaled_rounded * 10**divideByPower
-  # minMax_scaled|> print()
-  # bounds_rounded|> print()
+    ###### Power-10 Values
+    ### Then get the floor of the log10 value
+    df_minMax <- df_minMax |> mutate(p10   = log10 |> floor())
+    df_minMax <- df_minMax |> mutate(p1000 = log10 |> floor())
 
-  ###### Range ######
-  x_range      <- bounds_rounded
-  x_range_p10  <- x_range / 10**x_p10Max
-  # x_range_dif  <- x_range_p10[2] - x_range_p10[1]
-  x_p10_min    <- x_range_p10[1] |> floor()
-  x_p10_max    <- x_range_p10[1] |> ceiling()
-  x_p10_dif    <- x_p10_max - x_p10_min
-  # x_range_p10 |> print(); x_p10_dif |> print()
 
-  ### Determine unit of breaks in power of 10
-  # x_range_p10|> print()
-  x_unit_p10     <- 0.5
-  # x_unit_p10     <- x_p10_dif
-  # x_range_p10|> print()
-  x_breaks_p10   <- seq(x_range_p10[1], x_range_p10[2], by = x_unit_p10)
-  # x_breaks_p10   <- seq(x_p10_min, x_p10_max, by = x_unit_p10)
-  n_Ticks        <- x_breaks_p10 |> length()
+    ### Get maximum power of 10, then scale to zero for negative numbers
+    ### Integer division of power of 10 by 3 to get number of thousands
+    ### Then get the modulus of the thousands
+    # x_p10Max  <- df_minMax |> pull(p10) |> max(na.rm=T)
+    x_p10Max  <- hasVals |> ifelse(df_minMax |> pull(p10) |> max(na.rm=T), NA)
+    x_p1000   <- x_p10Max  %/% 3
+    x_mod1000 <- x_p10Max  %% 3
+    # df_minMax |> print(); x_p1000 |> print()
+    # df_minMax$value|> print()
+    # df_minMax$bound_abs|> print()
+    # x_p1000|> print()
 
-  ### Check if number of ticks greater than threshold number
-  cond1          <- n_Ticks > nTicks
-  if(cond1){
-    x_unit_p10   <- 1
-    x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by = x_unit_p10)
-    n_Ticks      <- x_breaks_p10 |> length()
-  } ### End if(n_Ticks>nTicks)
-  ### Check again
-  cond1          <- n_Ticks > nTicks
-  if(cond1){
-    x_unit_p10   <- 2
-    x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by = x_unit_p10)
-    n_Ticks      <- x_breaks_p10 |> length()
-  }
-  ### Number of breaks
-  x_breaks       <- x_breaks_p10 * 10**x_p10Max
-  # return(x_breaks)
+    ### Rounded bounded values (round to 1 essentially)
+    divideByPower         <- x_p10Max - 1
+    minMax_scaled         <- (df_minMax |> pull(value)) / 10**divideByPower
+    bound_scaled_min      <- minMax_scaled[1] |> floor()
+    bound_scaled_max      <- minMax_scaled[2] |> ceiling()
+    bounds_scaled_rounded <- c(bound_scaled_min, bound_scaled_max)
+    bounds_rounded        <- bounds_scaled_rounded * 10**divideByPower
+    # minMax_scaled|> print()
+    # bounds_rounded|> print()
 
-  # ### Add a zero value
-  # if(xMin < 0 & xMax > 0){
-  #   whichBelowZero <- (x_breaks < 0)|> which()
-  #   whichAboveZero <- (x_breaks > 0)|> which()
-  #
-  #   ### Add zero
-  #   x_breaks <- c(x_breaks[whichBelowZero], 0, x_breaks[whichAboveZero])
-  # }
+    ###### Range
+    x_range      <- bounds_rounded
+    x_range_p10  <- x_range / 10**x_p10Max
+    # x_range_dif  <- x_range_p10[2] - x_range_p10[1]
+    x_p10_min    <- x_range_p10[1] |> floor()
+    x_p10_max    <- x_range_p10[1] |> ceiling()
+    x_p10_dif    <- x_p10_max - x_p10_min
+    # x_range_p10 |> print(); x_p10_dif |> print()
+
+    ### Determine unit of breaks in power of 10
+    # x_range_p10|> print()
+    x_unit_p10   <- 0.5
+    ### X breaks with power of 10
+    x_breaks_p10 <- x_range_p10[1] |> seq(x_range_p10[2], by=x_unit_p10)
+    n_Ticks      <- x_breaks_p10   |> length()
+
+    ### Check if number of ticks greater than threshold number
+    cond1          <- n_Ticks > nTicks
+    if(cond1) {
+      x_unit_p10   <- 1
+      x_breaks_p10 <- x_range_p10[1] |> seq(x_range_p10[2], by=x_unit_p10)
+      n_Ticks      <- x_breaks_p10   |> length()
+    } ### End if(cond1)
+
+    ### Check again
+    cond2          <- n_Ticks > nTicks
+    if(cond2) {
+      x_unit_p10   <- 2
+      x_breaks_p10 <- x_range_p10[1] |> seq(x_range_p10[2], by=x_unit_p10)
+      n_Ticks      <- x_breaks_p10 |> length()
+    } ### End if(cond2)
+
+    ### Number of breaks
+    x_breaks       <- x_breaks_p10 * 10**x_p10Max
+    # return(x_breaks)
+  } else{
+    df_minMax      <- NULL
+    x_breaks       <- NULL
+    limits         <- NULL
+    bounds_rounded <- NULL
+    x_p10Max       <- 0
+    x_p1000        <- 0
+    x_mod1000      <- 0
+    # x_p10Max       <- NULL
+    # x_p1000        <- NULL
+    # x_mod1000      <- NULL
+  } ### End if(hasData)
 
   ###### Return List ######
   ### Create list to return
   return_list <- list(
-    breaks    = x_breaks,
-    limits    = df_minMax[["value"]],
-    bounds    = bounds_rounded,
-    p10       = x_p10Max,
-    p1000     = x_p1000,
-    mod1000   = x_mod1000
-    # mod1000   = x_mod1000,
-    # label     = x_lab
-  )
+    breaks  = x_breaks,
+    limits  = limits,
+    # limits  = df_minMax |> pull(value),
+    bounds  = bounds_rounded,
+    p10     = x_p10Max,
+    p1000   = x_p1000,
+    mod1000 = x_mod1000
+  ) ### End list
 
   ###### Return ######
   return(return_list)
 } ### End fun_getScale()
 
 
-###### get_colScale ######
+###### get_colScale
 ### Get X Scale Values
 get_colScale <- function(
-    df0, ### Data frame
+    df0,   ### Data frame
     col0   = "xCol", ### Column to use
     nTicks = 5 ### Number of ticks
 ){
   ###### Initialize list
   list0    <- list()
   ###### X Scales
-  x_info   <- df0 |> fun_getScale(scaleCol = col0, nTicks=nTicks)
-  ###### Modify values
-  x_p1000  <- x_info[["p1000"]]
-  x_p10    <- x_p1000 * 3
-  x_denom  <- 10**x_p10
-  # x_info[["breaks"]] |> print()
-  x_breaks <- x_info[["breaks"]] / x_denom
-  x_limits <- x_info[["limits"]] / x_denom
+  x_info   <- df0 |> fun_getScale(scaleCol=col0, nTicks=nTicks)
+  limits0  <- x_info[["limits"]]
+  hasVals  <- !(limits0 |> is.null())
 
-  ###### Add Labels ######
-  # x_lab    <- x_p1000
-  x_lab    <- x_p1000 |> get_p10Labels(type="p1000")
-  x_lab    <- x_lab[["label"]][1]
-  # x_p10 |> print(); x_p1000 |> print(); x_lab |> print()
+  ### If values present:
+  ### - Modify values
+  ### - Get labels
+  if(hasVals) {
+    ### Modify values
+    x_p1000  <- x_info[["p1000"]]
+    x_p10    <- x_p1000 * 3
+    x_denom  <- 10**x_p10
+    # x_info[["breaks"]] |> print()
+    x_breaks <- x_info[["breaks"]] / x_denom
+    x_limits <- x_info[["limits"]] / x_denom
+
+    ### Add labels
+    # x_lab    <- x_p1000
+    x_lab    <- x_p1000 |> get_p10Labels(type="p1000")
+    x_lab    <- x_lab[["label"]][1]
+    # x_p10 |> print(); x_p1000 |> print(); x_lab |> print()
+  } else{
+    ### Modify values
+    x_p1000  <- 0
+    x_p10    <- 0
+    x_denom  <- 10**x_p10
+    # x_info[["breaks"]] |> print()
+    x_breaks <- x_info[["breaks"]] / x_denom
+    x_limits <- x_info[["limits"]] / x_denom
+
+    ### Add labels
+    x_lab    <- ""
+  } ### End if(hasVals)
 
   ###### Update list
   list0[["scale" ]] <- x_info
@@ -200,6 +250,7 @@ get_colScale <- function(
   list0[["breaks"]] <- x_breaks
   list0[["limits"]] <- x_limits
   list0[["label" ]] <- x_lab
+
   ###### Return
   return(list0)
 } ### End get_colScale()
@@ -221,7 +272,7 @@ fun_limitsByGroup <- function(
   print_msg  <- !silent
   msg0       <- msg
   msg1       <- "\t" |> paste0(msg0)
-  if(print_msg){ msg0 |> paste0("Running fun_limitsByGroup()...") |> message()}
+  if(print_msg) msg0 |> paste0("Running fun_limitsByGroup()...") |> message()
   ###### Data ######
   names0     <- data |> names()
   sumCols0   <- sumCols
@@ -235,18 +286,16 @@ fun_limitsByGroup <- function(
   ### Conditions
   anySumCols   <- hasSumCols |> any()
   multSumCols  <- nSumCols > 1
-  hasNaSumCols <- length(naSumCols) > 0
+  hasNaSumCols <- (naSumCols |> length()) > 0
   ### Messaging
-  msgSumCols   <-
-    ### If no summary columns
-    if     (!anySumCols ){
-      if(print_msg){msg1 |> paste0("Summary columns ", paste(sumCols0, collapse=", "), " not present in data...") |> message()}
-      if(print_msg){msg1 |> paste0("Exiting...") |> message()}
-      return()
-    } ### End if(!hasSumCols)
-  else if(hasNaSumCols){
-    if(print_msg){msg1 |> paste0("Summary columns ", paste(naSumCols, collapse=", "), " not present in data...") |> message()}
-  }
+  ### If no summary columns
+  if     (!anySumCols ){
+    if(print_msg) msg1 |> paste0("Summary columns ", paste(sumCols0, collapse=", "), " not present in data...") |> message()
+    if(print_msg) msg1 |> paste0("Exiting...") |> message()
+    return()
+  } else if(hasNaSumCols){
+    if(print_msg) msg1 |> paste0("Summary columns ", paste(naSumCols, collapse=", "), " not present in data...") |> message()
+  } ### End if(!hasSumCols)
   ### IF multiple columns
   # if(multSumCols){
   #   if(print_msg){ "\t" |> paste0("More than one summary column provided. Summarizing the first column only...") |> message()}
@@ -265,25 +314,35 @@ fun_limitsByGroup <- function(
   hasNaGroupCols <- length(naGroupCols) > 0
   ### If no grouping columns
   if     (!anyGroupCols ){
-    if(print_msg){msg1 |> paste0("Group columns ", paste(groupCols0, collapse=", "), " not present in data...") |> message()}
-    if(print_msg){msg1 |> paste0("Exiting...") |> message()}
+    if(print_msg) msg1 |> paste0("Group columns ", paste(groupCols0, collapse=", "), " not present in data...") |> message()
+    if(print_msg) msg1 |> paste0("Exiting...") |> message()
     return()
+  } else if(hasNaGroupCols){
+    if(print_msg) msg1 |> paste0("Group columns ", paste(naGroupCols, collapse=", "), " not present in data...") |> message()
   } ### End if(!hasGroupCols)
-  else if(hasNaGroupCols){
-    if(print_msg){msg1 |> paste0("Group columns ", paste(naGroupCols, collapse=", "), " not present in data...") |> message()}
-  }
 
   ###### Summarize Values ######
   ### Message the user
-  if(print_msg){msg1 |> paste0("Summarizing values for columns ", paste(sumCols, collapse=", "), "...") |> message()}
-  if(print_msg){msg1 |> paste0("Grouping by columns ", paste(groupCols, collapse=", "), "...") |> message()}
+  if(print_msg) msg1 |> paste0("Summarizing values for columns ", paste(sumCols, collapse=", "), "...") |> message()
+  if(print_msg) msg1 |> paste0("Grouping by columns ", paste(groupCols, collapse=", "), "...") |> message()
+  # ### Summarize values by sector
+  # lim_bySector <- data |>
+  #   group_by_at (c(groupCols)) |>
+  #   summarise_at(c(sumCols), .funs=c(type), na.rm=T) |> ungroup()
+  # rm(data)
   ### Summarize values by sector
-  lim_bySector <- data |>
-    group_by_at (c(groupCols)) |>
-    summarise_at(c(sumCols), .funs=c(type), na.rm=T) |> ungroup()
-  rm(data)
-  ### Pivot longer
-  # lim_bySector <- lim_bySector |> gather(key = "summary_type", value = "summary_value", -c(all_of(groupCols)))
+  select0      <- c(groupCols, sumCols)
+  lim_bySector <- data |> select(all_of(select0)) |> unique()
+  naVals       <- data[,sumCols] |> is.na() |> rowSums() |> as.logical()
+  nVals        <- (!naVals) |> which() |> length()
+  ### Group and summarize if there are non-missing values
+  ### No need to summarize if all values are missing
+  if(nVals) {
+    lim_bySector <- lim_bySector |>
+      group_by_at(c(groupCols)) |>
+      summarize_at(c(sumCols), .funs=c(type), na.rm=T)
+  } ### End if(nVals)
+  ###### Pivot longer ######
   lim_bySector <- lim_bySector |> pivot_longer(
     cols      = -all_of(groupCols),
     names_to  = "summary_type",
@@ -293,15 +352,18 @@ fun_limitsByGroup <- function(
 
   ###### Spread ######
   ### Spread & calculate the spread
-  # lim_bySector <- lim_bySector |> spread(key="summary_type", value="summary_value")
-  lim_bySector <- lim_bySector |> pivot_wider(names_from="summary_type", values_from="summary_value")
-  lim_bySector <- lim_bySector |> mutate(spread=max - min)
+  lim_bySector <- lim_bySector |> pivot_wider(
+    names_from  = "summary_type",
+    values_from = "summary_value"
+  ) ### End pivot_wider
+  ### Calculate spread
+  lim_bySector <- lim_bySector |> mutate(spread = max - min)
 
   ###### Arrange ######
   ### Arrange the sectors & get their order
-  # arrange0     <- groupCols    |> c("max", "spread")
   arrange0     <- c("max", "spread")
   lim_bySector <- lim_bySector |> arrange_at(c(arrange0), desc)
+  rm(arrange0)
   # lim_bySector |> print()
 
   ###### Get Group Orders ######
@@ -313,6 +375,7 @@ fun_limitsByGroup <- function(
     fac_i <- group_i |> paste0("_", "factor")
     lim_bySector[[fac_i]] <- lim_bySector[[group_i]] |> factor(levels=val_i)
     lim_bySector[[ord_i]] <- lim_bySector[[fac_i  ]] |> as.numeric()
+    rm(group_i, val_i, ord_i, fac_i)
   } ### End for(group_i in groupCols)
 
   ###### Arrange Again ######
@@ -332,7 +395,7 @@ fun_limitsByGroup <- function(
 ###### get_sector_plotInfo ######
 ### Get sector plot info
 get_sector_plotInfo <- function(
-    df0, ### Data
+    df0,      ### Data
     yCol      = "yCol",
     byType    = FALSE,
     groupCols = c("sector"),
@@ -343,7 +406,7 @@ get_sector_plotInfo <- function(
   list0  <- list()
 
   ###### Grouping Columns ######
-  if(byType){
+  if(byType) {
     group0    <- c("impactYear", "variant", "impactType")
     groupCols <- groupCols[!(groupCols %in% group0)]
     groupCols <- groupCols |> c(group0)
@@ -355,7 +418,7 @@ get_sector_plotInfo <- function(
     sumCols   = yCol,
     groupCols = groupCols,
     silent    = silent
-  )
+  ) ### End fun_limitsByGroup
   # df_sectorInfo |> print()
 
   ###### Get Value Lists & Lengths ######
@@ -365,42 +428,43 @@ get_sector_plotInfo <- function(
   doVariants <- "variant"    %in% groupCols
   doTypes    <- "impactType" %in% groupCols
   ### Sectors
-  if(doSector){
+  if(doSector) {
     c_sectors <- df_sectorInfo[["sector_factor"]] |> levels() |> as.character()
     n_sectors <- c_sectors |> length()
     list0[["cSectors" ]] <- c_sectors |> as.character()
     list0[["nSectors" ]] <- n_sectors
-  }
+  } ### End if(doSector)
   ### Impact Years
-  if(doYears){
+  if(doYears) {
     c_impYears <- df_sectorInfo[["impactYear_factor"]] |> levels() |> as.character()
     n_impYears <- c_impYears |> length()
     list0[["cImpYears"]] <- c_impYears |> as.character()
     list0[["nImpYears"]] <- n_impYears
-  }
+  } ### End if(doYears)
   ### Variants
-  if(doVariants){
+  if(doVariants) {
     c_variants <- df_sectorInfo[["variant_factor"]] |> levels() |> as.character()
     n_variants <- c_variants |> length()
     list0[["cVariants"]] <- c_variants |> as.character()
     list0[["nVariants"]] <- n_variants
-  }
+  } ### End if(doVariants)
   ### Impact Types
-  if(doTypes){
+  if(doTypes) {
     c_impTypes <- df_sectorInfo[["impactType_factor"]] |> levels() |> as.character()
     n_impTypes <- c_impTypes |> length()
     list0[["cImpTypes"]] <- c_impTypes |> as.character()
     list0[["nImpTypes"]] <- n_impTypes
-  }
+  } ### End if(doTypes)
 
   ###### Number of Rows & Columns ######
   ### Initialize rows & columns
   nCol      <- nCol
-  nRow      <- n_sectors %/% nCol
+  # nRow      <- n_sectors %/% nCol
+  nRow      <- (n_sectors / nCol) |> ceiling()
   nRow      <- (nRow == 0) |> ifelse(1, nRow)
   ### Get Number of Rows & Columns
-  if(byType){ nCol <- n_variants}
-  if(byType){ nRow <- n_impTypes}
+  if(byType) nCol <- n_variants
+  if(byType) nRow <- n_impTypes
   ### Add to list
   list0[["nCol"]] <- nCol
   list0[["nRow"]] <- nRow
@@ -410,21 +474,23 @@ get_sector_plotInfo <- function(
   if(byType){
     df_sectorInfo <- df_sectorInfo |> mutate(plotCol = order_variant   )
     df_sectorInfo <- df_sectorInfo |> mutate(plotRow = order_impactType)
-  } ### End if(byType)
-  else{
+  } else{
     df_sectorInfo <- df_sectorInfo |> mutate(plotRow = ((order - 1) %/% nCol) + 1)
     df_sectorInfo <- df_sectorInfo |> mutate(plotCol = ((order - 1) %%  nCol) + 1)
-  } ### End else
+  } ### End if(byType)
 
   # df_sectorInfo |> print()
 
   ### Get maximum and minimum values by plot row and combine
   df_minMax   <- df_sectorInfo |>
-    group_by_at(.vars=c("plotRow")) |>
-    summarize(min = min(min), max=max(max)) |>
-    ungroup()
+    group_by_at(c("plotRow")) |>
+    summarize(min = min(min), max = max(max)) |> ungroup()
   ### Gather values
-  df_minMax   <- df_minMax |> gather(key="summary_type", value = "summary_value", -c("plotRow"))
+  df_minMax   <- df_minMax |> pivot_longer(
+    cols      = -c("plotRow"),
+    names_to  = "summary_type",
+    values_to = "summary_value"
+  ) ### End pivot_longer
   # df_minMax[["summary_value"]] |> print()
 
   ###### Return List ######
