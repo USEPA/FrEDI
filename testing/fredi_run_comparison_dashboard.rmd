@@ -4,8 +4,12 @@ author: "CIRA Team"
 output: 
   html_document:
     theme: lumen
+params:
+  ref:
+    value: x
+  comp:
+    value: x
 ---
-
 
 ```{r loadPackages , include =FALSE}
 ### Packages
@@ -22,120 +26,127 @@ library(kableExtra)
 knitr::opts_chunk$set(message = FALSE)
 ```
 
-
 ```{r setup, include=FALSE}
-new_2300 <- readRDS("../data_tests/newResults.rds")
+comp_2300 <- readRDS("../data_tests/compResults.rds")
 
   
-old_2300 <- readRDS("../data_tests/refResults.rds") 
+ref_2300 <- readRDS("../data_tests/refResults.rds") 
 
 ```
 
-
-
 ## FrEDI Analysis {.tabset .tabset-fade .tabset-pills}
 
+<font size = "5">**Comparing Branches** </font>
 
-###  Analysis {.tabset}
+<font size = "3"> `r paste("Reference Branch Name: *", params$ref,"*", sep="")` </font>
+
+<font size = "3">`r paste("Comparison Branch Name: *", params$comp,"*", sep="")` </font>
+
+### Analysis {.tabset}
 
 #### Plots {.tabset .tabset-fade .tabset-pills}
 
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 ##### Temperature Inputs
-# old_temp <- old_2300$scenarios$temp |> 
+# ref_temp <- ref_2300$scenarios$temp |> 
 #   ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
-#   ggtitle(glue("Old FrEDI Temp C"))
+#   ggtitle(glue("params$ref FrEDI Temp C"))
 # 
-# new_temp <- new_2300$scenarios$temp |> 
+# comp_temp <- comp_2300$scenarios$temp |> 
 #   ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
-#   ggtitle(glue("New FrEDI Temp C"))
+#   ggtitle(glue("params$comp FrEDI Temp C"))
 # 
 # 
-# grid.arrange(old_temp,new_temp, ncol=2)
+# grid.arrange(ref_temp,comp_temp, ncol=2)
 ```
 
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 ##### SLR Inputs
 
-# old_slr <- old_2300$scenarios$slr |> 
+# ref_slr <- ref_2300$scenarios$slr |> 
 #   ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
-#   ggtitle(glue("Old FrEDI SLR"))
+#   ggtitle(glue("params$ref FrEDI SLR"))
 # 
-# new_slr <- new_2300$scenarios$slr |> 
+# comp_slr <- comp_2300$scenarios$slr |> 
 #   ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
-#   ggtitle(glue("New FrEDI SLR"))
+#   ggtitle(glue("params$comp FrEDI SLR"))
 # 
 # 
-# grid.arrange(old_slr,new_slr,  ncol=2)
+# grid.arrange(ref_slr,comp_slr,  ncol=2)
 ```
 
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 ##### GDP Inputs
 
-# old_gdp <- old_2300$scenarios$gdp |> 
+# ref_gdp <- ref_2300$scenarios$gdp |> 
 #   ggplot() + geom_line(aes(x=year, y=gdp_usd)) +
-#   ggtitle(glue("Old FrEDI GDP"))
+#   ggtitle(glue("params$ref FrEDI GDP"))
 # 
 # 
-# new_gdp <- new_2300$scenarios$gdp |> 
+# comp_gdp <- comp_2300$scenarios$gdp |> 
 #   ggplot() + geom_line(aes(x=year, y=gdp_usd)) +
-#   ggtitle(glue("New FrEDI GDP"))
+#   ggtitle(glue("params$comp FrEDI GDP"))
 # 
 # 
 # 
-# grid.arrange(old_gdp,new_gdp,  ncol=2)
+# grid.arrange(ref_gdp,comp_gdp,  ncol=2)
 ```
 
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 ##### Population Inputs
-#   old_pop <- old_2300$scenarios$pop |>
+#   ref_pop <- ref_2300$scenarios$pop |>
 #   group_by(region,year) |>
 #   summarize(reg_pop = sum(state_pop)) |> 
 #   ggplot() + geom_line(aes(x=year, y=reg_pop/1e6, color = region)) +
-#   ggtitle(glue("Old FrEDI Pop"))
+#   ggtitle(glue("params$ref FrEDI Pop"))
 # 
 # 
-# new_pop <- new_2300$scenarios$pop |> 
+# comp_pop <- comp_2300$scenarios$pop |> 
 #   group_by(region,year) |>
 #   summarize(reg_pop = sum(state_pop)) |> 
 #   ggplot() + geom_line(aes(x=year, y=reg_pop/1e6, color = region)) +
-#   ggtitle(glue("New FrEDI Pop"))
+#   ggtitle(glue("params$comp FrEDI Pop"))
 # 
 # 
 # 
-# grid.arrange(old_pop,new_pop,  ncol=2)
+# grid.arrange(ref_pop,comp_pop,  ncol=2)
 ```
+
 ##### All Impacts Combined
+
 ```{r prepare_nat_2300_data, include =FALSE, echo = FALSE}
-new_2300_pct_diff_nat <- new_2300$results |>
-                rename("annual_impacts_new" = annual_impacts) |>
+comp_2300_pct_diff_nat <- comp_2300$results |>
+                FrEDI::aggregate_impacts(aggLevels = c("national","modelAverage")) |>
+                rename("annual_impacts_comp" = annual_impacts) |>
+               #find model average
               filter(region == "National Total") |> 
              filter(model %in% c("Average", "Interpolation")) |>
-              select(sector,variant,region,model,model_type,year,annual_impacts_new) |>
+              select(sector,variant,region,model,model_type,year,annual_impacts_comp) |>
   group_by(region,year) |>
   summarize(
-    annual_impacts_new = sum(annual_impacts_new)
+    annual_impacts_comp = sum(annual_impacts_comp)
   )
               
 
-old_2300_pct_diff_nat <- old_2300$results |>
-  filter(year <= 2100) |>
-                rename("annual_impacts_old" = annual_impacts) |>
+ref_2300_pct_diff_nat <- ref_2300$results |>
+                FrEDI::aggregate_impacts(aggLevels = c("national","modelAverage")) |>
+                rename("annual_impacts_ref" = annual_impacts) |>
               filter(region == "National Total") |> 
                filter(model %in% c("Average", "Interpolation")) |>
-              select(sector,variant,region,model,model_type,year,annual_impacts_old)|>
+              select(sector,variant,region,model,model_type,year,annual_impacts_ref)|>
   group_by(region,year) |>
   summarize(
-    annual_impacts_old = sum(annual_impacts_old)
+    annual_impacts_ref = sum(annual_impacts_ref)
   )
 
-compare_pct_diff_nat <- left_join(old_2300_pct_diff_nat,new_2300_pct_diff_nat) |> 
-                   mutate(ann_imp_perc_diff = ((annual_impacts_new - annual_impacts_old)/annual_impacts_old) * 100
+compare_pct_diff_nat <- left_join(ref_2300_pct_diff_nat,comp_2300_pct_diff_nat) |> 
+                   mutate(ann_imp_perc_diff = ((annual_impacts_comp - annual_impacts_ref)/annual_impacts_ref) * 100
                           )
-rm(new_2300_pct_diff_nat,old_2300_pct_diff_nat)
+rm(comp_2300_pct_diff_nat,ref_2300_pct_diff_nat)
 
-new_2300_run_nat <- new_2300$results |>
-                mutate(run = "new") |>
+comp_2300_run_nat <- comp_2300$results |>
+                  FrEDI::aggregate_impacts(aggLevels = c("national","modelAverage")) |>
+                mutate(run = "comp") |>
               filter(region == "National Total") |> 
               filter(model %in% c("Average", "Interpolation")) |>
               select(run, sector,variant,region,model,model_type,year,annual_impacts)|>
@@ -145,9 +156,9 @@ new_2300_run_nat <- new_2300$results |>
   )
 
 
-old_2300_run_nat <- old_2300$results |>
-    filter(year <= 2100) |>
-                mutate(run = "old") |>
+ref_2300_run_nat <- ref_2300$results |>
+                FrEDI::aggregate_impacts(aggLevels = c("national","modelAverage")) |>
+                mutate(run = "ref") |>
               filter(region == "National Total") |> 
              filter(model %in% c("Average", "Interpolation")) |> 
               select(run ,sector,variant,region,model,model_type,year,annual_impacts)|>
@@ -157,8 +168,8 @@ old_2300_run_nat <- old_2300$results |>
   )
 
 
-compare_2300run_nat <- full_join(old_2300_run_nat,new_2300_run_nat)
-rm(new_2300_run_nat,old_2300_run_nat)
+compare_2300run_nat <- full_join(ref_2300_run_nat,comp_2300_run_nat)
+rm(comp_2300_run_nat,ref_2300_run_nat)
 gc(verbose = FALSE)
 
 pct_diff_plots_nat <-  ggplotly(
@@ -169,7 +180,7 @@ pct_diff_plots_nat <-  ggplotly(
       ggtitle(glue("Percent Difference: All Impacts"))
     )
 
-old_new_plots_nat <- ggplotly(ggplot(data = compare_2300run_nat, aes(x = year, y = annual_impacts, group = run)) +
+ref_comp_plots_nat <- ggplotly(ggplot(data = compare_2300run_nat, aes(x = year, y = annual_impacts, group = run)) +
       geom_line(aes(color=run)) +
       ggtitle(glue("Two Branches FrEDI:All Impacts"))
       )
@@ -183,48 +194,50 @@ gc(verbose = FALSE)
 pct_diff_plots_nat
 
 
-old_new_plots_nat
+ref_comp_plots_nat
 ```
 
-#####  Sector Comparisons
+##### Sector Comparisons
 
 ```{r prepare_2300_data, include =FALSE, echo = FALSE}
-new_2300_pct_diff <- new_2300$results |>
-                rename("annual_impacts_new" = annual_impacts) |>
+comp_2300_pct_diff <- comp_2300$results |>
+                              FrEDI::aggregate_impacts(aggLevels = c("all")) |>
+                rename("annual_impacts_comp" = annual_impacts) |>
               filter(region == "National Total") |> 
              filter(model %in% c("Average", "Interpolation")) |>
-              select(sector,variant,region,model,model_type,year,annual_impacts_new)
-sectors_new <- new_2300_pct_diff$sector |> unique()
+              select(sector,variant,region,model,model_type,year,annual_impacts_comp)
+sectors_comp <- comp_2300_pct_diff$sector |> unique()
   
-old_2300_pct_diff <- old_2300$results |>
-  filter(year <= 2100) |>
-                rename("annual_impacts_old" = annual_impacts) |>
+ref_2300_pct_diff <- ref_2300$results |>
+                FrEDI::aggregate_impacts(aggLevels = c("all")) |>
+                rename("annual_impacts_ref" = annual_impacts) |>
               filter(region == "National Total") |> 
                filter(model %in% c("Average", "Interpolation")) |>
-              select(sector,variant,region,model,model_type,year,annual_impacts_old)
+              select(sector,variant,region,model,model_type,year,annual_impacts_ref)
 
-compare_pct_diff <- left_join(old_2300_pct_diff,new_2300_pct_diff) |> 
-                   mutate(ann_imp_perc_diff = ((annual_impacts_new - annual_impacts_old)/annual_impacts_old) * 100
+compare_pct_diff <- left_join(ref_2300_pct_diff,comp_2300_pct_diff) |> 
+                   mutate(ann_imp_perc_diff = ((annual_impacts_comp - annual_impacts_ref)/annual_impacts_ref) * 100
                           )
-rm(new_2300_pct_diff,old_2300_pct_diff)
+rm(comp_2300_pct_diff,ref_2300_pct_diff)
 
-new_2300_run <- new_2300$results |>
-                mutate(run = "new") |>
+comp_2300_run <- comp_2300$results |>
+                                FrEDI::aggregate_impacts(aggLevels = c("all")) |>
+                mutate(run = "comp") |>
               filter(region == "National Total") |> 
               filter(model %in% c("Average", "Interpolation")) |>
               select(run, sector,variant,region,model,model_type,year,annual_impacts)
-sectors_run <- new_2300_run$sector |> unique()
+sectors_run <- comp_2300_run$sector |> unique()
   
-old_2300_run <- old_2300$results |>
-    filter(year <= 2100) |>
-                mutate(run = "old") |>
+ref_2300_run <- ref_2300$results |>
+                FrEDI::aggregate_impacts(aggLevels = c("all")) |>
+                mutate(run = "ref") |>
               filter(region == "National Total") |> 
              filter(model %in% c("Average", "Interpolation")) |> 
               select(run ,sector,variant,region,model,model_type,year,annual_impacts)
 
 
-compare_2300run <- full_join(old_2300_run,new_2300_run)
-rm(new_2300_run,old_2300_run)
+compare_2300run <- full_join(ref_2300_run,comp_2300_run)
+rm(comp_2300_run,ref_2300_run)
 gc(verbose = FALSE)
 
 pct_diff_plots <- compare_pct_diff |> 
@@ -243,7 +256,7 @@ pct_diff_plots <- compare_pct_diff |>
     )
   )
 
-old_new_plots <- compare_2300run |> 
+ref_comp_plots <- compare_2300run |> 
    filter(model %in% c("Average", "Interpolation")) |>
   group_by(sector) |>
   nest() %>%
@@ -251,13 +264,13 @@ old_new_plots <- compare_2300run |>
     ~ ggplotly(ggplot(data = .x, aes(x = year, y = annual_impacts, group = run)) +
       geom_line(aes(color=run)) +
       facet_wrap(~ variant,scales="free") +
-      ggtitle(glue("Old vs New FrEDI: {.y}"))
+      ggtitle(glue("ref vs comp FrEDI: {.y}"))
       )
     )
   )
 
-plots <- full_join(pct_diff_plots, old_new_plots)|> dplyr::arrange(sector)
-rm(old_new_plots,pct_diff_plots)
+plots <- full_join(pct_diff_plots, ref_comp_plots)|> dplyr::arrange(sector)
+rm(ref_comp_plots,pct_diff_plots)
 gc(verbose = FALSE)
 ```
 
@@ -265,30 +278,26 @@ gc(verbose = FALSE)
 htmltools::tagList(plots$plot)
 ```
 
----
-
+------------------------------------------------------------------------
 
 #### Data {.tabset .tabset-fade .tabset-pills}
 
 ```{r, echo=FALSE}
 
-new_dat_clean <- new_2300$results |>
-                rename("annual_impacts_new" = annual_impacts) |>
-              filter(region == "National Total") |> 
-             filter(model %in% c("Average", "Interpolation")) 
+comp_dat_clean <- comp_2300$results |>
+                rename("annual_impacts_comp" = annual_impacts)
   
-old_dat_clean <- old_2300$results |> 
+ref_dat_clean <- ref_2300$results |> 
               filter(year <= 2100) |> 
-                 rename("annual_impacts_old" = annual_impacts) |>
-              filter(region == "National Total") |> 
-             filter(model %in% c("Average", "Interpolation"))
+                 rename("annual_impacts_ref" = annual_impacts)
 
-dat_clean <- old_dat_clean |>
-             left_join(new_dat_clean) |> 
+dat_clean <- ref_dat_clean |>
+             full_join(comp_dat_clean) |> 
              filter(year %in% c(2010,2020,2030,2040,2050,2060,2070,2080,2090,2100))
   
 
-DT::datatable(dat_clean, 
+DT::DataTable(dat_clean,
+                    server = TRUE,
                 filter = "top",
                 extensions = 'Buttons', 
                 options = list( searching = TRUE,
