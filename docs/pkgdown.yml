@@ -5,10 +5,9 @@ articles:
   About: About.html
   contributing: contributing.html
   Example1: Example1.html
-  Example2: Example2.html
   manual: manual.html
   References: References.html
-last_built: 2024-11-26T00:24Z
+last_built: 2025-02-07T19:04Z
 urls:
   reference: https://usepa.github.io/FrEDI/reference
   article: https://usepa.github.io/FrEDI/articles
