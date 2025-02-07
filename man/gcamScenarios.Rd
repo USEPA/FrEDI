@@ -36,8 +36,8 @@ gcamScenarios
 
 The scenarios in this data frame were created using \strong{Hector} with \strong{GCAM v5.3}:
 \itemize{
-\item \href{https://jgcri.github.io/hector/}{\strong{Hector}} is an open-source, reduced-form global carbon-cycle climate model (Hartin et al., 2015) used to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM).
-\item \href{https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model}{\strong{GCAM v5.3}} -- i.e., the Global Change Analysis Model v5.3 -- is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019).
+\item \href{https://jgcri.github.io/hector/}{\strong{Hector}} is an open-source, reduced-form model (Hartin et al., 2015) used to model temperatures associated with emissions scenarios .
+\item \href{https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model}{\strong{GCAM v5.3}} -- an open source model that represents the linkages between physical and economic systems (Calvin et al., 2019).
 }
 
 Scenario identifiers in the \code{scenario} column of \code{\link[=gcamScenarios]{gcamScenarios()}} have the string \code{"ECS_3.0_REF_"} as a prefix, followed by a suffix indicating an emissions intensity associated with the scenario (e.g., \code{"20"}) -- for instance, the default scenario for \code{\link[=run_fredi]{run_fredi()}} and \code{\link[=run_fredi_sv]{run_fredi_sv()}} is \code{"ECS_3.0_REF"}. Other scenarios include \code{"ECS_3.0_REF_20"}, \code{"ECS_3.0_REF_30"}, \code{"ECS_3.0_REF_50"}, \code{"ECS_3.0_REF_70"}, and \code{"ECS_3.0_REF_90"}.
@@ -49,8 +49,8 @@ Users can use the scenarios in \code{gcamScenarios} as inputs to FrEDI or the Fr
 \item \code{gcamScenarios} can also be combined with other provided scenarios (\code{gdpDefault}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(temp=gcamScenarios |> filter(scenario=="ECS_3.0_REF"), gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=FrEDI:run_fredi_sv]{FrEDI:run_fredi_sv()}}, \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 }
 
-Calvin, K., Patel, P., Clarke, L., et al. 2019. GCAM v5.1: representing the linkages between energy, water, land, climate, and economic systems, Geosci. Model Dev., 12:677–698. https://doi.org/10.5194/gmd-12-677-2019.
+Calvin, K., Patel, P., Clarke, L., et al. 2019. \url{https://doi.org/10.5194/gmd-12-677-2019}.
 
-Hartin, C.A., Patel, P., Schwarber, A., Link, R.P. and Bond-Lamberty, B.P., 2015. A simple object-oriented and open-source model for scientific and policy analyses of the global climate system–Hector v1. 0. Geoscientific Model Development, 8(4), pp.939-955.
+Hartin, C.A., Patel, P., Schwarber, A., Link, R.P. and Bond-Lamberty, B.P., 2015. URL: <www.geosci-model-dev-discuss.net/7/7075/2014/>. \url{doi:10.5194/gmdd-7-7075-2014}.
 }
 \keyword{datasets}

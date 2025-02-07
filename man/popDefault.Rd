@@ -21,14 +21,14 @@ A data frame with 4,459 rows and 5 columns:
 popDefault
 }
 \description{
-\code{popDefault} is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the \strong{Integrated Climate and Land Use Scenarios Version 2} (\strong{ICLUSv2}) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
+\code{popDefault} is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the (\strong{ICLUSv2}) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
 }
 \details{
 To use \code{popDefault} as an input to FrEDI, the FrEDI SV module, and/or the FrEDI Methane module, pass the data frame via the named element \code{pop} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=run_fredi_sv]{run_fredi_sv()}}, and/or \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, respectively, e.g.: \code{run_fredi(inputsList=list(pop=popDefault))}. \code{popDefault} can also be combined with other provided scenarios (\code{gcamScenarios}, \code{gdpDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=FrEDI:run_fredi_sv]{FrEDI:run_fredi_sv()}}, \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 
-Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
+Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. \url{https://doi.org/10.1073/pnas.1002096107}.
 
-EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+EPA. 2017. \url{https://doi.org/10.13140/RG.2.2.14466.79045}
 
 United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
 }

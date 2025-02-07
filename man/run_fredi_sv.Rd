@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_fredi_sv.R
 \name{run_fredi_sv}
 \alias{run_fredi_sv}
-\title{Calculate climate change impacts on socially vulnerable (SV) populations throughout the 21st century for available sectors}
+\title{Calculate annual average impacts from temperature and sea level change with distribution among different populations throughout the 21st century for available sectors}
 \usage{
 run_fredi_sv(
   sector = NULL,
@@ -14,7 +14,7 @@ run_fredi_sv(
 \arguments{
 \item{sector}{A character string indicating the sector for which the FrEDI SV module should calculate impacts (see \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} for a list of available sectors).}
 
-\item{silent}{A logical (\code{TRUE/FALSE}) value indicating the level of messaging desired by the user (defaults to \code{silent=TRUE})}
+\item{silent}{A logical (\code{TRUE/FALSE}) value indicating the level of messaging desired by the user (defaults to \code{silent=TRUE}).}
 
 \item{inputsList=list(pop=NULL, temp=NULL, slr=NULL)}{A list with named elements (\code{pop}, \code{temp}, and/or \code{slr}), each containing data frames of custom scenarios for state-level population, temperature, and/or global mean sea level rise (GMSL) trajectories, respectively, over a continuous period. Temperature and sea level rise inputs should start in 2000 or earlier. Values for population scenarios can start in 2010 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see \code{\link[=import_inputs]{import_inputs()}}.
 \itemize{
@@ -34,19 +34,19 @@ run_fredi_sv(
 }}
 }
 \value{
-The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
+The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts, with distribution among different populations, at the NCA region level and five-year increments.
 }
 \description{
-\code{run_fredi_sv} allows users to project annual average climate change impacts throughout the 21st century (2010-2100) for socially vulnerable (SV) populations for available sectors. Users can run \code{\link[=run_fredi_sv]{run_fredi_sv()}} for individual sectors to generate annual physical impacts for SV populations. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population and climate (temperature and sea level rise trajectories) or using custom trajectories. The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. The basic structure, specific methodology, and underlying data supporting FrEDI-SV are derived from EPA’s independently peer-reviewed September 2021 report, \href{https://epa.gov/cira/social-vulnerability-report}{Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts}
+\code{run_fredi_sv} allows users to project annual average impacts from temperature and sea level change throughout the 21st century (2010-2100) with distribution among different populations for available sectors. Users can run \code{\link[=run_fredi_sv]{run_fredi_sv()}} for individual sectors to generate annual physical impacts for SV populations. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population, temperature, and sea level trajectories or using custom trajectories. The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. The basic structure, specific methodology, and underlying data supporting FrEDI-SV are derived from EPA’s independently peer-reviewed September \href{https://epa.gov/cira/social-vulnerability-report}{2021 report}.
 }
 \details{
-\code{\link[=run_fredi_sv]{run_fredi_sv()}} projects annual climate change impacts for socially vulnerable (SV) populations throughout the 21st century (2010-2100) for available sectors, using default or user-specified population, temperature, and sea level rise (SLR) trajectories. \code{\link[=run_fredi_sv]{run_fredi_sv()}} is the main function for the FrEDI Social Vulnerability (SV) module in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information). The SV module extends the \link{FrEDI} framework to socially vulnerable populations using data underlying a 2021 U.S. Environmental Protection Agency (EPA) report on \href{https://www.epa.gov/cira/social-vulnerability-report/}{Climate Change and Social Vulnerability in the United States}.
+\code{\link[=run_fredi_sv]{run_fredi_sv()}} projects annual average impacts from temperature and sea level change throughout the 21st century (2010-2100) for available sectors, with distribution among different populations, using default or user-specified population, temperature, and sea level rise (SLR) trajectories. \code{\link[=run_fredi_sv]{run_fredi_sv()}} is the main function for the FrEDI SV module in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information). The SV module extends the \link{FrEDI} framework to different populations using data underlying a \href{https://www.epa.gov/cira/social-vulnerability-report/}{2021 U.S. Environmental Protection Agency (EPA) report}.
 
 Users can run \code{\link[=run_fredi_sv]{run_fredi_sv()}} to generate annual physical impacts for SV groups for individual sectors. When running \code{\link[=run_fredi_sv]{run_fredi_sv()}}, users must specify one of the sectors in the SV module; use \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} for a list of available sectors.
 
-\code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population and climate (temperature and SLR) trajectories or use \code{\link[=run_fredi_sv]{run_fredi_sv()}} to run custom scenarios. Running \code{\link[=run_fredi_sv]{run_fredi_sv()}} with custom climate scenarios requires passing a data frame of scenarios to the \code{driverInput} argument. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can also be run with a custom population scenario by passing a data frame of regional population trajectories to the \code{popInput} argument; unlike climate scenarios, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will only run a single scenario at a time.
+\code{\link[=run_fredi_sv]{run_fredi_sv()}} can be run with default population, temperature, and sea level trajectories or use \code{\link[=run_fredi_sv]{run_fredi_sv()}} to run custom scenarios. Running \code{\link[=run_fredi_sv]{run_fredi_sv()}} with custom temperature and sea level scenarios requires passing a data frame of scenarios to the \code{driverInput} argument. \code{\link[=run_fredi_sv]{run_fredi_sv()}} can also be run with a custom population scenario by passing a data frame of state population trajectories to the \code{popInput} argument; unlike the temperature and sea level scenarios, \code{\link[=run_fredi_sv]{run_fredi_sv()}} will only run a single population scenario at a time.
 
-The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
+The output of \code{\link[=run_fredi_sv]{run_fredi_sv()}} is an R data frame object containing average annual physical impacts, with distribution among different populations, at the NCA region level and five-year increments.
 }
 \examples{
 ### Run SV Module with defaults without specifying sector
@@ -83,15 +83,15 @@ df_sv <- run_fredi_sv(sector = "Coastal Properties", inputsList=list(pop=popDefa
 
 }
 \references{
-Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
+Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. https://doi.org/10.1073/pnas.1002096107.
 
-EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+EPA. 2017. https://doi.org/10.13140/RG.2.2.14466.79045
 
 EPA. 2021. Technical Documentation on the Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental Protection Agency, EPA 430-R-21-004. Available at \url{https://epa.gov/cira/FrEDI/}.
 
-EPA. 2021. Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts. U.S. Environmental Protection Agency, EPA 430-R-21-003. Available at \url{https://www.epa.gov/cira/social-vulnerability-report/}.
+EPA. 2021. \url{https://www.epa.gov/cira/social-vulnerability-report/}.
 
 United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
 
-U.S. Global Change Research Program. 2015. Scenarios for the National Climate Assessment. Available at \url{https://scenarios.globalchange.gov/regions_nca4}.
+U.S. Global Change Research Program. 2015. \url{https://scenarios.globalchange.gov/regions_nca4}.
 }

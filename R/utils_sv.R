@@ -1,17 +1,17 @@
 ###### Overview ######
 ### This file contains helper functions for the FrEDI SV module.
 ###### get_sv_sectorInfo ######
-#' Retrieve a character vector of sectors available in the FrEDI Social Vulnerability (SV) module ([FrEDI::run_fredi_sv]) or a data frame with SV sectors and additional information.
+#' Retrieve a character vector of sectors available in the FrEDI SV module ([FrEDI::run_fredi_sv]) or a data frame with SV sectors and additional information.
 #'
 #' @description
-#' `get_sv_sectorInfo` returns a character vector with the names of sectors in the FrEDI Social Vulnerability (SV) module (default) **or** a data frame of SV sectors with additional information (e.g., associated variants, model type, etc.).
+#' `get_sv_sectorInfo` returns a character vector with the names of sectors in the FrEDI SV module (default) **or** a data frame of SV sectors with additional information (e.g., associated variants, model type, etc.).
 #'
 #'
 #' @param description Logical value indicating whether to include information about each sector. Returns a data frame if `description=TRUE` and returns a character vector of sector names if `description=FALSE` (default).
 #'
-#' @param gcmOnly     Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.
+#' @param gcmOnly     Logical value indicating whether to return only sectors with impacts driven by temperature changes.
 #'
-#' @param slrOnly     Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.
+#' @param slrOnly     Logical value indicating whether to return only sectors with impacts driven by sea level changes.
 #'
 #'
 #' @details

@@ -62,9 +62,9 @@ This release corresponds to FrEDI v4.0.1, the public comment release version.
 
 # FrEDI v3.0
 
-* Bug fix - global to conus temperature in import_inputs
+* Bug fix - global to conus temperature in `import_inputs`
 * Additional sector added - ATS Extreme Temperature Mortality
-* New feature - additional capability to calculate impacts to social vulnerable communities
+* New feature - added capability to perform distributional analysis of impacts among different populations for select sectors
 
 # FrEDI v2.2.0
 
