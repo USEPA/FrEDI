@@ -16,7 +16,7 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
+  comment  = "#>",
   fig.path = "/man/figures/",
   out.width = "100%",
   fig.align="center"
@@ -25,17 +25,19 @@ knitr::opts_chunk$set(
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
 ```
 
 # Summary 
 
-The **Framework for Evaluating Damages and Impacts (FrEDI)** was developed to understand and communicate the potential physical and economic impacts of climate in the United States.
+The **Framework for Evaluating Damages and Impacts (FrEDI)** was developed to understand and communicate the potential physical and economic impacts of changes in temperature and sea level in the United States.
 
 FrEDI works by first taking user-defined projections of U.S. population, gross domestic product (GDP), and global (or CONUS) mean surface temperature change (relative to a 1986-2005 average baseline). When run, FrEDI draws upon underlying sector, state, and GCM-specific temperature-impact relationships to project the annual physical and economic impacts of across multiple impact sectors, U.S. states, and population groups across the contiguous U.S. (CONUS), through the end of the 21st century (and optionally through the year 2300). 
 
 ``` {r, out.width = "70%", echo=FALSE}
-knitr::include_graphics("../man/figures/FrEDI.png")
+"../man/figures/FrEDI.png" |> knitr::include_graphics()
 ```
+
 <center>
 *Figure 1. Illustrative FrEDI Schematic (Credit: Sarah Barr)*
 </center>
@@ -49,20 +51,19 @@ EPA. 2024. Technical Documentation for the Framework for Evaluating Damages and 
 
 # Key Characteristics
 
-FrEDI fills an important gap in assessing U.S. climate impacts by:
+FrEDI fills an important gap in assessing U.S. impacts from changes in temperature and sea level by:
 
 1. Incorporating a broad range of impact studies into common analytic framework
 2. Providing a robust, customizable, and fast tool to facilitate custom scenario analyses
 3. Providing a flexible framework that can readily incorporate new information, to ensure projections reflect the latest science on impacts
 <br>
 
-**FrEDI draws upon a wide range of existing scientific literature.** FrEDI currently draws upon over 30 existing peer-reviewed studies and impact models and uses an impacts-by-degree temperature binning approach [(Sarofim et al., 2021)](https://link.springer.com/article/10.1007/s10584-021-03048-6), to estimate the relationship between future degrees of warming and impacts across more than 20 impact category sectors ([Hartin et al., 2023](https://egusphere.copernicus.org/preprints/2023/egusphere-2023-114/)). Many of these sectoral studies have been adapted from EPA’s [Climate Change Impacts and Risk Assessment (CIRA)](https://www.epa.gov/cira) project, which began in 2008 to assess and compare the impacts of climate in the U.S. using a consistent set of climate models and scenarios. External studies (for example from the [Climate Impacts Lab](https://impactlab.org/)) are now also integrated into FrEDI in cases where the underlying studies can provide regional physical or economic impacts by degree of warming (or cm of sea level rise) and can be scaled to account for future GDP or population, or sector-specific conditions. 
+**FrEDI draws upon a wide range of existing scientific literature.** FrEDI currently draws upon over 30 existing peer-reviewed studies and impact models and uses an impacts-by-degree temperature binning approach [(Sarofim et al., 2021)](https://link.springer.com/article/10.1007/s10584-021-03048-6), to estimate the relationship between future degrees of warming and impacts across more than 20 impact category sectors ([Hartin et al., 2023](https://egusphere.copernicus.org/preprints/2023/egusphere-2023-114/)). Many of these sectoral studies have been adapted from EPA’s [CIRA](https://www.epa.gov/cira) project, which began in 2008 to assess and compare the impacts of temperature changes in the U.S. using a consistent set of physical models and scenarios. External studies (for example from the [CIL](https://impactlab.org/)) are now also integrated into FrEDI in cases where the underlying studies can provide regional physical or economic impacts by degree of warming (or cm of sea level rise) and can be scaled to account for future GDP or population, or sector-specific conditions. 
 
 
 **FrEDI is peer-reviewed and developed as an open-source R package.** This Framework and its [Technical Documentation](https://www.epa.gov/cira/fredi) have been subject to a public review comment period and an independent external peer review, following guidance in the EPA Peer-Review Handbook for Influential Scientific Information (ISI). Information on the peer-review is available in the [EPA Science Inventory](https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=351316&Lab=OAP&simplesearch=0&showcriteria=2&sortby=pubDate&searchall=fredi&timstype=&datebeginpublishedpresented=02/14/2021). 
 
-**FrEDI is customizable and fast.** As shown in Figure 1, the user first provides custom projections for mean surface temperature, U.S. population, and GDP. Within a few minutes FrEDI then outputs a timeseries of annual physical and economic impacts across its multiple dimensions (see Examples page). This framework does not include natural variability and is therefore designed to quantify impacts, with the same level of accuracy,
-under any level of future temperature change.
+**FrEDI is customizable and fast.** As shown in Figure 1, the user first provides custom projections for mean surface temperature, U.S. population, and GDP. Within a few minutes FrEDI then outputs a timeseries of annual physical and economic impacts across its multiple dimensions (see Examples page). This framework does not include natural variability and is therefore designed to quantify impacts, with the same level of accuracy, under any level of future temperature change.
 
 **FrEDI is continually improved to reflect the current state of impact science.** FrEDI currently includes temperature-impact relationships for over 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors and includes the capacity to differentiate these sectoral impacts across multiple geographic regions within the U.S., demographics, and various adaptation scenarios. As described in the [Technical Documentation](https://www.epa.gov/cira/fredi/), FrEDI is continually updated to incorporate new studies with the common framework to reflect the latest available science on impacts within U.S. borders. 
 <br>
@@ -76,7 +77,7 @@ FrEDI can be run for a single scenario, or run multiple times with different inp
 
 The main FrEDI function is `FrEDI::run_fredi()`, as described further on the [Getting Started](manual.html) page. 
 
-FrEDI also includes an `FrEDI::run_fredi_sv()` module, that has the added capability to compare the distribution of physical impacts in six impact sectors across different population groups within the U.S.
+FrEDI also includes an SV module (`FrEDI::run_fredi_sv()`), that has the added capability to compare the distribution of physical impacts in six impact sectors across different population groups within the U.S.
 
 <br>
 
@@ -84,7 +85,7 @@ FrEDI also includes an `FrEDI::run_fredi_sv()` module, that has the added capabi
 
 `FrEDI::run_fredi()` can accept the following projections as input:
 
-1. Temperature (global or CONUS)
+1. Temperature change (global or CONUS)
 2. Sea-Level Rise (optional) 
 3. U.S. Population
 3. U.S. GDP
@@ -95,9 +96,10 @@ If the user does not supply any projections, FrEDI will use FrEDI default projec
 
 A CSV containing mean temperatures in degrees Celsius relative to the 1986-2005 average (degrees of warming relative to the baseline). Temperature values must be greater than or equal to zero Celsius. The first column needs to contain years in the interval 2000 to 2100 (or 2300) and second column contains temperatures, in degrees Celsius, above the 1986-2005 baseline. Users can convert global temperatures to CONUS temperatures using `FrEDI::convertTemps(from="global")` or by specifying `FrEDI::import_inputs(temptype="global")` when importing a temperature scenario from a CSV file.
 
-FrEDI can also be used to project the impacts associated with temperature trajectories that are associated with specific emission scenarios. Users are encouraged to use a simple climate model to first relate emissions to global mean temperature change, for input into FrEDI.
+FrEDI can also be used to project the impacts associated with temperature trajectories that are associated with specific emission scenarios. Users are encouraged to use a simple temperature or sea level change model to first relate emissions to global mean temperature change or sea level, for input into FrEDI.
 
 ### Sea Level Rise (SLR)
+
 A CSV file containing a custom sea level rise scenario, in centimeters. The first column contains years in the interval 2000 to 2100 (or 2300) and the second column contains values for global mean sea level rise (GMSL), in centimeters, above a 2000 baseline. If a SLR scenario is not specified, FrEDI will project SLR based on the input temperature trajectory.
 
 ### U.S. Population 
@@ -110,11 +112,12 @@ A CSV file containing a scenario for U.S. gross domestic product (GDP). The firs
 See the `FrEDI::import_inputs()` function for more information on formatting input data for use in FrEDI.
 
 ### Additional Parameters
+
 Users also have the option to specify additional parameters, including:
 
-- income elasticity (default = 1) - A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts.
-- the level of desired results aggregation 
-- specifying which sectors to analyze (default ==all) 
+- Income elasticity (defaults to `elasticity = 1`) - A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts.
+- The level of desired results aggregation (defaults to all levels of aggregation).
+- Specifying which sectors to analyze (defaults to all sectors).
 
 <br>
 
@@ -135,15 +138,16 @@ FrEDI outputs an R dataframe of impacts corresponding to the following dimension
 
 ### FrEDI Regions
 
-FrEDI currently estimates impacts that occur within the physical borders of 48 states plus the District of Columbia within the contiguous United States (CONUS). These states can be aggregated in regions (Southeast, Southern Plains, Southwest, Northwest, Northern Plains, Midwest, Northeast; see Figure 1), which correspond to those in the [4th National Climate Assessment.](https://nca2018.globalchange.gov/)
+FrEDI currently estimates impacts that occur within the physical borders of 48 states plus the District of Columbia within the contiguous United States (CONUS). These states can be aggregated in regions (Southeast, Southern Plains, Southwest, Northwest, Northern Plains, Midwest, Northeast; see Figure 1), which correspond to those in the [4th NCA.](https://nca2018.globalchange.gov/)
 
 ### FrEDI Impact Sectors & Units
 
 FrEDI currently projects monetized impacts across more than 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors. FrEDI includes economic impacts (in units of $2015 USD) for all sectors and physical endpoints (e.g., morbidity, mortality, response costs, etc.) for nine sectors. 
 
 For a current list of FrEDI sectors, run:
+
 ```
-FrEDI_sector info <- FrEDI::get_sectorInfo(description =T)
+FrEDI_sector_info <- FrEDI::get_sectorInfo(description = T)
 ```
 
 For details about each sector and the underlying damage functions, see the [FrEDI Technical Documentation](https://epa.gov/cira/FrEDI/)
@@ -154,17 +158,18 @@ For details about each sector and the underlying damage functions, see the [FrED
 To assess aspects of uncertainty in the underlying impact studies, FrEDI also includes multiple variant options for select sectors. These are listed in the `variant` column of the FrEDI sector output dataframe. For example, Temperature-Related Mortality (`ATS Temperature-Related mortality`), includes multiple impact estimates that correspond to the mean, as well as the high and low confidence intervals for this sector (based on information in the underlying study). Other sectors, such as Agriculture (`CIL Agriculture`), include impact estimates derived from multiple damage functions that are associated with different conditions (e.g., estimates with and without CO~2~ fertilization). 
 
 FrEDI also calculates impacts under different adaptation assumptions, in select sectors. Adaptation options for the applicable sectors (e.g., Coastal Property, Roads, Rail) are also included as `variants`. The available adaptation options reflect the extent of treatment paid to adaptation in the underlying sectoral impact studies. 
+
 The adaptation options are labeled in FrEDI as: 
 
-- `No Additional Adaptation`: no additional adaptation reflect a “business as usual” scenario, but incorporates adaptive measures and strategies reflected in historical actions to respond to climate hazards
-- `Reactive Adaptation`, or `Reasonably Anticipated Adaptation`: reflect options taken without advanced warning or foresight (e.g., no action is taken to prevent or mitigate future climate change impacts)
-- `Proactive Adaptation` or `Direct Adaptation`: reflect damages where cost-effective adaptations are implemented with perfect foresight. 
+- `No Additional Adaptation`: No additional adaptation reflect a “business as usual” scenario, but incorporates adaptive measures and strategies reflected in historical actions to respond to hazards and risks resulting from changes to temperatures and/or sea level.
+- `Reactive Adaptation`, or `Reasonably Anticipated Adaptation`: Reflect options taken without advanced warning or foresight (e.g., no action is taken to prevent or mitigate future impacts).
+- `Proactive Adaptation` or `Direct Adaptation`: Reflect damages where cost-effective adaptations are implemented with perfect foresight. 
 
-FrEDI includes adaptation options because the realized magnitude, type, location, and timing of long-term climate-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.
+FrEDI includes adaptation options because the realized magnitude, type, location, and timing of long-term temperature change-driven damages are all intricately linked with the ability to implement adaptive measures that reduce these risks.
 
 ### FrEDI Impact Types
 
-FrEDI also calculates the impacts within each sector as a function of multiple `impactTypes`. The impact types that are considered depend on the level of detail available in the underlying impact studies. For example, impacts from climate-driven changes in air quality (`Climate-Driven Changes in Air Quality`) are calculated separately for the mortality-related impacts of ozone and fine particulate matter (PM~2.5~), which can be combined to calculate total impacts for that sector.
+FrEDI also calculates the impacts within each sector as a function of multiple `impactTypes`. The impact types that are considered depend on the level of detail available in the underlying impact studies. For example, impacts from Agriculture (`CIL Agriculture`) are calculated separately for cotton, maize, soybean, and wheat cropts, which can be combined to calculate total impacts for that sector.
 
 <br>
 <br>
@@ -175,11 +180,11 @@ FrEDI also calculates the impacts within each sector as a function of multiple `
 
 All results from the main module (`FrEDI::run_fredi()`) are presented as net annual impacts, either in physical units or in $2015 US dollars. 
 
-FrEDI evaluates both negative and positive effects. At the national level, net damages outweigh the positive effects for all sectors. These reflect the impacts that have accrued from the baseline period through the given impact year. Presenting impacts in a specific year is consistent with the approach commonly used throughout the climate impact literature, including in the Intergovernmental Panel on Climate Change (IPCC) Scientific Assessment Reports and the U.S National Climate Assessment (NCA).
+FrEDI evaluates both negative and positive effects. At the national level, net damages outweigh the positive effects for all sectors. These reflect the impacts that have accrued from the baseline period through the given impact year. Presenting impacts in a specific year is consistent with the approach commonly used throughout the literature on impacts resulting from changes to temperatures and/or sea level, including in the IPCC Scientific Assessment Reports and the U.S NCA report.
 
 There are also important caveats to consider when interpreting FrEDI results, including but not limited to: 
 
 -	FrEDI is not a comprehensive accounting of all impacts expected to occur within contiguous U.S. borders and does not currently include impacts occurring in AK, HI, or U.S. territories. 
 -	FrEDI does not consider impacts to U.S. citizens residing outside of the U.S. or feedbacks of impacts elsewhere back to the U.S. through trade, etc. 
--	There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by available variant options
--	There are uncertainties in the climate drivers and the human responses to adapt to changes in those drivers
+-	There are additional uncertainties in FrEDI’s underlying temperature-impact relationships not fully captured by available variant options.
+-	There are uncertainties in the temperature and sea level drivers and the human responses to adapt to changes in those drivers.

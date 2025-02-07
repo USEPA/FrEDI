@@ -1,8 +1,8 @@
 ###### Documentation ######
-#' Calculate climate change impacts on socially vulnerable (SV) populations throughout the 21st century for available sectors
+#' Calculate annual average impacts from temperature and sea level change with distribution among different populations throughout the 21st century for available sectors
 #'
 #' @description
-#' `run_fredi_sv` allows users to project annual average climate change impacts throughout the 21st century (2010-2100) for socially vulnerable (SV) populations for available sectors. Users can run [FrEDI::run_fredi_sv()] for individual sectors to generate annual physical impacts for SV populations. [FrEDI::run_fredi_sv()] can be run with default population and climate (temperature and sea level rise trajectories) or using custom trajectories. The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. The basic structure, specific methodology, and underlying data supporting FrEDI-SV are derived from EPA’s independently peer-reviewed September 2021 report, [Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts](https://epa.gov/cira/social-vulnerability-report)
+#' `run_fredi_sv` allows users to project annual average impacts from temperature and sea level change throughout the 21st century (2010-2100) with distribution among different populations for available sectors. Users can run [FrEDI::run_fredi_sv()] for individual sectors to generate annual physical impacts for SV populations. [FrEDI::run_fredi_sv()] can be run with default population, temperature, and sea level trajectories or using custom trajectories. The output of [FrEDI::run_fredi_sv()] is an R data frame object containing annual average physical impacts at five-year increments for the period 2010 to 2100. The basic structure, specific methodology, and underlying data supporting FrEDI-SV are derived from EPA’s independently peer-reviewed September [2021 report](https://epa.gov/cira/social-vulnerability-report).
 #'
 #'
 #'
@@ -19,33 +19,23 @@
 #'        * __temp__. Temperature inputs are used by `run_fredi_sv()` with temperature-driven sectors; run `get_sv_sectorInfo(gcmOnly=TRUE)` to get a list of the temperature-driven sectors available for the SV module. Temperature inputs require a data frame with columns of `year`, `temp_C`, and `scenario`, respectively containing the year associated with an observation, temperature values for CONUS in degrees Celsius of warming relative to a 1995 baseline (where 1995 is the central year of a 1986-2005 baseline period -- i.e., values should start at zero in the year 1995), and a unique scenario identifier. If no temperature scenario is specified (i.e., `inputsList$temp` is `NULL`) when running a temperature-driven sector, `run_fredi_sv()` will use a default temperature scenario (see [FrEDI:gcamScenarios]).
 #'        * __slr__. SLR inputs are used by `run_fredi_sv()` with sea level rise-driven sectors; run `get_sv_sectorInfo(slrOnly=TRUE)` to get a list of the SLR-driven sectors available for the SV module. SLR inputs require a data frame with columns of `year`, `slr_cm`, and `scenario`, respectively containing the global mean sea level rise in centimeters relative to a 2000 baseline (i.e., values should start at zero in the year 2000), and a unique scenario identifier. If no SLR scenario is specified (i.e., `inputsList$slr` is `NULL`) when running a temperature-driven sector: if a user has supplied a temperature scenario (i.e., `inputsList$temp` is not `NULL`), `run_fredi_sv()` will calculate sea level rise values from the temperature inputs using the [FrEDI::temps2slr()] function; if no temperature scenario is provided, `run_fredi_sv` will use a default SLR scenario (see [FrEDI:gcamScenarios]).
 #'
-#' @param silent A logical (`TRUE/FALSE`) value indicating the level of messaging desired by the user (defaults to `silent=TRUE`)
+#' @param silent A logical (`TRUE/FALSE`) value indicating the level of messaging desired by the user (defaults to `silent=TRUE`).
 #'
 #'
 #'
-#' @details [FrEDI::run_fredi_sv()] projects annual climate change impacts for socially vulnerable (SV) populations throughout the 21st century (2010-2100) for available sectors, using default or user-specified population, temperature, and sea level rise (SLR) trajectories. [FrEDI::run_fredi_sv()] is the main function for the FrEDI Social Vulnerability (SV) module in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information). The SV module extends the [FrEDI] framework to socially vulnerable populations using data underlying a 2021 U.S. Environmental Protection Agency (EPA) report on [Climate Change and Social Vulnerability in the United States](https://www.epa.gov/cira/social-vulnerability-report/).
+#' @details [FrEDI::run_fredi_sv()] projects annual average impacts from temperature and sea level change throughout the 21st century (2010-2100) for available sectors, with distribution among different populations, using default or user-specified population, temperature, and sea level rise (SLR) trajectories. [FrEDI::run_fredi_sv()] is the main function for the FrEDI SV module in the [FrEDI] R package, described elsewhere (See <https://epa.gov/cira/FrEDI> for more information). The SV module extends the [FrEDI] framework to different populations using data underlying a [2021 U.S. Environmental Protection Agency (EPA) report](https://www.epa.gov/cira/social-vulnerability-report/).
 #'
 #' Users can run [FrEDI::run_fredi_sv()] to generate annual physical impacts for SV groups for individual sectors. When running [FrEDI::run_fredi_sv()], users must specify one of the sectors in the SV module; use [FrEDI::get_sv_sectorInfo()] for a list of available sectors.
 #'
-#' [FrEDI::run_fredi_sv()] can be run with default population and climate (temperature and SLR) trajectories or use [FrEDI::run_fredi_sv()] to run custom scenarios. Running [FrEDI::run_fredi_sv()] with custom climate scenarios requires passing a data frame of scenarios to the `driverInput` argument. [FrEDI::run_fredi_sv()] can also be run with a custom population scenario by passing a data frame of regional population trajectories to the `popInput` argument; unlike climate scenarios, [FrEDI::run_fredi_sv()] will only run a single scenario at a time.
+#' [FrEDI::run_fredi_sv()] can be run with default population, temperature, and sea level trajectories or use [FrEDI::run_fredi_sv()] to run custom scenarios. Running [FrEDI::run_fredi_sv()] with custom temperature and sea level scenarios requires passing a data frame of scenarios to the `driverInput` argument. [FrEDI::run_fredi_sv()] can also be run with a custom population scenario by passing a data frame of state population trajectories to the `popInput` argument; unlike the temperature and sea level scenarios, [FrEDI::run_fredi_sv()] will only run a single population scenario at a time.
 #'
-# * `driverInput` can take a data frame containing up to four custom scenarios for drivers (temperature or global mean sea level rise). `driverInput` requires a data frame with columns of `"year"` and `"scenario"`. The data frame must also include a third column: `"temp_C"` for temperature-driven sectors (containing temperature values in degrees Celsius of warming for the contiguous U.S.) or `"slr_cm"` for sea level rise (SLR)-driven sectors (containing values for global mean sea level rise in centimeters). Run `get_sv_sectorInfo(gcmOnly = TRUE)` to see temperature-driven sectors in the SV module and `get_sv_sectorInfo(slrOnly = TRUE)` to see SLR-driven scenarios. Users can also pass a data frame with all four columns (`"year"`, `"scenario"`, `"temp_C"`, and `"slr_cm"`), in which case [FrEDI::run_fredi_sv()] determines whether to use the `"temp_C"` or `"slr_cm"` column as the driver trajectory based on the specified sector. If any required columns are missing, [FrEDI::run_fredi_sv()] will use the default temperature or sea level rise scenario from [FrEDI::run_fredi()]. If the data frame passed to `driverInput` has more than four unique scenarios, [FrEDI::run_fredi_sv()] will only run the first four scenarios.
-#     * Temperature inputs must be temperature change in degrees Celsius for the contiguous U.S. (use [FrEDI::convertTemps()] to convert global temperatures to CONUS temperatures before passing to `driverInput`) relative to a 1995 baseline (where 1995 is the central year of a 1986-2005 baseline period; values should start at zero in the year 1995).
-#     * Sea level rise inputs must be in centimeters relative to a 2000 baseline (i.e., values should start at zero in the year 2000). Driver inputs for all scenarios should start in the year 2000 or earlier. All scenarios must include at least two non-missing values  (especially values before or at 2000 and at or after 2100).
-# * The input population scenario requires a data frame object with a single scenario of state-level population values.
-#    * The population scenario must have five columns with names `"year"`, `"region"`, `"state"`, `"postal"`, and `"state_pop"` containing the year, the NCA region name, the state name, the postal code abbreviation (e.g., "ME" for "Maine") for the state, and the state population, respectively.
-#    * `popInput` only accepts a a single scenario, in contrast to `driverInput`. In other words, [FrEDI::run_fredi_sv()] uses the same population scenario for any and all driver scenarios passed to `driverInput`.
-#    * If the user does not specify an input scenario for population (i.e., `popInput = NULL`, [FrEDI::run_fredi_sv()] uses a default population scenario.
-#    * Population inputs must have at least one non-missing value in 2010 or earlier and at least one non-missing value in or after the final analysis year (2100).
-#    * Population values must be greater than or equal to zero.
-#    The default regional population scenario is drawn from the Integrated Climate and Land Use Scenarios version 2 (ICLUSv2) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Note that the FrEDI SV default population scenario differs from the default population scenario used by [FrEDI::run_fredi()].
 #'
-#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts, with distribution among different populations, at the NCA region level and five-year increments.
 #'
 #'
 #'
 #' @return
-#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts for socially vulnerable groups, at the NCA region level and five-year increments.
+#' The output of [FrEDI::run_fredi_sv()] is an R data frame object containing average annual physical impacts, with distribution among different populations, at the NCA region level and five-year increments.
 #'
 #' @examples
 #' ### Run SV Module with defaults without specifying sector
@@ -81,17 +71,17 @@
 #'
 #'
 #' @references
-#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
+#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. https://doi.org/10.1073/pnas.1002096107.
 #'
-#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+#' EPA. 2017. https://doi.org/10.13140/RG.2.2.14466.79045
 #'
 #' EPA. 2021. Technical Documentation on the Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental Protection Agency, EPA 430-R-21-004. Available at <https://epa.gov/cira/FrEDI/>.
 #'
-#' EPA. 2021. Climate Change and Social Vulnerability in the United States: A Focus on Six Impacts. U.S. Environmental Protection Agency, EPA 430-R-21-003. Available at <https://www.epa.gov/cira/social-vulnerability-report/>.
+#' EPA. 2021. <https://www.epa.gov/cira/social-vulnerability-report/>.
 #'
 #' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
 #'
-#' U.S. Global Change Research Program. 2015. Scenarios for the National Climate Assessment. Available at <https://scenarios.globalchange.gov/regions_nca4>.
+#' U.S. Global Change Research Program. 2015. <https://scenarios.globalchange.gov/regions_nca4>.
 #'
 #'
 #' @export

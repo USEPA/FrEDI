@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_fredi.R
 \name{run_fredi}
 \alias{run_fredi}
-\title{Project annual average climate change impacts throughout the 21st century for available sectors}
+\title{Project annual average impacts from temperature and sea level change throughout the 21st century for available sectors}
 \usage{
 run_fredi(
   inputsList = list(temp = NULL, slr = NULL, gdp = NULL, pop = NULL),
@@ -23,7 +23,7 @@ run_fredi(
 
 \item{aggLevels="all"}{Levels of aggregation at which to summarize data: one or more of \verb{c("national"}, \code{"modelaverage"}, \code{"impactyear"}, \code{"impacttype"}, \code{"all"}, \verb{"none")}. Defaults to all levels (i.e., \code{aggLevels = "all"}). Uses the same aggregation levels as \code{\link[=aggregate_impacts]{aggregate_impacts()}}. Note that, if \code{"impacttype"} is in \code{aggLevels} (e.g., \code{aggLevels = "all"}), columns \code{"physical_measure"} and \code{"physical_impacts"} will be dropped from the results data frame. This is because aggregating over impact types for some sectors requires summing costs over different types of physical impacts, so reporting the physical impacts would be nonsensical.}
 
-\item{elasticity=1}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to \code{elasticity = 1}). Applicable sectors and impacts are: \strong{Climate-Driven Changes in Air Quality} (all impact types), \strong{ATS Temperature-Related Mortality} (\code{impactType = "N/A"}; i.e., all impact types), \strong{CIL Temperature-Related Mortality}, \strong{Extreme Temperature} (all impact types), \strong{Suicide} (\code{impactType = "N/A"}; i.e., all impact types), \strong{Southwest Dust} (\code{impactType = "All Mortality"}), \strong{Valley Fever} (\code{impactType = "Mortality"}), \strong{Vibriosis} (\code{impactType = "N/A"}; i.e., all impact types), and \strong{Wildfire} (\code{impactType = "Mortality"}).}
+\item{elasticity=1}{A numeric value indicating an elasticity to use for adjusting VSL for applicable sectors and impacts (defaults to \code{elasticity = 1}). Applicable sectors and impacts are: \strong{Air Quality} (all impact types), \strong{ATS Temperature-Related Mortality} (\code{impactType = "N/A"}; i.e., all impact types), \strong{CIL Temperature-Related Mortality}, \strong{Extreme Temperature} (all impact types), \strong{Suicide} (\code{impactType = "N/A"}; i.e., all impact types), \strong{Southwest Dust} (\code{impactType = "All Mortality"}), \strong{Valley Fever} (\code{impactType = "Mortality"}), \strong{Vibriosis} (\code{impactType = "N/A"}; i.e., all impact types), and \strong{Wildfire} (\code{impactType = "Mortality"}).}
 
 \item{maxYear=2100}{A numeric value indicating the maximum year for the analysis. The range for \code{maxYear} is \verb{[2011, 2300]}. Defaults to \code{maxYear = 2100}.}
 
@@ -47,12 +47,12 @@ If \code{outputList=TRUE}, \code{\link[=run_fredi]{run_fredi()}} returns a list 
 }
 }
 \description{
-This function allows users to project annual average climate change impacts through 2100 (2010-2100) for available sectors, with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
+This function allows users to project annual average impacts from temperature and sea level change through 2100 (2010-2100) for available sectors, with the option to extend results to 2300 (2010-2300). Users may specify custom temperature, sea level, U.S. population, and GDP scenarios. The output is an R data frame object containing annual average impacts, by year, for each sector, variant, impact type, region, state, and model.
 
 As of FrEDI Version 4.1.0, \code{\link[=run_fredi]{run_fredi()}} calculates impacts at the state-level for all available sectors.
 }
 \details{
-This function allows users to project annual average climate change impacts through 2300 (2010-2300) for available sectors. \code{\link[=run_fredi]{run_fredi()}} is the main function in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information).
+This function allows users to project annual average impacts from temperature and sea level change through 2300 (2010-2300) for available sectors. \code{\link[=run_fredi]{run_fredi()}} is the main function in the \link{FrEDI} R package, described elsewhere (See \url{https://epa.gov/cira/FrEDI} for more information).
 
 Users can specify an optional list of custom scenarios with \code{inputsList} (for more information on the format of inputs, see \code{\link[=import_inputs]{import_inputs()}}). The function \code{\link[=import_inputs]{import_inputs()}} can be used to importing custom scenarios from CSV files. \code{\link[=import_inputs]{import_inputs()}} returns a list with named elements \code{gdp}, \code{pop}, \code{temp}, and \code{slr}, with each containing a data frame with a custom scenario for GDP, state-level population, temperature, and/or GMSL respectively. If a user imports scenarios using \code{\link[=import_inputs]{import_inputs()}}, they can pass the outputs of \code{\link[=import_inputs]{import_inputs()}} directly to the \code{\link[=run_fredi]{run_fredi()}} argument \code{inputsList}. Note that the documentation for \code{\link[=import_inputs]{import_inputs()}} can also provide additional guidance and specification on the formats for each scenario type.
 
@@ -95,7 +95,7 @@ By default, \code{\link[=run_fredi]{run_fredi()}} will calculate impacts for all
 
 By default, \code{\link[=run_fredi]{run_fredi()}} calculates impacts starting in the year 2010 and ending in 2100. Specify an alternative end year for the analysis using the \code{maxYear} argument. \code{maxYear} has a default value of \code{2100} and minimum and maximum values of \code{2011} and \code{2300}, respectively. Alternatively, users can set argument \code{thru2300 = TRUE} to override the \code{maxYear} argument and set \code{maxYear = 2300}. Note that the default scenarios included within \link{FrEDI} stop in the year 2100; users must provide custom input scenarios out to the desired end year \strong{and} specify a \code{maxYear >= 2100} (and \code{maxYear <= 2300}) in order to return non-missing values for years after 2100.
 
-Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled climate impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. \code{\link[=run_fredi]{run_fredi()}} uses a default value of \code{elasticity = 1}to adjust VSL for applicable sectors and impacts (the default value of \code{elasticity = 1} keeps VSL constant over time). A custom elasticity can be passed to the \code{elasticity} argument. Applicable sectors and impacts are *\strong{Climate-Driven Changes in Air Quality} (all impact types), \strong{ATS Temperature-Related Mortality}  (\code{impactType = "N/A"}; i.e., all impact types), \strong{CIL Temperature-Related Mortality}, \strong{Extreme Temperature} (all impact types), \strong{Suicide} (\code{impactType = "N/A"}; i.e., all impact types), \strong{Southwest Dust} (\code{impactType = "All Mortality"}), \strong{Valley Fever} (\code{impactType = "Mortality"}), \strong{Vibriosis} (\code{impactType = "N/A"}; i.e., all impact types), and \strong{Wildfire} (\code{impactType = "Mortality"}).
+Annual impacts for each sector, variant, impact type, and impact year combination included in the model are calculated by multiplying scaled impacts by a physical scalar and economic scalars and multipliers. Some sectors use Value of a Statistical Life (VSL) to adjust the value non-linearly over time. \code{\link[=run_fredi]{run_fredi()}} uses a default value of \code{elasticity = 1}to adjust VSL for applicable sectors and impacts (the default value of \code{elasticity = 1} keeps VSL constant over time). A custom elasticity can be passed to the \code{elasticity} argument. Applicable sectors and impacts are *\strong{Air Quality} (all impact types), \strong{ATS Temperature-Related Mortality}  (\code{impactType = "N/A"}; i.e., all impact types), \strong{CIL Temperature-Related Mortality}, \strong{Extreme Temperature} (all impact types), \strong{Suicide} (\code{impactType = "N/A"}; i.e., all impact types), \strong{Southwest Dust} (\code{impactType = "All Mortality"}), \strong{Valley Fever} (\code{impactType = "Mortality"}), \strong{Vibriosis} (\code{impactType = "N/A"}; i.e., all impact types), and \strong{Wildfire} (\code{impactType = "Mortality"}).
 
 \code{\link[=run_fredi]{run_fredi()}} aggregates or summarizes results to level(s) of aggregation specified by the user (passed to \code{aggLevels}) using the post-processing helper function \code{\link[=aggregate_impacts]{aggregate_impacts()}}. Users can specify all aggregation levels at once by specifying \code{aggLevels = "all"} (default) or no aggregation levels (\code{aggLevels = "none"}). Users can specify a single aggregation level or multiple aggregation levels by passing a single character string or character vector to \code{aggLevels}. Options for aggregation include calculating national totals (\code{aggLevels = "national"}), averaging across model types and models (\code{aggLevels = "modelaverage"}), summing over all impact types (\code{aggLevels = "impacttype"}), and interpolating between impact year estimates (\code{aggLevels = "impactYear"}).
 
@@ -137,7 +137,7 @@ require(FrEDI)
 ### Run function with defaults
 run1 <- run_fredi()
 
-### Load climate scenarios and glimpse data
+### Load temperature scenarios and glimpse data
 data("gcamScenarios")
 gcamScenarios |> glimpse()
 
@@ -145,7 +145,7 @@ gcamScenarios |> glimpse()
 data("popDefault")
 popDefault |> glimpse()
 
-### Subset climate scenario
+### Subset temperature scenario
 temps1 <- gcamScenarios |> filter(scenario=="ECS_3.0_ref")
 temps1 <- temps1 |> select(year, temp_C_conus)
 

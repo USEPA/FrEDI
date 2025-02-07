@@ -35,14 +35,13 @@ Authors@R: c(person("Corinne", "Hartin",
              )
 URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
 Description: This R package models damages and impacts from temperature changes in the contiguous United States (CONUS) 
-    using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the Climate Change Impacts and 
-    Risk Analysis (CIRA) project at the U.S. Environmental Protection Agency. The package contains functions that 
-    implement FrEDI for projecting impacts from climate and sea level rise for a selected set of 
-    sectors. Versions 3+ include a module for estimating impacts on different populations for 
-    select sectors. Versions 3.3+ extend calculations out to 2300 to facilitate the calculation of Net Present Values 
-    (NPV) but only contain default values through 2090--users must provide their own custom input scenarios for results past 2090. 
-    Versions 4.0.1+ calculate values at the state-level. Versions 4.2+ include a module for estimating excess mortality from changes
-    to ozone concentrations or methane concentrations and, optionally, NOx emissions. 
+    using the Framework for Evaluating Damages and Impacts (FrEDI) developed as part of the CIRA project at the U.S. 
+    EPA. The package contains functions that implement FrEDI for projecting impacts from changes in temperatures and sea level for 
+    a selected set of sectors. Versions 3+ include a module for estimating impacts on different populations for select sectors. 
+    Versions 3.3+ extend calculations out to 2300 to facilitate the calculation of Net Present Values (NPV), but only contain default 
+    values through 2090--users must provide their own custom input scenarios for results past 2090. Versions 4.0.1+ calculate values 
+    at the state-level. Versions 4.2+ include a module for estimating excess mortality from changes to ozone concentrations or methane
+    concentrations and, optionally, NOx emissions. 
 License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.2.0),
