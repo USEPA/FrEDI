@@ -85,17 +85,48 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="fredi-">FrEDI <img src="reference/figures/FrEDI_hex2.png" align="right" alt="" width="140"><a class="anchor" aria-label="anchor" href="#fredi-"></a>
+<div class="page-header"><h1 id="fredi">FrEDI<a class="anchor" aria-label="anchor" href="#fredi"></a>
 </h1></div>
-<p>This repository is for FrEDI, the <strong>Framework for Evaluating Damages and Impacts</strong>, developed by the U.S. Environmental Protection Agency (EPA).</p>
-<p>FrEDI is an open-source, reduced form model that rapidly projects the impacts within the United States, under any custom temperature.</p>
-<p>FrEDI was developed to fill an important gap in assessing U.S. impacts by incorporating a broad range of impact studies into a common, open-source framework. This allows FrEDI to facilitate comparability across impact studies, with the flexibility of facilitating custom scenario analyses.</p>
-<p>FrEDI is continually developed and currently draws upon over 30 existing peer-reviewed studies, including from the <a href="https://www.epa.gov/cira/" class="external-link">Climate Change Impacts and Risk Analysis (CIRA)</a> project, to estimate the relationship between future degrees of warming and impacts across more than 20 category sectors, 48 U.S. states plus the District of Columbia, and population groups. When supplied with a user-defined temperature trajectory, FrEDI then applies these temperature-impact relationships to rapidly project annual impacts and damages through the end of the 21st century. <br></p>
-<p><strong>Recommended Citation:</strong> EPA 2024. Technical Documentation on the Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental Protection Agency, EPA 430-R-24-001. Available at: <a href="https://www.epa.gov/cira/fredi" class="external-link uri">https://www.epa.gov/cira/fredi</a>.</p>
+<p>The Framework for Evaluating Damages and Impacts (FrEDI)</p>
+<p>FrEDI estimates the annual physical and economic impacts of temperature change to the US, through the 21st century (and optionally through 2300).</p>
 <hr>
-<p><font size="3"> <strong><em>EPA Disclaimer</em></strong> <br></font></p>
-<p><em>The United States Environmental Protection Agency (EPA) GitHub project code is provided on an “as is” basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.</em></p>
-<p><em>By submitting a pull request to the GitHub and/or by installing this package, you make an agreement with EPA that you will not submit a claim of compensation for services rendered to EPA or any other federal agency. Further, you agree not to charge the time you spend developing software code related to this project to any federal grant or cooperative agreement.</em> </p>
+<p><em>The 2024 FrEDI Technical Documentation and v4.1 of the FrEDI R package were subject to an independent external peer review and public comment period. All comments received were carefully reviewed, considered, and responded to. The final versions of the 2024 Technical Documentation and v4.1 R package were published in August 2024.</em> ***</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>To install FrEDI for the first time:</p>
+<p><code><a href="https://devtools.r-lib.org/" class="external-link">library("devtools")</a></code></p>
+<pre><code><span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_libpaths.html" class="external-link">with_libpaths</a></span><span class="op">(</span>  </span>
+<span></span>
+<span>   new <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,  </span>
+<span>   </span>
+<span>   <span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span>  </span>
+<span>   </span>
+<span>       repo <span class="op">=</span> <span class="st">"USEPA/FrEDI"</span>,  </span>
+<span>         subdir <span class="op">=</span> <span class="st">"FrEDI"</span>,  </span>
+<span>        type <span class="op">=</span> <span class="st">"source"</span>,  </span>
+<span>         force <span class="op">=</span> <span class="cn">TRUE</span>  </span>
+<span>         <span class="co">#ref = "branch" # this will install a particular branch of interest</span></span>
+<span>       <span class="op">)</span><span class="op">)</span></span></code></pre>
+<p><code><a href="https://usepa.github.io/FrEDI">library("FrEDI")</a></code></p>
+</div>
+<div class="section level2">
+<h2 id="using-fredi">Using FrEDI<a class="anchor" aria-label="anchor" href="#using-fredi"></a>
+</h2>
+<p>After loading FrEDI, point FrEDI to a particular temperature file of interest formatted year, temp_c: <code>tempInputFile &lt;- file.path("your_file.csv")</code>.<br>
+You also can add in files for U.S. GDP and population.</p>
+<p>Here we specify that the temperature inputs are global. This will allow FrEDI to convert those temperatures to CONUS level:</p>
+<p><code>inputs &lt;- import_inputs(tempfile = tempInputFile, temptype = "global")</code></p>
+<p>A simple command to run FrEDI using the inputs specified above : <code>df &lt;- run_fredi(inputsList= inputs, aggLevels="all")</code></p>
+<p>There are different levels to aggregate the data. By selecting “none”, FrEDI will print out all of the information and the user can then aggregate after.</p>
+</div>
+<div class="section level2">
+<h2 id="contributing-to-fredi">Contributing to FrEDI<a class="anchor" aria-label="anchor" href="#contributing-to-fredi"></a>
+</h2>
+<p>The FrEDI team welcomes and values community contributions, but please see our <a href="FrEDI/vignettes/articles/contributing.Rmd">Contribution Guide</a> and note by contributing to this project, you agree to abide to our <a href="FrEDI/CODE_OF_CONDUCT.html">Contributor Code of Conduct</a></p>
+<hr>
+<p>For more information, refer to the documentation at <a href="https://www.epa.gov/cira/about-fredi" class="external-link uri">https://www.epa.gov/cira/about-fredi</a> and <a href="https://usepa.github.io/FrEDI" class="uri">https://usepa.github.io/FrEDI</a>.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
