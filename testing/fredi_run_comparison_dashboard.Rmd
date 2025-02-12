@@ -27,10 +27,20 @@ knitr::opts_chunk$set(message = FALSE)
 ```
 
 ```{r setup, include=FALSE}
-comp_2300 <- "../data_tests/compResults.rds" |> readRDS()
+dataDir   <- ".." |> file.path("data_tests")
+fileExt   <- "."  |> paste0("rds")
 
+strComp   <- "comp"
+strRef    <- "ref"
 
-ref_2300  <- "../data_tests/refResults.rds" |> readRDS() 
+fileComp  <- strComp  |> paste0("Results") |> paste0(fileExt)
+fileRef   <- strRef   |> paste0("Results") |> paste0(fileExt)
+
+pathComp  <- dataDir  |> file.path(fileComp)
+pathRef   <- dataDir  |> file.path(fileRef)
+
+comp_2300 <- pathComp |> readRDS()
+ref_2300  <- pathRef  |> readRDS() 
 ```
 
 ## FrEDI Analysis {.tabset .tabset-fade .tabset-pills}
