@@ -4,7 +4,7 @@
 #'
 #'
 #' @description
-#' This function allows users to estimate mortality impacts from changes to ozone concentrations driven by changes in methane concentrations and (optionally) NOx emissions in the atmosphere.
+#' This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere.
 #'
 #'
 #'
@@ -22,83 +22,85 @@
 #'
 #'
 #'
-#' @details This function allows users to estimate mortality impacts from changes to ozone concentrations driven by changes in methane concentrations, and (optionally) NOx emissions.
+#' @details This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere. This module (also referred to as the **concentration-driven module** or **FrEDI-GHG**. **FrEDI-GHG** is an optional supplement to the main FrEDI function [FrEDI::run_fredi()], and is driven by changes in GHG concentrations, rather than by changes in temperature or sea-level rise. The outputs of **FrEDI-GHG** complement the damages output from main FrEDI and allow users to explore how these additional GHG-related impacts will be distributed across CONUS regions.
 #'
-#' Users can specify an optional list of custom scenarios with `inputsList` (for more information on the format of inputs, see [FrEDI::import_inputs()]). The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with named elements `gdp`, `pop`, `o3`, `ch4`, and/or `nox`, with each respectively containing a data frame with a custom scenario for GDP, state-level population, change in ozone concentration, change in methane concentration, and NOx emissions. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the `run_fred_methane()` argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
+#' The **FrEDI-GHG** module currently assesses the health impacts associated with changes in exposure to the ozone produced from atmospheric methane. `run_fredi_ghg()` calculates these impacts by adapting the reduced form damage function developed by McDuffie et al., 2023. As described in McDuffie et al. 2023, increases in atmospheric methane concentrations lead to higher levels of global background ozone in the troposphere, and result in increased ozone attributable respiratory-related mortality. The efficiency of ozone production from methane (i.e., the ozone response) is sensitive to (or modified by) the presence of other ozone precursors, such as nitrogen oxides (NOx), CO, or volatile organic compounds (VOCs). GCM simulations conducted by the UNEP/CCAC Methane Assessment Report (which formed the basis of the McDuffie at al., 2023 results) previously showed that the ozone response efficiency was more sensitive to change in NOx emissions than to changes in VOCs and derived a NOx-specific modification factor. This relationship shows that as NOx emissions are reduced, ozone production will become more NOx limited (or VOC saturated) and methane will have a smaller impact on ozone production. Users have the option to supply annual NOx concentrations to modify the amount of methane-ozone production in each state by the change in NOx emissions relative to the reference values (the reference scenario assumes constant annual NOx emissions of 10.53Mt/year in the US). If the user does not provide a NOx emissions trajectory with a methane concentration trajectory, we assume NOx levels stay constant at the reference values, and with no adjustment to ozone response. Alternatively, users can supply a custom ozone concentration scenario. Users also have the option to supply a custom state-level population trajectory and/or a national Gross Domestic Product (GDP) scenario.
 #'
-#' Otherwise, `run_fred_methane()` looks for a list object passed to the argument `inputsList`. Within that list, `run_fred_methane()` looks for named list elements -- `gdp`, `pop`, `o3`, `ch4`, and/or `nox` -- with each respectively containing a data frame with a custom scenario for GDP, state-level population, ozone concentration, methane concentration, and/or NOx concentration. If `inputsList = NULL` or `inputsList = list()` (default), `run_fred_methane()` uses default trajectories for GDP, population, ozone concentration, methane concentration, and/or NOx concentration. `run_fred_methane()` will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running `run_fred_methane()`). See [FrEDI::gdpDefault], [FrEDI::popDefault] for more information about the default GDP and population scenarios. Default scenarios for ozone, methane, and NOx are described in more detail below.
+#' Users can specify any optional custom scenarios to use with `run_fredi_ghg()` via the `inputsList` argument (for more information on the format of inputs, refer to the format of outputs described in [FrEDI::import_inputs()]). `run_fredi_ghg()` looks for a list object passed to the argument `inputsList`. Within that list, `run_fredi_ghg()` looks for named list elements -- `gdp`, `pop`, `o3`, `ch4`, and/or `nox` -- with each respectively containing a data frame with a custom scenario for GDP, state-level population, ozone concentration, methane concentration, and/or NOx concentration. If `inputsList = NULL` or `inputsList = list()` (default), `run_fredi_ghg()` uses default trajectories for GDP, population, ozone concentration, methane concentration, and/or NOx concentration. `run_fredi_ghg()` will default back to the default scenarios for any list elements that empty or `NULL` (in other words, running `run_fredi(inputsList = list())` returns the same outputs as running `run_fredi_ghg()`). See [FrEDI::gdpDefault], [FrEDI::popDefault] for more information about the default GDP and population scenarios. Default scenarios for ozone, methane, and NOx are described in more detail below.
 #'
 #' * __GDP Inputs.__ The input scenario for gross domestic product (GDP) requires national GDP values in 2015$. GDP values must be greater than or equal to zero.
 #'    * `gdp` requires a data frame object with two columns with names `"year"`, and `"gdp_usd"` containing the year and the national GDP, respectively. GDP values must be greater than or equal to zero.
-#'    * GDP inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`). Note that the minimum year for the GDP scenario is different from that for [FrEDI::run_fredi()], because `run_fredi_methane()` is only available starting in 2020.
-#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdp = NULL)`, `run_fred_methane()` uses a default GDP scenario.
+#'    * GDP inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`). Note that the minimum year for the GDP scenario is different from that for [FrEDI::run_fredi()], because `run_fredi_ghg()` is only available starting in 2020.
+#'    * If the user does not specify an input scenario for GDP (i.e., `inputsList = list(gdp = NULL)`, `run_fredi_ghg()` uses a default GDP scenario.
 #'
 #' * __Population Inputs.__ The input population scenario requires state-level population values(national-, CONUS-, or region-level population values can be converted to state-level population by immporting inputs using the [FrEDI::import_inputs()] function). Population values must be greater than or equal to zero.
 #'    * `pop` requires a data frame object with five columns with names `"region"`, `"state"`, `"postal"`, `"year"`, and `"pop"` containing the region name (one of `"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, or `"Southwest"` for CONUS states, or `"Alaska"` and `"Hawaii"` for Alaska and Hawaii, respectively), the state name, the two-character postal code abbreviation for the state, the year, and the state population, respectively.
-#'    * Population inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`). Note that the minimum year for the GDP scenario is different from that for [FrEDI::run_fredi()], because `run_fredi_methane()` is only available starting in 2020.
-#'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(pop = NULL)`, `run_fred_methane()` uses a default population scenario.
+#'    * Population inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`). Note that the minimum year for the GDP scenario is different from that for [FrEDI::run_fredi()], because `run_fredi_ghg()` is only available starting in 2020.
+#'    * If the user does not specify an input scenario for population (i.e., `inputsList = list(pop = NULL)`, `run_fredi_ghg()` uses a default population scenario.
 #'
 #' * __Ozone Inputs.__ The input ozone scenario requires changes in annual state-level ozone concentrations, by GCM model, in parts per trillion by volume (pptv) relative to a 1986-2005 baseline era. In other words, the input ozone scenario requires ozone concentrations specific to the state, GCM model, and year of the analysis.
 #'    * `o3` requires a data frame object with six columns with names `"region"`, `"state"`, `"postal"`, `"model"`, `"year"`, and `"O3_pptv"`  containing the region name (`"Midwest"`, `"Northeast"`, `"Northern Plains"`, `"Northwest"`, `"Southeast"`, `"Southern Plains"`, or `"Southwest"` for CONUS states, or `"Alaska"` and `"Hawaii"` for Alaska and Hawaii, respectively), the state name, the two-character postal code abbreviation for the state, the GCM model name (`"CanESM2"`, `"GFDL-CM3"`, `"GISS-E2-R"`, `"HadGEM2-ES"`, and/or `"MIROC5"`), the year, and the change in ozone concentration (in pptv) relative to a 1986-2005 baseline era.
 #'    * Ozone inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * If inputs are specified for ozone _and_ methane or NOx (i.e., `!is.null(inputsList$o3) & (!is.null(inputsList$ch4) | !is.null(inputsList$nox))`), `run_fredi_methane()` will use the ozone scenario in preference of the methane and NOx scenario.
+#'    * If inputs are specified for ozone _and_ methane or NOx (i.e., `!is.null(inputsList$o3) & (!is.null(inputsList$ch4) | !is.null(inputsList$nox))`), `run_fredi_ghg()` will use the ozone scenario in preference of the methane and NOx scenario.
 #'
 #' * __Methane Inputs.__ The input methane scenario requires changes in annual methane concentrations, at the national level, in parts per billion by volume (ppbv) relative to a 1986-2005 baseline era.
 #'    * `ch4` requires a data frame object with two columns with names `"year"` and `"CH4_ppbv"`  containing the year and the change in methane concentration (in ppbv) relative to a 1986-2005 baseline era.
 #'    * Methane inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * `run_fredi_methane()` will override a user-supplied methane scenario with a user-supplied ozone scenario; in other words, `run_fredi_methane()` will use the ozone scenario in preference of the methane and NOx scenario.
+#'    * `run_fredi_ghg()` will override a user-supplied methane scenario with a user-supplied ozone scenario; in other words, `run_fredi_ghg()` will use the ozone scenario in preference of the methane and NOx scenario.
 #'
 #' * __NOx Inputs.__ The input NOx scenario requires annual NOx emissions in the US, at the national level, in Megatons (MT) relative to a 1986-2005 baseline.
 #'    * `nox` requires a data frame object with two columns with names `"year"` and `"NOx_Mt"`  containing the year and the change in NOx concentration (in Mt) relative to a 1986-2005 baseline era.
 #'    * NOx inputs must have at least one non-missing value in 2020 or earlier and at least one non-missing value in or after the final analysis year (as specified by `maxYear`).
-#'    * `run_fredi_methane()` will override a user-supplied methane scenario with a user-supplied ozone scenario; in other words, `run_fredi_methane()` will use the ozone scenario in preference of the methane and NOx scenario.
+#'    * `run_fredi_ghg()` will override a user-supplied methane scenario with a user-supplied ozone scenario; in other words, `run_fredi_ghg()` will use the ozone scenario in preference of the methane and NOx scenario.
 #'
-#' If inputs are specified for ozone _and_ methane or NOx (i.e., `!is.null(inputsList$o3) & (!is.null(inputsList$ch4) | !is.null(inputsList$nox))`), `run_fredi_methane()` will use the ozone scenario in preference of the methane and NOx scenario. If no ozone, methane, or NOx scenario are provided (i.e., `inputsList$o3`, `inputsList$ch4`, and `inputsList$nox` are all `NULL`), `run_fredi_methane()` will use the default ozone scenario to calculate impacts. However, if a user provides an input scenario for methane or NOx (i.e., either `inputsList$ch4` or `inputsList$nox` are not `NULL`) but no ozone scenario is provided (i.e., `inputsList$o3` is `NULL`), then `run_fredi_methane()` will use the methane and NOx scenarios (if either of those inputs is missing, `run_fredi_methane()` will use the corresponding default scenario).
+#' The function [FrEDI::import_inputs()] can be used to importing custom scenarios from CSV files. [FrEDI::import_inputs()] returns a list with named elements `gdp`, `pop`, `o3`, `ch4`, and/or `nox`, with each respectively containing a data frame with a custom scenario for GDP, state-level population, change in ozone concentration, change in methane concentration, and NOx emissions. If a user imports scenarios using [FrEDI::import_inputs()], they can pass the outputs of [FrEDI::import_inputs()] directly to the `run_fredi_ghg()` argument `inputsList`. Note that the documentation for [FrEDI::import_inputs()] can also provide additional guidance and specification on the formats for each scenario type.
 #'
-#' To calculate the change in ozone concentrations when using methane and NOx scenarios, `run_fredi_methane()` follows the approach described in EPA (Forthcoming):
+#' If inputs are specified for ozone _and_ methane or NOx (i.e., `!is.null(inputsList$o3) & (!is.null(inputsList$ch4) | !is.null(inputsList$nox))`), `run_fredi_ghg()` will use the ozone scenario in preference of the methane and NOx scenario. If no ozone, methane, or NOx scenario are provided (i.e., `inputsList$o3`, `inputsList$ch4`, and `inputsList$nox` are all `NULL`), `run_fredi_ghg()` will use the default ozone scenario to calculate impacts. However, if a user provides an input scenario for methane or NOx (i.e., either `inputsList$ch4` or `inputsList$nox` are not `NULL`) but no ozone scenario is provided (i.e., `inputsList$o3` is `NULL`), then `run_fredi_ghg()` will use the methane and NOx scenarios (if either of those inputs is missing, `run_fredi_ghg()` will use the corresponding default scenario).
 #'
-#' 1. First, `run_fredi_methane` calculates values for the change in ozone concentration (in pptv) by multiplying values for a given change in methane concentrations (in ppbv) by a state- and model-specific ozone response matrix (with values in units of concentrations of ozone in pptv relative to concentrations of methane in ppbv).
-#' 2. Second, `run_fredi_methane` calculates values for NOx factor (`NOxFactor`) from the NOx concentrations in Mt (`NOX_Mt`), using the equation `NOxFactor = (log(NOX_Mt) \* k1 + k0) \* 1e3/556` (where `k0` and `k1` are coefficients with values of `-1.12` and `-0.49`, respectively). Note that methane module currently uses the GCM average values for the US, though GCM-specific values are available and could be added in future revisions.
-#' 3. Third, `run_fredi_methane` calculates a NOx ratio (`NOxRatio = NOxFactor / NOxFactor0`) by dividing the NOx factor values (`NOxFactor`) from Step 2 by a reference NOx factor (`NOxFactor0=-4.088991`), where the value for `NOxFactor0` was calculated for a reference NOx concentration (`NOX_Mt0=10.528`) using the equation from Step 2.
-#' 4. Fourth, `run_fredi_methane` adjusts the values for change in ozone concentration from Step 1 by the NOx ratio from Step 3.
+#' To calculate the change in ozone concentrations when using methane and NOx scenarios, `run_fredi_ghg()` follows the approach described in EPA (Forthcoming):
 #'
-#' `run_fredi_methane` uses the following default scenarios:
+#' 1. First, `run_fredi_ghg` calculates values for the change in ozone concentration (in pptv) by multiplying values for a given change in methane concentrations (in ppbv) by a state- and model-specific ozone response matrix (with values in units of concentrations of ozone in pptv relative to concentrations of methane in ppbv).
+#' 2. Second, `run_fredi_ghg` calculates values for NOx factor (`NOxFactor`) from the NOx concentrations in Mt (`NOX_Mt`), using the equation `NOxFactor = (log(NOX_Mt) \* k1 + k0) \* 1e3/556` (where `k0` and `k1` are coefficients with values of `-1.12` and `-0.49`, respectively). Note that methane module currently uses the GCM average values for the US, though GCM-specific values are available and could be added in future revisions.
+#' 3. Third, `run_fredi_ghg` calculates a NOx ratio (`NOxRatio = NOxFactor / NOxFactor0`) by dividing the NOx factor values (`NOxFactor`) from Step 2 by a reference NOx factor (`NOxFactor0=-4.088991`), where the value for `NOxFactor0` was calculated for a reference NOx concentration (`NOX_Mt0=10.528`) using the equation from Step 2.
+#' 4. Fourth, `run_fredi_ghg` adjusts the values for change in ozone concentration from Step 1 by the NOx ratio from Step 3.
+#'
+#' `run_fredi_ghg` uses the following default scenarios:
 #'
 #' * __Methane__. The methane default scenario, `ch4Default`, uses a constant value of `CH4_ppbv=100` for change in methane concentration (in ppbv) for the years 2020 through 2100. See [FrEDI::ch4Default] for more information on the default scenario. Note that the temperature scenario used to produce this default methane scenario differs from the default temperature scenario used in main `FrEDI` ([FrEDI::run_fredi()]) and the `FrEDI` SV module ([FrEDI::run_fredi_sv()]).
 #' * __NOx__. The NOx default scenario, `noxDefault`, uses a constant value of `NOx_Mt=10.528` for change in NOx concentration (in Mt) for the years 2020 through 2100.
 #' * __Ozone__. The ozone default scenario, `o3Default`, uses state- and GCM-specific constant values for change in ozone concentration (`O3_pptv` in pptv) for the years 2020 through 2100, as calculated from the default methane and NOx scenarios using the approach described above.
 #'
-#' `run_fredi_methane()` linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, `run_fredi_methane()` subsets the input scenarios to values within the analysis period (years above 2020 and ending in the year specified by `maxYear`).
+#' `run_fredi_ghg()` linearly interpolates missing annual values for all input scenarios using non-missing values (each scenario requires at least two non-missing values as detailed above for each scenario type). After interpolation of the input scenarios, `run_fredi_ghg()` subsets the input scenarios to values within the analysis period (years above 2020 and ending in the year specified by `maxYear`).
 #'
-#' By default, `run_fredi_methane()` calculates impacts starting in the year 2020 and ending in 2100. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2100` and minimum and maximum values of `2020` and `2300`, respectively. Alternatively, users can set argument `thru2300 = TRUE` to override the `maxYear` argument and set `maxYear = 2300`. Note that the default scenarios included within [FrEDI] stop in the year 2100; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear >= 2100` (and `maxYear <= 2300`) in order to return non-missing values for years after 2100.
+#' By default, `run_fredi_ghg()` calculates impacts starting in the year 2020 and ending in 2100. Specify an alternative end year for the analysis using the `maxYear` argument. `maxYear` has a default value of `2100` and minimum and maximum values of `2020` and `2300`, respectively. Alternatively, users can set argument `thru2300 = TRUE` to override the `maxYear` argument and set `maxYear = 2300`. Note that the default scenarios included within [FrEDI] stop in the year 2100; users must provide custom input scenarios out to the desired end year **and** specify a `maxYear >= 2100` (and `maxYear <= 2300`) in order to return non-missing values for years after 2100.
 #'
-#' `run_fredi_methane()` calculates national population from state population values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively. `run_fredi_methane()` converts the physical impacts (excess deaths) to an economic impact using a Value of Statistical Life (VSL) approach. VSL values are adjusted over time by scaling GDP per capita (relative to CONUS population) relative to a reference GDP per capita. For more information, refer to EPA (2021).
+#' `run_fredi_ghg()` calculates national population from state population values and then calculates GDP per capita from values for GDP and national population. Values for state population, national population, national GDP (in 2015$), and national per capita GDP (in 2015$/capita) are provided in the results data frame in columns `"pop"`, `"national_pop"`, `"gdp_usd"`, and `"gdp_percap"`, respectively. `run_fredi_ghg()` converts the physical impacts (excess deaths) to an economic impact using a Value of Statistical Life (VSL) approach. VSL values are adjusted over time by scaling GDP per capita (relative to CONUS population) relative to a reference GDP per capita. For more information, refer to EPA (2021).
 #'
 #' The process used by the methane module to calculate physical impacts (excess respiratory deaths) from ozone is as follows:
 #'
-#' 1. `run_fredi_methane()` estimates a time-dependent national respiratory mortality rate (in deaths per capita) from national population values relative to a reference population.
+#' 1. `run_fredi_ghg()` estimates a time-dependent national respiratory mortality rate (in deaths per capita) from national population values relative to a reference population.
 #' 2. State-level respiratory mortality (deaths) is then calculated by the national respiratory mortality rate by state population.
-#' 3. `run_fredi_methane()` then calculates a state-level respiratory mortality ratio by dividing the state-level respiratory mortality by a reference respiratory mortality.
-#' 4. `run_fredi_methane()` also calculates a state- and model-specific ozone ratio by dividing the change in ozone concentration values in pptv by reference values.
-#' 5. To calculate the number of excess respiratory mortality due to ozone, `run_fredi_methane()` multiplies the state- and model-specific baseline values for excess respiratory mortality by the state-level respiratory mortality ratio and the state- and model-specific ozone ratio. These
+#' 3. `run_fredi_ghg()` then calculates a state-level respiratory mortality ratio by dividing the state-level respiratory mortality by a reference respiratory mortality.
+#' 4. `run_fredi_ghg()` also calculates a state- and model-specific ozone ratio by dividing the change in ozone concentration values in pptv by reference values.
+#' 5. To calculate the number of excess respiratory mortality due to ozone, `run_fredi_ghg()` multiplies the state- and model-specific baseline values for excess respiratory mortality by the state-level respiratory mortality ratio and the state- and model-specific ozone ratio. These
 #'
-#' To calculate the economic impacts of excess respiratory deaths from ozone, `run_fredi_methane()` multiplies the physical impacts by VSL adjusted for GDP and population, as described above.
-#'
-#'
+#' To calculate the economic impacts of excess respiratory deaths from ozone, `run_fredi_ghg()` multiplies the physical impacts by VSL adjusted for GDP and population, as described above.
 #'
 #'
-#' If `outputList = FALSE` (default), `run_fredi_methane()` returns a data frame of annual physical and economic impacts over the analysis period, for each region, state, and model. If `outputList = TRUE`, in addition to the data frame of impacts, `run_fred_methane()` returns a list object containing information about values for function arguments and scenarios for GDP, population, and ozone or methane and NOx.
+#'
+#'
+#' If `outputList = FALSE` (default), `run_fredi_ghg()` returns a data frame of annual physical and economic impacts over the analysis period, for each region, state, and model. If `outputList = TRUE`, in addition to the data frame of impacts, `run_fredi_ghg()` returns a list object containing information about values for function arguments and scenarios for GDP, population, and ozone or methane and NOx.
 #'
 #'
 #'
 #'
 #' @return
-#' If `outputList=FALSE`, the output of `run_fredi_methane()` is a data frame object (described above) containing annual physical and economic impacts over the analysis period, for each region, state, and model.
+#' If `outputList=FALSE`, the output of `run_fredi_ghg()` is a data frame object (described above) containing annual physical and economic impacts over the analysis period, for each region, state, and model.
 #'
-#' If `outputList=TRUE`, `run_fredi_methane()` returns a list object containing the following:
+#' If `outputList=TRUE`, `run_fredi_ghg()` returns a list object containing the following:
 #'
-#' * __`statusList`__. A list with values for the arguments passed to `run_fredi_methane()` (including defaults if unspecified).
-#' * __`argsList`__. A list with elements named after `run_fredi_methane()` arguments, containing the values of the arguments passed to `run_fred_methane()` (or default values if unspecified).
+#' * __`statusList`__. A list with values for the arguments passed to `run_fredi_ghg()` (including defaults if unspecified).
+#' * __`argsList`__. A list with elements named after `run_fredi_ghg()` arguments, containing the values of the arguments passed to `run_fredi_ghg()` (or default values if unspecified).
 #' * __`scenarios`__. A list with named elements `gdp` and `pop` and `o3` or `ch4` and `nox` -- each containing the scenarios for GDP, population, and ozone or methane and NOx as used by the model in calculating impacts.
 #' * __`results`__. Containing a data frame of annual physical and economic impacts (i.e., the same data frame returned if `outputList = FALSE`).
 #'
@@ -106,6 +108,8 @@
 #'
 #'
 #' @references Environmental Protection Agency (EPA). (Forthcoming). Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
+#'
+#' McDuffie, E. E., Sarofim, M. C., Raich, W., Jackson, M., Roman, H., Seltzer, K., Henderson, B. H., Shindell, D. T., Collins, M., Anderton, J., Barr, S., & Fann, N. (2023). The Social Cost of Ozone-Related Mortality Impacts From Methane Emissions. Earth’s Future, 11(9), e2023EF003853.
 #'
 #'
 #'
@@ -119,13 +123,13 @@
 #'
 #'
 #' ### Run FrEDI methane with O3 inputs
-#' example1 <- run_fredi_methane(inputsList=list(gdp=gdpDefault, pop=popDefault, o3=o3Default))
+#' example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, o3=o3Default))
 #'
 #' ### Run FrEDI methane with methane inputs
-#' example1 <- run_fredi_methane(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch4Default))
+#' example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch4Default))
 #'
 #' ### Run FrEDI methane with methane and NOx inputs
-#' example1 <- run_fredi_methane(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch4Default, nox=noxDefault))
+#' example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch4Default, nox=noxDefault))
 #'
 #'
 #' @export
@@ -135,9 +139,9 @@
 #'
 #'
 
-###### run_fredi_methane ######
+###### run_fredi_ghg ######
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
-run_fredi_methane <- function(
+run_fredi_ghg <- function(
     inputsList = list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL), ### List of inputs
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period

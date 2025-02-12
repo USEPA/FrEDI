@@ -188,4 +188,3 @@ jobs:
           name: general_tests
           path: |
             ./data_tests/*
-
