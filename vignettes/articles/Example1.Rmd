@@ -21,16 +21,16 @@ require(FrEDI)
 
 # Running FrEDI with Default Parameters
 
-FrEDI is commonly used to project the annual, climate-driven physical and economic impacts associated with user-defined trajectories of U.S. temperature change (relative to a 1985-2005 baseline), population, and GDP. 
+FrEDI is commonly used to project the annual, temperature and sea level change-driven physical and economic impacts associated with user-defined trajectories of U.S. temperature change (relative to a 1985-2005 baseline), population, and GDP. 
 
 This vignette provides a simple example of how to run and analyze data from FrEDI's default scenario.
 
 **This example script:**
 
 1. [Installs](#installFrEDI) the `FrEDI` R package from GitHub
-2. [Sets](#setFrEDI) `FrEDI` input and run parameters.
+2. [Sets](#setFrEDI) `FrEDI` input and run parameters
 3. [Runs](#runFrEDI) `FrEDI` with inputs specified in Step 2
-4. [Shows](#analyzeFrEDI) example types of analyses using `FrEDI` output data. 
+4. [Shows](#analyzeFrEDI) example types of analyses using `FrEDI` output data
 
 For more information about `FrEDI`, see the [About](About.html) page and [FrEDI Technical Documentation](https://www.epa.gov/cira/fredi)
 
@@ -38,9 +38,10 @@ For more information about `FrEDI`, see the [About](About.html) page and [FrEDI 
 
 # Step 1. Install `FrEDI` R package {#installFrEDI}
 
-When installing for the first time, see [Installing & Running FrEDI](manual.html) page.
+When installing for the first time, see the [Installing & Running FrEDI](manual.html) page.
 
-Load package
+Load package:
+
 ```{r load_FrEDI, message=FALSE, results='hide'}
 require(FrEDI)
 ```
@@ -57,11 +58,11 @@ If `FrEDI` has been installed, users can also search for function-specific docum
 
 # Step 2. Set `FrEDI` Runtime parameters {#setFrEDI}
 
-First, use this chunk to specify & format input projections. Either provide paths to specific files, or set to `NULL` to use default projections for each variable
+First, use this chunk to specify & format input projections. Either provide paths to specific files, or set to `NULL` to use default projections for each variable.
 
-Use this chunk to specify the input trajectories (temperature, population, GDP) and runtime parameters for `FrEDI`.
+Use this chunk to specify the input trajectories (temperature, sea level, population, and/or GDP) and runtime parameters for `FrEDI`.
 
-```{r setup_fredi_input, results = 'hold', message=FALSE }
+```{r setup_fredi_input, results='hold', message=FALSE}
 ### To run FrEDI for more than one scenario, the code below can be
 ### adapted into a loop to format the inputs for each scenario. 
 
@@ -127,7 +128,7 @@ inputs_list <- import_inputs(
 inputs_list |> glimpse()
 ```
 
-If no input files are specified, `run_fredi()` will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi()` will calculate annual projected sea level rise based on the default temperature change. 
+If no input files are specified, `run_fredi()` will use default temperature, U.S. population, and GDP projections. In this case, `run_fredi()` will calculate annual projected sea level change based on the default temperature change. 
 
 Default population scenarios are based on UN Median Population projection ([United Nations, 2015](https://www.un.org/en/development/desa/publications/world-population-prospects-2015-revision.html)) and EPA’s ICLUSv2 model ([Bierwagen et al., 2010](https://www.pnas.org/doi/abs/10.1073/pnas.1002096107); [EPA 2017](https://cfpub.epa.gov/ncea/risk/recordisplay.cfm?deid=322479)), and GDP from the EPPA version 6 model ([Chen et al., 2015](https://globalchange.mit.edu/publication/16262)). Default temperature projections are from the GCAM reference scenario. Current default projections of U.S. GDP, national population, and U.S. temperature in the year 2090 are 70 trillion (2015USD), 438 million, and 3.4°C respectively. 
 
@@ -149,7 +150,7 @@ sectorListFlag <- NULL
 
 ### Aggregation level flag
 ### - Purpose: Specify the desired level of results aggregation. For example,
-###   to report national total results across all underlying climate-model 
+###   to report national total results across all underlying GCM 
 ###   damage functions, set the flag to c("national","modelaverage")
 ### - Options: at least one from c("national", "modelaverage", "impactyear",
 ###   "impacttype", "all"), or "none". 
@@ -190,7 +191,8 @@ silentFlag <- TRUE
 <br>
 
 # Step 3. Run `FrEDI` {#runFrEDI}
-Run `FrEDI` using the main `run_fredi()` function 
+
+Run `FrEDI` using the main `run_fredi()` function.
 
 Default parameter options are used for any parameters that are not specified in `run_fredi()`. 
 
@@ -247,7 +249,7 @@ df_sumTypes <- df_primary |>
 
 # Step 4. Analyze `FrEDI` {#analyzeFrEDI}
 
-The following chunks provide three examples options for how to analyze the raw output dataframe from `FrEDI::run_fredi()`
+The following chunks provide three examples options for how to analyze the raw output dataframe from `FrEDI::run_fredi()`.
 
 **Disclaimer: These results only provide an illustrative example and should *NOT* be used for further analysis.**
 
@@ -256,6 +258,7 @@ The following chunks provide three examples options for how to analyze the raw o
 Extract national average of economic damages (in billions of dollars in 2015$) for all `FrEDI` sectors for a specified year
 
 The output of this chunk includes a snapshot of a subset of the resulting dataframe.
+
 * Note: Use the `sectorprimary == 1` and `includeaggregate >= 1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, see the FrEDI Technical Documentation (Chapter 2) and `FrEDI::run_fredi()` documentation. 
 
 ```{r, example1, echo=TRUE, warning=FALSE, message=FALSE}
@@ -267,7 +270,7 @@ select1     <- groups1 |> c(sumCol1)
 ### Filter to specific values:
 ### - Filter for national aggregate results averaged across all GCMs
 ### - Filter to specified years
-### Select specific columns
+### - Select specific columns
 df_filter1  <- df_sumTypes |> 
   filter(region == "National Total") |>
   select(all_of(select1)) |>
@@ -277,7 +280,7 @@ df_filter1  <- df_sumTypes |>
 
 ### Display first 10 sectors
 df_filter1[1:10,] |> 
-  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Climate-Driven Impacts") |>
+  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Temperature and Sea Level Change-Driven Impacts") |>
   kable_styling(font_size = 12, full_width = F)
 ```
 
@@ -285,7 +288,7 @@ df_filter1[1:10,] |>
 
 Extract national average of physical damages for all `FrEDI` sectors that include physical impacts, for a specified year:
 
-* The 0utput of this chunk includes a snapshot of a subset of the resulting dataframe.
+* The output of this chunk includes a snapshot of a subset of the resulting dataframe.
 * Note: Use the `sectorprimary == 1` and `includeaggregate >= 1` flags to filter the `FrEDI` dataframe for impacts from only the default impact sectors and variants. For recommendations on aggregating impacts across sectors, see the FrEDI Technical Documentation (Chapter 2) and `FrEDI::run_fredi()` documentation. 
 
 ```{r, example2, echo=TRUE, warning=FALSE, message=FALSE}
@@ -297,7 +300,7 @@ select2     <- groups2  |> c(sumCol2)
 ### Filter to specific values:
 ### - Filter for national aggregate results averaged across all GCMs
 ### - Filter to specified years
-### Select specific columns
+### - Select specific columns
 df_filter2 <- df_primary |>
   filter(region == "National Total") |>
   filter(!(is.na(physicalmeasure))) |>
@@ -306,7 +309,7 @@ df_filter2 <- df_primary |>
 
 ### Display first 10 rows
 df_filter2[c(1, 6:9, 14),] |> 
-  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Climate-Driven Physical Impacts") |>
+  kable(caption = "Example *Subset* of 2100 Annual National Sectoral Temperature and Sea Level Change-Driven Physical Impacts") |>
   kable_styling(font_size = 12, full_width = F)
 ```
 
@@ -326,7 +329,7 @@ select3     <- groups3  |> c(sumCol3)
 ### Filter to specific values:
 ### - Filter for national aggregate results averaged across all GCMs
 ### - Filter to specified years
-### Select specific columns
+### - Select specific columns
 df_filter3 <- df_sumTypes |>
   filter(!(region == "National Total")) |>
   group_by_at(c(groups3)) |>
@@ -354,7 +357,7 @@ df_filter3 <- df_sumTypes |>
 
 ### Display first 10 rows
 df_filter3[1:10,] |> 
-  kable(caption = "Example 2100 Annual Climate-Driven Damages, by State") |>
+  kable(caption = "Example 2100 Annual Temperature and Sea Level Change-Driven Damages, by State") |>
   kable_styling(font_size = 12, full_width = F)
 ```
 

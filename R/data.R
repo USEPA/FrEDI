@@ -14,8 +14,8 @@
 #'
 #' The scenarios in this data frame were created using **Hector** with **GCAM v5.3**:
 #'
-#'    * [__Hector__](https://jgcri.github.io/hector/) is an open-source, reduced-form global carbon-cycle climate model (Hartin et al., 2015) used to model temperatures associated with emissions scenarios from the Global Change Analysis Model v5.3 (GCAM).
-#'    * [__GCAM v5.3__](https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model) -- i.e., the Global Change Analysis Model v5.3 -- is an open source model that represents the linkages between energy, water, land, climate and economic systems (Calvin et al., 2019).
+#'    * [__Hector__](https://jgcri.github.io/hector/) is an open-source, reduced-form model (Hartin et al., 2015) used to model temperatures associated with emissions scenarios .
+#'    * [__GCAM v5.3__](https://gcims.pnnl.gov/modeling/gcam-global-change-analysis-model) -- an open source model that represents the linkages between physical and economic systems (Calvin et al., 2019).
 #'
 #' Scenario identifiers in the `scenario` column of [FrEDI::gcamScenarios()] have the string `"ECS_3.0_REF_"` as a prefix, followed by a suffix indicating an emissions intensity associated with the scenario (e.g., `"20"`) -- for instance, the default scenario for [FrEDI::run_fredi()] and [FrEDI::run_fredi_sv()] is `"ECS_3.0_REF"`. Other scenarios include `"ECS_3.0_REF_20"`, `"ECS_3.0_REF_30"`, `"ECS_3.0_REF_50"`, `"ECS_3.0_REF_70"`, and `"ECS_3.0_REF_90"`.
 #'
@@ -25,9 +25,9 @@
 #'    * Any or all of the GCAM scenarios can be passed directly to the FrEDI SV module via the [FrEDI::run_fredi_sv()] function via a named list element (`temp` and/or `slr`) in a list passed to the `inputsList` argument -- e.g., `run_fredi_sv(inputsList=list(temp=gcamScenarios))` will run the SV module for all the GCAM scenarios provided in `gcamScenarios`.
 #'    * `gcamScenarios` can also be combined with other provided scenarios (`gdpDefault`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(temp=gcamScenarios |> filter(scenario=="ECS_3.0_REF"), gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_ghg()], and [FrEDI::import_inputs()].
 #'
-#' Calvin, K., Patel, P., Clarke, L., et al. 2019. GCAM v5.1: representing the linkages between energy, water, land, climate, and economic systems, Geosci. Model Dev., 12:677–698. https://doi.org/10.5194/gmd-12-677-2019.
+#' Calvin, K., Patel, P., Clarke, L., et al. 2019. <https://doi.org/10.5194/gmd-12-677-2019>.
 #'
-#' Hartin, C.A., Patel, P., Schwarber, A., Link, R.P. and Bond-Lamberty, B.P., 2015. A simple object-oriented and open-source model for scientific and policy analyses of the global climate system–Hector v1. 0. Geoscientific Model Development, 8(4), pp.939-955.
+#' Hartin, C.A., Patel, P., Schwarber, A., Link, R.P. and Bond-Lamberty, B.P., 2015. URL: <www.geosci-model-dev-discuss.net/7/7075/2014/>. <doi:10.5194/gmdd-7-7075-2014>.
 #'
 #' @format A data frame with 606 rows and 6 columns:
 #' \describe{
@@ -45,15 +45,15 @@
 ###### popDefault ######
 #' U.S. state population scenario, which can be passed as an input to [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], and/or [FrEDI:run_fredi_ghg()].
 #'
-#' `popDefault` is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the **Integrated Climate and Land Use Scenarios Version 2** (**ICLUSv2**) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
+#' `popDefault` is a data frame object that contains population projections for 50 U.S. states and the District of Columbia for the period from 2010 to 2100. Values for the 48 states and the District of Columbia comprising the contiguous U.S. (CONUS) are from the (**ICLUSv2**) model (Bierwagen et al, 2010; EPA 2017) under the Median variant projection of United Nations (United Nations, 2015). Values for Alaska and Hawaii are from the U.S. Census Bureau.
 #'
 #' To use `popDefault` as an input to FrEDI, the FrEDI SV module, and/or the FrEDI Methane module, pass the data frame via the named element `pop` in a list passed to the `inputsList` argument in function calls to [FrEDI::run_fredi()], [FrEDI::run_fredi_sv()], and/or [FrEDI:run_fredi_ghg()], respectively, e.g.: `run_fredi(inputsList=list(pop=popDefault))`. `popDefault` can also be combined with other provided scenarios (`gcamScenarios`, `gdpDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI::run_fredi()], [FrEDI:run_fredi_sv()], [FrEDI:run_fredi_ghg()], and [FrEDI::import_inputs()].
 #'
 #'
 #'
-#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. “National housing and impervious surface scenarios for integrated climate impact assessments.” Proc. Natl. Acad. Sci. 107 (49): 20887–20892. https://doi.org/10.1073/pnas.1002096107.
+#' Bierwagen, B., D. M. Theobald, C. R. Pyke, A. Choate, P. Groth, J. V. Thomas, and P. Morefield. 2010. <https://doi.org/10.1073/pnas.1002096107>.
 #'
-#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+#' EPA. 2017. <https://doi.org/10.13140/RG.2.2.14466.79045>
 #'
 #' United Nations. 2015. World population prospects: The 2015 revision. New York: United Nations, Department of Economic and Social Affairs, Population Division.
 #'
@@ -78,7 +78,7 @@
 #'
 #' Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: Economic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
 #'
-#' EPA. 2017. Multi-Model Framework for Quantitative Sectoral Impacts Analysis: A technical report for the Fourth National Climate Assessment. U.S. Environmental Protection Agency, EPA 430-R-17-001.
+#' EPA. 2017. <DOI:10.13140/RG.2.2.14466.79045>.
 #'
 #'
 #' @format A data frame with 91 rows and 2 columns:
@@ -98,9 +98,9 @@
 #'
 #' To use `ch4Default` as an input to the FrEDI Methane module, pass the data frame via the named element `ch4` in a list passed to the `inputsList` argument in function calls to [FrEDI:run_fredi_ghg()], e.g.: `run_fredi_ghg(inputsList=list(ch4=ch4Default))`. `ch4Default` can also be combined with other provided scenarios (`gdpDefault`, `popDefault`) in function calls (e.g., `run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))`) or user-provided data frames. For more information, see documentation for [FrEDI:run_fredi_ghg()], and [FrEDI::import_inputs()].
 #'
-#' Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. FaIRv2.0.0: a generalized impulse response model for climate uncertainty and future scenario exploration, Geosci. Model Dev., 14, 3007--3036, https://doi.org/10.5194/gmd-14-3007-2021.
+#' Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. <https://doi.org/10.5194/gmd-14-3007-2021>.
 #'
-#' Nicholls, Z. R. J., Meinshausen, M., Lewis, J., Gieseke, R., Dommenget, D., Dorheim, K., Fan, C.-S., Fuglestvedt, J. S., Gasser, T., Goluke, U., Goodwin, P., Hartin, C., Hope, A. P., Kriegler, E., Leach, N., Marchegiani, D., McBride, L. A., Quilcaille, Y., Rogelj, J., Xie, Z. (2020). Reduced Complexity Model Intercomparison Project Phase 1: introduction and evaluation of global-mean temperature response. Geoscientific Model Development. 13. 5175-5190. 10.5194/gmd-13-5175-2020.
+#' Nicholls, Z. R. J., Meinshausen, M., Lewis, J., Gieseke, R., Dommenget, D., Dorheim, K., Fan, C.-S., Fuglestvedt, J. S., Gasser, T., Goluke, U., Goodwin, P., Hartin, C., Hope, A. P., Kriegler, E., Leach, N., Marchegiani, D., McBride, L. A., Quilcaille, Y., Rogelj, J., Xie, Z. (2020). <https://doi.org/10.5194/gmd-13-5175-2020>.
 #'
 #' Environmental Protection Agency (EPA). Forthcoming. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
 #'

@@ -2,16 +2,16 @@
 % Please edit documentation in R/utils_sv.R
 \name{get_sv_sectorInfo}
 \alias{get_sv_sectorInfo}
-\title{Retrieve a character vector of sectors available in the FrEDI Social Vulnerability (SV) module (\link{run_fredi_sv}) or a data frame with SV sectors and additional information.}
+\title{Retrieve a character vector of sectors available in the FrEDI SV module (\link{run_fredi_sv}) or a data frame with SV sectors and additional information.}
 \usage{
 get_sv_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 }
 \arguments{
 \item{description}{Logical value indicating whether to include information about each sector. Returns a data frame if \code{description=TRUE} and returns a character vector of sector names if \code{description=FALSE} (default).}
 
-\item{gcmOnly}{Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.}
+\item{gcmOnly}{Logical value indicating whether to return only sectors with impacts driven by temperature changes.}
 
-\item{slrOnly}{Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.}
+\item{slrOnly}{Logical value indicating whether to return only sectors with impacts driven by sea level changes.}
 }
 \value{
 \code{\link[=get_sv_sectorInfo]{get_sv_sectorInfo()}} will return SV sectors in the form specified by \code{description}:
@@ -21,7 +21,7 @@ get_sv_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 }
 }
 \description{
-\code{get_sv_sectorInfo} returns a character vector with the names of sectors in the FrEDI Social Vulnerability (SV) module (default) \strong{or} a data frame of SV sectors with additional information (e.g., associated variants, model type, etc.).
+\code{get_sv_sectorInfo} returns a character vector with the names of sectors in the FrEDI SV module (default) \strong{or} a data frame of SV sectors with additional information (e.g., associated variants, model type, etc.).
 }
 \details{
 \code{get_sv_sectorInfo} returns a character vector with the names of sectors in the FrEDI SV module (\code{description=FALSE}, default) \strong{or} a data frame with SV sectors and additional information (\code{description=TRUE}).
