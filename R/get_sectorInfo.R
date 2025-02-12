@@ -41,38 +41,35 @@
 ###
 ###
 get_sectorInfo <- function(
-    description=F,
-    gcmOnly=F,
-    slrOnly=F
+    description = F,
+    gcmOnly     = F,
+    slrOnly     = F
 ){
-  if((description |> is.null())){description<-F}
-  if((gcmOnly     |> is.null())){gcmOnly    <-F}
-  if((slrOnly     |> is.null())){slrOnly    <-F}
-  # co_sectorsRef$sector_label
-  # assign("co_sectorsRef", rDataList[["co_sectors"]])
-  co_sectorsRef  <- "co_sectorsRef" |> get_frediDataObj("frediData")
-
+  ### Get objects
+  co_sectorsRef <- "co_sectorsRef" |> get_frediDataObj("frediData")
+  ### Select and rename
   co_sectorsRef <- co_sectorsRef |>
     select(-c("sector_id")) |>
     rename(sector     = sector_label) |>
     rename(model_type = modelType) |>
     mutate(model_type = model_type |> toupper())
   ### Sort
-  co_sectorsRef <- co_sectorsRef |> arrange_at(vars("sector"))
+  co_sectorsRef <- co_sectorsRef |> arrange_at(c("sector"))
   ### GCM or SLR
-  gcm_string <- "GCM"
+  gcm_string    <- "GCM"
   if(gcmOnly){
-    co_sectorsRef <- co_sectorsRef |> filter(model_type==gcm_string)
+    co_sectorsRef <- co_sectorsRef |> filter(model_type == gcm_string)
   } else if(slrOnly){
-    co_sectorsRef <- co_sectorsRef |> filter(model_type!=gcm_string)
+    co_sectorsRef <- co_sectorsRef |> filter(model_type != gcm_string)
   } ### End if(gcmOnly)
 
   ### If not description, return names only
   if(!description){
-    return_obj <- co_sectorsRef$sector
+    return_obj <- co_sectorsRef |> pull(sector)
   } else{
-    return_obj <- co_sectorsRef |> as.data.frame()
+    return_obj <- co_sectorsRef
   } ### End if(!description)
 
+  ### Return
   return(return_obj)
 }

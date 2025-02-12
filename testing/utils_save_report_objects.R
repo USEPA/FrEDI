@@ -13,7 +13,7 @@ check_and_create_path <- function(
   if(create1) {
     "Directory does not exist. " |> message()
     "\t" |> paste0("Creating directory...") |> message()
-    try0 <- fpath |> dir.create() |> try()
+    try0 <- fpath |> dir.create(recursive=T) |> try()
     "\t" |> paste0("...Directory created.") |> message()
   } ### End if(create1)
 } ### End check_and_create_path
@@ -34,7 +34,7 @@ save_data <- function(
   createDir <- fdir |> check_and_create_path(createDir=createDir)
   ### File name
   ftype     <- ftype |> tolower()
-  fname     <- fname |> paste0(".") |> paste0(ftype)
+  fname     <- fname |> paste0(".", ftype)
   fpath     <- fdir  |> file.path(fname)
   ### Which type to save
   doCsv     <- ftype == "csv"
@@ -42,8 +42,8 @@ save_data <- function(
   ### Message user
   "Writing data to " |> paste0(ftype, " file...") |> message()
   ### Save CSV
-  if(doCsv){saved0 <- obj0 |> write.csv(file = fpath, row.names = row.names) |> try()}
-  else     {saved0 <- obj0 |> save(file = fpath) |> try()}
+  if(doCsv){saved0 <- obj0 |> write.csv(file=fpath, row.names=row.names) |> try()}
+  else     {saved0 <- obj0 |> save(file=fpath) |> try()}
   ### Message user
   "...Finished." |> message()
   ### Return
@@ -52,16 +52,16 @@ save_data <- function(
 ###### save_image ######
 ### Utility function to help save an image to file
 save_image <- function(
-    obj0, ### Data object
-    fpath     = ".", ### File path
-    fname     = "data",
-    device    = "pdf", ### CSV or RData
+    obj0,     ### Data object
+    fpath     = "."   , ### File path
+    fname     = "data", ### Base file name
+    device    = "pdf" , ### CSV or RData
     options   = list(
       height = 8,
       width  = 6.9,
       res    = 200,
       units  = "in"
-    ),
+    ), ### End options
     createDir = TRUE ### Whether to create directory if it doesn't exist
 ){
   ### Plot options
@@ -72,13 +72,13 @@ save_image <- function(
   units0    <- options[["units"]]
   ### File name
   fdir      <- fpath
-  fname     <- fname |> paste0(".") |> paste0(dev0)
+  fname     <- fname |> paste0(".", dev0)
   ### Create directory if it doesn't exist
   createDir <- fdir  |> check_and_create_path(createDir=createDir)
   fpath     <- fdir  |> file.path(fname)
 
   ### Save Image
-  saved0    <- ggsave(fname, plot = obj0, device=dev0, path=fdir, width=w0, height=h0, units=units0) |> try()
+  saved0    <- ggsave(fname, plot=obj0, device=dev0, path=fdir, width=w0, height=h0, units=units0) |> try()
   ### Return
 } ### End save_image
 
@@ -90,7 +90,7 @@ fun_appx_plot_height <- function(ntypes=1, nrows=1){
   factor0 <- case_when(
     ntypes == 5 ~ 3.5,
     .default = 3
-  )
+  ) ### End case_when
   ### Spacer for titles & legend
   spacer0 <- case_when(
     ntypes == 5 ~ 3,
@@ -98,29 +98,33 @@ fun_appx_plot_height <- function(ntypes=1, nrows=1){
     nrows == 4 ~ 2,
     nrows == 3 ~ 1.5,
     .default = 1
-  )
-  1.5 + spacer0 + factor0 * ntypes
-  # 2 + nrows + 3.5 * ntypes
+  ) ### End case_when
+  ### Calculate value
+  # val0    <-  2 + nrows + 3.5 * ntypes
+  val0    <- 1.5 + spacer0 + factor0 * ntypes
+  return(val0)
 }
 
 ### Wrapper function to help save appendix figures to file
 save_appendix_figures <- function(
     plotList,
     df0,      ### Dataframe used to create plots
-    modelType = "GCM", ### Or SLR
-    fpath     = ".",
-    device    = "pdf",
-    res       = 200,
-    units     = "in",
-    createDir = TRUE ### Whether to create directory if it doesn't exist
+    type0     = "GCM", ### Or SLR
+    typeCol   = "modelType", ### Which column to filter to type
+    fpath     = "."  , ### Where to save figures
+    device    = "pdf", ### Image device to use
+    res       = 200  , ### Image resolution for PNG or JPEG
+    units     = "in" , ### Size
+    createDir = TRUE   ### Whether to create directory if it doesn't exist
 ){
   ### Create directory if it doesn't exist
-  fdir      <- fpath; rm("fpath")
+  fdir      <- fpath; rm(fpath)
   fdir      <- fdir |> file.path("images")
   created0  <- fdir |> check_and_create_path(createDir=createDir)
   ### Prepare data
-  df0       <- df0  |> filter(model_type %in% modelType)
-  list0     <- plotList[[modelType]]
+  # df0       <- df0  |> filter(model_type %in% type0)
+  df0       <- df0  |> filter_at(c(typeCol), function(x, y=type0){x %in% y})
+  list0     <- plotList[[type0]]
   ### Unique values
   names0    <- list0  |> names()
   sectors0  <- names0 |> map(function(.x){str_split(string=.x, pattern="_")[[1]][1]}) |> unlist() |> unique()
@@ -144,9 +148,9 @@ save_appendix_figures <- function(
     # df0 |> glimpse()
 
     ### Unique sector values
-    c_types   <- df_x[["impactType"]] |> unique()
-    c_vars    <- df_x[["variant"   ]] |> unique()
-    c_models  <- df_x[["model"     ]] |> unique()
+    c_types   <- df_x |> pull(impactType) |> unique()
+    c_vars    <- df_x |> pull(variant) |> unique()
+    c_models  <- df_x |> pull(model) |> unique()
     # c_years |> print(); c_types |> print(); c_vars |> print();
 
     ### Number of values
@@ -163,15 +167,14 @@ save_appendix_figures <- function(
       .default = 2 * 3 + 6
     ) ### End case_when
 
-
     ### Plot heights
     w_x       <- n_vars  |> fun_appx_plot_width ()
     h_x       <- n_types |> fun_appx_plot_height(nrows = lgdRows)
     # w_x |> c(h_x) |> print()
 
     ### Plot options
-    units_x   <- units; #rm(units)
-    res_x     <- res  ; #rm(res  )
+    units_x   <- units; # rm(units)
+    res_x     <- res  ; # rm(res  )
     dev_x     <- device |> tolower()
     opts_x    <- list(
       height = h_x,
@@ -179,7 +182,7 @@ save_appendix_figures <- function(
       res    = res_x,
       units  = units_x
     ) ### End options
-    # "got here" |> print()
+
     ### Iterate over impact years
     plot_x    <- list_x[[1]]
     fname_x   <- .x
@@ -191,7 +194,7 @@ save_appendix_figures <- function(
       createDir = createDir,
       options   = opts_x
     ) ### End save_image
-    # "got here2" |> print()
+
   }) ### End map(function(.z))
   ### Return
 } ### End save_appendix_figures
@@ -215,7 +218,6 @@ save_fig7_images <- function(
   ### Other values
   type0  <- modelType |> tolower()
   ### Figure options
-  # h0     <- ("gcm" %in% type0) |> ifelse(9, 4.5)
   h0     <- ("gcm" %in% type0) |> ifelse(12, 5)
   w0     <- 6.9
   dev0   <- device |> tolower()
@@ -227,7 +229,7 @@ save_fig7_images <- function(
   names0 |> walk(function(.x){
     plot_x <- plotList[[.x]]
     file_x <- .x |> paste0(".", device)
-    ggsave(file_x, plot = plot_x, device=dev0, path=fdir, width=w0, height=h0, units=units)
+    ggsave(file_x, plot=plot_x, device=dev0, path=fdir, width=w0, height=h0, units=units)
   })
-### Return
+  ### Return
 } ### End save_fig7_images

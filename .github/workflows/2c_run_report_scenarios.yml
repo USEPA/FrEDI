@@ -1,0 +1,187 @@
+### https://github.com/actions/upload-artifact
+### https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows/
+### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
+### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### Single line conditional can use ${{}} formulation. Multi-line conditional does not.
+### For uploading artifacts:
+###     "path:" is the output path where Pandoc will write the compiled PDF.
+###      Note, this should be the same directory as the input paper.md
+name: 2c. Run Report Scenarios
+
+on:
+  workflow_dispatch:
+    inputs:
+      doScenarios:
+        type: choice
+        description: Do you want to generate scenario results for report figures?
+        required: true
+        options:
+        - no
+        - yes
+      sector:
+        type: string
+        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name
+        default: "all"
+
+
+jobs:
+  run_scenarios:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    name: Load Package Code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send input status
+        run: |
+          echo "ref_name    = ${{ github.ref_name }}"
+          echo "doScenarios = ${{ inputs.doScenarios }}"
+          echo "sector      = ${{ inputs.sector }}"
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Setup R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          cache-version: 1
+          packages: |
+            any::tidyverse
+            any::devtools
+            any::openxlsx
+            any::ggpubr
+
+
+      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from ref branch and get results
+      - name: Test results
+        # if: |
+        #   inputs.doScenarios == 'true'
+        run: |
+          Rscript -e '
+            ###### Libraries ###
+            require(tidyverse)
+            require(devtools)
+            require(openxlsx)
+            require(ggpubr)
+
+            ###### Workflow Inputs ######
+            # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
+            newBranch   <- "${{ github.ref_name }}"
+            sectors0    <- "${{ inputs.sector }}"
+
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0   <- ".";
+            # pPath0   <- rPath0 |> file.path("FrEDI")
+            pPath0   <- rPath0
+
+            ### Load scripts and testing functions
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
+            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+
+            ### Where to save results
+            oPath0   <- pPath0 |> file.path("data_tests")
+            oFileNew <- oPath0 |> file.path("newResults.rda")
+            oFileRef <- oPath0 |> file.path("refResults.rda")
+
+            ### Check if path exists and, if not, create it
+            exists0  <- oPath0 |> dir.exists()
+            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+
+            ###### Repo Info ######
+            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            c(newBranch) |> print()
+
+            ###### ** Install FrEDI from New Branch ######
+            ### Install FrEDI from new branch
+            devtools::install_github(
+              repo=urlRepo, ref=newBranch,
+              dependencies=F, upgrade="never", force=T, type="source"
+            ) ### End install_github
+            require(FrEDI)
+
+            ###### Sectors & Years ######
+            ### Format sector names
+            sectors0 |> print()
+            sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
+            sectorsLC0 <- sectors0 |> tolower()
+            doAll      <- "all" %in% sectorsLC0
+            doGcm      <- "gcm" %in% sectorsLC0
+            doSlr      <- "slr" %in% sectorsLC0
+            if     (doAll) sectors <- NULL else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
+            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T) else
+            sectors <- sectors0
+            sectors |> print()
+
+            ### Which years to report on for GCM, SLR sectors
+            gcmYears0 <- c(2010, 2090)
+            slrYears0 <- c(2050, 2090)
+
+
+            ###### Run Scenarios ######
+            ###### ** Setup Scenarios ######
+            ### CONUS temps
+            conusTemps  <- list(
+              temps      = c(0:10),
+              tempLabels = c(0:10),
+              tempType   = "conus",
+              prefix     = "Other_Integer"
+            ) ### End list
+            ### Global temps
+            globalTemps <- list(
+              temps      = c(1.487, 2.198),
+              tempLabels = c(1.5, 2),
+              tempType   = "global",
+              prefix     = "preI_global"
+            ) ### End list
+            ### Temps list
+            tempsList   <- list(conus=conusTemps, global=globalTemps)
+            rm(conusTemps, globalTemps)
+
+            ###### ** Run Scenarios ######
+            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+            ### Run scenarios
+            dfResults <- run_constantTempScenarios(
+              sectors  = sectors,
+              tempList = tempsList,
+              gcmYears = gcmYears0,
+              slrYears = slrYears0,
+              aggOnly  = FALSE,
+              loadCode = "project",
+              silent   = TRUE ,
+              testing  = FALSE,
+              fpath    = pPath0,
+              saveFile = TRUE ,
+              outPath  = oPath0,
+              return   = FALSE
+            ) ### End run_constantTempScenarios
+            "Finished running scenarios..." |> print()
+            oPath0 |> list.files() |> print()
+            rm(dfResults)
+
+            ###### Return ######
+            "Finished running report scenarios." |> print()
+          '
+
+
+      - name: Upload Scenario Results
+        if: |
+          inputs.doScenarios == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario_results
+          path: |
+            ./data_tests/*
+
+
+
