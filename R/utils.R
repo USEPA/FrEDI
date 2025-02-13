@@ -765,8 +765,6 @@ extend_slrScalars <- function(
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
     elasticity  = NULL
 ){
-
-
   ###### Filter to reference year ######
   dfRef      <- df0     |> filter(year <= refYear0)
   df0        <- df0     |> filter(year >= refYear0)
@@ -785,7 +783,7 @@ extend_slrScalars <- function(
   join0      <- c("sector", "impactType")
   drop0      <- slrScalars |> names() |>  get_matches(y=join0, matches=F)
   drop1      <- c("physScalar", "econScalar", "econMultiplier", "physEconScalar")
-  drop2      <- c("physScalar", "econMultiplier", "econAdj") |> map(paste0, c("Name", "Value")) |> unlist()
+  drop2      <- c("physScalar", "physAdj", "econMultiplier", "econAdj") |> map(paste0, c("Name", "Value")) |> unlist()
   drop3      <- c(drop0, drop1, drop2) |> unique()
   df0        <- df0 |> select(-any_of(drop3))
   df0        <- df0 |> left_join(slrScalars, by=join0)
@@ -825,8 +823,6 @@ extend_slrScalars <- function(
   ### Bind results back in
   df0        <- df0   |> filter(year > refYear0)
   df0        <- dfRef |> bind_rows(df0)
-  rm(df0)
-
 
   ###### Return ######
   ### Return
