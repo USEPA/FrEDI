@@ -271,7 +271,7 @@ interpolate_annual <- function(
   if(doJoin){
     # data |> glimpse(); df_interp |> glimpse()
     data <- data |> select(-all_of(cols1)) |> distinct()
-    data <- data |> left_join(df_interp, by=c(join0))
+    data <- data |> left_join(df_interp, by=join0)
   } else{
     data <- df_interp
   } ### End else
@@ -279,7 +279,7 @@ interpolate_annual <- function(
 
   ### Arrange data
   drop0    <- c("group_id")
-  arrange0 <- c(join0) |> c("year") |> unique() |> get_matches(y=drop0, matches=F)
+  arrange0 <- join0 |> c("year") |> unique() |> get_matches(y=drop0, matches=F)
   data     <- data |> select(-any_of(drop0))
   data     <- data |> arrange_at(c(arrange0))
 
@@ -510,11 +510,11 @@ create_nationalScenario <- function(
   pop0     <- pop0 |> select(all_of(colsP0))
   ### Join GDP and national population by year
   join0    <- c("year")
-  nat0     <- gdp0 |> left_join(natPop0, by=c(join0))
+  nat0     <- gdp0 |> left_join(natPop0, by=join0)
   ### Calculate GDP per capita
   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
   ### Join nat0 with state population by year
-  nat0     <- nat0 |> left_join(pop0, by=c(join0), relationship="many-to-many")
+  nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
   ### Arrange by colsP0
   arrange0 <- colsP0 |> get_matches(y=c("pop"), matches=F)
   nat0     <- nat0 |> arrange_at(vars(arrange0))
@@ -544,6 +544,7 @@ update_popScalars <- function(
 
   ###### National Scenario ######
   select0    <- c("gdp_usd", "gdp_percap", "year")
+  sort0      <- c("scalarName", "year")
   idCol0     <- c("year")
   df_nat     <- df_pop
   df_nat     <- df_nat |> select(all_of(select0)) |> unique()
@@ -557,9 +558,10 @@ update_popScalars <- function(
   df_nat     <- df_nat |> mutate(state                = "N/A")
   df_nat     <- df_nat |> mutate(postal               = "N/A")
   df_nat     <- df_nat |> mutate(national_or_regional = "national")
+  df_nat     <- df_nat |> arrange_at(c(sort0))
   ### Bind values
   df_scalars <- df_scalars |> rbind(df_nat)
-  rm(select0)
+  rm(select0, sort0, idCol0)
 
   ###### GDP per cap ######
   # ### Format GDP percap scenario:
@@ -654,7 +656,7 @@ extend_slrScalars2 <- function(
   ###### Join Data & Scalar Info ######
   ### Join initial results & scalar info
   join0      <- c("sector","impactType")
-  df0        <- df0 |> left_join(df_info, by=c(join0))
+  df0        <- df0 |> left_join(df_info, by=join0)
   rm(join0)
 
   ###### Set Default Columns ######
@@ -681,7 +683,7 @@ extend_slrScalars2 <- function(
 
   ### Join with data
   join0      <- c("econMultiplierName", "year")
-  df0        <- df0 |> left_join(df_mult0, by=c(join0))
+  df0        <- df0 |> left_join(df_mult0, by=join0)
   rm(join0)
 
   ###### Economic Adjustment Values ######
@@ -694,7 +696,7 @@ extend_slrScalars2 <- function(
   df_adj0    <- df_adj0  |> rename_at(c(rename0), ~rename1)
   # df0 |> glimpse(); df_adj0 |> glimpse()
   df_adj0    <- df_adj0  |> select(all_of(select0))
-  df0        <- df0      |> left_join(df_adj0, by=c(join0))
+  df0        <- df0      |> left_join(df_adj0, by=join0)
   ### Drop values
   rm(rename0, rename1, select0, join0, df_mult0, df_adj0)
   # "got here1" |> print()
@@ -733,7 +735,7 @@ extend_slrScalars2 <- function(
   df_phys0   <- df_phys0   |> rename_at(c(rename0), ~rename1)
   df_phys0   <- df_phys0   |> select(all_of(select0))
   # df0 |> glimpse(); df_phys0 |> glimpse()
-  df0        <- df0        |> left_join(df_phys0, by=c(join0))
+  df0        <- df0        |> left_join(df_phys0, by=join0)
   ### Drop values
   rm(type0, rename0, rename1, join0, select0, vals0)
 
@@ -748,7 +750,7 @@ extend_slrScalars2 <- function(
   df_adj0    <- df_adj0  |> select(all_of(select0))
   df0        <- df0 |> mutate(physAdjName = physScalarName)
   # df0 |> glimpse(); df_adj0 |> glimpse()
-  df0        <- df0 |> left_join(df_adj0, by=c(join0))
+  df0        <- df0 |> left_join(df_adj0, by=join0)
   ### Drop values
   rm(rename0, rename1, select0, join0, df_phys0, df_adj0)
 
@@ -941,9 +943,9 @@ get_co_sectorsInfo <- function(
   ### Join with co_variants, co_impactTypes, co_impactYears
   join0   <- c("sector_id")
   join1   <- c("modelType")
-  df0     <- co_sectors |> left_join(co_variants, by=c(join0))
-  df0     <- df0        |> left_join(co_impTypes, by=c(join0), relationship="many-to-many")
-  df0     <- df0        |> left_join(co_impYears, by=c(join0), relationship="many-to-many")
+  df0     <- co_sectors |> left_join(co_variants, by=join0)
+  df0     <- df0        |> left_join(co_impTypes, by=join0, relationship="many-to-many")
+  df0     <- df0        |> left_join(co_impYears, by=join0, relationship="many-to-many")
   df0     <- df0        |> left_join(co_modTypes, by=c(join1), relationship="many-to-many")
   rm(join0, join1)
 
@@ -957,7 +959,7 @@ get_co_sectorsInfo <- function(
     renameAt0 <- c("region")
     co_states <- co_states |> rename_at(c(renameAt0), ~c(renameAt0 |> paste0("_id")))
     # co_states <- co_states |> mutate   (region = region |> str_replace(" ", ""))
-    co_states <- co_states |> left_join(co_regions, by=c(join0))
+    co_states <- co_states |> left_join(co_regions, by=join0)
     co_states <- co_states |> mutate(joinCol = 1)
     df0       <- df0       |> mutate(joinCol = 1)
     df0       <- df0       |> left_join(co_states, by=c(join1), relationship="many-to-many")
@@ -969,7 +971,7 @@ get_co_sectorsInfo <- function(
   if(addModels) {
     # join0     <- c("modelType")
     join0     <- df0 |> names() |> get_matches(y=co_models |> names())
-    df0       <- df0 |> left_join(co_models, by=c(join0), relationship="many-to-many")
+    df0       <- df0 |> left_join(co_models, by=join0, relationship="many-to-many")
     rm(join0)
   } ### End if(addModels)
 
@@ -1095,7 +1097,7 @@ match_scalarValues <- function(
   ### Join & drop
   if(has_reg) {
     join0   <- c("region") |> c(stateCols0) |> c(scalarName) |> c("year")
-    df_reg  <- df_reg  |> left_join(scalars_reg, by=c(join0))
+    df_reg  <- df_reg  |> left_join(scalars_reg, by=join0)
     df0     <- df0     |> rbind(df_reg)
     rm(join0, df_reg)
   } ### End if(has_regional)
@@ -1106,7 +1108,7 @@ match_scalarValues <- function(
   ### Join & drop
   if(has_nat) {
     join0   <- c(scalarName) |> c("year")
-    df_nat  <- df_nat  |> left_join(scalars_nat, by=c(join0))
+    df_nat  <- df_nat  |> left_join(scalars_nat, by=join0)
     df0     <- df0     |> rbind(df_nat)
     # df_nat |> glimpse(); df0 |> glimpse()
     rm(join0, df_nat)
@@ -1136,12 +1138,10 @@ get_scalarAdjValues <- function(
     data,       ### Initial results dataframe
     scalars,    ### Scalars data frame
     scalarType0 = "econMultiplier",
-    multipliers = "co_econMultipliers" |> get_frediDataObj("frediData") # multipliers ### List of multipliers
+    multipliers = "co_econMultipliers" |> get_frediDataObj("frediData") |> pull(econMultiplierName) |> get_matches(y="none", matches=FALSE) # multipliers ### List of multipliers
 ){
   ###### Multipliers
   none0       <- "none"
-  multipliers <- multipliers |> get_matches(y=none0, matches=FALSE)
-
 
   ###### Format data
   ### - Add adjName column
@@ -1150,8 +1150,9 @@ get_scalarAdjValues <- function(
   col0        <- scalarType0 |> paste0("Name")
   # names0      <- data |> names() |> c("adjName", "adjValue")
   data        <- data |> mutate(adjName = data |> pull(all_of(col0)))
-  df_none     <- data |> filter_at(c(col0), function(x) {(col0 |> tolower()) == none0})
-  df_other    <- data |> filter_at(c(col0), function(x) {(col0 |> tolower()) != none0})
+  # data |> glimpse(); data |> pull(adName) |> unique() |> print()
+  df_none     <- data |> filter_at(c(col0), function(x) {(x |> tolower()) == none0})
+  df_other    <- data |> filter_at(c(col0), function(x) {(x |> tolower()) != none0})
   rm(data)
 
   ### Number of rows
@@ -1161,19 +1162,21 @@ get_scalarAdjValues <- function(
   ### Initialize results
   data        <- tibble()
 
-
   ###### ScalarName == "None"
   ### Filter the data to those for which the scalar identifier == "none"...value = 1
   ### Set econMultiplierValue, adjValue == 1 if scalarMultiplierName=none
   if(hasNone0 ) {
     mutate0  <- c("adjValue")
-    df_none  <- df_none  |> (function(x){x[,mutate0] <- 1})()
+    df_none  <- df_none  |> (function(x){x[,mutate0] <- 1; return(x)})()
     data     <- data     |> rbind(df_none)
     rm(mutate0, df_none)
   } ### End if(hasNone0 )
 
   ### Other values:
   if(hasOther0) {
+    ###### Multipliers
+    # multipliers <- data |> pull(all_of(adjName)) |> unique()
+
     ###### Format scalar data
     ### Get values for a single region since the multipliers are the same for all regions
     ### Gather scenario information
@@ -1183,13 +1186,16 @@ get_scalarAdjValues <- function(
     renameAt0   <- c("year" , "scalarName" , "value")
     renameTo0   <- c("year0", "adjName", "adjValue")
     mutate0     <- c("year0")
+    drop0       <- c("scalarType")
     # drop0       <- c("national_or_regional")
     scalars     <- scalars |> filter(scalarType %in% filter0)
-    scalars     <- scalars |> filter(scalarName %in% multipliers)
+    # scalars     <- scalars |> filter(scalarName %in% multipliers)
     scalars     <- scalars |> rename_at(c(renameAt0), ~renameTo0)
     scalars     <- scalars |> mutate_at(c(mutate0), as.character)
-    # scalars     <- scalars |> select(-all_of(drop0))
-    rm(filter0, renameAt0, renameTo0, mutate0)
+    scalars     <- scalars |> select(-all_of(drop0))
+    # scalars |> glimpse()
+    # scalars |> pull("national_or_regional") |> unique() |> print()
+    rm(filter0, renameAt0, renameTo0, mutate0, drop0)
     # data |> glimpse(); scalars |> glimpse()
 
     ### Divide into national and regional values
@@ -1197,11 +1203,18 @@ get_scalarAdjValues <- function(
     pull0       <- "adjName"
     dropReg     <- c("national_or_regional")
     dropNat     <- c("region", "state", "postal") |> c(dropReg)
-    scalarsNat  <- scalars  |> filter(  national_or_regional %in% natStr0 ) |> select(-all_of(dropReg))
-    scalarsReg  <- scalars  |> filter(!(national_or_regional %in% natStr0)) |> select(-all_of(dropNat))
-    dfOthNat    <- df_other |> filter(  adjName %in% (scalarsNat |> pull(all_of(pull0))) )
-    dfOthReg    <- df_other |> filter(!(adjName %in% (scalarsNat |> pull(all_of(pull0)))))
-    rm(natStr0, pull0, df_other, dropReg, dropNat)
+    scalarsNat  <- scalars  |> filter(  national_or_regional %in% natStr0 ) |> select(-any_of(dropNat))
+    scalarsReg  <- scalars  |> filter(!(national_or_regional %in% natStr0)) |> select(-any_of(dropReg))
+    natScalars  <- scalarsNat |> pull(pull0) |> unique()
+    regScalars  <- scalarsReg |> pull(pull0) |> unique()
+    # natScalars |> print(); regScalars |> print()
+    # scalarsNat |> glimpse(); scalarsReg |> glimpse()
+    # df_other |> dim() |> print()
+    dfOthNat    <- df_other |> filter(adjName %in% natScalars)
+    dfOthReg    <- df_other |> filter(adjName %in% regScalars)
+    # dfOthNat |> dim() |> print(); dfOthReg |> dim() |> print()
+    # dfOthNat |> glimpse(); dfOthReg |> glimpse()
+    rm(natStr0, df_other, dropReg, dropNat)
 
     ### Join adjustments with data
     ### Number of rows
@@ -1215,22 +1228,24 @@ get_scalarAdjValues <- function(
     ### National values
     if(hasNat) {
       join0    <- scalarsNat |> names() |> get_matches(dfOthNat |> names())
-      dfOthNat <- dfOthNat |> left_join(scalarsNat, by=join0)
-      data     <- data     |> rbind(dfOthNat)
+      dfOthNat <- dfOthNat   |> left_join(scalarsNat, by=join0)
+      # dfOthNat |> dim() |> print()
+      data     <- data       |> rbind(dfOthNat)
       rm(join0, scalarsNat, dfOthNat)
     } ### End if(hasNat)
 
     ### Regional values
     if(hasReg) {
       join0    <- scalarsReg |> names() |> get_matches(dfOthReg |> names())
-      dfOthReg <- dfOthReg |> left_join(scalarsReg, by=join0)
-      data     <- data     |> rbind(dfOthReg)
+      dfOthReg <- dfOthReg   |> left_join(scalarsReg, by=join0)
+      # dfOthReg |> dim() |> print()
+      data     <- data       |> rbind(dfOthReg)
       rm(join0, scalarsReg, dfOthReg)
     } ### End if(hasReg)
   } ### End if(hasOther0)
 
   ###### Bind values and rename
-  # data |> glimpse(); df_none |> glimpse()
+  # data |> glimpse()
   renameAt0   <- c("adjName", "adjValue")
   renameTo0   <- c(scalarType0 |> paste0(c("AdjName", "AdjValue")))
   data        <- data |> rename_at(c(renameAt0), ~renameTo0)
@@ -1372,20 +1387,20 @@ get_econAdjValues <- function(
 #     base_vals <- base_vals |> select(-all_of(drop0)) |> rename_at(c(renameAt0), ~renameTo0)
 #     scalarAdj <- scalars   |> rename_at(c(renameAt0), ~renameTo0)
 #     scalarAdj <- scalarAdj |> select(-all_of(drop1))
-#     scalarAdj <- scalarAdj |> left_join(base_vals, by=c(join0), relationship="many-to-many")
+#     scalarAdj <- scalarAdj |> left_join(base_vals, by=join0, relationship="many-to-many")
 #     rm(renameAt0, renameTo0, drop0, drop1, join0)
 #
 #     ###### Join with scalars
 #     scalars   <- scalars |> mutate(econAdjName = econMultiplierName)
 #     join0     <- scalars |> names() |> get_matches(scalarAdj |> names())
-#     scalars   <- scalars |> left_join(scalarAdj, by=c(join0))
+#     scalars   <- scalars |> left_join(scalarAdj, by=join0)
 #     rm(join0)
 #     # scalars |> glimpse(); scalarAdj |> glimpse(); data |> glimpse()
 #
 #     ### Join data
 #     # scalars |> glimpse(); data |> glimpse()
 #     join0     <- scalars |> names() |> get_matches(data |> names())
-#     data      <- data    |> left_join(scalars, by=c(join0))
+#     data      <- data    |> left_join(scalars, by=join0)
 #   } ### End if(hasOther0)
 #
 #   ###### Rename value column
@@ -1403,6 +1418,7 @@ initialize_resultsDf <- function(
     df_se,     ### Dataframe with socioeconomic scenario
     sectors    = "co_sectors" |> get_frediDataObj("frediData") |> pull(sector_id), ### Vector of sectors
     elasticity = NULL,
+    df_scalars = "df_scalars" |> get_frediDataObj("stateData"),  ### Tibble of main scalars
     slrScalars = "co_slrScalars" |> get_frediDataObj("frediData"),
     refYear0   = slrScalars |> pull(refYear) |> unique() |> min(),
     msg0       = "\t"
@@ -1425,7 +1441,7 @@ initialize_resultsDf <- function(
   ### Get FrEDI data objects and format data
   # df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
   # slrScalars <- "co_slrScalars"  |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
-  df_scalars <- "df_scalars"     |> get_frediDataObj("stateData")  ### Tibble of main scalars
+  # df_scalars <- "df_scalars" |> get_frediDataObj("stateData")  ### Tibble of main scalars
 
   ### Format scalars
   ### Filter to years, update with info from socioeconomic scenario
@@ -1461,7 +1477,7 @@ initialize_resultsDf <- function(
   ### Initialized results: Join sector info with socioeconomic scenario
   # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
   join0      <- df_info |> names() |> get_matches(df_se |> names())
-  df0        <- df_info |> left_join(df_se, by=c(join0), relationship="many-to-many")
+  df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
   rm(join0)
 
   ###### Update Scalar Info ######
@@ -1536,8 +1552,14 @@ initialize_resultsDf <- function(
   } ### End if(do_npd)
   # df0 |> pull(region) |> unique() |> print()
 
+  ###### Arrange ######
+  sort0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType")
+  df0        <- df0 |> arrange_at(c(sort0))
+  rm(sort0)
+
   ###### Return ######
   ### Return
+  gc()
   return(df0)
 }
 
@@ -1814,8 +1836,8 @@ get_slrScaledImpacts <- function(
     # ### Join with df1
     # df_ext0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse()
     join0       <- c("year")
-    df_ext0     <- df1 |> left_join(df_ext0, by=c(join0))
-    df_imp0     <- df1 |> left_join(df_imp0, by=c(join0))
+    df_ext0     <- df1 |> left_join(df_ext0, by=join0)
+    df_imp0     <- df1 |> left_join(df_imp0, by=join0)
     # df_ext0 |> glimpse(); df_imp0 |> glimpse();
 
     ###### Scaled Impacts >= Max
@@ -1888,7 +1910,7 @@ get_slrScaledImpacts <- function(
 
     ### Join and bind values
     join0     <- c("scenario_id", "year")
-    df_hasSlr <- df_hasSlr |> left_join(df_slr0, by=c(join0))
+    df_hasSlr <- df_hasSlr |> left_join(df_slr0, by=join0)
     df0       <- df0       |> rbind(df_hasSlr)
     rm(join0, df_slr0, df_hasSlr)
   } ### End if(hasSlr0)
@@ -1948,8 +1970,8 @@ calc_scaled_impacts_fredi <- function(
 
   ### Join with driver info
   join0      <- drivers0 |> names() |> get_matches(y=gcmInfo0 |> names())
-  gcmInfo0   <- gcmInfo0 |> left_join(drivers0, by=c(join0))
-  slrInfo0   <- slrInfo0 |> left_join(drivers0, by=c(join0))
+  gcmInfo0   <- gcmInfo0 |> left_join(drivers0, by=join0)
+  slrInfo0   <- slrInfo0 |> left_join(drivers0, by=join0)
 
   ### Number of GCM and SLR rows
   nrow_gcm   <- gcmInfo0 |> nrow()
@@ -1997,7 +2019,7 @@ calc_scaled_impacts_fredi <- function(
   select0     <- join0 |> c("scaled_impacts")
   # dfImpacts0 |> glimpse(); dfGroups0 |> glimpse()
   dfImpacts0  <- dfImpacts0 |> select(all_of(select0))
-  df0         <- dfGroups0  |> left_join(dfImpacts0, by=c(join0))
+  df0         <- dfGroups0  |> left_join(dfImpacts0, by=join0)
   rm(dfGroups0, dfImpacts0, select0, join0)
   # df0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
   # df0 |> glimpse()
@@ -2039,8 +2061,8 @@ calc_impacts_fredi <- function(
   ### Add model info to df0
   # df_info |> glimpse(); df0 |> glimpse()
   join0    <- c("sector", "variant", "impactType", "impactYear", "modelType")
-  # df0      <- df_info |> left_join(df0, by=c(join0), relationship="many-to-many")
-  df0      <- df0 |> left_join(df_info, by=c(join0), relationship="many-to-many")
+  # df0      <- df_info |> left_join(df0, by=join0, relationship="many-to-many")
+  df0      <- df0 |> left_join(df_info, by=join0, relationship="many-to-many")
   rm(join0, df_info)
   # df0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
   # df0 |> pull(region) |> unique() |> print()
@@ -2060,7 +2082,7 @@ calc_impacts_fredi <- function(
   drop0    <- df0 |> names() |> get_matches(y=df1 |> names()) |> get_matches(y=join0, matches=FALSE)
   # drop0 |> print()
   df0      <- df0 |> select(-all_of(drop0))
-  df0      <- df1 |> left_join(df0, by=c(join0))
+  df0      <- df1 |> left_join(df0, by=join0)
   rm(df1)
   # df0 |> dim() |> print();
 
@@ -2310,8 +2332,8 @@ interp_slr_byYear <- function(
   nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
   nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
   ### Create tibbles of missing years
-  dfNaLo  <- tibble(year = yrs_lo, model_level = slr_min) |> left_join(df_new, by = c(join0))
-  dfNaHi  <- tibble(year = yrs_lo, model_level = slr_max) |> left_join(df_new, by = c(join0))
+  dfNaLo  <- tibble(year = yrs_lo, model_level = slr_min) |> left_join(df_new, by = join0)
+  dfNaHi  <- tibble(year = yrs_lo, model_level = slr_max) |> left_join(df_new, by = join0)
   ### Bind missing years back in
   df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
   df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
@@ -2333,7 +2355,7 @@ interp_slr_byYear <- function(
   df_lo <- df_lo |> group_by_at(c(group0)) |>
     summarize_at(c(sum0), max, na.rm=T) |> ungroup()
   ### - Join
-  df_lo <- data  |> left_join(df_lo, by=c(join0))
+  df_lo <- data  |> left_join(df_lo, by=join0)
   df_lo <- df_lo |> left_join(slr_df , by=c(join1))
   ### - Select & rename
   df_lo <- df_lo |> select(all_of(select0))
@@ -2345,7 +2367,7 @@ interp_slr_byYear <- function(
     group_by_at (c(group0)) |>
     summarize_at(c(sum0), min, na.rm=T) |> ungroup()
   ### - Join
-  df_hi <- data  |> left_join(df_hi, by=c(join0))
+  df_hi <- data  |> left_join(df_hi, by=join0)
   df_hi <- df_hi |> left_join(slr_df , by=c(join1))
   ### - Select & rename
   df_hi <- df_hi |> select(all_of(select0))
@@ -2356,7 +2378,7 @@ interp_slr_byYear <- function(
 
   ### Join all
   join0 <- c("year") |> c(newColName_y)
-  data  <- df_lo |> left_join(df_hi, by=c(join0))
+  data  <- df_lo |> left_join(df_hi, by=join0)
   data  <- data  |> select(all_of(select1))
   rm(df_lo, df_hi)
 
@@ -2640,7 +2662,7 @@ fredi_slrInterp <- function(
     ### Join upper and lower data frames
     # join0          <- data_xLower |> names() |> (function(x){x[!(x %in% c(lowerSumCols))]})()
     join0          <- data_xLower |> names() |> get_matches(y=lowerSumCols, matches=FALSE)
-    data_xOther    <- data_xLower |> left_join(data_xUpper, by = c(join0))
+    data_xOther    <- data_xLower |> left_join(data_xUpper, by = join0)
     rm(data_xLower, data_xUpper)
 
     ### Calculate the new value
@@ -2703,7 +2725,7 @@ combine_driverScenarios <- function(
   ### Join info
   join0    <- c("driverName")
   join1    <- c("modelUnit_label")
-  df0      <- df0 |> left_join(info0, by=c(join0))
+  df0      <- df0 |> left_join(info0, by=join0)
   df0      <- df0 |> left_join(info1, by=c(join1))
 
   ### Return
