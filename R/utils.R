@@ -564,27 +564,11 @@ update_popScalars <- function(
   rm(select0, sort0, idCol0)
 
   ###### GDP per cap ######
-  # ### Format GDP percap scenario:
-  # ### - Select columns and get unique values
-  # ### - Rename column
-  # ### - Add additional scalar attributes
-  # select0    <- c("gdp_percap", "year")
-  # from0      <- c("gdp_percap")
-  # to0        <- c("value")
-  # df_gdp     <- df_pop
-  # df_gdp     <- df_gdp |> select(all_of(select0)) |> unique()
-  # df_gdp     <- df_gdp |> rename_at(c(from0), ~to0)
-  # df_gdp     <- df_gdp |> mutate(scalarName           = "gdp_percap")
-  # df_gdp     <- df_gdp |> mutate(scalarType           = "econScalar")
-  # df_gdp     <- df_gdp |> mutate(region               = "National")
-  # df_gdp     <- df_gdp |> mutate(state                = "N/A")
-  # df_gdp     <- df_gdp |> mutate(postal               = "N/A")
-  # df_gdp     <- df_gdp |> mutate(national_or_regional = "national")
+  ### Filter to scalarName and mutate scalarType
   df_gdp     <- df_nat
   df_gdp     <- df_gdp |> filter(scalarName %in% "gdp_percap")
   df_gdp     <- df_gdp |> mutate(scalarType = "econScalar")
   ### Bind values
-  ### End values and bind again
   df_scalars <- df_scalars |> rbind(df_gdp)
   rm(df_nat, df_gdp)
 
@@ -600,15 +584,10 @@ update_popScalars <- function(
   df_pop     <- df_pop |> mutate(scalarType           = "physScalar")
   df_pop     <- df_pop |> mutate(national_or_regional = "regional")
   df_pop     <- df_pop |> rename_at(c(from0), ~to0)
-  rm(drop0, from0, to0)
-
-  ###### Bind Values ######
-  ### Bind values to scalars
-  # df_scalars |> glimpse(); df_pop |> glimpse()
-  # df_scalars <- df_scalars |> rbind(df_gdp)
+  ### Bind values
   df_scalars <- df_scalars |> rbind(df_pop)
-  rm(df_pop)
-  # df_scalars |> glimpse();
+  rm(drop0, from0, to0, df_pop)
+
 
   ###### Return ######
   gc()
@@ -632,7 +611,6 @@ extend_slrScalars2 <- function(
   ###### Ref Year ######
   ### Filter to years >= refYear (2090)
   df_info    <- "co_slrScalars" |> get_frediDataObj("frediData")
-  # refYear0   <- (df_info   |> pull(refYear) |> unique())[1]
   df_scalars <- df_scalars |> filter(year >= refYear0)
   df_se      <- df_se      |> filter(year >= refYear0)
   df0        <- df0        |> filter(year >= refYear0)
@@ -824,40 +802,15 @@ extend_slrScalars <- function(
   df0        <- df0 |> match_scalarValues(scalars=scalars, scalarType="econMultiplier")
   # df0 |> glimpse()
   ### Get economic adjustment values
-  # df0        <- df0 |> get_econAdjValues(scalars=scalars)
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
   df0        <- df0 |> get_scalarAdjValues(scalars=scalars, scalarType0="econMultiplier")
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
-  # df0 |> pull(region) |> unique() |> print()
-
-  # ###### CHECK for ECON Value "none" and add 1
-  # df0        <- df0 |> mutate(econAdjValue = case_when(
-  #   econAdjName == "none" ~ 1,
-  #   .default = econAdjValue
-  # ),
-  # econMultiplierValue = case_when(
-  #   econMultiplierName == "none" ~ 1,
-  #   .default = econMultiplierValue
-  # ))
-  #
-  # ###### CHECK for PHYS Value "none" and add 1
-  # df0        <- df0 |> mutate(physScalarValue = case_when(
-  #   physScalarName== "none" ~ 1,
-  #   .default = physScalarValue
-  # ),
-  # physAdjValue = case_when(
-  #   physScalarName == "none" ~ 1,
-  #   .default = physAdjValue
-  # ))
-
 
   ###### Calculate Scalars ######
   ### Calculate scalars
-  # "got here" |> print()
   df0        <- df0   |> calcScalars(extendSlr=TRUE, elasticity=elasticity)
-  # df0 |> pull(region) |> unique() |> print()
 
   ###### Drop Columns ######
   ### Drop columns
@@ -1218,11 +1171,6 @@ get_scalarAdjValues <- function(
 
     ### Join adjustments with data
     ### Number of rows
-    # join0    <- scalars  |> names() |> get_matches(df_other |> names())
-    # df_other <- df_other |> left_join(scalars, by=join0)
-    # data     <- data     |> rbind(df_other)
-    # rm(join0, df_other)
-    # data |> glimpse(); scalars |> glimpse()
     hasNat      <- dfOthNat |> nrow()
     hasReg      <- dfOthReg |> nrow()
     ### National values
@@ -1249,7 +1197,6 @@ get_scalarAdjValues <- function(
   renameAt0   <- c("adjName", "adjValue")
   renameTo0   <- c(scalarType0 |> paste0(c("AdjName", "AdjValue")))
   data        <- data |> rename_at(c(renameAt0), ~renameTo0)
-  # data        <- data |> rbind(df_none)
   # data |> glimpse()
 
   ###### Return results values
@@ -1257,160 +1204,6 @@ get_scalarAdjValues <- function(
   return(data)
 }
 
-get_econAdjValues <- function(
-    data,       ### Initial results dataframe
-    scalars,    ### Scalars data frame
-    multipliers = "co_econMultipliers" |> get_frediDataObj("frediData") # multipliers ### List of multipliers
-){
-  ###### Multipliers
-  none0       <- "none"
-  multipliers <- multipliers |> get_matches(y=none0, matches=FALSE)
-
-  ###### Format scalar data
-  ###### Get values for a single region since the multipliers are the same for all regions
-  ###### Gather scenario information
-  ### Rename year to year0 and convert to character
-  filter0     <- c("econMultiplier")
-  renameAt0   <- c("year" , "scalarName" , "value")
-  renameTo0   <- c("year0", "econAdjName", "econAdjValue")
-  mutate0     <- c("year0")
-  drop0       <- c("national_or_regional")
-  scalars     <- scalars |> filter(scalarType %in% filter0)
-  scalars     <- scalars |> filter(scalarName %in% multipliers)
-  scalars     <- scalars |> rename_at(c(renameAt0), ~renameTo0)
-  scalars     <- scalars |> mutate_at(c(mutate0), as.character)
-  scalars     <- scalars |> select(-all_of(drop0))
-  rm(filter0, renameAt0, renameTo0, mutate0, drop0)
-  # data |> glimpse(); scalars |> glimpse()
-
-
-  ###### Format data
-  ### - Add econAdjName column
-  ### - Separate data
-  ### - Check number of rows
-  data        <- data |> mutate(econAdjName = econMultiplierName)
-  df_none     <- data |> filter(econMultiplierName == none0)
-  data        <- data |> filter(econMultiplierName != none0)
-  ### Number of rows
-  hasNone0    <- df_none |> nrow()
-  hasOther0   <- data    |> nrow()
-
-
-  ###### ScalarName == "None"
-  ### Filter the data to those for which the scalar identifier == "none"...value = 1
-  ### Set econMultiplierValue, econAdjValue == 1 if scalarMultiplierName=none
-  if(hasNone0 ) {
-    ### Columns
-    mutate0     <- c("econAdjValue")
-    # drop0       <- c("econAdjName")
-    df_none[,mutate0] <- 1
-    rm(mutate0)
-  } ### End if(hasNone0 )
-
-  ### Other values:
-  if(hasOther0) {
-    ### Join adjustments with data
-    join0     <- scalars |> names() |> get_matches(data |> names())
-    data      <- data    |> left_join(scalars, by=join0)
-    rm(join0)
-    # data |> glimpse(); scalars |> glimpse()
-  } ### End if(hasOther0)
-
-  ###### Rename value column
-  # data |> glimpse(); df_none |> glimpse()
-  data        <- data |> rbind(df_none)
-  # data |> glimpse()
-
-  ###### Return results values
-  return(data)
-}
-
-# get_econAdjValues <- function(
-#     data,       ### Initial results dataframe
-#     scalars     ### Scalars data frame
-#     # df_se,      ### Population and GDP scenario
-#     # multipliers ### List of multipliers
-# ){
-#   ###### Multipliers
-#   none0       <- "none"
-#   multipliers <- "co_econMultipliers" |> get_frediDataObj("frediData") |> pull(econMultiplierName)
-#   multipliers <- multipliers |> get_matches(y=none0, matches=FALSE)
-#
-#   ###### Scenario information
-#   # Get column names:
-#   cNames      <- df_se   |> names()
-#   cNames      <- cNames  |> get_matches(y=multipliers, matches=TRUE)
-#
-#   ###### By state
-#   ### Select columns
-#   idCols0     <- c("year")
-#   select0     <- cNames  |> c(idCols0) |> unique()
-#   scalars     <- df_se   |> select(all_of(select0)) |> distinct()
-#
-#   ###### Format scalar data
-#   ###### Get values for a single region since the multipliers are the same for all regions
-#   ###### Gather scenario information
-#   scalars     <- scalars |> pivot_longer(
-#     -all_of(idCols0),
-#     names_to  = "econMultiplierName",
-#     values_to = "econMultiplierValue"
-#   ) ### End pivot_longer()
-#   ### Rename year to year0 and convert to character
-#   scalars     <- scalars |> mutate(year0 = year |> min()  |> as.character())
-#   # data |> glimpse(); scalars |> glimpse()
-#
-#   ###### Format data and separate
-#   data        <- data |> mutate(econAdjName = econMultiplierName)
-#   df_none     <- data |> filter(econMultiplierName == none0)
-#   data        <- data |> filter(econMultiplierName != none0)
-#   ### Which to do
-#   hasNone0    <- df_none |> nrow()
-#   hasOther0   <- data    |> nrow()
-#   ###### ScalarName == "None"
-#   ### Columns
-#   mutate0     <- c("econMultiplierValue", "econAdjValue")
-#   drop0       <- c("econAdjName")
-#   ### Filter the data to those for which the scalar identifier == "none"...value = 1
-#   ### Set econMultiplierValue, econAdjValue == 1 if scalarMultiplierName=none
-#   if(hasNone0 ) {df_none[,mutate0] <- 1}
-#   if(hasOther0) {
-#     ###### Multiplier Adjustment
-#     ### Scalar Adjustments
-#     ### Take value at base year
-#     # scalars |> glimpse()
-#     renameAt0 <- c("econMultiplierName", "econMultiplierValue")
-#     renameTo0 <- c("econAdjName"       , "econAdjValue")
-#     drop0     <- c("year")
-#     drop1     <- c("econAdjValue")
-#     join0     <- c("year0", "econAdjName")
-#     base_vals <- scalars   |> filter(year == year0)
-#     base_vals <- base_vals |> select(-all_of(drop0)) |> rename_at(c(renameAt0), ~renameTo0)
-#     scalarAdj <- scalars   |> rename_at(c(renameAt0), ~renameTo0)
-#     scalarAdj <- scalarAdj |> select(-all_of(drop1))
-#     scalarAdj <- scalarAdj |> left_join(base_vals, by=join0, relationship="many-to-many")
-#     rm(renameAt0, renameTo0, drop0, drop1, join0)
-#
-#     ###### Join with scalars
-#     scalars   <- scalars |> mutate(econAdjName = econMultiplierName)
-#     join0     <- scalars |> names() |> get_matches(scalarAdj |> names())
-#     scalars   <- scalars |> left_join(scalarAdj, by=join0)
-#     rm(join0)
-#     # scalars |> glimpse(); scalarAdj |> glimpse(); data |> glimpse()
-#
-#     ### Join data
-#     # scalars |> glimpse(); data |> glimpse()
-#     join0     <- scalars |> names() |> get_matches(data |> names())
-#     data      <- data    |> left_join(scalars, by=join0)
-#   } ### End if(hasOther0)
-#
-#   ###### Rename value column
-#   # data |> glimpse(); df_none |> glimpse()
-#   data        <- data |> rbind(df_none)
-#   # data |> glimpse()
-#
-#   ###### Return results values
-#   return(data)
-# }
 
 ###### initialize_resultsDf ######
 ### Initialize results data frame
@@ -1436,12 +1229,6 @@ initialize_resultsDf <- function(
   years0     <- df_se  |> pull(year) |> get_years_fromData()
   minYr0     <- years0 |> min()
   maxYr0     <- years0 |> max()
-
-  ###### FrEDI Data ######
-  ### Get FrEDI data objects and format data
-  # df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
-  # slrScalars <- "co_slrScalars"  |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
-  # df_scalars <- "df_scalars" |> get_frediDataObj("stateData")  ### Tibble of main scalars
 
   ### Format scalars
   ### Filter to years, update with info from socioeconomic scenario
@@ -1494,29 +1281,22 @@ initialize_resultsDf <- function(
   ### Economic multiplier
   # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
-  # df0 |> glimpse()
-  # df0 |> pull(region) |> unique() |> print()
+  # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
   ###### Economic Adjustment Values ######
   ### Get economic adjustment values
-  # # df0        <- df0 |> get_econAdjValues(df_se=df_se)
-  # df0        <- df0 |> get_econAdjValues(scalars=df_scalars)
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
   df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
-  # df0 |> pull(region) |> unique() |> print()
 
   ###### Calculate Scalars ######
   ### Calculate scalars
-  # "got here" |> print()
   df0        <- df0 |> calcScalars(elasticity=elasticity)
-  # df0 |> pull(region) |> unique() |> print()
 
   ###### SLR Scalars for Years > 2090 ######
   ### Scalars for SLR past 2090
-  # refYear0   <- slrScalars |> pull(refYear) |> unique() |> first()
   do_slr     <- has_slr & (maxYr0 > refYear0)
   if(do_slr) {
     ### Separate GCM & SLR values
@@ -1524,31 +1304,17 @@ initialize_resultsDf <- function(
     df_gcm0    <- df0 |> filter((modelType |> tolower()) != slrStr0)
     df_slr0    <- df0 |> filter((modelType |> tolower()) == slrStr0)
 
-    # ### Filter to reference year
-    # df_slr1    <- df_slr0 |> filter(year <= refYear0)
-    # df_slr2    <- df_slr0 |> filter(year >= refYear0)
-    # rm(df_slr0)
-
     ### Get extended scalars
     df_slr0    <- df_slr0 |> extend_slrScalars(
       scalars    = scalars,
       refYear0   = refYear0,
       elasticity = elasticity
     ) ### End extend_slrScalars
-    # df_slr2    <- extend_slrScalars(
-    #   df0 = df_slr2,
-    #   df_se      = df_se,
-    #   df_scalars = df_scalars,
-    #   elasticity = elasticity
-    # ) ### End extend_slrScalars
-    ### Ensure there are no duplicate years
-    # df_slr2    <- df_slr2 |> filter(year > refYear0)
 
     ### Add results back together
-    # df_slr0    <- df_slr1 |> bind_rows(df_slr2)
     df0        <- df_gcm0 |> bind_rows(df_slr0)
     df0        <- df0     |> filter(year <= maxYr0)
-    rm(df_slr1, df_slr2, df_slr0, df_gcm0)
+    rm(slrStr0, df_slr0, df_gcm0)
   } ### End if(do_npd)
   # df0 |> pull(region) |> unique() |> print()
 
@@ -1584,26 +1350,6 @@ calcScalars <- function(
     ))
   } ### End if(!(elasticity |> is.null()))
 
-  # ###### Economic Multiplier
-  # ### Economic multipliers are the economic multiplier value divided by the adjustment
-  # ### The economic multiplier value is 1, GDP, or GDP per capita
-  # ### The economic adjustment value is usually the economic multiplier value at a reference year
-  # data   <- data |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
-  #
-  # ###### Calculate Physical Scalar
-  # ### Physical scalars are the product of the physical scalar, the physical adjustment, and the damage adjustment
-  # data   <- data |> mutate(physScalar = physScalarValue * physAdjValue * damageAdjValue)
-  #
-  # ###### Economic adjustments
-  # ### Economic multipliers are the economic multiplier value divided by the adjustment
-  # ### The economic multiplier value is 1, GDP, or GDP per capita
-  # ### The economic adjustment value is usually the economic multiplier value at a reference year
-  # data <- data |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
-  #
-  # ###### Economic scalars
-  # ### The economic scalar is calculated using the following equation.
-  # ### Constants c0, c1, and exp0 are from the
-  # data <- data |> mutate(econScalar = c0 + c1 * econScalarValue * econMultiplier )
 
   ###### Physical Scalar ######
   ### Calculate physical scalar values
@@ -1621,22 +1367,19 @@ calcScalars <- function(
   ### - The economic adjustment value is usually the economic multiplier value at a reference year
   ### The economic scalar is calculated using the following equation.
   ### - Constants c0, c1, and exp0 are from the impactTypes data frame
-  # if(extendSlr) {
-  #   data   <- data |> mutate(econMultiplier = c1 * (econMultiplierValue / econAdjValue)**exp0)
-  #   data   <- data |> mutate(econScalar     = econScalarValue * econMultiplier)
-  # } else{
   data   <- data |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
   data   <- data |> mutate(econScalar     = c0 + c1 * econScalarValue * econMultiplier )
   # } ### End if(extendSlr)
 
+
   ###### Physical Economic Scalar ######
   ### Combine the physical and economic scalar.
-  # data   <- data |> mutate(physEconScalar  = econScalar * physScalar )
   if(extendSlr) {
     data   <- data |> mutate(physEconScalar = econScalar + physScalar)
   } else{
     data   <- data |> mutate(physEconScalar = econScalar * physScalar)
   } ### End if(extendSlr)
+
 
   ###### Return ######
   gc()
@@ -1655,17 +1398,10 @@ get_gcmScaledImpacts <- function(
 
   ### State Columns
   stateCols0 <- c("state", "postal")
-  # df0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
-  # dr0 |> glimpse()
 
   ### Ensure that data is filtered to the correct model
   df0        <- df0 |> filter(modelType == "gcm")
   df1        <- df1 |> filter(modelType == "gcm")
-
-  # ### Get df_imp0 & gcmImpFuncs
-  # sectors0   <- df0 |> pull(sector) |> unique()
-  # df_imp0    <- "gcmImpData" |> get_frediDataObj("stateData")
-  # df_imp0    <- df_imp0 |> filter(sector %in% sectors0)
 
   ### Drivers
   xVar0      <- df1 |> pull(modelUnitValue)
@@ -1675,19 +1411,12 @@ get_gcmScaledImpacts <- function(
   funList0   <- "gcmImpFuncs" |> get_frediDataObj("stateData")
   funNames0  <- funList0 |> names()
   scenarios0 <- df0 |> pull(scenario_id) |> unique()
-  # funNames0 |> get_matches(y=scenarios0) |> head() |> print(); scenarios0 |> get_matches(y=funNames0) |> head() |> print()
   df0        <- df0      |> mutate(hasScenario = (scenario_id %in% funNames0))
 
   ### Check whether the scenario has an impact function (scenarios with all missing values have no functions)
   gcmFuns0   <- df0 |> filter( hasScenario)
   gcmNoFuns0 <- df0 |> filter(!hasScenario)
   rm(df0)
-  # df0        <- df0      |> mutate(hasScenario = (scenario_id %in% funNames0) |> as.numeric())
-  #
-  # ### Check whether the scenario has an impact function (scenarios with all missing values have no functions)
-  # gcmFuns0   <- df0 |> filter(hasScenario == 1)
-  # gcmNoFuns0 <- df0 |> filter(hasScenario != 1)
-  # rm(df0)
 
   ### Which values have functions
   hasFuns0   <- gcmFuns0   |> nrow()
@@ -1712,7 +1441,6 @@ get_gcmScaledImpacts <- function(
     df0        <- df0        |> rbind(df_hasFuns)
     rm(funList0, df_hasFuns)
   } ### End if(hasFuns0)
-  # return(df_i)
 
   ### For groups that don't have functions, create a tibble with na values
   if(hasNoFuns0) {
@@ -1763,10 +1491,6 @@ get_slrScaledImpacts <- function(
   select0    <- c("modelUnitValue", "year")
   df1        <- df1 |> select(all_of(select0))
   rm(select0)
-
-  ### Rename values
-  # renameAt0  <- c("driverValue")
-  # renameTo0  <- c("modelUnitValue")
 
   ### Get max model value, max year, unique sectors, and scenario IDS
   slrMax0    <- df0 |> pull(modelMaxOutput) |> unique()
@@ -1964,9 +1688,6 @@ calc_scaled_impacts_fredi <- function(
   slrInfo0   <- slrInfo0 |> get_scenario_id(include = include0)
   df_info0   <- gcmInfo0 |> rbind(slrInfo0)
   rm(include0)
-  # df0 |> pull(scenario_id) |> unique() |> head() |> print()
-  # df0 |> filter(modelType=="slr") |> pull(scenario_id) |> unique() |> head()
-  # return(df0)
 
   ### Join with driver info
   join0      <- drivers0 |> names() |> get_matches(y=gcmInfo0 |> names())
@@ -1985,15 +1706,9 @@ calc_scaled_impacts_fredi <- function(
   ### ** -- GCM Scaled Impacts
   ### Calculate scaled impacts, then bind impacts and info
   if(nrow_gcm) {
-    # join0      <- c("scenario_id", "year")
-    # drop0      <- c("modelUnitValue")
     select0    <- c("scenario_id", "year") |> c("scaled_impacts")
-    # gcmInfo0 |> glimpse()
-    # gcmInfo0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
     df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(df1=drivers0)
-    # df_gcm0    <- df_gcm0    |> left_join(gcmInfo0, by=c())
     df_gcm0    <- df_gcm0    |> select(all_of(select0))
-    # df_gcm0 |> filter(!(scaled_impacts |> is.na())) |> glimpse()
     dfImpacts0 <- dfImpacts0 |> rbind(df_gcm0)
     dfGroups0  <- dfGroups0  |> rbind(gcmInfo0)
     rm(df_gcm0, gcmInfo0)
@@ -2021,18 +1736,14 @@ calc_scaled_impacts_fredi <- function(
   dfImpacts0  <- dfImpacts0 |> select(all_of(select0))
   df0         <- dfGroups0  |> left_join(dfImpacts0, by=join0)
   rm(dfGroups0, dfImpacts0, select0, join0)
-  # df0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
-  # df0 |> glimpse()
-  # df0 |> pull(region) |> unique() |> print()
 
-  ### Return
+  ###### Return ######
   gc()
   return(df0)
 }
 
 ####### calc_impacts_fredi ######
 calc_impacts_fredi <- function(
-    # df0 ### Tibble with scalars/initialized results
     df0, ### Tibble with scalars/initialized results
     df1  ### Tibble with scaled impacts
 ){
@@ -2042,7 +1753,6 @@ calc_impacts_fredi <- function(
 
   ### Get info
   df_info  <- sectors0 |> get_co_sectorsInfo(
-  # df_info    <- sectors |> get_co_sectorsInfo(
     addRegions = FALSE, ### Whether to include regions & states
     addModels  = TRUE,  ### Whether to include models
     colTypes   = c("ids") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
@@ -2061,11 +1771,8 @@ calc_impacts_fredi <- function(
   ### Add model info to df0
   # df_info |> glimpse(); df0 |> glimpse()
   join0    <- c("sector", "variant", "impactType", "impactYear", "modelType")
-  # df0      <- df_info |> left_join(df0, by=join0, relationship="many-to-many")
   df0      <- df0 |> left_join(df_info, by=join0, relationship="many-to-many")
   rm(join0, df_info)
-  # df0 |> group_by_at(c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model", "year")) |> summarize(n=n(), .groups="drop") |> filter(n>1) |> glimpse()
-  # df0 |> pull(region) |> unique() |> print()
 
   ### Add scenario ID
   include0 <- c("region") |> c(stateCols0) |> c("model")
@@ -2170,12 +1877,9 @@ get_annual_model_stats <- function(
   modelLbl0   <- (modelType0=="gcm") |> ifelse(modelAves0[1], modelAves0[2])
 
   ###### Reshape the data ######
-  # groupCols0 <- c("sector", "variant", "model_type", "impactType", "impactYear", "region")
-  # if(groupCols |> is.null()){groupCols <- groupCols0}
   groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0)
   groupCols0  <- groupCols0 |> c("model", "model_type")
   groupCols0  <- groupCols0 |> c("year", "yvar")
-  # groupByCols <- groupCols0 |> (function(x){x[x %in% (data |> names())]})()
   groupByCols <- groupCols0 |> get_matches(y = data |> names())
 
   ### Reshape the data and prepare a column indicating which rows have is.na() for all models
@@ -2184,7 +1888,6 @@ get_annual_model_stats <- function(
 
   ###### Summarize by group columns ######
   ### Add group column with year
-  # group0      <- groupByCols |> (function(x){x[!(x %in% c("model", "yvar"))]})()
   group0      <- groupByCols |> get_matches(y = c("model", "yvar"), matches=FALSE)
   sum0        <- c("notNA"   )
   rename0     <- c("sumNotNA")
@@ -2250,13 +1953,12 @@ get_annual_model_stats <- function(
 ###### interp_slr_byYear ######
 ### utils for aggregate_impacts
 interp_slr_byYear <- function(
-    data, ### Driver scenario with columns year, slr_cm
-    yCol = "driverValue", ### Column to look for the driver value
-    silent=TRUE
+    data,  ### Driver scenario with columns year, slr_cm
+    yCol   = "driverValue", ### Column to look for the driver value
+    silent = TRUE
 ){
   ###### Defaults ######
   ### Rename y Column
-  # if(yCol |> is.null()){yCol <- "driverValue"}
   oldColName_y <- yCol |> c()
   newColName_y <- "yValue" |> c()
   newColRef_y  <- newColName_y |> paste0("_ref")
