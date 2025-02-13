@@ -765,6 +765,8 @@ extend_slrScalars <- function(
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
     elasticity  = NULL
 ){
+
+
   ###### Filter to reference year ######
   dfRef      <- df0     |> filter(year <= refYear0)
   df0        <- df0     |> filter(year >= refYear0)
@@ -774,17 +776,18 @@ extend_slrScalars <- function(
   renameAt0  <- c("refYear")
   renameTo0  <- c("year0")
   slrScalars <- slrScalars |> rename_at(c(renameAt0), ~renameTo0)
+  slrScalars <- slrScalars |> mutate(year0 = year0 |> as.character())
   rm(renameAt0, renameTo0)
 
   ###### Join Data & Scalar Info ######
   ### Drop columns from data
   ### Join initial results & scalar info
-  drop0      <- slrScalars |> get_matches(y=c("sector", "impactType"), matches=F)
+  join0      <- c("sector", "impactType")
+  drop0      <- slrScalars |> names() |>  get_matches(y=join0, matches=F)
   drop1      <- c("physScalar", "econScalar", "econMultiplier", "physEconScalar")
   drop2      <- c("physScalar", "econMultiplier", "econAdj") |> map(paste0, c("Name", "Value")) |> unlist()
   drop3      <- c(drop0, drop1, drop2) |> unique()
-  join0      <- c("sector", "impactType")
-  df0        <- df0 |> select(-all_of(drop1))
+  df0        <- df0 |> select(-any_of(drop3))
   df0        <- df0 |> left_join(slrScalars, by=join0)
   rm(drop0, drop1, drop2, drop3, join0)
 
@@ -794,7 +797,7 @@ extend_slrScalars <- function(
   ### Physical scalar adjustment values
   renameAt0  <- c("physScalarAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Scalar", "")
-  df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="physScalar")
+  df0        <- df0 |> get_scalarAdjValues(scalars=scalars, scalarType0="physScalar")
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
 
@@ -1305,8 +1308,9 @@ initialize_resultsDf <- function(
     df_slr0    <- df0 |> filter((modelType |> tolower()) == slrStr0)
 
     ### Get extended scalars
-    df_slr0    <- df_slr0 |> extend_slrScalars(
-      scalars    = scalars,
+    df_slr0    <- extend_slrScalars(
+      df0        = df_slr0,
+      scalars    = df_scalars,
       refYear0   = refYear0,
       elasticity = elasticity
     ) ### End extend_slrScalars
