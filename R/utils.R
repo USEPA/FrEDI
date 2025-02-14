@@ -765,6 +765,16 @@ extend_slrScalars <- function(
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
     elasticity  = NULL
 ){
+  ###### Separate Data ######
+  ### Not all SLR sectors need to have scalars extended with extend_slrScalars()
+  ### Divide data into those that are in slrScalars and those that aren't
+  sectors0   <- slrScalars |> pull(sector) |> unique()
+  # sectors0   <- c("CoastalProperties", "HTF")
+  dfSame     <- df0     |> filter(!(sector %in% sectors0))
+  df0        <- df0     |> filter(  sector %in% sectors0)
+  doExtend   <- df0     |> nrow()
+  if(!doExtend) {return(dfSame)}
+
   ###### Filter to reference year ######
   # refYear0 |> print()
   scalars    <- scalars |> filter(year >= refYear0)
@@ -833,9 +843,11 @@ extend_slrScalars <- function(
 
   ###### Bind Results ######
   ### Bind results back in
-  df0        <- df0   |> select(all_of(names0))
-  df0        <- df0   |> filter(year > refYear0)
-  df0        <- dfRef |> bind_rows(df0)
+  df0        <- df0    |> select(all_of(names0))
+  df0        <- df0    |> filter(year > refYear0)
+  df0        <- dfRef  |> bind_rows(df0)
+  df0        <- dfSame |> bind_rows(df0)
+  rm(dfRef, dfSame)
   # df0 |> filter(!(scaled_impacts |> is.na())) |> filter(year > 2100) |> glimpse()
 
   ###### Return ######
