@@ -21,7 +21,7 @@ params:
 ### Packages
 require(tidyverse)
 require(plotly)
-require(glue)
+# require(glue)
 require(ggpubr)
 require(ggplot2)
 require(lattice)
@@ -29,6 +29,7 @@ require(htmltools)
 require(ggh4x)
 require(kableExtra)
 require(gridExtra)
+require(ggplotify)
 ```
 
 
@@ -118,48 +119,9 @@ sectorsList <- resultsList |> map(function(df0, col0="sector"){df0 |> pull(all_o
 ```
 
 
-<!-- Custom Functions -->
+<!-- Basic Functions -->
 
-```{r functions, include=F}
-###### getInputPlot ------------------------
-getInputPlot <- function(
-    name0   = "ref", 
-    input0  = "temp", 
-    list0   = paramInputsList, 
-    names0  = rc_argStr, 
-    yCols0  = inputPlotArgs[["yCol"]], 
-    ks0     = inputPlotTitles[["k0"]], 
-    titles0 = inputPlotTitles[["title"]], 
-    yLabs0  = inputPlotTitles[["yLab"]], 
-    xLab0   = yearLab
-){
-  ### Input type
-  doSlr  <- "slr" %in% input0
-  doPop  <- "pop" %in% input0
-  type0  <- case_when(doSlr | doPop, input0, .default=input0 |> paste0("Input"))
-  ### Plot labels
-  yLab0  <- yLabs0 [[input0]]
-  sub0   <- names0 [[name0]]
-  gg0    <- titles0[[input0]]
-  ### Data
-  k0     <- ks0   [[input0]]
-  yCol0  <- yCols0[[input0]]
-  df0    <- list0 [[name0]][[type0]]
-  df0    <- df0 |> mutate(yCol = df0 |> pull(all_of(yCol0)))
-  df0    <- df0 |> mutate(yCol = yCol  /  k0)
-  ### Summarize data if population
-  if(doPop) {df0 <- df0 |> group_by_at(c("region", "year")) |> summarize_at(c("pop"), sum, na.rm=T)} ### End if(doPop)
-  ### Plot
-  p0     <- df0 |> ggplot()
-  if(doPop) {p0 <- p0 + geom_line(aes(x=year, y=yCol, color=region)) + scale_color_discrete("Region")}
-  else      {p0 <- p0 + geom_line(aes(x=year, y=yCol))}
-  p0     <- p0 + scale_x_continuous(xLab0)
-  p0     <- p0 + scale_y_continuous(yLab0)
-  p0     <- p0 + ggtitle(gg0 |> glue(), sub0)
-  ### Return
-  return(p0)
-}
-
+```{r functions_basic, include=F}
 ###### rbindListTibbles ------------------------
 rbindListTibbles <- function(list0){
   ### Names
@@ -204,7 +166,12 @@ applyFilters <- function(
   ### Return
   return(df0)
 }
+```
 
+
+<!-- Custom Functions for Summarizing Data -->
+
+```{r functions_summary, include=F}
 ###### getNationalSum ------------------------
 getNationalSum <- function(
   df0, ### E.g., outputs of rbindListTibbles
@@ -224,7 +191,7 @@ getNationalSum <- function(
 ###### calcPctDiffs ------------------------
 calcPctDiffs <- function(
   # list0, ### E.g., outputs of getNationalAgg
-  df0, ### E.g., outputs of getNationalSum
+  df0,     ### E.g., outputs of getNationalSum
   sumCol0  = "sumCol",
   repoCol0 = "repo",
   sum0     = "annual_impacts"
@@ -241,6 +208,11 @@ calcPctDiffs <- function(
   df0    <- df0 |> mutate(colName=df0 |> pull(all_of(sumCol0)) |> paste0("_", df0 |> pull(all_of(repoCol0))))
   df0    <- df0 |> select(-any_of(drop0))
   df0    <- df0 |> pivot_wider(all_of(sum0), names_from=colNames, values_from=all_of(sum0))
+  ### If one column doesn't exist, add a second column
+  doAdd0 <- (sums0 |> length()) < 2
+  if(doAdd0) {
+    sums0 <- sums0 |> c(sum0 |> paste0("_", "na"))
+  } ### End if(doAdd0)
   ### Calculate differences
   col0   <- sum0 |> paste0("_", "pctDiff")
   vals1  <- df0  |> pull(sums0[1])
@@ -253,37 +225,89 @@ calcPctDiffs <- function(
   return(df0)
   # return(list0)
 }
+```
+
+
+<!-- Plotting Functions -->
+
+```{r functions_plots, include=F}
+###### getInputPlot ------------------------
+getInputPlot <- function(
+    name0   = "ref", 
+    input0  = "temp", 
+    list0   = paramInputsList, 
+    names0  = rc_argStr, 
+    yCols0  = inputPlotArgs[["yCol"]], 
+    ks0     = inputPlotTitles[["k0"]], 
+    titles0 = inputPlotTitles[["title"]], 
+    yLabs0  = inputPlotTitles[["yLab"]], 
+    xLab0   = yearLab
+){
+  ### Input type
+  doSlr  <- "slr" %in% input0
+  doPop  <- "pop" %in% input0
+  type0  <- case_when(doSlr | doPop, input0, .default=input0 |> paste0("Input"))
+  ### Plot labels
+  yLab0  <- yLabs0 [[input0]]
+  sub0   <- names0 [[name0]]
+  gg0    <- titles0[[input0]]
+  ### Data
+  k0     <- ks0   [[input0]]
+  yCol0  <- yCols0[[input0]]
+  df0    <- list0 [[name0]][[type0]]
+  df0    <- df0 |> mutate(yCol = df0 |> pull(all_of(yCol0)))
+  df0    <- df0 |> mutate(yCol = yCol  /  k0)
+  ### Summarize data if population
+  if(doPop) {df0 <- df0 |> group_by_at(c("region", "year")) |> summarize_at(c("pop"), sum, na.rm=T)} ### End if(doPop)
+  ### Plot
+  p0     <- df0 |> ggplot()
+  if(doPop) {p0 <- p0 + geom_line(aes(x=year, y=yCol, color=region)) + scale_color_discrete("Region")}
+  else      {p0 <- p0 + geom_line(aes(x=year, y=yCol))}
+  p0     <- p0 + scale_x_continuous(xLab0)
+  p0     <- p0 + scale_y_continuous(yLab0)
+  p0     <- p0 + ggtitle(gg0, sub0)
+  ### Convert to grob
+  p0     <- p0 |> cowplot::as_grob()
+  ### Return
+  return(p0)
+}
 
 ###### plotPctDiffs ------------------------
 plotPctDiffs <- function(
     df0,      ### Wide format in list output from calcPctDiffs()
     yCol0     = "annual_impacts_pctDiff",
     thresh0   = 0.5,
+    bySector  = FALSE, 
     title0    = "Percent Difference" |> paste("Between Two Versions of FrEDI"),
     subTitle0 = "All Impacts",
     xLab0     = yearLab,
     yLab0     = "Percent Difference",
-    colors0   = list(colors=list(low="#ffe4bf", mid="#ed781f", high="#6e0208"))
+    colors0   = list(colors=list(low="#ffe4bf", mid="#ed781f", high="#6e0208")),
 ){
   ### Calculate color threshold
-  df0      <- df0 |> mutate(yCol     = df0 |> pull(all_of(yCol0)))
-  df0      <- df0 |> mutate(yColAbs  = yCol |> abs())
-  df0      <- df0 |> mutate(colorCol = yColAbs >= thresh0)
+  df0    <- df0 |> mutate(yCol     = df0 |> pull(all_of(yCol0)))
+  df0    <- df0 |> mutate(yColAbs  = yCol |> abs())
+  df0    <- df0 |> mutate(colorCol = yColAbs >= thresh0)
   ### Plot elements
-  yLab0    <- title0 |> paste0(" (", subTitle0, ")")
-  lgdLab   <- paste0("|", title0, "|") |> paste(">=", thresh0)
+  yLab0  <- title0 |> paste0(" (", subTitle0, ")")
+  lgdLab <- paste0("|", title0, "|") |> paste(">=", thresh0)
   # title0   <- title0
-  title0   <- title0 |> glue()
+  title0 <- title0 
   ### Create plot
-  p0       <- df0 |> ggplot()
-  p0       <- p0 + geom_line(aes(x=year, y=yCol, colour=colorCol), alpha=0.75)
-  p0       <- p0 + scale_x_continuous(xLab0)
-  p0       <- p0 + scale_y_continuous(yLab0)
-  p0       <- p0 + scale_colour_gradient(lgdLab, low=colors0$colors$low, high=colors0$colors$high)
-  # p0       <- p0 + scale_colour_gradient2(lgdLab, low=colors0$colors$low, mid=colors0$colors$mid, high=colors0$colors$high, midpoint=thresh0)
-  p0       <- p0 + ggtitle(title0, subTitle0)
+  p0     <- df0 |> ggplot()
+  p0     <- p0 + geom_line(aes(x=year, y=yCol, colour=colorCol), alpha=0.75)
+  ### Add facets for sectors
+  if(bySector) p0 <- p0 + facet_grid2(. ~ variant, scales="free")
+  ### Add scales and titles
+  p0     <- p0 + scale_x_continuous(xLab0)
+  p0     <- p0 + scale_y_continuous(yLab0)
+  p0     <- p0 + scale_colour_gradient(lgdLab, low=colors0$colors$low, high=colors0$colors$high)
+  # p0     <- p0 + scale_colour_gradient2(lgdLab, low=colors0$colors$low, mid=colors0$colors$mid, high=colors0$colors$high, midpoint=thresh0)
+  p0     <- p0 + ggtitle(title0, subTitle0)
+  ### Convert to grob
+  p0     <- p0 |> cowplot::as_grob()
   ### Ggplotly
-  p0       <- p0 |> ggplotly()
+  # p0     <- p0 |> plotly::ggplotly()
   ### Return
   gc(verbose=FALSE)
   return(p0)
@@ -293,6 +317,7 @@ plotPctDiffs <- function(
 plotTwoRuns <- function(
     df0,      ### Wide format in list output from calcPctDiffs()
     yCol0     = "annual_impacts",
+    bySector  = FALSE, 
     title0    = "Comparison" |> paste("Between Two Versions of FrEDI"),
     subTitle0 = "All Impacts",
     xLab0     = yearLab,
@@ -301,22 +326,46 @@ plotTwoRuns <- function(
     k0        = 1e9
 ){
   ### Calculate color threshold
-  df0      <- df0 |> mutate(yCol = df0 |> pull(all_of(yCol0)))
-  df0      <- df0 |> mutate(yCol = yCol / k0)
+  df0    <- df0 |> mutate(yCol = df0 |> pull(all_of(yCol0)))
+  df0    <- df0 |> mutate(yCol = yCol / k0)
   ### Plot elements
-  title0   <- title0 |> glue()
+  title0 <- title0 
   ### Create plot
-  p0       <- df0 |> ggplot()
-  p0       <- p0 + geom_line(aes(x=year, y=yCol, color=repo), alpha=0.75)
-  p0       <- p0 + scale_x_continuous(xLab0)
-  p0       <- p0 + scale_y_continuous(yLab0)
-  p0       <- p0 + scale_colour_discrete(colorLab0)
-  p0       <- p0 + ggtitle(title0)
+  p0     <- df0 |> ggplot()
+  p0     <- p0 + geom_line(aes(x=year, y=yCol, color=repo), alpha=0.75)
+  ### Add facets for sectors
+  if(bySector) p0 <- p0 + facet_grid2(. ~ variant, scales="free")
+  ### Add scales and titles
+  p0     <- p0 + scale_x_continuous(xLab0)
+  p0     <- p0 + scale_y_continuous(yLab0)
+  p0     <- p0 + scale_colour_discrete(colorLab0)
+  p0     <- p0 + ggtitle(title0)
+  ### Convert to grob
+  p0     <- p0 |> cowplot::as_grob()
   ### Ggplotly
-  p0       <- p0 |> ggplotly()
+  # p0     <- p0 |> plotly::ggplotly()
   ### Return
   gc(verbose=FALSE)
   return(p0)
+}
+
+###### getSectorPlotGrid ------------------------
+### Arrange comparison and pct difference plots side by side
+getSectorPlotGrid <- function(
+    sector0, ### Sector name
+    list1 = list(), ### List with elements named by sector and containing a plot
+    list2 = list()  ### List with elements named by sector
+){
+  plot10 <- list10[[sector0]] |> cowplot::as_grob()
+  plot20 <- list20[[sector0]] |> cowplot::as_grob()
+  plist0 <- list(plot10, plot20)
+  grid0  <- ggpubr::ggarrange(plotlist=plist0, ncol=2, widths=c(1, 1))
+  # return(grid0)
+  lab0   <- sector0 |> paste("Comparisons")
+  title0 <- ggpubr::text_grob(label=lab0, face="bold", size=14)
+  grid0  <- grid0   |> ggpubr::annotate_figure(plot, top=title0)
+  ### Return grid
+  return(grid0)
 }
 ```
 
@@ -338,16 +387,24 @@ plotTwoRuns <- function(
 
 ```{r echo=FALSE, fig.height = 7, fig.width = 15}
 tempPlotList <- rc_str |> map(getInputPlot, list0=paramInputsList, input0="temp") |> set_names(rc_str)
-tempPlotList |> gridExtra::marrangeGrob(ncol=2)
-rm(tempPlotList)
+tempPlotList |> (function(list0){
+  ggpubr::ggarrange(plotlist=list0, ncol=2, widths=c(1, 1)) |> 
+    ggpubr::annotate_figure("Comparison of Input" |> paste("Temperatures"), top=title0)
+  })
+# tempPlotList |> gridExtra::grid.arrange(ncol=2)
 # grid.arrange(ref_temp, comp_temp, ncol=2)
+rm(tempPlotList)
 ```
 
 ##### SLR Inputs
 
 ```{r echo=FALSE, fig.height = 7, fig.width = 15}
 slrPlotList <- rc_str |> map(getInputPlot, list0=paramInputsList, input0="slr") |> set_names(rc_str)
-slrPlotList |> gridExtra::marrangeGrob(ncol=2)
+tempPlotList |> (function(list0){
+  ggpubr::ggarrange(plotlist=list0, ncol=2, widths=c(1, 1)) |> 
+    ggpubr::annotate_figure("Comparison of Input" |> paste("Sea Level Rise"), top=title0)
+  })
+# slrPlotList |> gridExtra::marrangeGrob(ncol=2)
 rm(slrPlotList)
 ```
 
@@ -355,7 +412,11 @@ rm(slrPlotList)
 
 ```{r echo=FALSE, fig.height = 7, fig.width = 15}
 gdpPlotList <- rc_str |> map(getInputPlot, list0=paramInputsList, input0="gdp") |> set_names(rc_str)
-gdpPlotList |> gridExtra::marrangeGrob(ncol=2)
+tempPlotList |> (function(list0){
+  ggpubr::ggarrange(plotlist=list0, ncol=2, widths=c(1, 1)) |> 
+    ggpubr::annotate_figure("Comparison of Input" |> paste("U.S. GDP"), top=title0)
+  })
+# gdpPlotList |> gridExtra::marrangeGrob(ncol=2)
 rm(gdpPlotList)
 ```
 
@@ -363,7 +424,11 @@ rm(gdpPlotList)
 
 ```{r echo=FALSE, fig.height = 7, fig.width = 15}
 popPlotList <- rc_str |> map(getInputPlot, list0=paramInputsList, input0="pop") |> set_names(rc_str)
-popPlotList |> gridExtra::marrangeGrob(ncol=2)
+tempPlotList |> (function(list0){
+  ggpubr::ggarrange(plotlist=list0, ncol=2, widths=c(1, 1)) |> 
+    ggpubr::annotate_figure("Comparison of Input" |> paste("Population"), top=title0)
+  })
+# popPlotList |> gridExtra::marrangeGrob(ncol=2)
 rm(popPlotList)
 ```
 
@@ -403,94 +468,62 @@ sum_pctDiff |> plotPctDiffs()
 
 #### Sector Comparisons
 
-```{r prepare_2300_data, include=FALSE, echo=FALSE}
+<!-- Format sector data -->
+
+```{r formatSectorResults, include=FALSE, echo=FALSE}
+### Sector comparison
 sect_results <- df_results |> 
   applyFilters(national=TRUE, modelaves=TRUE, aggSectors=FALSE, aggVariants=FALSE) |>
   selectCols() |>
   mutate(sumCol = "annual_impacts")
+
+### Percent differences
 sect_pctDiff <- sect_results |> calcPctDiffs()
+```
 
+<!-- Generate sector plots -->
 
-# comp_2300_pct_diff <- comp_2300$results |>
-#   #FrEDI::aggregate_impacts(aggLevels = c("all")) |>
-#   rename("annual_impacts_comp" = annual_impacts) |>
-#   filter(region == "National Total") |> 
-#   filter(model %in% c("Average", "Interpolation")) |>
-#   select(sector, variant, region, model, model_type, year, annual_impacts_comp) 
-# 
-# 
-# sectors_comp <- comp_2300_pct_diff$sector 
-# 
-# ref_2300_pct_diff <- ref_2300$results |>
-#   #FrEDI::aggregate_impacts(aggLevels = c("all")) |>
-#   rename("annual_impacts_ref" = annual_impacts) |>
-#   filter(region == "National Total") |> 
-#   filter(model %in% c("Average", "Interpolation")) |>
-#   select(sector, variant, region, model, model_type, year, annual_impacts_ref) 
-# 
-# compare_pct_diff <- left_join(ref_2300_pct_diff, comp_2300_pct_diff) |> 
-#   mutate(ann_imp_perc_diff = ((annual_impacts_comp - annual_impacts_ref) / annual_impacts_ref) * 100
-#   )
-# # test <- ref_2300_pct_diff |> filter( sector == "ATS Temperature-Related Mortality")
-# rm(comp_2300_pct_diff, ref_2300_pct_diff)
-# 
-# comp_2300_run <- comp_2300$results |>
-#   #FrEDI::aggregate_impacts(aggLevels = c("all")) |>
-#   mutate(run = "comp") |>
-#   filter(region == "National Total") |> 
-#   filter(model %in% c("Average", "Interpolation")) |>
-#   filter(sectorprimary == 1) |>
-#   select(run, sector, variant, region, model, model_type, year, annual_impacts) 
-# sectors_run <- comp_2300_run$sector 
-# 
-# ref_2300_run <- ref_2300$results |>
-#   #FrEDI::aggregate_impacts(aggLevels = c("all")) |>
-#   mutate(run = "ref") |>
-#   filter(region == "National Total") |> 
-#   filter(model %in% c("Average", "Interpolation")) |>
-#   filter(sectorprimary == 1) |>
-#   select(run , sector, variant, region, model, model_type, year, annual_impacts) 
-# 
-# compare_2300run <- full_join(ref_2300_run, comp_2300_run)
-# rm(comp_2300_run, ref_2300_run)
-# gc(verbose =FALSE)
+```{r makeSectorPlots_pctDiff, include=FALSE, echo=FALSE}
+### Comparison plots
+plots_sect_comp    <- sect_results |> (function(df0){
+  sectors0 <- df0      |> pull(sector) |> unique()
+  plots0   <- sectors0 |> map(function(sector_i, df_i=df0){
+    df_i |> plotTwoRuns(subTitle0=sector_i)
+  }) |> set_names(sectors0)
+  return(plots0)
+})()
 
-pct_diff_plots <- compare_pct_diff |> 
-  filter(model %in% c("Average", "Interpolation")) |>
-  group_by(sector) |>
-  nest() %>%
-  mutate(plot = map2(data, sector, 
-                     ~ ggplotly(
-                       ggplot(data = .x, aes(x = year, y = ann_imp_perc_diff, colour= (0.5 > ann_imp_perc_diff & ann_imp_perc_diff > -0.5))) +
-                         geom_line() +
-                         scale_colour_manual(name = ' 0.5> %_diff > -0.5', values = setNames(c('green', 'red'), c(T, F))) +
-                         facet_grid2(.~ variant, scales="free") +
-                         #theme_gray() +
-                         ggtitle(glue("Percent Difference: {.y}"))
-                     )
-  )
-  )
+### Percent difference plots
+plots_sect_pctDiff <- sect_pctDiff |> (function(df0){
+  sectors0 <- df0      |> pull(sector) |> unique()
+  plots0   <- sectors0 |> map(function(sector_i, df_i=df0){
+    df_i |> plotPctDiffs(subTitle0=sector_i)
+  }) |> set_names(sectors0)
+  return(plots0)
+})()
 
-ref_comp_plots <- compare_2300run |> 
-  filter(model %in% c("Average", "Interpolation")) |>
-  group_by(sector) |>
-  nest() %>%
-  mutate(plot = map2(data, sector, 
-                     ~ ggplotly(ggplot(data = .x, aes(x = year, y = annual_impacts, group = run)) +
-                                  geom_line(aes(color=run)) +
-                                  facet_wrap(~ variant, scales="free") +
-                                  ggtitle(glue("ref vs comp FrEDI: {.y}"))
-                     )
-  )
-  )
-
-plots <- full_join(pct_diff_plots, ref_comp_plots)|> dplyr::arrange(sector)
-rm(ref_comp_plots, pct_diff_plots)
+### Join plots and arrange
+plots_sect_grid <- plots_sect_comp |> (function(
+    list1, 
+    list2 = plots_sect_pctDiff
+){
+  sectors1 <- list1 |> names()
+  sectors2 <- list2 |> names()
+  sectors0 <- sectors1 |> get_matches(y=sectors2) |> unique() |> sort()
+  plots0   <- sectors0 |> map(getSectorPlotGrid, list1=list1, list2=list2) |> set_names(sectors0)
+  return(plots0)
+})()
+rm(plots_sect_pctDiff, plots_sect_comp)
 gc(verbose =FALSE)
 ```
 
-```{r plot2300_Data , echo=FALSE}
-htmltools::tagList(plots$plot)
+
+
+
+
+```{r plot2300_Data, echo=FALSE}
+plots_sect_grid |> htmltools::tagList()
+# plots_sect$plot |> htmltools::tagList()
 ```
 
 ------------------------------------------------------------------------
