@@ -864,17 +864,13 @@ get_fig7_slrDataObj <- function(
     df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
     # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
-    ###### Economic Adjustment Values ######
+    ###### Economic Adjustment Values
     ### Get economic adjustment values
     renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
     renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
     df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
     df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
     rm(renameAt0, renameTo0)
-
-    ###### Calculate Scalars ######
-    ### Calculate scalars
-    df0        <- df0 |> calcScalars(elasticity=elasticity)
 
     ### Calculate scalars
     # "got here" |> print()
