@@ -661,8 +661,6 @@ sum_impacts_byDoW_years <- function(
 get_fig7_slrDataObj <- function(
     drivers = TRUE, ### Whether to return drivers
     sectors = FrEDI::get_sectorInfo(slrOnly=T),
-    # scalars =
-    # impacts = TRUE ### Whether to return impacts
     impacts = TRUE, ### Whether to return impacts
     years   = c(2050, 2090) ### Years for filtering
 ){
@@ -849,27 +847,28 @@ get_fig7_slrDataObj <- function(
 
     ###### Calculate Scalars
     ### Add scalar info
-    slrImp    <- slrImp |> match_scalarValues(scalars=df_scalars, scalarType="physScalar")
-    slrImp    <- slrImp |> match_scalarValues(scalars=df_scalars, scalarType="physAdj")
-    slrImp    <- slrImp |> match_scalarValues(scalars=df_scalars, scalarType="damageAdj")
-    slrImp    <- slrImp |> match_scalarValues(scalars=df_scalars, scalarType="econScalar")
+    # dfScalars |> glimpse()
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="physScalar")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="physAdj")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="damageAdj")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="econScalar")
     # df0 |> pull(region) |> unique() |> print()
     # ### Get economic adjustment values
     # # slrImp    <- slrImp |> get_econAdjValues(df_se=df_se)
     # slrImp    <- slrImp |> mutate(econMultiplierValue = (econMultiplierName  == "none") |> ifelse(1, NA))
     # slrImp    <- slrImp |> mutate(econAdjValue  = (econMultiplierName  == "none") |> ifelse(1, NA))
-    # df0 |> pull(region) |> unique() |> print()
+    # slrImp |> pull(region) |> unique() |> print()
     ### Economic multiplier
     # df0 |> glimpse(); df_scalars |> glimpse()
-    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
+    slrImp     <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="econMultiplier")
     # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
     ###### Economic Adjustment Values
     ### Get economic adjustment values
     renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
     renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
-    df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
-    df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
+    slrImp     <- slrImp |> get_scalarAdjValues(scalars=dfScalars, scalarType0="econMultiplier")
+    slrImp     <- slrImp |> rename_at(c(renameAt0), ~renameTo0)
     rm(renameAt0, renameTo0)
 
     ### Calculate scalars
@@ -917,7 +916,8 @@ get_fig7_slrImpacts <- function(
     aggOnly    = TRUE, ### Whether to filter to includeaggregate>=1
     years      = c(2050, 2090),
     adjVal     = 1/10**9, ### Factor to multiply by
-    adjCol     = "impact_billions"
+    adjCol     = "impact_billions",
+    df_scalars = "df_scalars" |> get_frediDataObj(listSub="stateData")
 ){
   ###### Values
   primary      <- !bySector
