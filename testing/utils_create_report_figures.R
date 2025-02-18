@@ -170,6 +170,45 @@ create_fig_scale_note <- function(
   return(note0)
 } ### create_fig_scale_note
 
+### Standardize strings
+### For github actions where multiple items are entered, separated by commas
+standardize_actionStrings <- function(str0, sep0=","){
+  str0  <- str0 |> str_replace(pattern="\\.", sep0) |> unlist() |> trimws()
+  str0  <- str0 |> str_split(pattern=sep0) |> unlist() |> trimws()
+  return(str0)
+}
+
+### Get action sectors
+### Process sectors specified in an action
+get_action_sectors <- function(
+    sectors0,
+    df0 = FrEDI::get_sectorInfo(description=T)
+){
+  ### Process sectors
+  sectors0   <- sectors0 |> standardize_actionStrings()
+  sectorsLC0 <- sectors0 |> tolower()
+  df1        <- tibble(input=sectors0, sectorLC = sectorsLC0) |> arrange_at(c("input"))
+  ### Conditions
+  doAll      <- "all" %in% sectorsLC0
+  doGcm      <- "gcm" %in% sectorsLC0
+  doSlr      <- "slr" %in% sectorsLC0
+  ### If doAll, doGcm, or doSlr, filter to appropriate sectors and return
+  if(doAll) {sectors <- df0 |> pull(sector); return(sectors)}
+  if(doGcm) {sectors <- df0 |> filter((model_type |> tolower()) %in% "gcm") |> pull(sector); return(sectors)}
+  if(doSlr) {sectors <- df0 |> filter((model_type |> tolower()) %in% "slr") |> pull(sector); return(sectors)}
+  ### Otherwise, match values
+  ### Filter to non-NA values
+  # allSectors <- df0 |> pull(sector)
+  # allStd     <- allSectors |> str_replace("\\(", "\\\\(") |> str_replace("\\)", "\\\\)") |> tolower()
+  # df1        <- df1 |> mutate(sector =  |> str_extract(pattern=get_sectorInfo() |> paste(collapse="|")))
+  df0        <- df0 |> select(sector) |> mutate(sectorLC = sector |> tolower())
+  df1        <- df1 |> left_join(df0, by="sectorLC")
+  df1        <- df1 |> filter(!(sector |> is.na()))
+  sectors    <- df1 |> pull(sector) |> unique()
+  ### Return
+  return(sectors)
+}
+
 #### Summarize missing values
 sum_with_na <- function(
     df0,    ### Dataframe
