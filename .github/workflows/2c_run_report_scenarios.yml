@@ -21,7 +21,7 @@ on:
         - yes
       sector:
         type: string
-        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name
+        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name(s) (if more than one, separate with a comma)
         default: "all"
 
 
@@ -39,7 +39,7 @@ jobs:
       - name: Send input status
         run: |
           echo "ref_name    = ${{ github.ref_name }}"
-          echo "doScenarios = ${{ inputs.doScenarios }}"
+          # echo "doScenarios = ${{ inputs.doScenarios }}"
           echo "sector      = ${{ inputs.sector }}"
 
       - name: Setup R
@@ -71,16 +71,16 @@ jobs:
             require(ggpubr)
 
             ###### Workflow Inputs ######
-            # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
+            doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
             newBranch   <- "${{ github.ref_name }}"
             sectors0    <- "${{ inputs.sector }}"
-            print("tony1")
+            "got here1" |> print()
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
             # pPath0   <- rPath0 |> file.path("FrEDI")
             pPath0   <- rPath0
-            print("tony2")
+            "got here1" |> print()
             ### Load scripts and testing functions
             sPath0   <- pPath0 |> file.path("scripts")
             tPath0   <- pPath0 |> file.path("testing")
@@ -89,41 +89,50 @@ jobs:
             rmd_file <- tFiles0[grepl(".rmd",tFiles0)]
             tFiles0 <- tFiles0[!grepl(".rmd",tFiles0)]
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
-            print("tony3")
+            "got here3" |> print()
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-            print("tony4")
+            "got here4" |> print()
             ### Where to save results
             oPath0   <- pPath0 |> file.path("data_tests")
             oFileNew <- oPath0 |> file.path("newResults.rda")
             oFileRef <- oPath0 |> file.path("refResults.rda")
-            print("tony5")
+            "got here5" |> print()
             ### Check if path exists and, if not, create it
             exists0  <- oPath0 |> dir.exists()
             if(!exists0) oPath0 |> dir.create(recursive=TRUE)
-            print("tony6")
+            "got here6" |> print()
             ###### Repo Info ######
             urlRepo   <- "https://github.com/USEPA/FrEDI"
             c(newBranch) |> print()
 
             ###### ** Install FrEDI from New Branch ######
-            ### Install FrEDI from new branch
-            devtools::install_github(
-              repo=urlRepo, ref=newBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
-            ) ### End install_github
-            require(FrEDI)
+            # ### Install FrEDI from new branch
+            # devtools::install_github(
+            #   repo=urlRepo, ref=newBranch,
+            #   dependencies=F, upgrade="never", force=T, type="source"
+            # ) ### End install_github
+            # require(FrEDI)
+            pPath0 |> devtools::load_all()
 
             ###### Sectors & Years ######
             ### Format sector names
             sectors0 |> print()
             sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
+            sectors0   <- sectors0 |> str_replace(pattern="\\.", ",") |> unlist() |> trimws()
+            sectors0   <- sectors0 |> str_split  (pattern=",") |> unlist() |> trimws()
             sectorsLC0 <- sectors0 |> tolower()
             doAll      <- "all" %in% sectorsLC0
             doGcm      <- "gcm" %in% sectorsLC0
             doSlr      <- "slr" %in% sectorsLC0
-            if     (doAll) sectors <- NULL else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
-            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T) else
-            sectors <- sectors0
+            if      (doAll) {
+              sectors <- NULL
+            } else if (doGcm) {
+              sectors <- FrEDI::get_sectorInfo(gcmOnly=T)
+            } else if (doSlr) {
+              sectors <- FrEDI::get_sectorInfo(slrOnly=T)
+            } else            {
+              sectors <- sectors0
+            } ### End if      (doAll)
             sectors |> print()
 
             ### Which years to report on for GCM, SLR sectors
