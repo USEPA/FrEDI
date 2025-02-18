@@ -74,30 +74,33 @@ jobs:
             # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
             newBranch   <- "${{ github.ref_name }}"
             sectors0    <- "${{ inputs.sector }}"
-
+            print("tony1")
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
             # pPath0   <- rPath0 |> file.path("FrEDI")
             pPath0   <- rPath0
-
+            print("tony2")
             ### Load scripts and testing functions
             sPath0   <- pPath0 |> file.path("scripts")
             tPath0   <- pPath0 |> file.path("testing")
             sFiles0  <- sPath0 |> list.files(full.names=TRUE)
             tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            rmd_file <- tFiles0[grepl(".rmd",tFiles0)]
+            tFiles0 <- tFiles0[!grepl(".rmd",tFiles0)]
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            print("tony3")
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-
+            print("tony4")
             ### Where to save results
             oPath0   <- pPath0 |> file.path("data_tests")
             oFileNew <- oPath0 |> file.path("newResults.rda")
             oFileRef <- oPath0 |> file.path("refResults.rda")
-
+            print("tony5")
             ### Check if path exists and, if not, create it
             exists0  <- oPath0 |> dir.exists()
             if(!exists0) oPath0 |> dir.create(recursive=TRUE)
-
+            print("tony6")
             ###### Repo Info ######
             urlRepo   <- "https://github.com/USEPA/FrEDI"
             c(newBranch) |> print()
