@@ -251,14 +251,14 @@ getFilterDf  <- function(
   ### Return
   return(df0)
 }
-fredi2090    <- frediResults |> (function(df0){
-  df0 <- df0 |> filter(year %in% 2090)
-  df0 <- df0 |> filter(includeaggregate > 0)
-  df0 <- df0 |> filter(model %in% c("Average", "Model Average", "Interpolation"))
-  df0 <- df0 |> filter(!(region %in% "National Total"))
-  return(df0)
-})()
-fredi2090$sector |> unique()
+# fredi2090    <- frediResults |> (function(df0){
+#   df0 <- df0 |> filter(year %in% 2090)
+#   df0 <- df0 |> filter(includeaggregate > 0)
+#   df0 <- df0 |> filter(model %in% c("Average", "Model Average", "Interpolation"))
+#   df0 <- df0 |> filter(!(region %in% "National Total"))
+#   return(df0)
+# })()
+# fredi2090$sector |> unique()
 
 #### Summarize missing values
 sum_with_na <- function(

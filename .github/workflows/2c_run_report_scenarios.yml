@@ -160,11 +160,11 @@ jobs:
 
             ###### Values ######
             ### Figure Type
-            agg_lvls0   <- agg_lvl0  |> standardize_actionStrings()
+            agg_lvls0   <- agg_lvls0  |> standardize_actionStrings()
             allCols0    <- "none" %in% (agg_lvls0 |> tolower())
 
             ### Figure Type
-            figTypeLc   <- fig_type  |> tolower()
+            figTypeLC   <- figure_type  |> tolower()
             doConstant  <- figTypeLC |> str_detect("constant")
             doDefaults  <- figTypeLC |> str_detect("default")
             do2300      <- figTypeLC |> str_detect("2300")

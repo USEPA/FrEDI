@@ -184,7 +184,7 @@ format_boxWhisker <- function(
   sum0    <- c("value")
   sort0   <- c(sum0, group0)
   df1     <- df0
-  df1     <- df1 |> group_by_at(c(group0)) |> summarize_at(c(sum0), sum, na.rm=T) |> ungroup
+  df1     <- df1 |> group_by_at(c(group0)) |> summarize_at(c(sum0), sum, na.rm=T) |> ungroup()
   df1     <- df1 |> arrange_at(c(sort0), desc)
   lvls0   <- df1 |> pull(all_of(group0))
   ### Factor category and arrange
@@ -198,7 +198,7 @@ format_boxWhisker <- function(
   sum0    <- c("value")
   sort0   <- c(sum0, group0)
   df1     <- df0
-  df1     <- df1 |> group_by_at(c(group0)) |> summarize_at(c(sum0), sum, na.rm=T) |> ungroup
+  df1     <- df1 |> group_by_at(c(group0)) |> summarize_at(c(sum0), sum, na.rm=T) |> ungroup()
   df1     <- df1 |> arrange_at(c(sort0))
   lvls0   <- df1 |> pull(all_of(group0))
   ### Factor category and arrange
