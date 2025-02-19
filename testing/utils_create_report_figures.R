@@ -209,6 +209,57 @@ get_action_sectors <- function(
   return(sectors)
 }
 
+### Function to apply filters
+getFilterDf  <- function(
+    df0,
+    filters0 = c("sector", "region", "model", "model_type", "includeaggregate", "sectorprimary", "year"),
+    reverse0 = FALSE, ### Whether to filter positive or negative matches
+    sectors0 = FrEDI::get_sectorInfo(),
+    regions0 = c("national total"),
+    models0  = c("average", "interpolation"),
+    mTypes0  = c("gcm", "slr"),
+    years0   = 2090
+){
+  ### Format values
+  filters0  <- filters0 |> tolower()
+  sectors0  <- sectors0 |> tolower()
+  regions0  <- regions0 |> tolower()
+  models0   <- models0  |> tolower()
+  mTypes0   <- mTypes0  |> tolower()
+
+  ### Reverse
+  logic0    <- !reverse0
+
+  ### Which filters to do
+  doSector0 <- "sector" %in% filters0
+  doRegion0 <- "region" %in% filters0
+  doModel0  <- "model"  %in% filters0
+  doMType0  <- "model_type"  %in% filters0
+  doAgg0    <- filters0 |> str_detect("agg") |> any()
+  doPrim0   <- filters0 |> str_detect("prim") |> any()
+  doYear0   <- filters0 |> str_detect("year") |> any()
+
+  ### Filter values logic0
+  if(doSector0){df0 <- df0 |> filter(((sector |> tolower()) %in% sectors0) * logic0)}
+  if(doRegion0){df0 <- df0 |> filter(((region |> tolower()) %in% regions0) * logic0)}
+  if(doModel0 ){df0 <- df0 |> filter(((model  |> tolower()) %in% models0 ) * logic0)}
+  if(doMType0 ){df0 <- df0 |> filter(((model_type |> tolower()) %in% mTypes0) * logic0)}
+  if(doAgg0   ){df0 <- df0 |> filter(((includeaggregate > 0)) * logic0)}
+  if(doPrim0  ){df0 <- df0 |> filter(((sectorprimary    > 0)) * logic0)}
+  if(doYear0  ){df0 <- df0 |> filter(((year %in% years0)) * logic0)}
+
+  ### Return
+  return(df0)
+}
+fredi2090    <- frediResults |> (function(df0){
+  df0 <- df0 |> filter(year %in% 2090)
+  df0 <- df0 |> filter(includeaggregate > 0)
+  df0 <- df0 |> filter(model %in% c("Average", "Model Average", "Interpolation"))
+  df0 <- df0 |> filter(!(region %in% "National Total"))
+  return(df0)
+})()
+fredi2090$sector |> unique()
+
 #### Summarize missing values
 sum_with_na <- function(
     df0,    ### Dataframe
