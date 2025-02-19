@@ -189,8 +189,8 @@ jobs:
             slrData0   <- NULL
 
             ### Check if file exists and, if it does, load it
+            ### - Load GCM data
             if (doGcm) {
-              ### - Load GCM data
               gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
               gcmPath   <- artDir  |> file.path(gcmName)
               gcmExists <- gcmPath |> file.exists()

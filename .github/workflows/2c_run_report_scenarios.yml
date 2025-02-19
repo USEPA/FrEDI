@@ -194,7 +194,7 @@ jobs:
             ### Run to 2300
             if(do2300) {
                ### rDataList$scenarioData$testScenarios calc_import_pop
-               defPath        <- oPath0 |> file.path("resultsT02300") |> paste0(".", "rda")
+               defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
                sortCols0      <- c("area", "region", "state", "year")
                scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c(scenario0)
                scenNames0     <- c("gdp", "pop", "temp")
