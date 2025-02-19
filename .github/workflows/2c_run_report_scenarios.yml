@@ -51,7 +51,7 @@ on:
         type: choice
         default: temp_0to6_to2300
         options:
-        - temp_0to6_to23000
+        - temp_0to6_to2300
         - rff_temp_mean
       # max_year:
       #   type: numeric
@@ -194,16 +194,16 @@ jobs:
             ### Run to 2300
             if(do2300) {
                ### rDataList$scenarioData$testScenarios calc_import_pop
-               defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
-               sortCols0      <- c("area", "region", "state", "year")
-               scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c(scenario0)
-               scenNames0     <- c("gdp", "pop", "temp")
-               inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
-               inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
-               inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
-               resultsT02300  <- run_fredi(inputsList=list0, sectorList=sectors, aggLevels=agg_lvls0, allCols=allCols0, outputList=outList0)
-               resultsT02300  |> save(file=defPath)
-               oPath0 |> list.files() |> print()
+                 defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+                 sortCols0      <- c("area", "region", "state", "year")
+                 scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c(scenario0)
+                 scenNames0     <- c("temp", "gdp", "pop")
+                 inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+                 inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+                 inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+                 resultsT02300  <- run_fredi(inputsList=inputs0, sectorList=sectors, aggLevels=agg_lvls0, allCols=allCols0, outputList=outList0)
+                 resultsT02300  |> save(file=defPath)
+                 oPath0 |> list.files() |> print()
             } ### End if(!doDefaults)
 
 
