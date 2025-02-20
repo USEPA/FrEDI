@@ -20,20 +20,21 @@ adjustSector1_bySector2 <- function(
   ### - Suicide has only one each of variant, impact type, and impact year
   ### - Then join to ATS data
   # dropS   <- c("sector", "variant", "sectorprimary", "includeaggregate")
-  select1 <- join0 |> c(cols0)
+  select2 <- join0 |> c(cols0)
   df2     <- df2   |> select(all_of(select2))
   df2     <- df2   |> rename_at(c(cols0), ~cols2)
   df2     <- df2   |> unique()
+  rm(select2)
   # return(list(df1=df1, df2=df3))
 
   ### Format data for first sector, then join with data for second sector
-  df1     <- df1 |> left_join(df2, by=join1)
-  rm(join1, df2)
+  df1     <- df1 |> left_join(df2, by=join0)
+  rm(join0, df2)
   df1 |> is.na() |> sum() |> print()
 
   ### - Subtract sector 2 impacts from sector 1 impacts, then drop sector 2 impacts
   drop1   <- cols2
-  df1[[cols0]] <- df1[[cols0]] - df1[[cols2]]
+  df1[,cols0] <- df1[,cols0] - df1[,cols2]
   df1     <- df1 |> select(-any_of(drop1))
   df1 |> is.na() |> sum() |> print()
   rm(drop1)
