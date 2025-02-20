@@ -143,7 +143,7 @@ jobs:
             ### Data path
             ### Check if file exists and, if it does, load it
             dfData      <- NULL
-            dataPath    <- artDir |> file.path(resultsFile)
+            dataPath    <- artDir |> file.path(dataFile0)
             dataExists  <- dataPath |> file.exists()
             c(dataPath) |> print(); dataExists |> print()
             if(dataExists) {
