@@ -147,10 +147,15 @@ jobs:
             dataExists  <- dataPath |> file.exists()
             c(dataPath) |> print(); dataExists |> print()
             if(dataExists) {
-              dataPath |> load()
-              dfData  <- obj0
-              hasData <- !(dfData |> is.null())
-              rm(obj0)
+                result0   <- dataPath |> load()
+                result0Type <- result0  |> get() |> typeof()
+                #### If data is a list, set dfData to "results"
+                if(result0Type == "list"){
+                      dfData <- result0  |> get() |> _[["results"]]
+                } else {
+                  dfData  <- result0  |> get()
+                }
+                hasData <- !(dfData |> is.null())
             } ### End if(dataExists)
 
             ###### Run Map Script ######
