@@ -46,7 +46,7 @@ jobs:
       - name: Send input status
         run: |
           echo "agg_types   = ${{ inputs.agg_types }}"
-          echo "doCompare  = ${{ inputs.agg_types }}"
+          echo "doCompare  = ${{ inputs.doCompare}}"
           echo "ref_name    = ${{ github.ref_name }}"
           echo "ref_branch  = ${{ inputs.ref_branch }}"
 

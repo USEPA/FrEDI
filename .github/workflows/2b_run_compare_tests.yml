@@ -38,8 +38,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "agg_types   = ${{ inputs.agg_types }}"
-          echo "doCompare  = ${{ inputs.agg_types }}"
+          echo "doCompare   = ${{ inputs.doCompare }}"
           echo "ref_name    = ${{ github.ref_name }}"
           echo "ref_branch  = ${{ inputs.ref_branch }}"
 
@@ -82,17 +81,16 @@ jobs:
             require(ggpubr)
 
             ###### Workflow Inputs ######
-            aggTypes  <- "${{ inputs.agg_types  }}"
-            doCompare <- "${{ inputs.doCompare  }}"
-            compBranch <- "${{ github.ref_name   }}"
-            refBranch <- "${{ inputs.ref_branch }}"
+            doCompare  <- "${{ inputs.doCompare }}"
+            compBranch <- "${{ github.ref_name }}"
+            refBranch  <- "${{ inputs.ref_branch }}"
 
             ###### Format Inputs ######
             ### Conditionals
             doTests   <- doCompare %in% c("true", "yes")
-            aggAll    <- aggTypes  %in% c("true", "yes")
+            #aggAll    <- aggTypes  %in% c("true", "yes")
             ### If aggAll, aggregate, national, model averages, impact years
-            if (aggAll){ aggLevels <- c("all")} else{aggLevels <- c("national", "modelaverage", "impactyear")}
+            #if (aggAll){ aggLevels <- c("all")} else{aggLevels <- c("national", "modelaverage", "impactyear")}
 
 
             ###### Paths ######
@@ -133,36 +131,55 @@ jobs:
             ###### ** Install FrEDI from Reference Branch ######
             ### Install FrEDI from ref branch
             if(doTests) {
-              devtools::install_github(
-                repo=urlRepo, ref=refBranch,
-                # subdir="FrEDI",
-                dependencies=F, upgrade="never", force=T, type="source"
-              ) ### End install_github
+            devtools::install_github(
+            repo=urlRepo, ref=refBranch,
+            # subdir="FrEDI",
+            dependencies=F, upgrade="never", force=T, type="source"
+            ) ### End install_github
             } ### End if(installRef)
 
             ###### ** Run FrEDI from Reference Branch ######
             ### Load library, run FrEDI
             if(doTests) {
-              library(FrEDI)
-              dfRef <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
-              dfRef |> saveRDS(file=oFileRef)
-              "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
-              oPath0 |> list.files() |> print()
-              ### Detach FrEDI package
-              package:FrEDI |> detach(unload=TRUE)
+            library(FrEDI)
+            ### Prepare Inputs
+            defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+            sortCols0      <- c("area", "region", "state", "year")
+            scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c("temp_0to6_to2300")
+            scenNames0     <- c("temp", "gdp", "pop")
+            inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+            inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+            inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+
+            ### Run FrEDI
+            dfRef <- run_fredi(inputsList=inputs0,aggLevels="all",outputList = TRUE,thru2300 = T)
+            dfRef |> saveRDS(file=oFileRef)
+            "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
+            oPath0 |> list.files() |> print()
+            ### Detach FrEDI package
+            package:FrEDI |> detach(unload=TRUE)
             } ### End if(doTests)
 
             ###### ** Install FrEDI from comp Branch ######
             ### Install FrEDI from comp branch
             devtools::install_github(
-              repo=urlRepo, ref=compBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
+            repo=urlRepo, ref=compBranch,
+            dependencies=F, upgrade="never", force=T, type="source"
             ) ### End install_github
 
             ###### ** Run FrEDI from comp Branch ######
             ### Load library, run FrEDI
             library(FrEDI)
-            dfcomp <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
+            ### Prepare Inputs
+            defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+            sortCols0      <- c("area", "region", "state", "year")
+            scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c("temp_0to6_to2300")
+            scenNames0     <- c("temp", "gdp", "pop")
+            inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+            inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+            inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+
+            dfcomp <- run_fredi(inputsList=inputs0,aggLevels="all",outputList = TRUE,thru2300 = T)
             dfcomp |> saveRDS(file=oFilecomp)
             "Finished running FrEDI on " |> paste0(compBranch, " branch.") |> print()
             oPath0 |> list.files() |> print()
@@ -170,11 +187,12 @@ jobs:
 
             ###### Compare Test results########
             rmarkdown::render(input = rmd_file,
-                              output_dir = oPath0,
-                              params = list(
-                              ref = refBranch,
-                              comp = compBranch
-                              ))
+                          output_dir = oPath0,
+                          params = list(
+                            ref = refBranch,
+                            comp = compBranch
+                          ))
+
 
             ###### Return ######
             "Finished running R script." |> print()
