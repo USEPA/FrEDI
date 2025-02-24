@@ -167,7 +167,8 @@ map2StateMap <- function(
   plot0  <- df0 |> ggplot(aes(long, lat, group = group))
   ### Create plot 1
   print("GOT HERE3")
-
+  print(df0)
+  print(names0)
   list0  <- cols0 |> length() |> seq_len() |> map(function(i, col_i=cols0[[i]]){
     df0 |> plotStateMap(
       col0      = col_i,
