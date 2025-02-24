@@ -77,6 +77,7 @@ jobs:
             any::devtools
             any::openxlsx
             any::ggpubr
+            any::maps
 
 
       ### Install FrEDI from new branch and get results
@@ -90,6 +91,7 @@ jobs:
             require(devtools)
             require(openxlsx)
             require(ggpubr)
+            require(maps)
 
             ###### Workflow Inputs ######
             # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
