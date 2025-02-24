@@ -904,16 +904,15 @@ joinDeltaResults <- function(
   ### Names
   lNames0 <- list0  |> names()
   lDiff0  <- lNames0 |> map(function(name_i){diff0 |> paste0("_", name_i)}) |> set_names(lNames0)
-  lDiff0 |> print()
+  # lDiff0 |> print()
   ### Rename columns
   df1     <- list0[[1]]
   df2     <- list0[[2]]
-  df1 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
-  df2 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
+  # df1 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
+  # df2 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
   ### Drop columns from one data frame and join
   select2 <- c(join0, diff0)
   df2     <- df2 |> select(all_of(select2))
-  df2 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
   rm(select2)
   ### Rename columns
   df1     <- df1 |> rename_at(c(diff0), ~lDiff0[[1]])
@@ -924,11 +923,11 @@ joinDeltaResults <- function(
   df0     <- df1
   df0[,lDiff0[[2]]] <- df2[,lDiff0[[2]]]
   rm(df1, df2)
-  # ### Mutate data
-  # delta0  <- diff0 |> paste0("_delta")
-  # pct0    <- diff0 |> paste0("_deltaPct")
-  # df0[,delta0] <- df0[,lDiff0[[1]]] - df0[,lDiff0[[2]]]
-  # df0[,pct0  ] <- df0[,delta0     ] / df0[,lDiff0[[2]]] * 1e2
+  ### Mutate data
+  delta0  <- diff0 |> paste0("_delta")
+  pct0    <- diff0 |> paste0("_deltaPct")
+  df0[,delta0] <- df0[,lDiff0[[1]]] - df0[,lDiff0[[2]]]
+  df0[,pct0  ] <- df0[,delta0     ] / df0[,lDiff0[[2]]] * 1e2
   ### Return
   return(df0)
 }
