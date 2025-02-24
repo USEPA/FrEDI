@@ -143,19 +143,25 @@ jobs:
             ### Data path
             ### Check if file exists and, if it does, load it
             dfData      <- NULL
-            dataPath    <- artDir |> file.path(resultsFile)
+            dataPath    <- artDir |> file.path(dataFile0)
             dataExists  <- dataPath |> file.exists()
             c(dataPath) |> print(); dataExists |> print()
             if(dataExists) {
-              dataPath |> load()
-              dfData  <- obj0
+              result0   <- dataPath |> load()
+              result0Type <- result0  |> get() |> is_tibble()
+              #### If data is a list, set dfData to "results"
+              if(result0Type){
+                dfData  <- result0  |> get()
+              } else {
+                dfData <- result0  |> get() |> _[["results"]]
+              }
               hasData <- !(dfData |> is.null())
-              rm(obj0)
             } ### End if(dataExists)
 
             ###### Run Map Script ######
             if(hasData) {
-              maps0       <- dfData |> create_sector_maps(
+              maps0       <-  create_sector_maps(
+                df0      = dfData ,   ### Results Data
                 sectors  = sectors,   ### Which sectors
                 year0    = 2090 ,     ### Year to plot
                 loadCode = "project", ### Whether to load code as source or devtools
