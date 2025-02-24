@@ -118,10 +118,10 @@ plotStateMap <- function(
   plot0 <- df0 |> ggplot(aes(long, lat, group=group))
   ### Create plot 1
   plot0 <- plot0 +
-    geom_polygon(aes(fill=.data[[col0]]), color=outlines) +
+    geom_polygon(aes(fill=.data[[col0]]), color=outline) +
     scale_fill_gradient2(
-      name     = lgdLabs0[[1]],
-      limits   = lims0[[1]],
+      name     = lgdLab0[[1]],
+      limits   = lims0,
       low      = colors0[["low"]],
       mid      = colors0[["mid"]],
       high     = colors0[["high"]],
@@ -130,7 +130,7 @@ plotStateMap <- function(
       guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
     ) ### End scale_fill_gradient2
   plot0 <- plot0 + theme0
-  plot0 <- plot0 + xlab(xLabs0[[1]]) + ylab(yLabs0[[1]])
+  plot0 <- plot0 + xlab(xLab0[[1]]) + ylab(yLab0[[1]])
   plot0 <- plot0 + ggtitle(ggTitle0[[1]], subTitle0[[1]])
   return(plot0)
 }
@@ -169,7 +169,7 @@ map2StateMap <- function(
       col0      = col_i,
       lims0     = lims0[[i]],
       colors0   = colors0, ### End list
-      outline   = outline,
+      outline   = outlines,
       xLab0     = xLabs0[[i]],
       yLab0     = yLabs0[[i]],
       lgdLab0   = lgdLabs0[[i]],

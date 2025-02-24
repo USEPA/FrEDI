@@ -45,19 +45,19 @@ create_sector_maps <- function(
 
   ### Output Paths
   # ### Check and create paths
-  # outPath |> print()
-  # outPath |> check_and_create_path()
+  outPath |> print()
+  outPath |> check_and_create_path()
 
   ### Maps
   mapTotPath    <- outPath |> file.path("fig304total") |> paste0(".", "tiff")
   mapSectPath   <- outPath |> file.path("map_") |> paste0("*", ".", "tiff")
 
   ### Plot and file names
-  rda_data_tot  <- "gcm_DOW_totals"
-  rda_data_gcm  <- "gcm_results" |> paste(saveStr, sep="_")
-  rda_data_slr  <- "slr_results" |> paste(saveStr, sep="_")
-  rda_plot_gcm  <- "gcm" |> paste(figStr, "plots", sep="_")
-  rda_plot_slr  <- "slr" |> paste(figStr, "plots", sep="_")
+  # rda_data_tot  <- "gcm_DOW_totals"
+  # rda_data_gcm  <- "gcm_results" |> paste(saveStr, sep="_")
+  # rda_data_slr  <- "slr_results" |> paste(saveStr, sep="_")
+  # rda_plot_gcm  <- "gcm" |> paste(figStr, "plots", sep="_")
+  # rda_plot_slr  <- "slr" |> paste(figStr, "plots", sep="_")
 
   #### Load Code -----------------------------------------------------
   ### Custom function to load code from a specified path
@@ -84,7 +84,7 @@ create_sector_maps <- function(
   ### Subset to sectorprimary values
   ### Drop national totals
   fredi2090    <- df0 |>
-    getFilterDf(filters0 = c("year", "model"), year0=2090) |>
+    getFilterDf(filters0 = c("year", "model"), years0=2090) |>
     getFilterDf(filters0 = c("sectorprimary")) |>
     getFilterDf(filters0 = c("region"), reverse0=TRUE)
   fredi2090$sector |> unique() |> print()
@@ -123,7 +123,7 @@ create_sector_maps <- function(
   stateMapList <- stateMapData |>
     mutate(annual_impacts = (annual_impacts / 1e9)) |>
     mutate(annual_impacts_percap = annual_impacts / 1e9 * 1e5 / pop ) |>
-    mapSectorTotals(); stateMapList
+    map2StateMap(); stateMapList
   ### Save map
   ggsave(plot=stateMapList, filename=mapTotPath, width=8, height=10)
 
@@ -141,7 +141,7 @@ create_sector_maps <- function(
   ### View map
   # sectorMaps$`CIL Agriculture`
   ### Save maps
-  cSectors |> walk(function(sector_i, map_i=sectorMaps[[sector_i]]){
+  sectors |> walk(function(sector_i, map_i=sectorMaps[[sector_i]]){
     sector_i |> print()
     ggsave(plot=map_i, filename=mapSectPath |> str_replace("\\*", sector_i), width=8, height=10)
   })
