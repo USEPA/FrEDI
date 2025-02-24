@@ -172,6 +172,8 @@ jobs:
             ###### ** Run FrEDI from comp Branch ######
             ### Load library, run FrEDI
             library(FrEDI)
+            ###### ** Load FrEDI Code ######
+            pPath0 |> devtools::load_all()
             ### Prepare Inputs
             defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
             sortCols0      <- c("area", "region", "state", "year")
