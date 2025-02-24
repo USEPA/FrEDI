@@ -98,6 +98,8 @@ jobs:
             rPath0    <- ".";
             # pPath0    <- rPath0 |> file.path("FrEDI")
             pPath0    <- rPath0
+            ###### ** Load FrEDI Code ######
+            pPath0 |> devtools::load_all()
 
             ### Load scripts and testing functions
             sPath0    <- pPath0 |> file.path("scripts")
