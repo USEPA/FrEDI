@@ -184,9 +184,11 @@ map2StateMap <- function(
   }) |> set_names(names0)
   # ### Add plot 1 to list
   # list0[["totals"]] <- plot1
+  print("GOT HERE4")
 
   ### Arrange the plots in a grid
   if(doGrid0) plot0 <- ggarrange(plotlist=list0, nrow=2)
+  print("GOT HERE5")
 
   ### Return
   return(plot0)
