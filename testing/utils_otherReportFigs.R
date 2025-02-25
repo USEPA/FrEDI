@@ -947,7 +947,40 @@ funLoadData <- function(path0, name0="obj_i"){
 
 ### Write a function to format limits
 # labels=function(x) sprintf("$%.2f", as.double(x))
-formatPlotBreaks <- function(vals0, round0=1, n.breaks0=6){
+# ### Get the power of ten of the maximum
+# log10   <- max0  |> log10()
+# floor10 <- log10 |> floor()
+# p10     <- 10**(floor10 - 1)
+#
+# ### Calculate limits
+# lims1   <- lims0 / p10
+# ### Round to nearest value
+# lims1   <- c(lims1[1] |> floor(), lims1[2] |> ceiling())
+# ### Then add power of 10 back
+# lims1   <- lims1 * p10
+
+# ### Then divide by the number to round by
+# tens1   <- 10**(round0)
+# lims1   <- lims1 * tens1
+# lims1   <- lims1 |> round(0)
+# lims1   <- lims1 / tens1
+# ### Get a sequence of breaks
+# len1    <- n.breaks0 + 1
+# vals1   <- seq(lims1[1], lims1[2], length.out=n.breaks0 + 1)
+# ends0   <- c(1, len1)
+# ends1   <- vals1[ends0]
+# mid0    <- vals1[-ends0] * tens1
+# mid0    <- mid0 |> round(0) / tens1
+# vals1   <- ends1 |> c(mid0) |> sort()
+# ### Get a sequence of breaks
+# mod0    <- n.breaks0 %% 2
+# # hBrks0  <- n.breaks0 %/% 2
+# # hSeq0   <- seq(0, max0, length.out=hBrks0 + 1)
+# seq0    <- seq(-max0, max0, length.out=nBrks0 * 2 + 1)
+# len0    <- n.breaks0 + 1
+# vals1   <- seq(lims1[1], lims1[2], len1)
+formatPlotBreaks <- function(vals0, signif0=1, n.breaks0=6){
+  ### Drop NA and infinite values
   vals0    <- vals0  |> sort()
   vals0    <- vals0  |> get_matches(y=c(NA, NaN, Inf, -Inf), matches=F)
   hasVals0 <- vals0  |> length()
@@ -956,8 +989,11 @@ formatPlotBreaks <- function(vals0, round0=1, n.breaks0=6){
   ### Return if there are no non-missing values
   if(!hasVals0) return()
 
-  ### Get the limits
-  lims0   <- vals0 |> range(na.rm=T)
+  ### Get significant figures
+
+  ### Get the limits, absolute values, and max
+  refs0   <- vals0 |> range(na.rm=T)
+  lims0   <- refs0 |> signif(digits=signif0)
   abs0    <- lims0 |> abs()
   max0    <- abs0  |> max()
 
@@ -969,40 +1005,35 @@ formatPlotBreaks <- function(vals0, round0=1, n.breaks0=6){
     if(less0) lims0 <- lims0[1] |> c(0)
     if(more0) lims0 <- 0 |> c(lims0[2])
   } else {
-    # lims0 <- max0 * c(-1, 1)
+    lims0 <- max0 * c(-1, 1)
   } ### End if(doZero0)
 
-  ### Get the power of ten of the maximum
-  log10   <- max0  |> log10()
-  floor10 <- log10 |> floor()
-  p10     <- 10**(floor10 - 1)
+  ### Get the power of ten associated with round0 and max0
+  tens0   <- 10**(round0)
+  log10   <- max0  |> log10() |> floor()
+  add0    <- (log10 - 1)  * c(-1, 1)
+  lims0   <- lims0 + add0
 
-  ### Calculate limits
-  lims1   <- lims0 / p10
-  ### Round to nearest value
-  lims1   <- c(lims1[1] |> floor(), lims1[2] |> ceiling())
-  ### Then add power of 10 back
-  lims1   <- lims1 * p10
+  ### Check that rounding produces some non-zero values
+  check0  <- (vals0 >= lims1[[1]]) & (vals0 <= lims0[[2]])
+  check1  <- check0 |> all()
+  check1 |> print(); refs0 |> print(); lims0 |> print();
+
+  ### Get signs
+  abs0    <- lims0 |> abs()
+  max0    <- abs0 |> max()
+  signs0  <- lims0 / abs0
 
   ### Get a sequence of breaks
-  len1    <- n.breaks0 + 1
-  vals1   <- seq(lims1[1], lims1[2], len1)
+  # mod0    <- n.breaks0 %% 2
+  # hBrks0  <- n.breaks0 %/% 2
+  seq0    <- seq(-max0, max0, length.out=nBrks0 * 2 + 1)
+  wMin0   <- (seq0 <= lims0) |> which() |> last ()
+  wMax0   <- (seq0 >= lims0) |> which() |> first()
+  brks0   <- seq0[wMin0:wMax0]
 
-  # ### Then divide by the number to round by
-  # tens1   <- 10**(round0)
-  # lims1   <- lims1 * tens1
-  # lims1   <- lims1 |> round(0)
-  # lims1   <- lims1 / tens1
-  # ### Get a sequence of breaks
-  # len1    <- n.breaks0 + 1
-  # vals1   <- seq(lims1[1], lims1[2], length.out=n.breaks0 + 1)
-  # ends0   <- c(1, len1)
-  # ends1   <- vals1[ends0]
-  # mid0    <- vals1[-ends0] * tens1
-  # mid0    <- mid0 |> round(0) / tens1
-  # vals1   <- ends1 |> c(mid0) |> sort()
   ### Return
-  return(vals1)
+  return(brks0)
 }
 
 ### Themes  -------------------------
@@ -1406,6 +1437,9 @@ fun_colorSectors <- function(
   ### Return
   return(df0)
 }
+
+
+### Sector stuff -------------------------
 
 
 ### End Script  -------------------------
