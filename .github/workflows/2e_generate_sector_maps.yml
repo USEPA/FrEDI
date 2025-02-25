@@ -77,6 +77,7 @@ jobs:
             any::devtools
             any::openxlsx
             any::ggpubr
+            any::maps
 
 
       ### Install FrEDI from new branch and get results
@@ -90,6 +91,7 @@ jobs:
             require(devtools)
             require(openxlsx)
             require(ggpubr)
+            require(maps)
 
             ###### Workflow Inputs ######
             # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
@@ -147,20 +149,21 @@ jobs:
             dataExists  <- dataPath |> file.exists()
             c(dataPath) |> print(); dataExists |> print()
             if(dataExists) {
-                result0   <- dataPath |> load()
-                result0Type <- result0  |> get() |> typeof()
-                #### If data is a list, set dfData to "results"
-                if(result0Type == "list"){
-                      dfData <- result0  |> get() |> _[["results"]]
-                } else {
-                  dfData  <- result0  |> get()
-                }
-                hasData <- !(dfData |> is.null())
+              result0   <- dataPath |> load()
+              result0Type <- result0  |> get() |> is_tibble()
+              #### If data is a list, set dfData to "results"
+              if(result0Type){
+                dfData  <- result0  |> get()
+              } else {
+                dfData <- result0  |> get() |> _[["results"]]
+              }
+              hasData <- !(dfData |> is.null())
             } ### End if(dataExists)
 
             ###### Run Map Script ######
             if(hasData) {
-              maps0       <- dfData |> create_sector_maps(
+              maps0       <-  create_sector_maps(
+                df0      = dfData ,   ### Results Data
                 sectors  = sectors,   ### Which sectors
                 year0    = 2090 ,     ### Year to plot
                 loadCode = "project", ### Whether to load code as source or devtools

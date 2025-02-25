@@ -20,20 +20,21 @@ adjustSector1_bySector2 <- function(
   ### - Suicide has only one each of variant, impact type, and impact year
   ### - Then join to ATS data
   # dropS   <- c("sector", "variant", "sectorprimary", "includeaggregate")
-  select1 <- join0 |> c(cols0)
+  select2 <- join0 |> c(cols0)
   df2     <- df2   |> select(all_of(select2))
   df2     <- df2   |> rename_at(c(cols0), ~cols2)
   df2     <- df2   |> unique()
+  rm(select2)
   # return(list(df1=df1, df2=df3))
 
   ### Format data for first sector, then join with data for second sector
-  df1     <- df1 |> left_join(df2, by=join1)
-  rm(join1, df2)
+  df1     <- df1 |> left_join(df2, by=join0)
+  rm(join0, df2)
   df1 |> is.na() |> sum() |> print()
 
   ### - Subtract sector 2 impacts from sector 1 impacts, then drop sector 2 impacts
   drop1   <- cols2
-  df1[[cols0]] <- df1[[cols0]] - df1[[cols2]]
+  df1[,cols0] <- df1[,cols0] - df1[,cols2]
   df1     <- df1 |> select(-any_of(drop1))
   df1 |> is.na() |> sum() |> print()
   rm(drop1)
@@ -117,10 +118,10 @@ plotStateMap <- function(
   plot0 <- df0 |> ggplot(aes(long, lat, group=group))
   ### Create plot 1
   plot0 <- plot0 +
-    geom_polygon(aes(fill=.data[[col0]]), color=outlines) +
+    geom_polygon(aes(fill=.data[[col0]]), color=outline) +
     scale_fill_gradient2(
-      name     = lgdLabs0[[1]],
-      limits   = lims0[[1]],
+      name     = lgdLab0[[1]],
+      limits   = lims0,
       low      = colors0[["low"]],
       mid      = colors0[["mid"]],
       high     = colors0[["high"]],
@@ -129,7 +130,7 @@ plotStateMap <- function(
       guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
     ) ### End scale_fill_gradient2
   plot0 <- plot0 + theme0
-  plot0 <- plot0 + xlab(xLabs0[[1]]) + ylab(yLabs0[[1]])
+  plot0 <- plot0 + xlab(xLab0[[1]]) + ylab(yLab0[[1]])
   plot0 <- plot0 + ggtitle(ggTitle0[[1]], subTitle0[[1]])
   return(plot0)
 }
@@ -160,15 +161,20 @@ map2StateMap <- function(
 ){
   ### Initialize list and plot
   # list0 <- list()
+  print("GOT HERE2")
+
   names0 <- names0 |> unlist()
   plot0  <- df0 |> ggplot(aes(long, lat, group = group))
   ### Create plot 1
+  print("GOT HERE3")
+  df0 |> glimpse()
+  print(names0)
   list0  <- cols0 |> length() |> seq_len() |> map(function(i, col_i=cols0[[i]]){
     df0 |> plotStateMap(
       col0      = col_i,
       lims0     = lims0[[i]],
       colors0   = colors0, ### End list
-      outline   = outline,
+      outline   = outlines,
       xLab0     = xLabs0[[i]],
       yLab0     = yLabs0[[i]],
       lgdLab0   = lgdLabs0[[i]],
@@ -179,9 +185,11 @@ map2StateMap <- function(
   }) |> set_names(names0)
   # ### Add plot 1 to list
   # list0[["totals"]] <- plot1
+  print("GOT HERE4")
 
   ### Arrange the plots in a grid
   if(doGrid0) plot0 <- ggarrange(plotlist=list0, nrow=2)
+  print("GOT HERE5")
 
   ### Return
   return(plot0)

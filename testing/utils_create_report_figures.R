@@ -227,38 +227,38 @@ getFilterDf  <- function(
   models0   <- models0  |> tolower()
   mTypes0   <- mTypes0  |> tolower()
 
-  ### Reverse
-  logic0    <- !reverse0
-
   ### Which filters to do
   doSector0 <- "sector" %in% filters0
   doRegion0 <- "region" %in% filters0
   doModel0  <- "model"  %in% filters0
   doMType0  <- "model_type"  %in% filters0
-  doAgg0    <- filters0 |> str_detect("agg") |> any()
+  doAgg0    <- filters0 |> str_detect("agg" ) |> any()
   doPrim0   <- filters0 |> str_detect("prim") |> any()
   doYear0   <- filters0 |> str_detect("year") |> any()
 
+  ### Reverse
+  logic0    <- !reverse0
+  m0        <- logic0
+  m1        <- m0 |> as.character()
+  t0        <- "matches"
+
   ### Filter values logic0
-  if(doSector0){df0 <- df0 |> filter(((sector |> tolower()) %in% sectors0) * logic0)}
-  if(doRegion0){df0 <- df0 |> filter(((region |> tolower()) %in% regions0) * logic0)}
-  if(doModel0 ){df0 <- df0 |> filter(((model  |> tolower()) %in% models0 ) * logic0)}
-  if(doMType0 ){df0 <- df0 |> filter(((model_type |> tolower()) %in% mTypes0) * logic0)}
-  if(doAgg0   ){df0 <- df0 |> filter(((includeaggregate > 0)) * logic0)}
-  if(doPrim0  ){df0 <- df0 |> filter(((sectorprimary    > 0)) * logic0)}
-  if(doYear0  ){df0 <- df0 |> filter(((year %in% years0)) * logic0)}
+  if(doSector0){df0 <- df0 |> filter(sector |> tolower() |> get_matches(y=sectors0, matches=m0, type=t0))}
+  if(doRegion0){df0 <- df0 |> filter(region |> tolower() |> get_matches(y=regions0, matches=m0, type=t0))}
+  if(doModel0 ){df0 <- df0 |> filter(model  |> tolower() |> get_matches(y=models0, matches=m0, type=t0))}
+  if(doMType0 ){df0 <- df0 |> filter(model_type |> tolower() |> get_matches(y=mTypes0, matches=m0, type=t0))}
+  if(doAgg0   ){df0 <- df0 |> filter((includeaggregate > 0) |> get_matches(y=m0, type=t0))}
+  if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> get_matches(y=m0, type=t0))}
+  # if(doAgg0   ){df0 <- df0 |> filter((aggregate_impacts > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  # if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  # if(doAgg0   ){df0 <- df0 |> filter_at(c("aggregate_impacts"), function(x, y=0){(x > 0) |> as.character() |> get_matches(y=m1, type=t0)})}
+  # if(doPrim0  ){df0 <- df0 |> filter_at(c("sectorprimary"), function(x, y=0){(x > 0) |> as.character() |> get_matches(y=m1, type=t0)})}
+  # if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  if(doYear0  ){df0 <- df0 |> filter(year |> get_matches(y=years0, matches=m0, type=t0))}
 
   ### Return
   return(df0)
 }
-# fredi2090    <- frediResults |> (function(df0){
-#   df0 <- df0 |> filter(year %in% 2090)
-#   df0 <- df0 |> filter(includeaggregate > 0)
-#   df0 <- df0 |> filter(model %in% c("Average", "Model Average", "Interpolation"))
-#   df0 <- df0 |> filter(!(region %in% "National Total"))
-#   return(df0)
-# })()
-# fredi2090$sector |> unique()
 
 #### Summarize missing values
 sum_with_na <- function(
