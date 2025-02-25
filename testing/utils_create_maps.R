@@ -138,14 +138,15 @@ plotStateMap <- function(
   ### Add geom
   p0    <- p0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
   ### Add color guide
-  p0    <- p0 + scale_fill_gradient2(
+  p0    <- p0 + scale_fill_gradientn(
       name     = lgdLab0,
       limits   = lims0,
       low      = colors0[["low"]],
       mid      = colors0[["mid"]],
       high     = colors0[["high"]],
       na.value = colors0[["na.value"]],
-      n.breaks = n.breaks0,
+      # n.breaks = n.breaks0,
+      brks0    = brks0,
       guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
       labels   = function(x, y=spr0) sprintf(y, as.double(x))
       # labels   = function(x) x |> as.double() |> sprintf(spr0)
