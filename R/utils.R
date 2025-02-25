@@ -126,6 +126,37 @@ get_frediDataObj <- function(
 } ### End get_frediDataObj
 
 
+### fun_extendVals
+### Function to extend values out to a particular year
+fun_extendVals <- function(
+    df0,  ### Data to extend
+    from0 = NULL,
+    to0   = 2300, ### Year to extend to
+    # cols0 = c() , ### Columns to extend values
+    sort0 = NULL  ### Columns for sorting
+){
+  ### Columns for sorting
+  doFrom <- !(from0 |> is.null())
+  if(doFrom) {from0 <- df0 |> pull(year) |> max()}
+  df1    <- df0 |> filter(year == from0) |> select(-c("year"))
+  df2    <- tibble(year = (from0 + 1):to0)
+  df3    <- df1 |> cross_join(df2)
+  rm(df1, df2)
+
+  ### Bind data
+  df0    <- df0 |> bind_rows(df3)
+  rm(df3)
+
+  ### Format data
+  names0 <- df0 |> names()
+  doSort <- !(sort0 |> is.null())
+  if(doSort) {sort0 <- names0}
+  df0    <- df0 |> arrange_at(c(sort0))
+
+  ### Return data
+  gc()
+  return(df0)
+}
 
 
 ###### get_scenario_id ######
