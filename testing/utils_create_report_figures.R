@@ -170,6 +170,96 @@ create_fig_scale_note <- function(
   return(note0)
 } ### create_fig_scale_note
 
+### Standardize strings
+### For github actions where multiple items are entered, separated by commas
+standardize_actionStrings <- function(str0, sep0=","){
+  str0  <- str0 |> str_replace(pattern="\\.", sep0) |> unlist() |> trimws()
+  str0  <- str0 |> str_split(pattern=sep0) |> unlist() |> trimws()
+  return(str0)
+}
+
+### Get action sectors
+### Process sectors specified in an action
+get_action_sectors <- function(
+    sectors0,
+    df0 = FrEDI::get_sectorInfo(description=T)
+){
+  ### Process sectors
+  sectors0   <- sectors0 |> standardize_actionStrings()
+  sectorsLC0 <- sectors0 |> tolower()
+  df1        <- tibble(input=sectors0, sectorLC = sectorsLC0) |> arrange_at(c("input"))
+  ### Conditions
+  doAll      <- "all" %in% sectorsLC0
+  doGcm      <- "gcm" %in% sectorsLC0
+  doSlr      <- "slr" %in% sectorsLC0
+  ### If doAll, doGcm, or doSlr, filter to appropriate sectors and return
+  if(doAll) {sectors <- df0 |> pull(sector); return(sectors)}
+  if(doGcm) {sectors <- df0 |> filter((model_type |> tolower()) %in% "gcm") |> pull(sector); return(sectors)}
+  if(doSlr) {sectors <- df0 |> filter((model_type |> tolower()) %in% "slr") |> pull(sector); return(sectors)}
+  ### Otherwise, match values
+  ### Filter to non-NA values
+  # allSectors <- df0 |> pull(sector)
+  # allStd     <- allSectors |> str_replace("\\(", "\\\\(") |> str_replace("\\)", "\\\\)") |> tolower()
+  # df1        <- df1 |> mutate(sector =  |> str_extract(pattern=get_sectorInfo() |> paste(collapse="|")))
+  df0        <- df0 |> select(sector) |> mutate(sectorLC = sector |> tolower())
+  df1        <- df1 |> left_join(df0, by="sectorLC")
+  df1        <- df1 |> filter(!(sector |> is.na()))
+  sectors    <- df1 |> pull(sector) |> unique()
+  ### Return
+  return(sectors)
+}
+
+### Function to apply filters
+getFilterDf  <- function(
+    df0,
+    filters0 = c("sector", "region", "model", "model_type", "includeaggregate", "sectorprimary", "year"),
+    reverse0 = FALSE, ### Whether to filter positive or negative matches
+    sectors0 = FrEDI::get_sectorInfo(),
+    regions0 = c("national total"),
+    models0  = c("average", "interpolation"),
+    mTypes0  = c("gcm", "slr"),
+    years0   = 2090
+){
+  ### Format values
+  filters0  <- filters0 |> tolower()
+  sectors0  <- sectors0 |> tolower()
+  regions0  <- regions0 |> tolower()
+  models0   <- models0  |> tolower()
+  mTypes0   <- mTypes0  |> tolower()
+
+  ### Which filters to do
+  doSector0 <- "sector" %in% filters0
+  doRegion0 <- "region" %in% filters0
+  doModel0  <- "model"  %in% filters0
+  doMType0  <- "model_type"  %in% filters0
+  doAgg0    <- filters0 |> str_detect("agg" ) |> any()
+  doPrim0   <- filters0 |> str_detect("prim") |> any()
+  doYear0   <- filters0 |> str_detect("year") |> any()
+
+  ### Reverse
+  logic0    <- !reverse0
+  m0        <- logic0
+  m1        <- m0 |> as.character()
+  t0        <- "matches"
+
+  ### Filter values logic0
+  if(doSector0){df0 <- df0 |> filter(sector |> tolower() |> get_matches(y=sectors0, matches=m0, type=t0))}
+  if(doRegion0){df0 <- df0 |> filter(region |> tolower() |> get_matches(y=regions0, matches=m0, type=t0))}
+  if(doModel0 ){df0 <- df0 |> filter(model  |> tolower() |> get_matches(y=models0, matches=m0, type=t0))}
+  if(doMType0 ){df0 <- df0 |> filter(model_type |> tolower() |> get_matches(y=mTypes0, matches=m0, type=t0))}
+  if(doAgg0   ){df0 <- df0 |> filter((includeaggregate > 0) |> get_matches(y=m0, type=t0))}
+  if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> get_matches(y=m0, type=t0))}
+  # if(doAgg0   ){df0 <- df0 |> filter((aggregate_impacts > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  # if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  # if(doAgg0   ){df0 <- df0 |> filter_at(c("aggregate_impacts"), function(x, y=0){(x > 0) |> as.character() |> get_matches(y=m1, type=t0)})}
+  # if(doPrim0  ){df0 <- df0 |> filter_at(c("sectorprimary"), function(x, y=0){(x > 0) |> as.character() |> get_matches(y=m1, type=t0)})}
+  # if(doPrim0  ){df0 <- df0 |> filter((sectorprimary > 0) |> as.character() |> get_matches(y=m1, type=t0))}
+  if(doYear0  ){df0 <- df0 |> filter(year |> get_matches(y=years0, matches=m0, type=t0))}
+
+  ### Return
+  return(df0)
+}
+
 #### Summarize missing values
 sum_with_na <- function(
     df0,    ### Dataframe
@@ -661,7 +751,6 @@ sum_impacts_byDoW_years <- function(
 get_fig7_slrDataObj <- function(
     drivers = TRUE, ### Whether to return drivers
     sectors = FrEDI::get_sectorInfo(slrOnly=T),
-    # impacts = TRUE ### Whether to return impacts
     impacts = TRUE, ### Whether to return impacts
     years   = c(2050, 2090) ### Years for filtering
 ){
@@ -686,7 +775,8 @@ get_fig7_slrDataObj <- function(
 
   ###### SLR Models ######
   ### Format SLR Models
-  slrRef    <- slrRef |> filter(modelType=="slr")
+  slrStr0   <- "slr"
+  slrRef    <- slrRef |> filter((modelType |> tolower()) %in% slrStr0)
   slrRef    <- slrRef |> rename_at(c("model_label"), ~c("model"))
 
   ###### Levels & Labels ######
@@ -847,16 +937,30 @@ get_fig7_slrDataObj <- function(
 
     ###### Calculate Scalars
     ### Add scalar info
-    slrImp    <- slrImp |> match_scalarValues(scalars=scalars, scalarType="physScalar")
-    slrImp    <- slrImp |> match_scalarValues(scalars=scalars, scalarType="physAdj")
-    slrImp    <- slrImp |> match_scalarValues(scalars=scalars, scalarType="damageAdj")
-    slrImp    <- slrImp |> match_scalarValues(scalars=scalars, scalarType="econScalar")
+    # dfScalars |> glimpse()
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="physScalar")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="physAdj")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="damageAdj")
+    slrImp    <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="econScalar")
     # df0 |> pull(region) |> unique() |> print()
+    # ### Get economic adjustment values
+    # # slrImp    <- slrImp |> get_econAdjValues(df_se=df_se)
+    # slrImp    <- slrImp |> mutate(econMultiplierValue = (econMultiplierName  == "none") |> ifelse(1, NA))
+    # slrImp    <- slrImp |> mutate(econAdjValue  = (econMultiplierName  == "none") |> ifelse(1, NA))
+    # slrImp |> pull(region) |> unique() |> print()
+    ### Economic multiplier
+    # df0 |> glimpse(); df_scalars |> glimpse()
+    slrImp     <- slrImp |> match_scalarValues(scalars=dfScalars, scalarType="econMultiplier")
+    # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
+
+    ###### Economic Adjustment Values
     ### Get economic adjustment values
-    # slrImp    <- slrImp |> get_econAdjValues(df_se=df_se)
-    slrImp    <- slrImp |> mutate(econMultiplierValue = (econMultiplierName  == "none") |> ifelse(1, NA))
-    slrImp    <- slrImp |> mutate(econAdjValue  = (econMultiplierName  == "none") |> ifelse(1, NA))
-    # df0 |> pull(region) |> unique() |> print()
+    renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
+    renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
+    slrImp     <- slrImp |> get_scalarAdjValues(scalars=dfScalars, scalarType0="econMultiplier")
+    slrImp     <- slrImp |> rename_at(c(renameAt0), ~renameTo0)
+    rm(renameAt0, renameTo0)
+
     ### Calculate scalars
     # "got here" |> print()
     slrImp    <- slrImp |> calcScalars()
@@ -902,7 +1006,8 @@ get_fig7_slrImpacts <- function(
     aggOnly    = TRUE, ### Whether to filter to includeaggregate>=1
     years      = c(2050, 2090),
     adjVal     = 1/10**9, ### Factor to multiply by
-    adjCol     = "impact_billions"
+    adjCol     = "impact_billions",
+    df_scalars = "df_scalars" |> get_frediDataObj(listSub="stateData")
 ){
   ###### Values
   primary      <- !bySector
