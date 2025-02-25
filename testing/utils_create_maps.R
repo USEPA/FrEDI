@@ -63,12 +63,15 @@ addData2Map <- function(
     gons0 = getStatePolygons()
 ){
   ### Add impact data to state map data
-  df0   <- df0 |> mutate(state_lc=state |> tolower())
-  gons0 <- gons0 |> left_join(df0, by="state_lc") |> relocate(c("state_lc"), .after="state")
-  gons0 |> pull(state_lc) |> unique() |> print()
+  df0   <- df0   |> mutate(state_lc=state |> tolower())
+  gons0 <- gons0 |> left_join(df0, by=join0, relationship="many-to-many")
+  gons0 <- gons0 |> relocate(all_of(join0), .after="state")
+  # gons0 |> pull(state_lc) |> unique() |> print()
+
   ### Filter data
   gons0 <- gons0 |> filter(!(state |> is.na()))
-  gons0 |> pull(state_lc) |> unique() |> print()
+  # gons0 |> pull(state_lc) |> unique() |> print()
+
   ### Return
   return(gons0)
 }
@@ -83,10 +86,10 @@ getMapTheme <- function(x=1){
     theme(legend.key.size   = unit(1, "cm")) +
     theme(legend.box.margin = margin(t = 1, l = 1)) +
     ### Axis ticks
-    theme(axis.ticks.x=element_blank()) +
-    theme(axis.ticks.y=element_blank()) +
-    theme(axis.text.x = element_blank()) +
-    theme(axis.text.y = element_blank()) +
+    theme(axis.ticks.x = element_blank()) +
+    theme(axis.ticks.y = element_blank()) +
+    theme(axis.text.x  = element_blank()) +
+    theme(axis.text.y  = element_blank()) +
     ### Panel
     theme(panel.background = element_rect(linewidth=0.5, linetype="solid", colour="white", fill="white")) +
     theme(panel.grid.major = element_line(linewidth=0.5, linetype="solid", colour="white")) +
@@ -100,42 +103,62 @@ plotStateMap <- function(
     col0      = "annual_impacts",
     # lims0     = list(),
     lims0     = c(-5, 325),
+    ggTitle0  = "Annual Climate-Driven Damages in 2090 by State",
+    subTitle0 = "Subset of Climate-Related Impacts",
+    lgdLab0   = "Total Impacts\nbillion USD",
+    xLab0     = "",
+    yLab0     = "",
     colors0   = list(
       low      = "#010d5e",
       mid      = "white",
       high     = "#701201",
-      na.value = "grey",
-      n.breaks = 6
+      na.value = "grey"
     ), ### End list
     outline   = "gray8",
-    xLab0     = "",
-    yLab0     = "",
-    lgdLab0   = "Total Impacts\nbillion USD",
-    ggTitle0  = "Annual Climate-Driven Damages in 2090 by State",
-    subTitle0 = "Subset of Climate-Related Impacts",
+    n.breaks0 = 8,
+    round0    = 1,
+    symb0     = "$",
     theme0    = getMapTheme()
 ){
-  plot0 <- df0 |> ggplot(aes(long, lat, group=group))
-  ### Create plot 1
-  plot0 <- plot0 +
-    geom_polygon(aes(fill=.data[[col0]]), color=outlines) +
-    scale_fill_gradient2(
-      name     = lgdLabs0[[1]],
-      limits   = lims0[[1]],
+  # col0 |> print()
+  # lims0 |> print()
+  # lgdLab0 |> print()
+  # ggTitle0 |> print()
+  # col0 |> print()
+  spr0  <- paste0(symb0, "%.", round0, "f")
+  spr0 |> print()
+  ### Get limits
+  vals0 <- df0   |> pull(all_of(col0))
+  # vals0 |> range(na.rm=T) |> print()
+  brks0 <- vals0 |> formatPlotBreaks(round0=round0, n.breaks0=n.breaks0)
+  # lims0 <- brks0 |> range()
+  # brks0 |> print(); lims0 |> print();
+  ### Create plot
+  p0    <- df0   |> ggplot(aes(long, lat, group=group))
+  ### Add geom
+  p0    <- p0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+  ### Add color guide
+  p0    <- p0 + scale_fill_gradient2(
+      name     = lgdLab0,
+      limits   = lims0,
       low      = colors0[["low"]],
       mid      = colors0[["mid"]],
       high     = colors0[["high"]],
       na.value = colors0[["na.value"]],
-      n.breaks = colors0[["n.breaks"]],
-      guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
+      n.breaks = n.breaks0,
+      guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
+      labels   = function(x, y=spr0) sprintf(y, as.double(x))
+      # labels   = function(x) x |> as.double() |> sprintf(spr0)
     ) ### End scale_fill_gradient2
-  plot0 <- plot0 + theme0
-  plot0 <- plot0 + xlab(xLabs0[[1]]) + ylab(yLabs0[[1]])
-  plot0 <- plot0 + ggtitle(ggTitle0[[1]], subTitle0[[1]])
-  return(plot0)
+  ### Add theme
+  p0 <- p0 + theme0
+  p0 <- p0 + xlab(xLab0) + ylab(yLab0)
+  p0 <- p0 + ggtitle(ggTitle0, subTitle0)
+  ### Return
+  return(p0)
 }
 
-### Function to map the plotStateMap function over a set of columns
+### Function to map the plotStateMap function over a set of columns by sector
 map2StateMap <- function(
     df0,
     cols0     = list(p1="annual_impacts", p2="annual_impacts_percap"),
@@ -147,23 +170,24 @@ map2StateMap <- function(
       low      = "white",
       mid      = "white",
       high     = "#DD8047",
-      na.value = "grey",
-      n.breaks = 6
+      na.value = "grey"
     ), ### End list
-    outlines  = "gray8",
+    outline   = "gray8",
     xLabs0    = list(p1="", p2=""),
     yLabs0    = list(p1="", p2=""),
     lgdLabs0  = list(p1="Total Impacts\nbillion USD", p2="Total Impacts\nbillion USD\nper 100,000\nindividuals"),
     ggTitle0  = list(p1="Annual Climate-Driven Damages in 2090 by State", p2=""),
     subTitle0 = list(p1="Subset of Climate-Related Impacts", p2="Subset of Climate-Related Impacts, Per 100,000 people"),
+    n.breaks0 = 8,
+    round0    = 1,
+    symb0     = "$",
     theme0    = getMapTheme(),
     doGrid0   = TRUE
 ){
   ### Initialize list and plot
-  # list0 <- list()
   names0 <- names0 |> unlist()
-  plot0  <- df0 |> ggplot(aes(long, lat, group = group))
-  ### Create plot 1
+
+  ### Create plot
   list0  <- cols0 |> length() |> seq_len() |> map(function(i, col_i=cols0[[i]]){
     df0 |> plotStateMap(
       col0      = col_i,
@@ -175,14 +199,16 @@ map2StateMap <- function(
       lgdLab0   = lgdLabs0[[i]],
       ggTitle0  = ggTitle0[[i]],
       subTitle0 = subTitle0[[i]],
+      n.breaks0 = n.breaks0,
+      round0    = round0,
+      symb0     = symb0[[i]],
       theme0    = theme0
     ) ### End plotStateMap
   }) |> set_names(names0)
-  # ### Add plot 1 to list
-  # list0[["totals"]] <- plot1
 
   ### Arrange the plots in a grid
   if(doGrid0) plot0 <- ggarrange(plotlist=list0, nrow=2)
+  rm(list0)
 
   ### Return
   return(plot0)
@@ -200,15 +226,17 @@ getSectorMaps <- function(
       low      = "white",
       mid      = "white",
       high     = "#DD8047",
-      na.value = "grey",
-      n.breaks = 6
+      na.value = "grey"
     ), ### End list
-    outlines  = "gray8",
+    outline   = "gray8",
     xLabs0    = list(p1="", p2=""),
     yLabs0    = list(p1="", p2=""),
     lgdLabs0  = list(p1="Total Impacts\nbillion USD", p2="Total Impacts\nbillion USD\nper 100,000\nindividuals"),
     ggTitle0  = list(p1="Climate-Driven Damages in 2090 by State for sectori", p2=""),
     subTitle0 = list(p1="sectori Impacts", p2="sectori Impacts, Per 100,000 people"),
+    n.breaks0 = 8,
+    round0    = 1,
+    symb0     = "$",
     theme0    = getMapTheme(),
     doGrid0   = TRUE
 ){
@@ -231,6 +259,9 @@ getSectorMaps <- function(
         lgdLabs0  = lgdLabs0,
         ggTitle0  = ggTitle0  |> map(str_replace, pattern="sectori", replacement=sector_i),
         subTitle0 = subTitle0 |> map(str_replace, pattern="sectori", replacement=sector_i),
+        n.breaks0 = n.breaks0,
+        round0    = round0,
+        symb0     = symb0,
         theme0    = theme0,
         doGrid0   = doGrid0
       ) ### End map2StateMap

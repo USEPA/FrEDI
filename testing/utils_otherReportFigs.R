@@ -944,21 +944,23 @@ funLoadData <- function(path0, name0="obj_i"){
   return(obj0)
 }
 
+
 ### Write a function to format limits
-formatPlotBreaks <- function(vals0, round0, n.breaks0=6){
-  nonNA0   <- vals0  |> get_matches(y=c(NA, NaN, Inf, -Inf), matches=F)
-  hasVals0 <- nonNA0 |> length()
+# labels=function(x) sprintf("$%.2f", as.double(x))
+formatPlotBreaks <- function(vals0, round0=1, n.breaks0=6){
+  vals0    <- vals0  |> sort()
+  vals0    <- vals0  |> get_matches(y=c(NA, NaN, Inf, -Inf), matches=F)
+  hasVals0 <- vals0  |> length()
+  # vals0 |> print() |> head()
+
   ### Return if there are no non-missing values
   if(!hasVals0) return()
-  ### Otherwise, multiply values by tens and get limits
-  p10     <- round0 + 1
-  tens0   <- 10**(p10)
-  vals1   <- nonNA0 * tens0
-  lims0   <- nonNA0  |> range(na.rm=T)
-  ### Take the floor and ceiling of the limits and then divide by tens
-  lims0   <- c(lims0 |> floor(), lims0 |> ceiling())
-  lims0   <- lims0 / tens0
-  vals1   <- vals1 / tens0
+
+  ### Get the limits
+  lims0   <- vals0 |> range(na.rm=T)
+  abs0    <- lims0 |> abs()
+  max0    <- abs0  |> max()
+
   ### Zero out values
   less0   <- lims0[1] < 0
   more0   <- lims0[2] > 0
@@ -967,15 +969,40 @@ formatPlotBreaks <- function(vals0, round0, n.breaks0=6){
     if(less0) lims0 <- lims0[1] |> c(0)
     if(more0) lims0 <- 0 |> c(lims0[2])
   } else {
-    abs0  <- lims0 |> abs()
-    max0  <- abs0  |> max()
-    lims0 <- c(-max0, max0)
+    # lims0 <- max0 * c(-1, 1)
   } ### End if(doZero0)
+
+  ### Get the power of ten of the maximum
+  log10   <- max0  |> log10()
+  floor10 <- log10 |> floor()
+  p10     <- 10**(floor10 - 1)
+
+  ### Calculate limits
+  lims1   <- lims0 / p10
+  ### Round to nearest value
+  lims1   <- c(lims1[1] |> floor(), lims1[2] |> ceiling())
+  ### Then add power of 10 back
+  lims1   <- lims1 * p10
+
   ### Get a sequence of breaks
-  vals0 <- seq(lims0[1], lims0[2], length.out=n.breaks0 + 1)
-  vals0 <- vals0 |> round(round0)
+  len1    <- n.breaks0 + 1
+  vals1   <- seq(lims1[1], lims1[2], len1)
+
+  # ### Then divide by the number to round by
+  # tens1   <- 10**(round0)
+  # lims1   <- lims1 * tens1
+  # lims1   <- lims1 |> round(0)
+  # lims1   <- lims1 / tens1
+  # ### Get a sequence of breaks
+  # len1    <- n.breaks0 + 1
+  # vals1   <- seq(lims1[1], lims1[2], length.out=n.breaks0 + 1)
+  # ends0   <- c(1, len1)
+  # ends1   <- vals1[ends0]
+  # mid0    <- vals1[-ends0] * tens1
+  # mid0    <- mid0 |> round(0) / tens1
+  # vals1   <- ends1 |> c(mid0) |> sort()
   ### Return
-  return(vals0)
+  return(vals1)
 }
 
 ### Themes  -------------------------
