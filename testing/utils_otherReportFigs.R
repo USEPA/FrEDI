@@ -292,6 +292,7 @@ format_boxWhisker <- function(
   df1     <- df1 |> arrange_at(c(sort1))
   df1     <- df1 |> arrange(row_number() |> desc())
   lvls1   <- df1 |> pull(all_of(group1))
+
   ### Factor category and arrange
   df0     <- df0 |> mutate_at(c(group1), factor, levels=lvls1)
   df0     <- df0 |> arrange_at(c(group1))
