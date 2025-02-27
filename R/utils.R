@@ -91,12 +91,10 @@ get_frediDataObj <- function(
   msg1    <- msg0 |> paste0("\t")
   ### Check if list name exists
   exists0 <- listName |> exists()
-  # exists0 |> print()
   ### If the listname exists in the name space, parse it
   ### Otherwise, grab it from a package name space
   if(exists0) {
     new_x <- parse(text=listName) |> eval()
-    # new_x |> names() |> print()
   } else      {
     ### Check if package & list name
     pkgList0    <- lib.loc |> installed.packages()
@@ -111,17 +109,13 @@ get_frediDataObj <- function(
   } ### End else(exists0)
 
   ### Whether to list all items in data object or not
-  # if(listall) {return_x <- new_x |> names()}
-  # else        {return_x <- new_x[[x]]}
   if(listall) {
     return_x <- new_x |> names()
   } else      {
-    # return_x <- new_x[[listSub]][["data"]][[x]]
-    # new_x |> names() |> print()
-    # new_x[[listSub]] |> names() |> print()
     return_x <- new_x[[listSub]][[x]]
   } ### End if(listall)
   ### Return
+  gc()
   return(return_x)
 } ### End get_frediDataObj
 
@@ -792,10 +786,14 @@ extend_slrScalars2 <- function(
 extend_slrScalars <- function(
     df0,        ### Tibble of initial results
     scalars,    ### Tibble of scalar values: df_Scalars
-    slrScalars  = "co_slrScalars" |> get_frediDataObj("frediData"),
+    # slrScalars  = "co_slrScalars" |> get_frediDataObj("frediData"),
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
+    module      = "fredi",
     elasticity  = NULL
 ){
+  ### Module list
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
+
   ###### Separate Data ######
   ### Not all SLR sectors need to have scalars extended with extend_slrScalars()
   ### Divide data into those that are in slrScalars and those that aren't
@@ -816,6 +814,7 @@ extend_slrScalars <- function(
   ###### Rename Columns ######
   renameAt0  <- c("refYear")
   renameTo0  <- c("year0")
+  slrScalars <- "co_slrScalars" |> get_frediDataObj("frediData", listName=listName0)
   slrScalars <- slrScalars |> rename_at(c(renameAt0), ~renameTo0)
   slrScalars <- slrScalars |> mutate(year0 = year0 |> as.character())
   rm(renameAt0, renameTo0)
@@ -887,23 +886,27 @@ extend_slrScalars <- function(
   return(df0)
 }
 
-###### get_co_sectorsInfo ######
+## get_co_sectorsInfo --------------
 ### This helper function helps get info about sector groups
 get_co_sectorsInfo <- function(
     sectors0   = NULL,  ### Sector IDs
     addRegions = FALSE, ### Whether to include regions & states
     addModels  = FALSE, ### Whether to include models
+    module     = "fredi", ### Which module
     colTypes   = c("ids", "labels", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
 ){
+  #### Methods
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
+
   ### Get objects from FrEDI
-  co_sectors  <- "co_sectors"     |> get_frediDataObj("frediData")
-  co_variants <- "co_variants"    |> get_frediDataObj("frediData")
-  co_impTypes <- "co_impactTypes" |> get_frediDataObj("frediData")
-  co_impYears <- "co_impactYears" |> get_frediDataObj("frediData")
-  co_regions  <- "co_regions"     |> get_frediDataObj("frediData")
-  co_states   <- "co_states"      |> get_frediDataObj("frediData")
-  co_modTypes <- "co_modelTypes"  |> get_frediDataObj("frediData")
-  co_models   <- "co_models"      |> get_frediDataObj("frediData")
+  co_sectors  <- "co_sectors"     |> get_frediDataObj("frediData", listName=listName0)
+  co_variants <- "co_variants"    |> get_frediDataObj("frediData", listName=listName0)
+  co_impTypes <- "co_impactTypes" |> get_frediDataObj("frediData", listName=listName0)
+  co_impYears <- "co_impactYears" |> get_frediDataObj("frediData", listName=listName0)
+  co_regions  <- "co_regions"     |> get_frediDataObj("frediData", listName=listName0)
+  co_states   <- "co_states"      |> get_frediDataObj("frediData", listName=listName0)
+  co_modTypes <- "co_modelTypes"  |> get_frediDataObj("frediData", listName=listName0)
+  co_models   <- "co_models"      |> get_frediDataObj("frediData", listName=listName0)
 
   ### Conditionals
   colTypes    <- colTypes |> tolower()
@@ -1138,7 +1141,7 @@ match_scalarValues <- function(
 }
 
 
-###### get_econAdjValues ######
+## get_econAdjValues --------------
 ### Get Economic Adjustment/Multiplier
 ### This function matches interpolated scalar values for each scalar type to the time series scenario information
 ### Scalar types are: physAdj, physMultiplier, damageAdj, econScalar, econMultiplier
@@ -1147,7 +1150,10 @@ get_scalarAdjValues <- function(
     data,       ### Initial results dataframe
     scalars,    ### Scalars data frame
     scalarType0 = "econMultiplier",
-    multipliers = "co_econMultipliers" |> get_frediDataObj("frediData") |> pull(econMultiplierName) |> get_matches(y="none", matches=FALSE) # multipliers ### List of multipliers
+    multipliers = "co_econMultipliers" |>
+      get_frediDataObj("frediData") |>
+      pull(econMultiplierName) |>
+      get_matches(y="none", matches=FALSE) # multipliers ### List of multipliers
 ){
   ###### Multipliers
   none0       <- "none"
@@ -1259,133 +1265,139 @@ get_scalarAdjValues <- function(
 }
 
 
-###### initialize_resultsDf ######
+## initialize_resultsDf --------------
 ### Initialize results data frame
 initialize_resultsDf <- function(
     df_se,     ### Dataframe with socioeconomic scenario
     sectors    = "co_sectors" |> get_frediDataObj("frediData") |> pull(sector_id), ### Vector of sectors
     elasticity = NULL,
-    df_scalars = "df_scalars" |> get_frediDataObj("stateData"),  ### Tibble of main scalars
-    slrScalars = "co_slrScalars" |> get_frediDataObj("frediData"),
-    refYear0   = slrScalars |> pull(refYear) |> unique() |> min(),
+    module     = "fredi",
+    refYear0   = "co_slrScalars" |> get_frediDataObj("frediData") |> pull(refYear) |> unique() |> min(),
+    # df_scalars = "df_scalars" |> get_frediDataObj("stateData"),  ### Tibble of main scalars
+    # slrScalars = "co_slrScalars" |> get_frediDataObj("frediData"),
     msg0       = "\t"
 ){
-  ###### Values ######
-  ###### Messaging
+  ### Values --------------
+  #### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Formatting initial results", "...") |> message()
 
-  ###### State Columns
-  stateCols0 <- c("state", "postal")
-  popCol0    <- c("pop")
+  #### Columns for selecting
+  selectCols <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType")
 
-  ###### Get min, max year
+  #### Methods
+  str0       <- "fredi"
+  doScalars  <- module |> str_detect(str0)
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
+  rm(str0)
+
+  #### Get min, max year
   years0     <- df_se  |> pull(year) |> get_years_fromData()
   minYr0     <- years0 |> min()
   maxYr0     <- years0 |> max()
 
-  ### Format scalars
-  ### Filter to years, update with info from socioeconomic scenario
-  df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
-  df_scalars <- df_scalars |> update_popScalars(df_se, popCol=popCol0)
-
-  ###### Scalar Info ######
+  ### Format Sector Info --------------
   ### Get info
   df_info    <- sectors |> get_co_sectorsInfo(
     addRegions = TRUE , ### Whether to include regions & states
     addModels  = FALSE, ### Whether to include models
-    colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
+    colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra.
   ) ### End get_co_sectorsInfo()
 
   ### Format info
-  drop0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType") |> paste0("_label")
-  # df_info |> glimpse(); select0 |> print()
+  # df_info |> glimpse(); selectCols |> print()
+  drop0      <- selectCols |> paste0("_label")
   df_info    <- df_info |> filter(sector %in% sectors)
   df_info    <- df_info |> select(-any_of(drop0))
   df_info    <- df_info |> distinct()
   rm(drop0)
-
+  ### Format region
+  df_info    <- df_info |> mutate(region = region |> str_replace("\\.", ""))
+  df_info    <- df_info |> mutate(region = region |> str_replace(" ", ""))
   ### Model Types
   types0     <- df_info |> pull(modelType) |> unique() |> tolower()
   has_slr    <- "slr" %in% types0
 
-  ###### SE Data ######
-  ### Format region
-  df_info    <- df_info |> mutate(region = region |> str_replace("\\.", ""))
-  df_info    <- df_info |> mutate(region = region |> str_replace(" ", ""))
+  ### Format Scalars --------------
+  if(doScalars) {
+    #### Join Socioeconomic Scenario --------------
+    ### Initialized results: Join sector info with socioeconomic scenario
+    # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
+    join0      <- df_info |> names() |> get_matches(df_se |> names())
+    df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
+    rm(join0)
 
-  ###### Initialize Results ######
-  ### Initialized results: Join sector info with socioeconomic scenario
-  # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
-  join0      <- df_info |> names() |> get_matches(df_se |> names())
-  df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
-  rm(join0)
+    #### Update Scalar Info --------------
+    ### Format scalars
+    ### Filter to years, update with info from socioeconomic scenario
+    # df_scalars = "df_scalars" |> get_frediDataObj("stateData", listName=listName0)
+    df_scalars = "df_scalars" |> get_frediDataObj("stateData", listName="fredi")
+    df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
+    df_scalars <- df_scalars |> update_popScalars(df_se, popCol="pop")
 
-  ###### Update Scalar Info ######
-  ### Update scalar info
-  ### Physical scalars
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physScalar")
-  ### Physical adjustment
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physAdj")
-  ### Damage adjustment
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="damageAdj")
-  ### Economic scalar
-  # df0 |> glimpse(); df_scalars |> glimpse()
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econScalar")
-  ### Economic multiplier
-  # df0 |> glimpse(); df_scalars |> glimpse()
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
-  # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
+    #### Match Scalars --------------
+    ### Physical scalars
+    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physScalar")
+    ### Physical adjustment
+    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physAdj")
+    ### Damage adjustment
+    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="damageAdj")
+    ### Economic scalar
+    # df0 |> glimpse(); df_scalars |> glimpse()
+    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econScalar")
+    ### Economic multiplier
+    # df0 |> glimpse(); df_scalars |> glimpse()
+    df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
+    # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
-  ###### Economic Adjustment Values ######
-  ### Get economic adjustment values
-  renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
-  renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
-  df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
-  df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
-  rm(renameAt0, renameTo0)
+    #### Economic Adjustment Values --------------
+    ### Get economic adjustment values
+    renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
+    renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
+    df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
+    df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
+    rm(renameAt0, renameTo0)
 
-  ###### Calculate Scalars ######
-  ### Calculate scalars
-  df0        <- df0 |> calcScalars(elasticity=elasticity)
+    #### Calculate Scalars --------------
+    ### Calculate scalars
+    df0        <- df0 |> calcScalars(elasticity=elasticity)
 
-  ###### SLR Scalars for Years > 2090 ######
-  ### Scalars for SLR past 2090
-  do_slr     <- has_slr & (maxYr0 > refYear0)
-  if(do_slr) {
-    ### Separate GCM & SLR values
-    slrStr0    <- "slr"
-    df_gcm0    <- df0 |> filter((modelType |> tolower()) != slrStr0)
-    df_slr0    <- df0 |> filter((modelType |> tolower()) == slrStr0)
+    #### Extend SLR Scalars past 2100 --------------
+    ### Scalars for SLR past 2090
+    do_slr     <- has_slr & (maxYr0 > refYear0)
+    if(do_slr) {
+      ### Separate GCM & SLR values
+      slrStr0    <- "slr"
+      df_gcm0    <- df0 |> filter((modelType |> tolower()) != slrStr0)
+      df_slr0    <- df0 |> filter((modelType |> tolower()) == slrStr0)
 
-    ### Get extended scalars
-    df_slr0    <- extend_slrScalars(
-      df0        = df_slr0,
-      scalars    = df_scalars,
-      refYear0   = refYear0,
-      elasticity = elasticity
-    ) ### End extend_slrScalars
+      ### Get extended scalars
+      df_slr0    <- extend_slrScalars(
+        df0        = df_slr0,
+        scalars    = df_scalars,
+        refYear0   = refYear0,
+        elasticity = elasticity
+      ) ### End extend_slrScalars
 
-    ### Add results back together
-    df0        <- df_gcm0 |> bind_rows(df_slr0)
-    df0        <- df0     |> filter(year <= maxYr0)
-    rm(slrStr0, df_slr0, df_gcm0)
-  } ### End if(do_npd)
-  # df0 |> pull(region) |> unique() |> print()
+      ### Add results back together
+      df0        <- df_gcm0 |> bind_rows(df_slr0)
+      df0        <- df0     |> filter(year <= maxYr0)
+      rm(slrStr0, df_slr0, df_gcm0)
+    } ### End if(do_npd)
+    # df0 |> pull(region) |> unique() |> print()
+  } ### End if(doScalars)
 
-  ###### Arrange ######
-  sort0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType")
-  df0        <- df0 |> arrange_at(c(sort0))
-  rm(sort0)
+  ### Arrange --------------
+  df0        <- df0 |> arrange_at(c(selectCols))
 
-  ###### Return ######
+  ### Return --------------
   ### Return
   gc()
   return(df0)
 }
 
 
-###### calcScalars ######
+## calcScalars --------------
 ### Calculate Scalars
 ### This function calculates the physical scalar value, the economic scalar value, and their product
 ### The physical and economic scalars refer to the time series column from which the Annual Sectors tab
@@ -1441,18 +1453,19 @@ calcScalars <- function(
   return(data)
 }
 
-###### get_gcmScaledImpacts ######
+## get_gcmScaledImpacts ######
 get_gcmScaledImpacts <- function(
-    df0, ### Tibble of initial results for GCM sectors, with scenario ID
-    df1, ### Tibble of drivers
-    msg0 = "\t"
+    df0,   ### Tibble of initial results for GCM sectors, with scenario ID
+    df1,   ### Tibble of drivers
+    module = "fredi", ### Which module
+    msg0   = "\t"
 ){
-  ###### Messaging
+  ### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Calculating temperature-driven scaled impacts", "...") |> message()
 
-  ### State Columns
-  stateCols0 <- c("state", "postal")
+  ### Modules
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
 
   ### Ensure that data is filtered to the correct model
   df0        <- df0 |> filter(modelType == "gcm")
@@ -1463,7 +1476,7 @@ get_gcmScaledImpacts <- function(
   years0     <- df1 |> pull(year)
 
   ### Get list of unique impact functions
-  funList0   <- "gcmImpFuncs" |> get_frediDataObj("stateData")
+  funList0   <- "gcmImpFuncs" |> get_frediDataObj("stateData", listName=listName0)
   funNames0  <- funList0 |> names()
   scenarios0 <- df0 |> pull(scenario_id) |> unique()
   df0        <- df0      |> mutate(hasScenario = (scenario_id %in% funNames0))
@@ -1517,24 +1530,24 @@ get_gcmScaledImpacts <- function(
   return(df0)
 }
 
-###### get_slrScaledImpacts ######
+## get_slrScaledImpacts ######
 get_slrScaledImpacts <- function(
-    df0, ### Initial results for SLR sectors
-    df1, ### Driver data frames
-    msg0 = "\t"
+    df0,   ### Initial results for SLR sectors
+    df1,   ### Driver data frames
+    module = "fredi",
+    msg0   = "\t"
 ){
-  ###### Messaging
+  ### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Calculating SLR-driven scaled impacts", "...") |> message()
 
-  ####### Columns & Values ######
-  ### State columns
-  stateCols0 <- c("state", "postal")
+  ### Module list
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
 
   ###### Get rDataList Objects #######
   ### Get objects from rDataLsit
-  df_ext0    <- "slrExtremes" |> get_frediDataObj("stateData")
-  df_imp0    <- "slrImpacts"  |> get_frediDataObj("stateData")
+  df_ext0    <- "slrExtremes" |> get_frediDataObj("stateData", listName=listName0)
+  df_imp0    <- "slrImpacts"  |> get_frediDataObj("stateData", listName=listName0)
 
   ###### Format Data #######
   ### Filter to appropriate model types
@@ -1565,7 +1578,7 @@ get_slrScaledImpacts <- function(
   df_imp0    <- df_imp0 |> mutate(modelType = "slr")
 
   ### Filter to values with scenarios
-  include0   <- c("region") |> c(stateCols0) |> c("model2")
+  include0   <- c("region", "state", "postal", "model2")
   df_imp0    <- df_imp0 |> mutate(model2 = "Interpolation")
   df_imp0    <- df_imp0 |> get_scenario_id(include=include0) |> ungroup()
   df_imp0    <- df_imp0 |> select(-c("model2"))
@@ -1598,7 +1611,7 @@ get_slrScaledImpacts <- function(
   df_noSlr   <- df_noSlr  |> distinct()
 
   ### Get scenario ID
-  include0   <- c("region") |> c(stateCols0) |> c("model")
+  include0   <- c("region", "state", "postal", "model")
   df_hasSlr  <- df_hasSlr |> get_scenario_id(include=include0) |> ungroup()
   df_noSlr   <- df_noSlr  |> get_scenario_id(include=include0) |> ungroup()
 
@@ -1675,7 +1688,7 @@ get_slrScaledImpacts <- function(
     df_max0   <- df_max0 |> mutate(model = "Interpolation")
 
     ### Calculate scenario ID
-    include0   <- c("region") |> c(stateCols0) |> c("model")
+    include0   <- c("region", "state", "postal", "model")
     df_slr0    <- df_slr0 |> get_scenario_id(include=include0) |> ungroup()
     df_max0    <- df_max0 |> get_scenario_id(include=include0) |> ungroup()
 
@@ -1712,21 +1725,21 @@ get_slrScaledImpacts <- function(
   return(df0)
 }
 
-####### calc_scaled_impacts_fredi ######
+## calc_scaled_impacts_fredi ######
 calc_scaled_impacts_fredi <- function(
     sectors0, ### Sector IDs
-    drivers0  ### Tibble with driver scenarios
+    drivers0, ### Tibble with driver scenarios
+    module = "fredi"
 ){
-  ### Column names
-  popCol0    <- "pop"
-  stateCols0 <- c("state", "postal")
+  ### Module list
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
 
   ###### ** Get Scenario IDs ######
   ### Mutate model for SLR sectors
-  select0    <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType", "model")
+  select0    <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType", "model")
   drop0      <- c("maxUnitValue")
   mutate0    <- c("model", "model_label")
-  df_info0   <- "co_sectorsInfo" |> get_frediDataObj("frediData")
+  df_info0   <- "co_sectorsInfo" |> get_frediDataObj("frediData", listName=listName0)
   df_info0   <- df_info0 |> filter(sector %in% sectors0)
   df_info0   <- df_info0 |> select(-any_of(drop0))
 
@@ -1738,7 +1751,7 @@ calc_scaled_impacts_fredi <- function(
   rm(select0, mutate0, drop0, df_info0)
 
   ### Create scenario ID and separate by model type
-  include0   <- c("region") |> c(stateCols0) |> c("model")
+  include0   <- c("region", "state", "postal", "model")
   gcmInfo0   <- gcmInfo0 |> get_scenario_id(include = include0)
   slrInfo0   <- slrInfo0 |> get_scenario_id(include = include0)
   df_info0   <- gcmInfo0 |> rbind(slrInfo0)
@@ -1761,8 +1774,8 @@ calc_scaled_impacts_fredi <- function(
   ### ** -- GCM Scaled Impacts
   ### Calculate scaled impacts, then bind impacts and info
   if(nrow_gcm) {
-    select0    <- c("scenario_id", "year") |> c("scaled_impacts")
-    df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(df1=drivers0)
+    select0    <- c("scenario_id", "year", "scaled_impacts")
+    df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(df1=drivers0, module=module)
     df_gcm0    <- df_gcm0    |> select(all_of(select0))
     dfImpacts0 <- dfImpacts0 |> rbind(df_gcm0)
     dfGroups0  <- dfGroups0  |> rbind(gcmInfo0)
@@ -1771,8 +1784,8 @@ calc_scaled_impacts_fredi <- function(
 
   ###### ** -- SLR Scaled Impacts
   if(nrow_slr){
-    select0    <- c("scenario_id", "year") |> c("scaled_impacts")
-    df_slr0    <- slrInfo0   |> get_slrScaledImpacts(df1=drivers0)
+    select0    <- c("scenario_id", "year", "scaled_impacts")
+    df_slr0    <- slrInfo0   |> get_slrScaledImpacts(df1=drivers0, module=module)
     # dfImpacts0 |> glimpse(); df_slr0 |> glimpse()
     df_slr0    <- df_slr0    |> select(all_of(select0))
     # df_slr0 |> filter(!(scaled_impacts |> is.na())) |> glimpse()
@@ -1800,28 +1813,29 @@ calc_scaled_impacts_fredi <- function(
 ####### calc_impacts_fredi ######
 calc_impacts_fredi <- function(
     df0, ### Tibble with scalars/initialized results
-    df1  ### Tibble with scaled impacts
+    df1, ### Tibble with scaled impacts
+    module = "fredi"
 ){
-  ### Column names
-  stateCols0 <- c("state", "postal")
-  sectors0   <- df0 |> pull(sector) |> unique()
+  ### Module
+  doScalar   <- module |> str_detect("fredi")
+  doAnnual   <- module |> str_detect("fredi")
 
   ### Get info
+  sectors0   <- df0 |> pull(sector) |> unique()
   df_info    <- sectors0 |> get_co_sectorsInfo(
     addRegions = FALSE,   ### Whether to include regions & states
     addModels  = TRUE ,   ### Whether to include models
-    colTypes   = c("ids") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
+    colTypes   = c("ids") ### Types of columns to include: IDs, labels, or extra.
   ) ### End get_co_sectorsInfo()
+  rm(sectors0)
 
   ### Mutate info
-  mutate0    <- c("model")
-  gcmInfo0   <- df_info |> filter(modelType == "gcm")
-  slrInfo0   <- df_info |> filter(modelType == "slr") |>
-    mutate_at(mutate0, function(x){"Interpolation"}) |>
-    distinct()
-  rm(df_info)
-  df_info    <- gcmInfo0 |> rbind(slrInfo0)
-  # df_info |> pull(region) |> unique() |> print()
+  # df_info |> nrow() |> print()
+  df_info    <- df_info |> mutate(model = case_when(
+    modelType %in% c("slr") ~ "Interpolation",
+    .default=module
+  ))
+  # df_info |> nrow() |> print()
 
   ### Add model info to df0
   # df_info |> glimpse(); df0 |> filter(year > 2100) |> glimpse()
@@ -1830,26 +1844,38 @@ calc_impacts_fredi <- function(
   rm(join0, df_info)
 
   ### Add scenario ID
-  include0   <- c("region") |> c(stateCols0) |> c("model")
-  df0        <- df0 |> get_scenario_id(include = include0)
+  include0   <- c("region", "state", "postal", "model")
+  df0        <- df0 |> get_scenario_id(include=include0)
 
   ### Join results with initialized results and update missing observations with NA
-  join0    <- c("scenario_id", "year")
-  drop0    <- df0 |> names() |> get_matches(y=df1 |> names()) |> get_matches(y=join0, matches=FALSE)
-  # drop0 |> print()
-  # df0      <- df0 |> select(-all_of(drop0))
-  df1      <- df1 |> select(-all_of(drop0))
-  df0      <- df1 |> left_join(df0, by=join0)
-  # df0      <- df1 |> left_join(df0, by=join0)
+  join0      <- c("scenario_id", "year")
+  drop0      <- df0 |> names() |> get_matches(y=df1 |> names()) |> get_matches(y=join0, matches=FALSE)
+  df1        <- df1 |> select(-any_of(drop0))
+  df0        <- df1 |> left_join(df0, by=join0)
   rm(df1)
-  # df0 |> filter(year > 2100) |> glimpse()
-  # df0 |> dim() |> print();
+  # df0 |> glimpse()
+
+  # # ### Physical impacts = physScalar * scaled_impacts
+  # # doPScalar  <- df0 |> names() |> get_matches(y="physScalar") |> length()
+  # # if(doPScalar) df0 <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
+  # # else          df0 <- df0 |> mutate(physical_impacts = scaled_impacts)
+  # # rm(doPScalar)
+  # # ### Annual impacts = phys-econ scalar value by the scaled impacts
+  # # doPEScalar <- df0 |> names() |> get_matches(y="physEconScalar") |> length()
+  # # if(doPEScalar) df0 <- df0 |> mutate(annual_impacts  = scaled_impacts * physEconScalar)
+  # # else           df0 <- df0 |> mutate(annual_impacts  = scaled_impacts)
+  # # rm(doPEScalar)
+  # ### Physical impacts = physScalar * scaled_impacts
+  # ### Annual impacts = phys-econ scalar value by the scaled impacts
+  # df0 <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
+  # df0 <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
 
   ### Physical impacts = physScalar * scaled_impacts
+  if(doScalar) df0 <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
+  else         df0 <- df0 |> mutate(physical_impacts = scaled_impacts)
+
   ### Annual impacts = phys-econ scalar value by the scaled impacts
-  # df0 |> glimpse()
-  df0      <- df0 |> mutate(physical_impacts = scaled_impacts * physScalar)
-  df0      <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
+  if(doAnnual) df0 <- df0 |> mutate(annual_impacts   = scaled_impacts * physEconScalar)
   # df0 |> nrow() |> print()
 
   ### Return
@@ -2448,8 +2474,12 @@ fredi_slrInterp <- function(
 combine_driverScenarios <- function(
     list0, ### List of driver scenarios
     info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-    info1 = "co_modelTypes" |> get_frediDataObj("frediData")
+    module = "fredi"
+    # info1 = "co_modelTypes" |> get_frediDataObj("frediData")
 ){
+  ### Module list
+  listName0  <- module |> str_detect("fredi") |> ifelse("rDataList", module |> paste0("Data"))
+
   ### Rename columns
   names0   <- list0 |> names()
   infoX    <- info0
@@ -2471,6 +2501,7 @@ combine_driverScenarios <- function(
   ### Select model info
   rename0  <- c("modelType_id")
   renameTo <- c("modelType")
+  info1    <- "co_modelTypes" |> get_frediDataObj("frediData", listName=listName0)
   info1    <- info1 |> rename_at(c(rename0), ~renameTo)
   # info0 |> glimpse(); info1 |> glimpse(); df0 |> glimpse()
   rm(rename0, renameTo)
@@ -2480,6 +2511,7 @@ combine_driverScenarios <- function(
   join1    <- c("modelUnit_label")
   df0      <- df0 |> left_join(info0, by=join0)
   df0      <- df0 |> left_join(info1, by=c(join1))
+  rm(join0, join1, info1)
 
   ### Return
   gc()

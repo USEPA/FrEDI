@@ -186,19 +186,18 @@ check_regions <- function(
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
-  doMain     <- "fredi"   %in% module0
-  doSV       <- "sv"      %in% module0
-  doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMain     <- module0  |> str_detect("fredi|sv")
+  doMethane  <- module0  |> str_detect("methane")
+  doOther    <- !(doMain | doMethane)
+  dListSub0  <- case_when(doMethane ~ "package", .default="frediData")
+  dListName0 <- case_when(doMain ~ "rDataList", doMethane ~ "listMethane", .default=module |> paste0("Data"))
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
   ###### Messages ######
   msgN       <- "\n"
@@ -217,13 +216,14 @@ check_regions <- function(
   ### Drop region from states, rename region_label
   join0     <- c("region")
   drop0     <- c("area", "us_area", "fips")
-  if(doFredi) {
+  doRegions <- module0  |> str_detect("fredi|sv|extremes")
+  if(doRegions) {
     renameAt0 <- c("region_id")
     renameTo0 <- c("region"   )
   } else {
     renameAt0 <- c()
     renameTo0 <- c()
-  } ### End if(doFredi)
+  } ### End if(doRegions)
   co_region <- co_region |> rename_at(c(renameAt0), ~renameTo0)
   co_region <- co_region |> select(-any_of(drop0))
   co_states <- co_states |> select(-any_of(drop0))
@@ -519,20 +519,18 @@ check_input_data <- function(
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
-  doMain     <- "fredi"   %in% module0
-  doSV       <- "sv"      %in% module0
-  doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMain     <- module0  |> str_detect("fredi|sv")
+  doMethane  <- module0  |> str_detect("methane")
+  doOther    <- !(doMain | doMethane)
+  dListSub0  <- case_when(doMethane ~ "package", .default="frediData")
+  dListName0 <- case_when(doMain ~ "rDataList", doMethane ~ "listMethane", .default=module |> paste0("Data"))
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  # co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_info   <- "co_inputInfo" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
 
   ### Get columns
@@ -791,12 +789,11 @@ calc_import_pop <- function(
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
-  doMain     <- "fredi"   %in% module0
-  doSV       <- "sv"      %in% module0
-  doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMain     <- module0  |> str_detect("fredi|sv")
+  doMethane  <- module0  |> str_detect("methane")
+  doOther    <- !(doMain | doMethane)
+  dListSub0  <- case_when(doMethane ~ "package", .default="frediData")
+  dListName0 <- case_when(doMain ~ "rDataList", doMethane ~ "listMethane", .default=module |> paste0("Data"))
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
