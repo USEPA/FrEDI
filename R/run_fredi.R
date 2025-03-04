@@ -187,16 +187,25 @@ run_fredi <- function(
     silent     = TRUE   ### Whether to message the user
 ){
   ###### Load Objects ######
+  ###### ** Create DB connection #####
+  con <-  load_frediDB()
+
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
-  fredi_config <- rDataList[["fredi_config"]]
+  #fredi_config <- rDataList[["fredi_config"]]
+  fredi_config   <- DBI::dbReadTable(con,"fredi_config")
+  fredi_config    <- unserialize(fredi_config$value |> unlist())
+
   # fredi_config |> names() |> print()
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Other values
-  co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
-  co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
 
+  #co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
+  co_sectors   <- DBI::dbReadTable(con,"co_sectors")
+
+  #co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
+  co_modTypes  <- DBI::dbReadTable(con,"co_modelTypes")
 
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
@@ -332,7 +341,9 @@ run_fredi <- function(
   ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
+  #co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
+  co_inputInfo <-  DBI::dbReadTable(con, "co_inputInfo")
+
   co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
@@ -351,7 +362,9 @@ run_fredi <- function(
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj("scenarioData")
+    #df0      <- defName0 |> get_frediDataObj("scenarioData")
+    df0 <-  DBI::dbReadTable(con, defName0)
+
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
