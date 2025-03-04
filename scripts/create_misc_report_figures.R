@@ -693,8 +693,36 @@ rm(natBoxWhiskerDf, natBoxWhiskerPlots)
 #### Plot average of region impacts/region population for each trial (e.g. per capita)
 ### Group by year, summarize over per capita values
 ### Supposedly the average values, but I'm only seeing sums
-### Refer to function creating map plots
+### Refer to function creating map plots...may need to edit to color by region
+mapSectorImpactsBaseDf <- listAggAdj[[base0]] |>
+  getFilterDf(filters0=c("model", "sectorprimary", "includeaggregate")) |>
+  getFilterDf(filters0=c("region"), reverse0=TRUE) |>
+  getFilterDf(filters0="year", years0=2090) |> (function(
+    df0,
+    group0 = c("sector", "region", "state", "postal", "year", "gdp_usd", "national_pop", "gdp_percap", "pop"),
+    sum0   = c("annual_impacts")
+  ){
+    ### Group and summarize
+    df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(sum0, sum, na.rm=T) |> ungroup()
+    ### Calculate per capita results
+    df0 <- df0 |> formatPlotData(cols0=sum0)
+    ### Add data to map
+    df0 <- df0 |> addData2Map(join0="state_lc")
+    ### Return
+    return(df0)
+  })(); mapSectorImpactsBaseDf |> glimpse()
 
+### Create map
+mapSectorImpactsBasePlots <- stateMapData |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9) |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9 * 1e5) |>
+  getSectorMaps(); mapSectorImpactsBasePlots
+
+### Save map
+mapSectorImpactsBasePlots |> names() |> walk(function(name_i, obj_i=mapSectorImpactsBasePlots[[name_i]]){
+  path_i <- saveDir() |> paste0("fig304map_", name_i, tiff0)
+  ggsave(plot=obj_i, filename=path_i, width=8, height=10)
+})
 
 
 #### Figure fa303-2: Donuts by Region ---------------------------------------------
@@ -870,6 +898,37 @@ plotsMapBasePhys |> names() |> walk(function(name_i, obj_i=plotsMapBasePhys[[nam
 ##### d. Total Annual Impacts ---------------------
 ### See function for creating maps
 # ggsave(plot = plot_mortality_total, filename="fig304total.tiff", width=8, height=10)
+mapTotalImpactsBaseDf <- listAggAdj[[base0]] |>
+  getFilterDf(filters0=c("model", "sectorprimary", "includeaggregate")) |>
+  getFilterDf(filters0=c("region"), reverse0=TRUE) |>
+  getFilterDf(filters0="year", years0=2090) |> (function(
+    df0,
+    group0 = c("region", "state", "postal", "year", "gdp_usd", "national_pop", "gdp_percap", "pop"),
+    sum0   = c("annual_impacts")
+  ){
+    ### Group and summarize
+    df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(sum0, sum, na.rm=T) |> ungroup()
+    ### Calculate per capita results
+    df0 <- df0 |> formatPlotData(cols0=sum0)
+    ### Add data to map
+    df0 <- df0 |> addData2Map(join0="state_lc")
+    ### Return
+    return(df0)
+  })(); mapTotalImpactsBaseDf |> glimpse()
+
+### Create map
+mapTotalImpactsBasePlot <- stateMapData |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9) |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9 * 1e5) |>
+  map2StateMap(); mapTotalImpactsBasePlot
+
+### Save map
+mapTotalImpactsBasePlot |> walk(function(obj_i){
+  path_i <- saveDir() |> paste0("fig304_all", tiff0)
+  ggsave(plot=obj_i, filename=path_i, width=8, height=10)
+})
+
+
 
 
 
@@ -1098,6 +1157,36 @@ rm(deltaBoxWhiskerDf, deltaBoxWhiskerPlots)
 # df_region_sum |> mutate(across(c("impacts_percap"), ~ signif(.,2))) |> print()
 # df_sector_region_sum |> mutate(across(c("impacts_percap"), ~ signif(.,2))) |> print()
 
+### Need to supply default titles as arguments
+mapSectorImpactsDeltaDf <- listAggAdj[[Delta0]] |>
+  getFilterDf(filters0=c("model", "sectorprimary", "includeaggregate")) |>
+  getFilterDf(filters0=c("region"), reverse0=TRUE) |>
+  getFilterDf(filters0="year", years0=2090) |> (function(
+    df0,
+    group0 = c("sector", "region", "state", "postal", "year", "gdp_usd", "national_pop", "gdp_percap", "pop"),
+    sum0   = c("annual_impacts")
+  ){
+    ### Group and summarize
+    df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(sum0, sum, na.rm=T) |> ungroup()
+    ### Calculate per capita results
+    df0 <- df0 |> formatPlotData(cols0=sum0)
+    ### Add data to map
+    df0 <- df0 |> addData2Map(join0="state_lc")
+    ### Return
+    return(df0)
+  })(); mapSectorImpactsDeltaDf |> glimpse()
+
+### Create map
+mapSectorImpactsDeltaPlots <- stateMapData |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9) |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9 * 1e5) |>
+  getSectorMaps(); mapSectorImpactsDeltaPlots
+
+### Save map
+mapSectorImpactsDeltaPlots |> names() |> walk(function(name_i, obj_i=mapSectorImpactsDeltaPlots[[name_i]]){
+  path_i <- saveDir() |> paste0("fig308_", name_i, tiff0)
+  ggsave(plot=obj_i, filename=path_i, width=8, height=10)
+})
 
 
 #### Figure fa308-2: Donuts by Region ---------------------------------------------
@@ -1263,6 +1352,36 @@ plotsMapPhysDelta |> names() |> walk(function(name_i, obj_i=plotsMapPhysDelta[[n
 ##### d: Total Annual Impacts ----------------------------------------
 ### See function for creating maps
 # ggsave(plot = plot_mortality_total, filename="fig309combined.tiff", width=8, height=10)
+mapTotalImpactsDeltaDf <- listAggAdj[[Delta0]] |>
+  getFilterDf(filters0=c("model", "sectorprimary", "includeaggregate")) |>
+  getFilterDf(filters0=c("region"), reverse0=TRUE) |>
+  getFilterDf(filters0="year", years0=2090) |> (function(
+    df0,
+    group0 = c("region", "state", "postal", "year", "gdp_usd", "national_pop", "gdp_percap", "pop"),
+    sum0   = c("annual_impacts")
+  ){
+    ### Group and summarize
+    df0 <- df0 |> group_by_at(c(group0)) |> summarize_at(sum0, sum, na.rm=T) |> ungroup()
+    ### Calculate per capita results
+    df0 <- df0 |> formatPlotData(cols0=sum0)
+    ### Add data to map
+    df0 <- df0 |> addData2Map(join0="state_lc")
+    ### Return
+    return(df0)
+  })(); mapTotalImpactsDeltaDf |> glimpse()
+
+### Create map
+mapTotalImpactsDeltaPlot <- stateMapData |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9) |>
+  mutate_multiplyConstant(cols=c("annual_impacts"), k0=1e-9 * 1e5) |>
+  map2StateMap(); mapTotalImpactsDeltaPlot
+
+### Save map
+mapTotalImpactsDeltaPlot |> walk(function(obj_i){
+  path_i <- saveDir() |> paste0("fig309_all", tiff0)
+  ggsave(plot=obj_i, filename=path_i, width=8, height=10)
+})
+
 
 
 
