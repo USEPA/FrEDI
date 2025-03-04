@@ -11,11 +11,11 @@
 #' @details
 #' This function converts a temperature scenario (global temperatures in degrees Celsius) into an SLR scenario to use for estimate impacts of global mean sea level rise (GMSL) on affected sectors. [FrEDI::temps2slr()] implements the method described by Kopp et al., 2016, "Temperature-driven global sea-level variability in the Common Era" (see references, below).
 #'
-#' Kopp et al.'s "semiempirical" sea-level model relates the rate of global sea level (GSL) rise \eqn{\frac{dh}{dt}}{dh/dt} to global mean temperature \eqn{T(t)}, an equilibrium temperature \eqn{T_0(t)}{Te(t)}, and a small residual trend arising from the long-term response to earlier climate change \eqn{\phi(t)}{\phi(t)}:
+#' Kopp et al.'s "semiempirical" sea-level model relates the rate of global sea level (GSL) rise \eqn{\frac{dh}{dt}}{dh/dt} to global mean temperature \eqn{T(t)}, an equilibrium temperature \eqn{T_0(t)}{Te(t)}, and a small residual trend arising from the long-term response to earlier changes \eqn{\phi(t)}{\phi(t)}:
 #'
 #' \deqn{dh/dt = \alpha \cdot (T(t) - T_0(t)) + \phi(t)}{dh/dt = \alpha \cdot (T(t) - Te(t)) + \phi(t)}
 #'
-#' As explained by Kopp et al. (2016): "The first term describes the GSL response to climate change during the study period. The second term covers a small residual trend arising from the long-term response to earlier climate change (i.e., deglaciation), which is very slowly decaying over millennia and of the order 0.1 mm/year in 2000 CE. It thus has a negligible effect on the modeled GSL rise during the 20th and 21st centuries" (Kopp et al., 2016, p. E1439).
+#' As explained by Kopp et al. (2016): "The first term describes the GSL response to earlier changes during the study period. The second term covers a small residual trend arising from the long-term response to earlier changes (i.e., deglaciation), which is very slowly decaying over millennia and of the order 0.1 mm/year in 2000 CE. It thus has a negligible effect on the modeled GSL rise during the 20th and 21st centuries" (Kopp et al., 2016, p. E1439).
 #'
 #' In the equation above, \eqn{T_0(t)}{Te(t)} and \eqn{\phi(t)} are functions of time, where:
 #'

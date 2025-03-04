@@ -104,10 +104,10 @@
 <div class="section level2">
 <h2 id="running-fredi-with-default-parameters">Running FrEDI with Default Parameters<a class="anchor" aria-label="anchor" href="#running-fredi-with-default-parameters"></a>
 </h2>
-<p>FrEDI is commonly used to project the annual, climate-driven physical
-and economic impacts associated with user-defined trajectories of U.S.
-temperature change (relative to a 1985-2005 baseline), population, and
-GDP.</p>
+<p>FrEDI is commonly used to project the annual, temperature and sea
+level change-driven physical and economic impacts associated with
+user-defined trajectories of U.S. temperature change (relative to a
+1985-2005 baseline), population, and GDP.</p>
 <p>This vignette provides a simple example of how to run and analyze
 data from FrEDI’s default scenario.</p>
 <p><strong>This example script:</strong></p>
@@ -117,13 +117,13 @@ data from FrEDI’s default scenario.</p>
 package from GitHub</li>
 <li>
 <a href="#setFrEDI">Sets</a> <code>FrEDI</code> input and run
-parameters.</li>
+parameters</li>
 <li>
 <a href="#runFrEDI">Runs</a> <code>FrEDI</code> with inputs
 specified in Step 2</li>
 <li>
 <a href="#analyzeFrEDI">Shows</a> example types of analyses using
-<code>FrEDI</code> output data.</li>
+<code>FrEDI</code> output data</li>
 </ol>
 <p>For more information about <code>FrEDI</code>, see the <a href="About.html">About</a> page and <a href="https://www.epa.gov/cira/fredi" class="external-link">FrEDI Technical
 Documentation</a></p>
@@ -132,8 +132,8 @@ Documentation</a></p>
 <div class="section level2">
 <h2 id="installFrEDI">Step 1. Install <code>FrEDI</code> R package<a class="anchor" aria-label="anchor" href="#installFrEDI"></a>
 </h2>
-<p>When installing for the first time, see <a href="manual.html">Installing &amp; Running FrEDI</a> page.</p>
-<p>Load package</p>
+<p>When installing for the first time, see the <a href="manual.html">Installing &amp; Running FrEDI</a> page.</p>
+<p>Load package:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/FrEDI">FrEDI</a></span><span class="op">)</span></span></code></pre></div>
 <p>After successfully <a href="manual.html">installing
@@ -164,9 +164,10 @@ each function includes examples.</p>
 </h2>
 <p>First, use this chunk to specify &amp; format input projections.
 Either provide paths to specific files, or set to <code>NULL</code> to
-use default projections for each variable</p>
-<p>Use this chunk to specify the input trajectories (temperature,
-population, GDP) and runtime parameters for <code>FrEDI</code>.</p>
+use default projections for each variable.</p>
+<p>Use this chunk to specify the input trajectories (temperature, sea
+level, population, and/or GDP) and runtime parameters for
+<code>FrEDI</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### To run FrEDI for more than one scenario, the code below can be</span></span>
 <span><span class="co">### adapted into a loop to format the inputs for each scenario. </span></span>
@@ -234,8 +235,8 @@ population, GDP) and runtime parameters for <code>FrEDI</code>.</p>
 <pre><code><span><span class="co">##  list()</span></span></code></pre>
 <p>If no input files are specified, <code><a href="../reference/run_fredi.html">run_fredi()</a></code> will use
 default temperature, U.S. population, and GDP projections. In this case,
-<code><a href="../reference/run_fredi.html">run_fredi()</a></code> will calculate annual projected sea level rise
-based on the default temperature change.</p>
+<code><a href="../reference/run_fredi.html">run_fredi()</a></code> will calculate annual projected sea level
+change based on the default temperature change.</p>
 <p>Default population scenarios are based on UN Median Population
 projection (<a href="https://www.un.org/en/development/desa/publications/world-population-prospects-2015-revision.html" class="external-link">United
 Nations, 2015</a>) and EPA’s ICLUSv2 model (<a href="https://www.pnas.org/doi/abs/10.1073/pnas.1002096107" class="external-link">Bierwagen et
@@ -261,7 +262,7 @@ million, and 3.4°C respectively.</p>
 <span></span>
 <span><span class="co">### Aggregation level flag</span></span>
 <span><span class="co">### - Purpose: Specify the desired level of results aggregation. For example,</span></span>
-<span><span class="co">###   to report national total results across all underlying climate-model </span></span>
+<span><span class="co">###   to report national total results across all underlying GCM </span></span>
 <span><span class="co">###   damage functions, set the flag to c("national","modelaverage")</span></span>
 <span><span class="co">### - Options: at least one from c("national", "modelaverage", "impactyear",</span></span>
 <span><span class="co">###   "impacttype", "all"), or "none". </span></span>
@@ -303,7 +304,7 @@ million, and 3.4°C respectively.</p>
 <h2 id="runFrEDI">Step 3. Run <code>FrEDI</code><a class="anchor" aria-label="anchor" href="#runFrEDI"></a>
 </h2>
 <p>Run <code>FrEDI</code> using the main <code><a href="../reference/run_fredi.html">run_fredi()</a></code>
-function</p>
+function.</p>
 <p>Default parameter options are used for any parameters that are not
 specified in <code><a href="../reference/run_fredi.html">run_fredi()</a></code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -370,7 +371,7 @@ specified in <code><a href="../reference/run_fredi.html">run_fredi()</a></code>.
 </h2>
 <p>The following chunks provide three examples options for how to
 analyze the raw output dataframe from
-<code><a href="../reference/run_fredi.html">FrEDI::run_fredi()</a></code></p>
+<code><a href="../reference/run_fredi.html">FrEDI::run_fredi()</a></code>.</p>
 <p><strong>Disclaimer: These results only provide an illustrative
 example and should <em>NOT</em> be used for further
 analysis.</strong></p>
@@ -380,12 +381,15 @@ analysis.</strong></p>
 <p>Extract national average of economic damages (in billions of dollars
 in 2015$) for all <code>FrEDI</code> sectors for a specified year</p>
 <p>The output of this chunk includes a snapshot of a subset of the
-resulting dataframe. * Note: Use the <code>sectorprimary == 1</code> and
+resulting dataframe.</p>
+<ul>
+<li>Note: Use the <code>sectorprimary == 1</code> and
 <code>includeaggregate &gt;= 1</code> flags to filter the
 <code>FrEDI</code> dataframe for impacts from only the default impact
 sectors and variants. For recommendations on aggregating impacts across
 sectors, see the FrEDI Technical Documentation (Chapter 2) and
-<code><a href="../reference/run_fredi.html">FrEDI::run_fredi()</a></code> documentation.</p>
+<code><a href="../reference/run_fredi.html">FrEDI::run_fredi()</a></code> documentation.</li>
+</ul>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### Specify groups</span></span>
 <span><span class="va">groups1</span>     <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sector"</span>, <span class="st">"region"</span>, <span class="st">"year"</span><span class="op">)</span></span>
@@ -395,7 +399,7 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <span><span class="co">### Filter to specific values:</span></span>
 <span><span class="co">### - Filter for national aggregate results averaged across all GCMs</span></span>
 <span><span class="co">### - Filter to specified years</span></span>
-<span><span class="co">### Select specific columns</span></span>
+<span><span class="co">### - Select specific columns</span></span>
 <span><span class="va">df_filter1</span>  <span class="op">&lt;-</span> <span class="va">df_sumTypes</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">region</span> <span class="op">==</span> <span class="st">"National Total"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">select</span><span class="op">(</span><span class="fu">all_of</span><span class="op">(</span><span class="va">select1</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -405,12 +409,12 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <span></span>
 <span><span class="co">### Display first 10 sectors</span></span>
 <span><span class="va">df_filter1</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="op">]</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example *Subset* of 2100 Annual National Sectoral Climate-Driven Impacts"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example *Subset* of 2100 Annual National Sectoral Temperature and Sea Level Change-Driven Impacts"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">kable_styling</span><span class="op">(</span>font_size <span class="op">=</span> <span class="fl">12</span>, full_width <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
 <table class="table table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-Example <em>Subset</em> of 2100 Annual National Sectoral Climate-Driven
-Impacts
+Example <em>Subset</em> of 2100 Annual National Sectoral Temperature and
+Sea Level Change-Driven Impacts
 </caption>
 <thead><tr>
 <th style="text-align:left;">
@@ -577,7 +581,7 @@ National Total
 <code>FrEDI</code> sectors that include physical impacts, for a
 specified year:</p>
 <ul>
-<li>The 0utput of this chunk includes a snapshot of a subset of the
+<li>The output of this chunk includes a snapshot of a subset of the
 resulting dataframe.</li>
 <li>Note: Use the <code>sectorprimary == 1</code> and
 <code>includeaggregate &gt;= 1</code> flags to filter the
@@ -595,7 +599,7 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <span><span class="co">### Filter to specific values:</span></span>
 <span><span class="co">### - Filter for national aggregate results averaged across all GCMs</span></span>
 <span><span class="co">### - Filter to specified years</span></span>
-<span><span class="co">### Select specific columns</span></span>
+<span><span class="co">### - Select specific columns</span></span>
 <span><span class="va">df_filter2</span> <span class="op">&lt;-</span> <span class="va">df_primary</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">region</span> <span class="op">==</span> <span class="st">"National Total"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">physicalmeasure</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -604,12 +608,12 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <span></span>
 <span><span class="co">### Display first 10 rows</span></span>
 <span><span class="va">df_filter2</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">6</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">14</span><span class="op">)</span>,<span class="op">]</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example *Subset* of 2100 Annual National Sectoral Climate-Driven Physical Impacts"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example *Subset* of 2100 Annual National Sectoral Temperature and Sea Level Change-Driven Physical Impacts"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">kable_styling</span><span class="op">(</span>font_size <span class="op">=</span> <span class="fl">12</span>, full_width <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
 <table class="table table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-Example <em>Subset</em> of 2100 Annual National Sectoral Climate-Driven
-Physical Impacts
+Example <em>Subset</em> of 2100 Annual National Sectoral Temperature and
+Sea Level Change-Driven Physical Impacts
 </caption>
 <thead><tr>
 <th style="text-align:left;">
@@ -780,7 +784,7 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <span><span class="co">### Filter to specific values:</span></span>
 <span><span class="co">### - Filter for national aggregate results averaged across all GCMs</span></span>
 <span><span class="co">### - Filter to specified years</span></span>
-<span><span class="co">### Select specific columns</span></span>
+<span><span class="co">### - Select specific columns</span></span>
 <span><span class="va">df_filter3</span> <span class="op">&lt;-</span> <span class="va">df_sumTypes</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">region</span> <span class="op">==</span> <span class="st">"National Total"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">group_by_at</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">groups3</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -813,11 +817,12 @@ sectors, see the FrEDI Technical Documentation (Chapter 2) and
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">### Display first 10 rows</span></span>
 <span><span class="va">df_filter3</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="op">]</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example 2100 Annual Climate-Driven Damages, by State"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">kable</span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Example 2100 Annual Temperature and Sea Level Change-Driven Damages, by State"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">kable_styling</span><span class="op">(</span>font_size <span class="op">=</span> <span class="fl">12</span>, full_width <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
 <table class="table table" style="font-size: 12px; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-Example 2100 Annual Climate-Driven Damages, by State
+Example 2100 Annual Temperature and Sea Level Change-Driven Damages, by
+State
 </caption>
 <thead><tr>
 <th style="text-align:left;">

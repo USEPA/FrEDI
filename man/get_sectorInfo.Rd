@@ -9,9 +9,9 @@ get_sectorInfo(description = F, gcmOnly = F, slrOnly = F)
 \arguments{
 \item{description}{= FALSE. Logical value indicating whether to include information about each sector. Returns a dataframe if \code{description=TRUE} and returns a character vector of sector names if \code{description=FALSE} (default).}
 
-\item{gcmOnly}{= FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using global climate model (GCM) results.}
+\item{gcmOnly}{= FALSE. Logical value indicating whether to return only sectors with impacts driven by temperature change.}
 
-\item{slrOnly}{= FALSE. Logical value indicating whether to return only sectors with climate impacts modeled using sea level rise (SLR) scenarios.}
+\item{slrOnly}{= FALSE. Logical value indicating whether to return only sectors with impacts driven by sea level change.}
 }
 \value{
 \itemize{

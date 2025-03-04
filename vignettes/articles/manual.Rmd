@@ -19,9 +19,10 @@ knitr::opts_chunk$set(
 
 # Installation
 
-FrEDI is developed by an R package. 
+FrEDI is developed as an R package. 
 
 ## R
+
 Install R and Rstudio, following the [instructions for your operating system](https://posit.co/download/rstudio-desktop/).
 
 ## FrEDI
@@ -29,6 +30,7 @@ Install R and Rstudio, following the [instructions for your operating system](ht
 The `FrEDI` R package can be installed using the `withr::with_libpaths()` and `devtools::install_github()` functions.
 
 If these packages are not installed, run:
+
 ```
 install.packages('withr')
 install.packages('devtools')
@@ -53,12 +55,15 @@ library(FrEDI)
 
 The user can specify a particular github branch, by including a `ref`. If not included, the default branch is `main`.
 <br>
+
 If the installation exists with the following error: 
+
 `
 Downloading GitHub repo USEPA/FrEDI@ref
 Error in utils::download.file(url, path, method = method, quiet = quiet,  : 
   cannot open URL 'https://api.github.com/repos/USEPA/FrEDI/tarball/ref'
 `
+
 Make sure that both `withr` and `devtools` are up to date. 
 
 If prompted during installation, update all listed R packages (e.g., Enter 1). 
@@ -76,7 +81,6 @@ In RStudio, first load any user-defined temperature, population, or GDP input fi
 tempInputFile <- file.path("your_file.csv")
 inputs        <- import_inputs(tempfile = tempInputFile,  
                                temptype = "global")
-
 ```
 
 Next, run FrEDI:

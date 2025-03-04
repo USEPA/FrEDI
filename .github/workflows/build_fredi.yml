@@ -93,82 +93,82 @@ jobs:
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
 
 
-            # ###### Update Scenarios ######
-            # ### GDP
-            # if(do_gdp) {
-            #   gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
-            #   fGdp          <- "gdpDefault"
-            #   dGdp          <- dPath0 |> paste0(fGdp, ".rda")
-            #   cGdp          <- cPath0 |> paste0(fGdp, ".csv")
-            #   gdpDefault |> save(file=dGdp)
-            #   gdpDefault |> write.csv(filename=cGdp, row.names=F)
-            #   rm(fGdp, dGdp, cGdp, gdpDefault)
-            # } ### End if(do_gdp)
-            #
-            # ### Population
-            # if(do_pop) {
-            #   popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
-            #   fPop          <- "popDefault"
-            #   dPop          <- dPath0 |> paste0(fPop, ".rda")
-            #   cPop          <- cPath0 |> paste0(fPop, ".csv")
-            #   popDefault |> save(file=dPop)
-            #   popDefault |> write.csv(filename=cPop, row.names=F)
-            #   rm(fPop, dPop, cPop, popDefault)
-            # } ### End if(do_pop)
-            #
-            # ### Temperature & CSV
-            # if(do_temp) {
-            #   gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
-            #   fTemps        <- "gcamScenarios"
-            #   dTemps        <- dPath0 |> paste0(fTemps, ".rda")
-            #   cTemps        <- cPath0 |> paste0(fTemps, ".csv")
-            #   gcamScenarios |> save(file=dTemps)
-            #   gcamScenarios |> write.csv(filename=cTemps, row.names=F)
-            #   rm(fTemps, dTemps, cTemps, gcamScenarios)
-            # } ### End if(do_temp)
-            #
-            # ### O3, CH4, and NOx
-            # if(do_o3) {
-            #   ### Ozone
-            #   select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
-            #   o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
-            #   o3Default     <- o3Default |> select(all_of(select0))
-            #   rm(select0)
-            #
-            #   # ### Adjust the default scenario
-            #   # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
-            #   # co_mods       <- co_mods   |> select(model, model_label)
-            #   # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
-            #   # o3Default     <- o3Default |> select(-model)
-            #   # o3Default     <- o3Default |> rename(model=model_label)
-            #   # o3Default     <- o3Default |> relocate(c("model"))
-            #
-            #   ### Save ozone
-            #   fO3           <- "o3Default"
-            #   dO3           <- dPath0 |> paste0(fO3, ".rda")
-            #   cO3           <- cPath0 |> paste0(fO3, ".csv")
-            #   o3Default |> save(file=dO3)
-            #   o3Default |> write.csv(filename=cO3, row.names=F)
-            #   rm(fO3, dO3, cO3, o3Default)
-            #
-            #   ### CH4
-            #   ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
-            #   fCH4          <- "ch4Default"
-            #   dCH4          <- dPath0 |> paste0(fCH4, ".rda")
-            #   cCH4          <- cPath0 |> paste0(fCH4, ".csv")
-            #   ch4Default |> save(file=dCH4)
-            #   ch4Default |> write.csv(filename=cCH4, row.names=F)
-            #   rm(fCH4, dCH4, cCH4, ch4Default)
-            #
-            #   ### NOx
-            #   noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
-            #   fNOx          <- "noxDefault"
-            #   dNOx          <- dPath0 |> paste0(fNOx, ".rda")
-            #   cNOx          <- cPath0 |> paste0(fNOx, ".csv")
-            #   noxDefault |> save(file=dNOx)
-            #   noxDefault |> write.csv(filename=cNOx, row.names=F)
-            #   rm(fNOx, dNOx, cNOx, noxDefault)
-            # } ### End if(do_o3)
+            ###### Update Scenarios ######
+            ### GDP
+            if(do_gdp) {
+              gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
+              fGdp          <- "gdpDefault"
+              dGdp          <- dPath0 |> file.path(fGdp) |> paste0(".rda")
+              cGdp          <- cPath0 |> file.path(fGdp) |> paste0(".csv")
+              gdpDefault |> save(file=dGdp)
+              gdpDefault |> write.csv(file=cGdp, row.names=F)
+              rm(fGdp, dGdp, cGdp, gdpDefault)
+            } ### End if(do_gdp)
+
+            ### Population
+            if(do_pop) {
+              popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
+              fPop          <- "popDefault"
+              dPop          <- dPath0 |> file.path(fPop) |> paste0(".rda")
+              cPop          <- cPath0 |> file.path(fPop) |> paste0(".csv")
+              popDefault |> save(file=dPop)
+              popDefault |> write.csv(file=cPop, row.names=F)
+              rm(fPop, dPop, cPop, popDefault)
+            } ### End if(do_pop)
+
+            ### Temperature & CSV
+            if(do_temp) {
+              gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
+              fTemps        <- "gcamScenarios"
+              dTemps        <- dPath0 |> file.path(fTemps) |> paste0(".rda")
+              cTemps        <- cPath0 |> file.path(fTemps) |> paste0(".csv")
+              gcamScenarios |> save(file=dTemps)
+              gcamScenarios |> write.csv(file=cTemps, row.names=F)
+              rm(fTemps, dTemps, cTemps, gcamScenarios)
+            } ### End if(do_temp)
+
+            ### O3, CH4, and NOx
+            if(do_o3) {
+              ### Ozone
+              select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
+              o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              o3Default     <- o3Default |> select(all_of(select0))
+              rm(select0)
+
+              # ### Adjust the default scenario
+              # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+              # co_mods       <- co_mods   |> select(model, model_label)
+              # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
+              # o3Default     <- o3Default |> select(-model)
+              # o3Default     <- o3Default |> rename(model=model_label)
+              # o3Default     <- o3Default |> relocate(c("model"))
+
+              ### Save ozone
+              fO3           <- "o3Default"
+              dO3           <- dPath0 |> file.path(fO3) |> paste0(".rda")
+              cO3           <- cPath0 |> file.path(fO3) |> paste0(".csv")
+              o3Default |> save(file=dO3)
+              o3Default |> write.csv(file=cO3, row.names=F)
+              rm(fO3, dO3, cO3, o3Default)
+
+              ### CH4
+              ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              fCH4          <- "ch4Default"
+              dCH4          <- dPath0 |> file.path(fCH4) |> paste0(".rda")
+              cCH4          <- cPath0 |> file.path(fCH4) |> paste0(".csv")
+              ch4Default |> save(file=dCH4)
+              ch4Default |> write.csv(file=cCH4, row.names=F)
+              rm(fCH4, dCH4, cCH4, ch4Default)
+
+              ### NOx
+              noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              fNOx          <- "noxDefault"
+              dNOx          <- dPath0 |> file.path(fNOx) |> paste0(".rda")
+              cNOx          <- cPath0 |> file.path(fNOx) |> paste0(".csv")
+              noxDefault |> save(file=dNOx)
+              noxDefault |> write.csv(file=cNOx, row.names=F)
+              rm(fNOx, dNOx, cNOx, noxDefault)
+            } ### End if(do_o3)
 
 
             ###### Update Documentation ######
