@@ -50,6 +50,7 @@
 ### This function aggregates outputs produced by temperature binning
 aggregate_impacts <- function(
     data,             ### Data frame of outputs from temperature binning
+    conn,             ### DB connection object
     aggLevels   = c("national", "modelaverage", "impacttype", "impactyear"),  ### Levels of aggregation
     columns     = c("physical_impacts", "annual_impacts"), ### Columns to aggregate
     groupByCols = c("sector", "variant", "impactType", "impactYear") |>
@@ -116,7 +117,7 @@ aggregate_impacts <- function(
 
   ###### Get FrEDI Data Objects ######
   ### Load info tables from sysdata.rda
-  co_sectInfo <- get_co_sectorsInfo(addRegions=F, addModels=F, colTypes=c("ids", "labels"))
+  co_sectInfo <- get_co_sectorsInfo(conn = conn, addRegions=F, addModels=F, colTypes=c("ids", "labels"))
 
   ###### Grouping Columns  ######
   ### Use default group by columns if none specified...otherwise, check which are present

@@ -188,12 +188,12 @@ run_fredi <- function(
 ){
   ###### Load Objects ######
   ###### ** Create DB connection #####
-  con <-  load_frediDB()
+  conn <-  load_frediDB()
 
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   #fredi_config <- rDataList[["fredi_config"]]
-  fredi_config   <- DBI::dbReadTable(con,"fredi_config")
+  fredi_config   <- DBI::dbReadTable(conn,"fredi_config")
   fredi_config    <- unserialize(fredi_config$value |> unlist())
 
   # fredi_config |> names() |> print()
@@ -202,10 +202,10 @@ run_fredi <- function(
   ### Other values
 
   #co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
-  co_sectors   <- DBI::dbReadTable(con,"co_sectors")
+  co_sectors   <- DBI::dbReadTable(conn,"co_sectors")
 
   #co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
-  co_modTypes  <- DBI::dbReadTable(con,"co_modelTypes")
+  co_modTypes  <- DBI::dbReadTable(conn,"co_modelTypes")
 
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
@@ -342,7 +342,7 @@ run_fredi <- function(
   paste0("Checking scenarios...") |> message()
   ### Add info to data
   #co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
-  co_inputInfo <-  DBI::dbReadTable(con, "co_inputInfo")
+  co_inputInfo <-  DBI::dbReadTable(conn, "co_inputInfo")
 
   co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
@@ -363,7 +363,7 @@ run_fredi <- function(
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
     #df0      <- defName0 |> get_frediDataObj("scenarioData")
-    df0 <-  DBI::dbReadTable(con, defName0)
+    df0 <-  DBI::dbReadTable(conn, defName0)
 
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
@@ -498,6 +498,7 @@ run_fredi <- function(
       valCols0  = valCols0[inNames]
     ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
       df0 |> format_inputScenarios(
+        conn      = conn,
         name0     = name0,
         hasInput0 = hasInput0,
         idCols0   = idCols0,
@@ -569,15 +570,15 @@ run_fredi <- function(
   ###### ** Get Scalar Info ######
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity) |> ungroup()
+  df_results   <- seScenario |> initialize_resultsDf(conn = conn, sectors=sectorIds, elasticity=elasticity) |> ungroup()
 
   ###### ** Calculate Scaled Impacts ######
   ### Get scaled impacts
-  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers) |> ungroup()
+  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(conn = conn, drivers0 = df_drivers) |> ungroup()
 
   ###### ** Calculate Total Impacts ######
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(conn = conn, df1=df_impacts) |> ungroup()
 
 
 
@@ -666,6 +667,7 @@ run_fredi <- function(
     # aggLevels |> length(); doAgg |> print()
     group0     <- groupCols0
     df_results <- df_results |> aggregate_impacts(
+      conn = conn,
       aggLevels   = aggLevels,
       groupByCols = group0,
       columns     = impactCols0
