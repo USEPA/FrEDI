@@ -78,52 +78,52 @@ get_matches <- function(
 
 
 ### This function makes it easier to get data objects from the sysdata.rda file
-get_frediDataObj <- function(
-    x        = NULL,        ### Object name
-    listSub  = "frediData", ### Sublist name
-    listall  = FALSE,
-    listName = "rDataList",
-    pkg      = "FrEDI",
-    lib.loc  = .libPaths()[1], ### Library path to look for packages
-    msg0     = "\t"
-){
-  ### Messaging
-  msg1    <- msg0 |> paste0("\t")
-  ### Check if list name exists
-  exists0 <- listName |> exists()
-  # exists0 |> print()
-  ### If the listname exists in the name space, parse it
-  ### Otherwise, grab it from a package name space
-  if(exists0) {
-    new_x <- parse(text=listName) |> eval()
-    # new_x |> names() |> print()
-  } else      {
-    ### Check if package & list name
-    pkgList0    <- lib.loc |> installed.packages()
-    pkgExists0  <- pkg %in% pkgList0
-    if(!pkgExists0) {
-      msg0 |> paste0("Package doesn't exist...") |> message()
-      msg0 |> paste0("Exiting...") |> message()
-      return()
-    } else          {
-      new_x <- getFromNamespace(listName, ns=pkg)
-    } ### End ### End if(!pkgExists0)
-  } ### End else(exists0)
-
-  ### Whether to list all items in data object or not
-  # if(listall) {return_x <- new_x |> names()}
-  # else        {return_x <- new_x[[x]]}
-  if(listall) {
-    return_x <- new_x |> names()
-  } else      {
-    # return_x <- new_x[[listSub]][["data"]][[x]]
-    # new_x |> names() |> print()
-    # new_x[[listSub]] |> names() |> print()
-    return_x <- new_x[[listSub]][[x]]
-  } ### End if(listall)
-  ### Return
-  return(return_x)
-} ### End get_frediDataObj
+# get_frediDataObj <- function(
+#     x        = NULL,        ### Object name
+#     listSub  = "frediData", ### Sublist name
+#     listall  = FALSE,
+#     listName = "rDataList",
+#     pkg      = "FrEDI",
+#     lib.loc  = .libPaths()[1], ### Library path to look for packages
+#     msg0     = "\t"
+# ){
+#   ### Messaging
+#   msg1    <- msg0 |> paste0("\t")
+#   ### Check if list name exists
+#   exists0 <- listName |> exists()
+#   # exists0 |> print()
+#   ### If the listname exists in the name space, parse it
+#   ### Otherwise, grab it from a package name space
+#   if(exists0) {
+#     new_x <- parse(text=listName) |> eval()
+#     # new_x |> names() |> print()
+#   } else      {
+#     ### Check if package & list name
+#     pkgList0    <- lib.loc |> installed.packages()
+#     pkgExists0  <- pkg %in% pkgList0
+#     if(!pkgExists0) {
+#       msg0 |> paste0("Package doesn't exist...") |> message()
+#       msg0 |> paste0("Exiting...") |> message()
+#       return()
+#     } else          {
+#       new_x <- getFromNamespace(listName, ns=pkg)
+#     } ### End ### End if(!pkgExists0)
+#   } ### End else(exists0)
+#
+#   ### Whether to list all items in data object or not
+#   # if(listall) {return_x <- new_x |> names()}
+#   # else        {return_x <- new_x[[x]]}
+#   if(listall) {
+#     return_x <- new_x |> names()
+#   } else      {
+#     # return_x <- new_x[[listSub]][["data"]][[x]]
+#     # new_x |> names() |> print()
+#     # new_x[[listSub]] |> names() |> print()
+#     return_x <- new_x[[listSub]][[x]]
+#   } ### End if(listall)
+#   ### Return
+#   return(return_x)
+# } ### End get_frediDataObj
 
 
 
@@ -855,7 +855,7 @@ get_co_sectorsInfo <- function(
 match_scalarValues <- function(
     df0,       ### Initial results dataframe
     conn,      ### DB Connection Object
-    scalars    = "df_scalars" |> get_frediDataObj("stateData"),
+    scalars,   ### Scalars Dataframe
     scalarType ### Type of scalar (one of: c("damageAdj", "econScalar", "physAdj", "phsScalar"))
 ){
   ###### State columns ######
@@ -1137,7 +1137,7 @@ get_econAdjValues <- function(
 initialize_resultsDf <- function(
     df_se,     ### Dataframe with socioeconomic scenario
     conn,      ### DB Connection Object
-    sectors    = "co_sectors" |> get_frediDataObj("frediData") |> pull(sector_id), ### Vector of sectors
+    sectors,   ### Vector of sectors
     elasticity = NULL,
     msg0       = "\t"
 ){
@@ -2367,7 +2367,7 @@ fredi_slrInterp <- function(
 combine_driverScenarios <- function(
     list0, ### List of driver scenarios
     info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-    info1 = "co_modelTypes" |> get_frediDataObj("frediData")
+    info1  ### co_modelTypes
 ){
   ### Rename columns
   names0   <- list0 |> names()

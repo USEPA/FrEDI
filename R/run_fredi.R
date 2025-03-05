@@ -543,7 +543,7 @@ run_fredi <- function(
   ###### ** Physical Driver Scenario  ######
   ### Select columns
   filter0    <- c("temp", "slr") |> get_matches(y=inNames)
-  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
+  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo, info1 = co_modTypes)
   # df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
   rm(filter0)
   # return(df_drivers)
