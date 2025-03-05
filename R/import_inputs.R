@@ -159,8 +159,7 @@ import_inputs <- function(
 
 
   ##### Connect to FrEDI Database
-  db_file <- system.file("extdata", "tmp_sysdata.db", package = "FrEDI")
-  con <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_file)
+  conn <-  load_frediDB()
 
 
   ###### Load Data from FrEDI ######
@@ -174,9 +173,9 @@ import_inputs <- function(
   # co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
-  co_info   <- DBI::dbGetQuery(con, "SELECT * FROM co_inputInfo")
-  co_states <- DBI::dbGetQuery(con, "SELECT * FROM co_states")
-  df_ratios <- DBI::dbGetQuery(con, "SELECT * FROM popRatiosData")
+  co_info   <- DBI::dbReadTable(conn, "co_inputInfo")
+  co_states <- DBI::dbReadTable(conn, "co_states")
+  df_ratios <- DBI::dbReadTable(conn, "popRatiosData")
 
   ###### Input Names ######
   ### Input names, output names
@@ -316,7 +315,8 @@ import_inputs <- function(
   ###### Return ######
   ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
-  dbDisconnect(con)
+  ### Disconnect from DB
+  dbDisconnect(conn)
   gc()
   return(inputsList)
 }
