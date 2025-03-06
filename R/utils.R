@@ -1170,7 +1170,7 @@ get_scalarAdjValues <- function(
     data,       ### Initial results dataframe
     conn,       ###  DB Connection Object
     scalars,    ### Scalars data frame
-    scalarType0 = "econMultiplier",
+    scalarType0 = "econMultiplier"
 ){
   ###### Multipliers
   none0       <- "none"
@@ -1293,7 +1293,6 @@ initialize_resultsDf <- function(
     conn,      ### DB Connection Object
     sectors,   ### Vector of sectors
     elasticity = NULL,
-    refYear0   = slrScalars |> pull(refYear) |> unique() |> min(),
     msg0       = "\t"
 ){
   ###### Values ######
@@ -1315,6 +1314,7 @@ initialize_resultsDf <- function(
   # df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
   # slrScalars <- "co_slrScalars"  |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
   slrScalars   <- DBI::dbReadTable(conn,"co_slrScalars")     ### Tibble with info on SLR scalars
+  refYear0   = slrScalars |> pull(refYear) |> unique() |> min()
 
   #df_scalars <- "df_scalars"     |> get_frediDataObj("stateData")  ### Tibble of main scalars
   stateDat   <- DBI::dbReadTable(conn,"stateData")
@@ -1380,7 +1380,7 @@ initialize_resultsDf <- function(
   ### Get economic adjustment values
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
-  df0        <- df0 |> get_scalarAdjValues(scalars=df_scalars, scalarType0="econMultiplier")
+  df0        <- df0 |> get_scalarAdjValues(conn = conn, scalars=df_scalars, scalarType0="econMultiplier")
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
 
