@@ -717,7 +717,7 @@ run_fredi <- function(
 
 
   ### Disconnect from DB
-  dbDisconnect(conn)
+  DBI::dbDisconnect(conn)
   ###### Return ######
   ### Message, clear unused memory, return
   message("\n", "Finished", ".")

@@ -7,7 +7,7 @@ load_frediDB <- function(){
 
   unzip_check <- fredi_db == ""
 
-  ## If needs to be unzipeed, un zip it
+  ## If needs to be unzipped, unzip it
   if(unzip_check){
     unzip(zipfile = zip, exdir = system.file("extdata", package="FrEDI"))
     fredi_db <- system.file("extdata", "sysdata.db", package="FrEDI")
@@ -17,4 +17,5 @@ load_frediDB <- function(){
 
   return(con)
 }
+
 ##### Queries #####

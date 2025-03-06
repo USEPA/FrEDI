@@ -47,7 +47,8 @@ Encoding: UTF-8
 Depends: R (>= 4.2.0),
     tidyverse,
     ggpubr,
-    openxlsx
+    openxlsx,
+    DBI
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 LazyData: TRUE
