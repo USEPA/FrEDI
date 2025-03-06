@@ -333,8 +333,8 @@ run_fredi <- function(
   paste0("Checking scenarios...") |> message()
   ### Add info to data
   co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
-  co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
+  # co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
+  # co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
   co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
 
