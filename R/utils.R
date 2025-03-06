@@ -1,7 +1,7 @@
 ###### Helpers ######
 ### Get column as vector
 # get_vector <- function(
-#     data, column = NULL
+    #     data, column = NULL
 # ){
 #   ### Select column and get values as vector
 #   col0  <- column |> is.null() |> ifelse(c(), column)
@@ -12,7 +12,7 @@
 
 # ### Get unique values from a dataframe column
 # get_uniqueValues <- function(
-#     data, column = NULL, sort=TRUE
+    #     data, column = NULL, sort=TRUE
 # ){
 #   ### Select column and get values as vector
 #   vals0 <- data  |> get_vector(column)
@@ -269,7 +269,7 @@ interpolate_annual <- function(
 
   ### Get group IDs and add to data
   groupCol0 <- defCols |> get_matches(y=c("year"), matches=F)
-  group0    <- data |> select(any_of(groupCol0))
+  group0    <- data   |> select(any_of(groupCol0))
   group0    <- group0 |> apply(1, function(x){x |> as.vector() |> paste(collapse ="_")}) |> unlist()
   data      <- data   |> mutate(group_id = group0)
   # groupCol0 |> print(); data |> glimpse()
@@ -463,7 +463,7 @@ get_years_fromData <- function(years0, by0=1){
 ### df0 is a data frame with columns c("year", "gdp_usd")
 interpolate_gdp <- function(df0){
   ### Import Functions to Namespace
-  interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
+  # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
   ### Select columns
   select0 <- c("year", "gdp_usd")
   df0     <- df0 |> select(all_of(select0))
@@ -486,7 +486,7 @@ interpolate_gdp <- function(df0){
 ### df0 is a data frame with columns c("region", "state", "postal", "year", "pop")
 interpolate_pop <- function(df0){
   ### Import Functions to Namespace
-  interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
+  # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
   ### Select column
   select0 <- c("region", "state", "postal", "year", "pop")
   df0     <- df0 |> select(all_of(select0))
@@ -528,9 +528,9 @@ calc_nationalPop <- function(df0){
 ### gdp0 is a data frame with columns c("year", "gdp_usd")
 ### pop0 is a data frame with columns c("region", "state", "postal", "year", "pop")
 create_nationalScenario <- function(
-    gdp0,
-    pop0,
-    natPop0=NULL
+    gdp0    = "gdp_default" |> get_frediDataObj("scenarioData", "rDataList"),
+    pop0    = "pop_default" |> get_frediDataObj("scenarioData", "rDataList"),
+    natPop0 = NULL
 ){
   ### If national population is NULL, calculate national population
   nullNpop <- natPop0 |> is.null()
@@ -549,8 +549,8 @@ create_nationalScenario <- function(
   ### Join nat0 with state population by year
   nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
   ### Arrange by colsP0
-  arrange0 <- colsP0 |> get_matches(y=c("pop"), matches=F)
-  nat0     <- nat0 |> arrange_at(vars(arrange0))
+  sort0    <- colsP0 |> get_matches(y=c("pop"), matches=F)
+  nat0     <- nat0 |> arrange_at(vars(sort0))
   ### Return
   return(nat0)
 }
@@ -562,18 +562,17 @@ create_nationalScenario <- function(
 ### Update scalars with regional population scenario
 update_popScalars <- function(
     df_scalars, ### Tibble of scalars
-    df_pop,     ### Socioeconomic scenario
-    groupCols = c("region") |> c("state", "postal") |> c("year"),
+    df_pop    = create_nationalScenario(), ### Pop scenario
+    scalars0  = c("reg_pop", "gdp_percap", "gdp_usd"),
+    groupCols = c("region", "state", "postal", "year"),
     popCol    = c("pop")
-    # popCol    = c("state_pop")
 ){
   ###### Format Data ######
   ### Drop region population, gdp_percap
   # df_scalars <- df_scalars |> filter(scalarName != "reg_pop")
   filter0    <- c("scalarName")
-  vals0      <- c("reg_pop", "gdp_percap", "gdp_usd")
-  df_scalars <- df_scalars |> filter_at(c(filter0), function(x, y=vals0){!(x %in% y)})
-  rm(filter0, vals0)
+  df_scalars <- df_scalars |> filter_at(c(scalars0), function(x, y=vals0){!(x %in% y)})
+  rm(filter0, scalars0)
 
   ###### National Scenario ######
   select0    <- c("gdp_usd", "gdp_percap", "year")
@@ -621,7 +620,6 @@ update_popScalars <- function(
   df_scalars <- df_scalars |> rbind(df_pop)
   rm(drop0, from0, to0, df_pop)
 
-
   ###### Return ######
   gc()
   return(df_scalars)
@@ -631,7 +629,9 @@ update_popScalars <- function(
 extend_slrScalars <- function(
     df0,        ### Tibble of initial results
     scalars,    ### Tibble of scalar values: df_Scalars
-    slrScalars  = "co_slrScalars" |> get_frediDataObj("frediData"),
+    slrScalars  = "co_slrScalars" |> get_frediDataObj("frediData", "rDataList"),
+    minYr0      = "minYear0" |> get_frediDataObj("fredi_config", "rDataList"),
+    maxYr0      = "maxYear0" |> get_frediDataObj("fredi_config", "rDataList"),
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
     elasticity  = NULL
 ){
@@ -725,7 +725,7 @@ extend_slrScalars <- function(
   return(df0)
 }
 
-## get_co_sectorsInfo --------------------------
+## get_co_sectorsInfo ----------------
 ### This helper function helps get info about sector groups
 get_co_sectorsInfo <- function(
     sectors0   = NULL,  ### Sector IDs
@@ -744,16 +744,6 @@ get_co_sectorsInfo <- function(
     dfStates = "co_states"      |> get_frediDataObj("frediData"),
     dfModels = "co_models"      |> get_frediDataObj("frediData")
 ){
-  # ### Get objects from FrEDI ----------------
-  # dfSects  <- "co_sectors"     |> get_frediDataObj("frediData")
-  # dfVars   <- "co_variants"    |> get_frediDataObj("frediData")
-  # dfITypes <- "co_impactTypes" |> get_frediDataObj("frediData")
-  # dfIYears <- "co_impactYears" |> get_frediDataObj("frediData")
-  # dfReg    <- "co_regions"     |> get_frediDataObj("frediData")
-  # dfStates <- "co_states"      |> get_frediDataObj("frediData")
-  # dfMTypes <- "co_modelTypes"  |> get_frediDataObj("frediData")
-  # dfModels <- "co_models"      |> get_frediDataObj("frediData")
-
   ### Conditionals ----------------
   colTypes   <- colTypes |> tolower()
   doIds      <- "ids"    %in% colTypes
@@ -1107,85 +1097,73 @@ get_scalarAdjValues <- function(
 }
 
 
-###### initialize_resultsDf ######
+## initialize_resultsDf ----------------
 ### Initialize results data frame
 initialize_resultsDf <- function(
-    df_se,     ### Dataframe with socioeconomic scenario
-    sectors    = "co_sectors" |> get_frediDataObj("frediData") |> pull(sector_id), ### Vector of sectors
+    df_se      = create_nationalScenario(), ### SE scenario
+    sectors    = "co_sectors"    |> get_frediDataObj("frediData", "rDataList") |> pull(sector_id) |> unique(), ### Vector of sectors
+    mTypes     = "co_models"     |> get_frediDataObj("frediData", "rDataList") |> pull(modelType) |> unique(),
+    minYr0     = "minYear0"      |> get_frediDataObj("fredi_config", "rDataList"),
+    maxYr0     = "maxYear0"      |> get_frediDataObj("fredi_config", "rDataList"),
     elasticity = NULL,
-    df_scalars = "df_scalars" |> get_frediDataObj("stateData"),  ### Tibble of main scalars
-    slrScalars = "co_slrScalars" |> get_frediDataObj("frediData"),
-    refYear0   = slrScalars |> pull(refYear) |> unique() |> min(),
+    refYear0   = "co_slrScalars" |> get_frediDataObj("frediData", "rDataList") |> pull(refYear) |> unique() |> min(),
     msg0       = "\t"
 ){
-  ###### Values ######
+  ### Messaging ----------------
   ###### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Formatting initial results", "...") |> message()
 
-  ###### State Columns
-  stateCols0 <- c("state", "postal")
-  popCol0    <- c("pop")
+  ### Scenario Info ----------------
+  ### Select columns
+  ### Rename region
+  colsMain0  <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "modelType")
+  colsScalar <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econMultiplier")
+  colsCoeff  <- c("c0", "c1", "exp0", "year0")
+  drop0      <- c("region")
+  select0    <- c(colsMain, colsScalar, colsCoeff)
+  df_info0   <- "co_sectorInfo" |>
+    get_frediDataObj("frediData", "rDataList") |>
+    filter(sector %in% sectorIds) |>
+    select(-any_of(drop0)) |>
+    rename_at(c(drop0 |> paste0("_label")), ~drop0)
+  df0        <- df0 |> select(all_of(select0)) |> distinct()
+  rm(select0, drop0)
 
-  ###### Get min, max year
-  years0     <- df_se  |> pull(year) |> get_years_fromData()
-  minYr0     <- years0 |> min()
-  maxYr0     <- years0 |> max()
-
-  ### Format scalars
-  ### Filter to years, update with info from socioeconomic scenario
-  df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
-  df_scalars <- df_scalars |> update_popScalars(df_se, popCol=popCol0)
-
-  ###### Scalar Info ######
-  ### Get info
-  df_info    <- sectors |> get_co_sectorsInfo(
-    addRegions = TRUE , ### Whether to include regions & states
-    addModels  = FALSE, ### Whether to include models
-    colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
-  ) ### End get_co_sectorsInfo()
-
-  ### Format info
-  drop0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType") |> paste0("_label")
-  # df_info |> glimpse(); select0 |> print()
-  df_info    <- df_info |> filter(sector %in% sectors)
-  df_info    <- df_info |> select(-any_of(drop0))
-  df_info    <- df_info |> distinct()
-  rm(drop0)
-
-  ### Model Types
-  types0     <- df_info |> pull(modelType) |> unique() |> tolower()
-  has_slr    <- "slr" %in% types0
-
-  ###### SE Data ######
-  ### Format region
-  df_info    <- df_info |> mutate(region = region |> str_replace("\\.", ""))
-  df_info    <- df_info |> mutate(region = region |> str_replace(" ", ""))
-
-  ###### Initialize Results ######
+  ### Join with SE Scenario ----------------
   ### Initialized results: Join sector info with socioeconomic scenario
   # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
-  join0      <- df_info |> names() |> get_matches(df_se |> names())
-  df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
-  rm(join0)
+  join0      <- df0 |> names() |> get_matches(df_se |> names())
+  df0        <- df0 |> left_join(df_se, by=join0, relationship="many-to-many")
+  rm(join0, df_se)
 
-  ###### Update Scalar Info ######
-  ### Update scalar info
-  ### Physical scalars
+  ### Update Scalar Info ----------------
+  ### Filter to years, update with info from socioeconomic scenario
+  sectScalars <- "co_sectorScalars" |>
+    get_frediDataObj("frediData", "rDataList") |>
+    filter(sector %in% sectorIds) |>
+    pull(scalarName) |>
+    unique()
+  ### Get scalars
+  df_scalars <- "df_scalars" |>
+    get_frediDataObj("stateData", "rDataList") |>
+    filter(scalarName %in% sectScalars) |>
+    filter(year >= minYr0, year <= maxYr0)
+  ### Update scalars
+  df_scalars <- df_scalars |> update_popScalars(df_se, popCol="pop")
+
+  ### Match Scalar Values ----------------
+  ### Update scalar info:
+  ### Physical scalars, Physical adjustment, Damage Adjustment
+  ### Economic scalar, Economic multiplier
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physScalar")
-  ### Physical adjustment
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physAdj")
-  ### Damage adjustment
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="damageAdj")
-  ### Economic scalar
-  # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econScalar")
-  ### Economic multiplier
-  # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
   # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
-  ###### Economic Adjustment Values ######
+  ### Calculate Economic Adjustment Values ----------------
   ### Get economic adjustment values
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
@@ -1193,40 +1171,48 @@ initialize_resultsDf <- function(
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
 
-  ###### Calculate Scalars ######
+  ### Calculate Scalars ----------------
   ### Calculate scalars
   df0        <- df0 |> calcScalars(elasticity=elasticity)
 
-  ###### SLR Scalars for Years > 2090 ######
+  ### Extend SLR Scalars for Years > 2090 ----------------
   ### Scalars for SLR past 2090
-  do_slr     <- has_slr & (maxYr0 > refYear0)
-  if(do_slr) {
+  slrStr0    <- "slr"
+  hasSlr     <- slrStr0 %in% mTypes
+  doSlr      <- hasSlr & (maxYr0 > refYear0)
+  if(doSlr) {
     ### Separate GCM & SLR values
-    slrStr0    <- "slr"
-    df_gcm0    <- df0 |> filter((modelType |> tolower()) != slrStr0)
-    df_slr0    <- df0 |> filter((modelType |> tolower()) == slrStr0)
-
+    dfSlr0 <- df0 |> filter((modelType |> tolower()) == slrStr0)
+    df0    <- df0 |> filter((modelType |> tolower()) != slrStr0)
     ### Get extended scalars
-    df_slr0    <- extend_slrScalars(
-      df0        = df_slr0,
+    dfSlr0 <- dfSlr0 |> extend_slrScalars(
       scalars    = df_scalars,
+      minYr0     = minYr0,
+      maxYr0     = maxYr0,
       refYear0   = refYear0,
       elasticity = elasticity
     ) ### End extend_slrScalars
 
-    ### Add results back together
-    df0        <- df_gcm0 |> bind_rows(df_slr0)
-    df0        <- df0     |> filter(year <= maxYr0)
-    rm(slrStr0, df_slr0, df_gcm0)
-  } ### End if(do_npd)
+    ### Bind Values back in
+    df0    <- df0 |> bind_rows(dfSlr0)
+    # df0        <- df0 |> filter(year <= maxYr0)
+    rm(dfSlr0)
+  } ### End if(doSlr)
   # df0 |> pull(region) |> unique() |> print()
 
-  ###### Arrange ######
-  sort0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType")
-  df0        <- df0 |> arrange_at(c(sort0))
-  rm(sort0)
+  ### Join and Arrange ----------------
+  ### Drop columns
+  drop0      <- c("region", "postal", "modelType") |> c(colsScalar, colsCoeff)
+  df0        <- df0 |> select(-any_of(drop0))
+  rm(drop0)
+  ### Join data
+  join0      <- df0 |> names() |> get_matches(df_info0 |> names())
+  df0        <- df_info0 |> left_join(df0, by=join0, relationship="many-to-many")
+  rm(join0, df_info0)
+  ### Arrange data
+  df0        <- df0 |> arrange_at(c(colsMain0))
 
-  ###### Return ######
+  ### Return ----------------
   ### Return
   gc()
   return(df0)
@@ -1313,6 +1299,8 @@ interpolate_impacts <- function(
 get_gcmScaledImpacts <- function(
     df0,   ### Tibble of initial results for GCM sectors, with scenario ID
     df1,   ### Tibble of drivers
+    minYr0 = "minYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList"),
+    maxYr0 = "maxYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList"),
     xCol0  = "modelUnitValue",
     yCol0  = "scaled_impacts",
     idCol0 = "scenario_id",
@@ -1432,15 +1420,10 @@ get_slrScaledImpacts <- function(
   df1        <- df1 |> filter(modelType == "slr")
   names1     <- df1 |> names()
 
-  ### Get unique sectors, min and max year
+  ### Get unique sectors
   sectors0   <- df0 |> pull(sector) |> unique()
-  # minYr0     <- df0 |> pull(year  ) |> min()
-  # maxYr0     <- df0 |> pull(year  ) |> max()
 
   ### Get rDataList Objects ----------------
-  # ### Get objects from rDataList and filter
-  # df_imp0    <- "slrImpacts"  |> get_frediDataObj("stateData", "rDataList")
-  # df_max0    <- "slrExtremes" |> get_frediDataObj("stateData", "rDataList")
   ### Filter to year range
   df_imp0    <- df_imp0 |> filter(year <= maxYr0) |> filter(year >= minYr0)
   df_max0    <- df_max0 |> filter(year <= maxYr0) |> filter(year >= minYr0)
@@ -1448,39 +1431,23 @@ get_slrScaledImpacts <- function(
   df_imp0    <- df_imp0 |> filter(sector %in% sectors0)
   df_max0    <- df_max0 |> filter(sector %in% sectors0)
 
-  ### Update scenario_id for df0 and df_imp0
-  include0   <- c("region", "state", "postal")
-  ### df0
-  df0        <- df0 |> mutate(model = "Interpolation")
-  df0        <- df0 |> distinct()
-  df0        <- df0 |> get_scenario_id(include=include0)
-  ### df_imp0
-  df_imp0    <- df_imp0 |> get_scenario_id(include=include0, col0=idCol0)
-  df_imp0    <- df_imp0 |> mutate_at(c(idCol0), paste0, "_", "Interpolation")
-
   ### Figure out which values have a scenario
   df_imp0    <- df_imp0 |> filter(hasScenario)
   scenarios0 <- df_imp0 |> pull(all_of(idCol0)) |> unique()
   # scenarios1 <- scenarios0
   ### Filter to values with a scenario and update df_imp0
-  df0        <- df0     |> mutate(hasScenario = df0[[idCol0]] %in% scenarios0)
-  scenarios0 <- df0     |> pull(all_of(idCol0)) |> unique()
-  df_max0    <- df_imp0 |> filter(df_max0[[idCol0]] %in% scenarios0)
+  df0        <- df0 |> mutate(hasScenario = df0[[idCol0]] %in% scenarios0)
+  scenarios0 <- df0 |> filter(hasScenario) |> pull(all_of(idCol0)) |> unique()
+  scenariosN <- df0 |> filter(!hasScenario) |> pull(all_of(idCol0)) |> unique()
+  df_max0    <- df_max0 |> filter(df_max0[[idCol0]] %in% scenarios0)
   df_imp0    <- df_imp0 |> filter(df_imp0[[idCol0]] %in% scenarios0)
+  # df_max0 |> glimpse(); df_imp0 |> glimpse(); df0 |> glimpse()
+  rm(df0)
 
-
-  ### Separate data into those with and without a scenario
-  ### Initialize tibble for results
-  # dfDoSlr    <- df0 |> filter( hasScenario)
-  # dfNoSlr    <- df0 |> filter(!hasScenario)
-  # df0        <- tibble()
-  df0        <- df0 |> filter(!hasScenario)
   ### Which values have functions
-  # hasDoSlr0  <- dfDoSlr |> nrow()
-  # hasNoSlr0  <- dfNoSlr |> nrow()
-  hasDoSlr0  <- df_imp0 |> nrow()
-  hasNoSlr0  <- df0     |> nrow()
-  # df_max0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse(); df0 |> glimpse()
+  hasDoSlr0  <- scenarios0 |> length()
+  hasNoSlr0  <- scenariosN |> length()
+
 
 
   ### Get Impacts for Valid IDs ----------------
@@ -1579,69 +1546,59 @@ get_slrScaledImpacts <- function(
   return(df0)
 }
 
-## calc_scaled_impacts_fredi ----------------
-calc_scaled_impacts_fredi <- function(
-    sectors0, ### Sector IDs
-    drivers0, ### Tibble with driver scenarios
-    minYr0    = "minYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList"),
-    maxYr0    = "maxYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList")
+## map_getScaledImpacts
+map_getScaledImpacts <- function(
+    type0, ### Model type
+    df0  , ### Tibble with sector info (e.g., initialize_resultsDf)
+    df1  , ### Tible with driver info
+    minYr0 = "minYear0" |> get_frediDataObj("fredi_config", "rDataList"),
+    maxYr0 = "maxYear0" |> get_frediDataObj("fredi_config", "rDataList")
 ){
-  ### Column names
-  popCol0    <- "pop"
-  stateCols0 <- c("state", "postal")
+  ### Filter values to type
+  df0     <- df0 |> filter(modelType %in% type0)
+  df1     <- df0 |> filter(modelType %in% type0)
+  ### Get scaled impacts
+  doGcm   <- (type0 |> tolower()) %in% "gcm"
+  doSlr   <- (type0 |> tolower()) %in% "slr"
+  if(doGcm) df0 <- df0 |> get_gcmScaledImpacts(df1=df1)
+  if(doSlr) df0 <- df0 |> get_slrScaledImpacts(df1=df1, minYr0=minYr0, maxYr0=maxYr0)
+  ### Select columns
+  select0 <- c("scenario_id", "year", "scaled_impacts")
+  df0     <- df0 |> select(all_of(select0))
+  ### Return
+  gc()
+  return(df0)
+}
 
-  ### ** Get Scenario IDs ----------------
+## calc_scaled_impacts_fredi
+calc_scaled_impacts_fredi <- function(
+    results0, ### Initial results DF with scenarios
+    drivers0, ### Tibble with driver scenarios
+    minYr0 = "minYear0" |> get_frediDataObj("fredi_config", "rDataList"),
+    maxYr0 = "maxYear0" |> get_frediDataObj("fredi_config", "rDataList")
+){
+  ### Select Data ----------------
   ### Filter sector info to sectors in study
   ### Mutate info to interpolation and get distinct values
-  select0  <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType", "model")
-  drop0    <- c("maxUnitValue")
-  mutate0  <- c("model", "model_label")
-  df_info0 <- "co_sectorsInfo" |> get_frediDataObj("frediData")
-  df_info0 <- df_info0 |> filter(sector %in% sectors0)
-  rm(select0, drop0, mutate0)
-  ### Doing this at a previous step in configuration process now
-  # df_info0   <- df_info0 |> select(-any_of(drop0))
-  # df_info0   <- df_info0 |> mutate_at(mutate0, function(x, y=df_info0[["modelType"]], z="slr", val0="Interpolation"){
-  #   case_when(y %in% z ~ val0, .default=x)
-  # }) |> distinct()
-  # df_info0   <- df_info0 |> distinct()
-  # ### Create scenario ID and separate by model type
-  # include0   <- c("region") |> c(stateCols0) |> c("model")
-  # gcmInfo0   <- gcmInfo0 |> get_scenario_id(include = include0)
-  # slrInfo0   <- slrInfo0 |> get_scenario_id(include = include0)
-  # df_info0   <- gcmInfo0 |> rbind(slrInfo0)
-  # rm(include0)
-  ### Join with driver info
-  join0    <- drivers0 |> names() |> get_matches(y=df_info0 |> names())
-  df_info0 <- df_info0 |> left_join(drivers0, by=join0)
-  rm(join0)
+  select0  <- c("scenario_id", "modelType")
+  df_info0 <- df_info0 |> select(all_of(select0))
+  rm(select0)
 
-  ### ** Calculate Scaled Impacts ----------------
+  ### Calculate Scaled Impacts ----------------
   # df_info0 |> pull(region) |> unique() |> print()
   mTypes0  <- df_info0 |> pull(modelType) |> unique()
-  df0      <- mTypes0  |> map(function(type0, df0=df_info0){
-    ### Filter values to type
-    df0     <- df0 |> filter(modelType %in% type0)
-    ### Get scaled impacts
-    doGcm   <- (type0 |> tolower()) %in% "gcm"
-    doSlr   <- (type0 |> tolower()) %in% "slr"
-    if(doGcm) df0 <- df0 |> get_gcmScaledImpacts(df1=drivers0)
-    if(doSlr) df0 <- df0 |> get_slrScaledImpacts(df1=drivers0, minYr0=minYr0, maxYr0=maxYr0)
-    ### Select columns
-    select0 <- c("scenario_id", "year", "scaled_impacts")
-    df0     <- df0 |> select(all_of(select0))
-    ### Return
-    gc()
-    return(df0)
-  }) |> bind_rows()
+  df0      <- mTypes0  |>
+    map(map_getScaledImpacts, df1=drivers0, minYr0=minYr0, maxYr0=maxYr0) |>
+    set_names(mTypes0) |>
+    bind_rows(.id="modelType")
 
   ### Join with scenario info ----------------
   ### Join scaled impacts with scenario info
   ### Drop columns, then join with scenario results
   # df_info0 |> glimpse(); df0 |> glimpse()
-  join0    <- c("scenario_id", "year")
-  df0      <- df_info0 |> left_join(df0, by=join0)
-  rm(df_info0, join0)
+  # join0    <- c("scenario_id", "year")
+  # df0      <- df_info0 |> left_join(df0, by=join0)
+  # rm(df_info0, join0)
 
   ### Return ----------------
   gc()
@@ -1714,13 +1671,18 @@ calc_impacts_fredi <- function(
 ### utils for aggregate_impacts
 interp_slr_byYear <- function(
     data,  ### Driver scenario with columns year, slr_cm
-    minYr0  = "minYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList"),
-    maxYr0  = "maxYear0" |> get_frediDataObj(listSub="fredi_config", listName="rDataList"),
+    minYr0  = "minYear0" |> get_frediDataObj("fredi_config", "rDataList"),
+    maxYr0  = "maxYear0" |> get_frediDataObj("fredi_config", "rDataList"),
     yCol    = "driverValue", ### Column to look for the driver value
-    co_slrs = "co_models" |>
-      get_frediDataObj("frediData", listName="rDataList") |>
+    coSlrs  = "co_models" |>
+      get_frediDataObj(listSub="frediData", listName="rDataList") |>
       rename(model=model_label) |>
+      filter(modelType %in% "slr") |>
       (function(df0, col0=model_id){
+        ### Add a line
+        df1 <- df0[1,] |> mutate(model="0 cm", model_id="0cm")
+        df0 <- df1 |> bind_rows(df0)
+        rm(df1)
         ### Get model_cm and arrange
         df0 <- df0 |> mutate(model_cm = model |> str_replace(" ", "") |> str_replace("cm", "") |> as.numeric())
         df0 <- df0 |> arrange(model_cm)
@@ -1730,6 +1692,13 @@ interp_slr_byYear <- function(
         ### Return
         return(df0)
       })(),
+    slrLvls = coSlrs |> pull(model_id),
+    slrLabs = coSlrs |> pull(model),
+    slrOrds = coSlrs |> pull(model_level),
+    slrMin  = slrOrders |> min(na.rm=T),
+    slrMax  = slrOrders |> max(na.rm=T),
+    slrDf   = "slr_cm" |> get_frediDataObj(listSub="frediData", listName="rDataList"),
+    # slrYrs  = slrDf |> pull(year) |> unique(),
     silent  = TRUE
 ){
   ### Messaging ----------------
@@ -1738,48 +1707,40 @@ interp_slr_byYear <- function(
 
   ### Defaults ----------------
   ### Rename y Column
-  oldColName_y <- yCol |> c()
-  newColName_y <- "yValue" |> c()
+  oldColName_y <- yCol
+  newColName_y <- "yValue"
   newColRef_y  <- newColName_y |> paste0("_ref")
   data         <- data |> rename_at(c(oldColName_y), ~newColName_y)
 
   ### Get Data Objects ----------------
-  co_models  <- "co_models" |> get_frediDataObj("frediData")
-  slr_df     <- "slr_cm"    |> get_frediDataObj("frediData")
+  # coSlrs    <- "co_models" |> get_frediDataObj("frediData")
+  # slrDf     <- "slr_cm"    |> get_frediDataObj("frediData")
 
   ### Assign data ----------------
   ### SLR scenario info
-  co_slrs    <- co_models |> filter(modelType=="slr") |> rename(model=model_label)
-  slr_levels <- c("0cm" ) |> c(co_slrs |> pull(model_id))
-  slr_labels <- c("0 cm") |> c(co_slrs |> pull(model))
-  slr_orders <- slr_levels |> factor(levels=slr_levels) |> as.numeric()
-  slr_min    <- (slr_orders |> min(na.rm=T)) #+ 1
-  slr_max    <-  slr_orders |> max(na.rm=T)
-
-  ### Sea level rise information
-  # assign("slr_df", rDataList[["slr_cm"]])
-  df_slr_years <- slr_df |> pull(year) |> unique()
-
-
-  ### Character vector of model names
-  c_slrs0      <- slr_labels
+  # slrLvls <- coSlrs |> pull(model_id)
+  # slrLabs <- coSlrs |> pull(model)
+  # slrOrds <- coSlrs |> pull(model_level)
+  # slrMin  <- slrOrds |> min(na.rm=T)
+  # slrMax  <- slrOrds |> max(na.rm=T)
 
   ### Check that years are unique
-  data_years   <- data |> pull(year) |> unique()
-  n_data_years <- data_years |> length()
-  nrows_data   <- data |> nrow()
-  flag0        <- nrows_data > n_data_years
+  dataYrs   <- data    |> pull(year) |> unique()
+  dataYrsN  <- dataYrs |> length()
+  dataNrow  <- data |> nrow()
+  flag0     <- dataNrow > dataYrsN
   ### Message user
   if(flag0){
-    "\t" |> paste0("values for 'yCol' are not unique...")
+    "\t" |> paste0("Warning: Values for 'yCol' are not unique!")
     "\t" |> paste0("Averaging over 'yCol' values...")
     data <- data |> group_by_at(c("year")) |> summarize_at(c("yValue"), mean, na.rm=T) |> ungroup()
   } ### End if(flag0)
-  rm(n_data_years, nrows_data, flag0)
+  rm(dataYrs, dataYrsN, dataNrow, flag0)
 
   ### Prepare data ----------------
   ### Filter to appropriate years
-  data    <- data |> filter(year %in% df_slr_years)
+
+  data    <- data |> filter(year %in% slrYrs)
   n_years <- data |> nrow()
   ### Figure if years are missing
   dataYrs <- data |> pull(year)
@@ -1790,10 +1751,10 @@ interp_slr_byYear <- function(
   select0 <- c("year") |> c(newColName_y, newColRef_y) |> c("model")
   select1 <- c("year") |> c(newColName_y) |> c("lower_model", "upper_model", "lower_slr", "upper_slr")
   ### Format data
-  slr_df  <- slr_df |> rename(yValue_ref = driverValue)
+  slrDf  <- slrDf |> rename(yValue_ref = driverValue)
   ### Join
-  # df_new  <- data |> left_join(slr_df, by = c("year", "modelType"))
-  df_new  <- data |> left_join(slr_df, by = c("year"))
+  # df_new  <- data |> left_join(slrDf, by = c("year", "modelType"))
+  df_new  <- data |> left_join(slrDf, by = c("year"))
   ### Filter to specific observations
   df_lo   <- df_new |> filter(yValue_ref <= yValue)
   df_hi   <- df_new |> filter(yValue_ref >= yValue)
@@ -1804,8 +1765,8 @@ interp_slr_byYear <- function(
   nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
   nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
   ### Create tibbles of missing years
-  dfNaLo  <- tibble(year = yrs_lo, model_level = slr_min) |> left_join(df_new, by = join0)
-  dfNaHi  <- tibble(year = yrs_lo, model_level = slr_max) |> left_join(df_new, by = join0)
+  dfNaLo  <- tibble(year = yrs_lo, model_level = slrMin) |> left_join(df_new, by = join0)
+  dfNaHi  <- tibble(year = yrs_lo, model_level = slrMax) |> left_join(df_new, by = join0)
   ### Bind missing years back in
   df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
   df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
@@ -1828,7 +1789,7 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), max, na.rm=T) |> ungroup()
   ### - Join
   df_lo <- data  |> left_join(df_lo, by=join0)
-  df_lo <- df_lo |> left_join(slr_df , by=c(join1))
+  df_lo <- df_lo |> left_join(slrDf , by=c(join1))
   ### - Select & rename
   df_lo <- df_lo |> select(all_of(select0))
   df_lo <- df_lo |> rename_at(c(rename0), ~rename1)
@@ -1840,13 +1801,13 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), min, na.rm=T) |> ungroup()
   ### - Join
   df_hi <- data  |> left_join(df_hi, by=join0)
-  df_hi <- df_hi |> left_join(slr_df , by=c(join1))
+  df_hi <- df_hi |> left_join(slrDf , by=c(join1))
   ### - Select & rename
   df_hi <- df_hi |> select(all_of(select0))
   df_hi <- df_hi |> rename_at(c(rename0), ~rename2)
   ### Remove values
   rm(group0, sum0, join1, rename0, rename1, rename2)
-  rm(slr_df)
+  rm(slrDf)
 
   ### Join all
   join0 <- c("year") |> c(newColName_y)
@@ -1942,95 +1903,7 @@ fun_getNeighbors <- function(
   return(new_values)
 }
 
-###### fun_getScale ######
-### This function creates a set of breaks for a particular column
-### It returns a list of breaks, the power of 10, and the limits
-fun_getScale <- function(
-    data,
-    scaleCol = "driverValue",
-    # zero = F,
-    nTicks = 5
-  ){
-    ### Defaults
-    if(scaleCol |> is.null()){scaleCol <- "driverValue"}
-    ### Default is not to zero out in case there are negative numbers
-    # if(is.null(zero))     zero <- F
-    if(nTicks   |> is.null()){nTicks <- 5}
 
-    ### Min/max values
-    xMin <- data[[scaleCol]] |> min(na.rm=T)
-    xMax <- data[[scaleCol]] |> max(na.rm=T)
-
-    ### Set minimum to zero unless the minimum is less than zero
-    if(xMin > 0){xMin <- 0}
-    if(xMax < 0){xMax <- 0}
-
-    ### Min/max values
-    ### Limit names, values, bounds, etc
-    df_minMax <- tibble(
-      name  = c("min", "max"),
-      value =  c(xMin, xMax),
-      bound =  c(floor(xMin), ceiling(xMax)),
-      boundType = c("floor", "ceiling")
-    ) ### End tibble
-
-    ### Absolute value, Power of 10 and y-scale info
-    df_minMax <- df_minMax |> mutate(bound_abs = bound |> abs())
-    ### Calculate log 10 and replace values of infinity with 0
-    df_minMax <- df_minMax |> mutate(log10 = (bound_abs |> log10()))
-    df_minMax <- df_minMax |> mutate(log10 = log10 |> abs() |> na_if(Inf))
-    df_minMax <- df_minMax |> mutate(log10 = log10 |> replace_na(0))
-    ### Then get the floor of the log10 value
-    df_minMax <- df_minMax |> mutate(power10 = log10 |> floor())
-
-    ### Get maximum power of 10, then scale to zero for negative numbers
-    ### Integer division of power of 10 by 3 to get number of thousands
-    ### Then get the modulus of the thousands
-    x_power10Max <- df_minMax[["power10"]] |> max(na.rm=T)
-    x_power1000  <- x_power10Max  %/% 3
-    x_mod1000    <- x_power10Max  %% 3
-
-    ### Rounded bounded values (round to 1 essentially)
-    divideByPower         <- x_power10Max - 1
-    minMax_scaled         <- df_minMax[["value"]] / 10**divideByPower
-    bounds_scaled_rounded <- minMax_scaled[1] |> floor() |> c(minMax_scaled[2] |> ceiling())
-    bounds_rounded        <- bounds_scaled_rounded * 10**divideByPower
-
-    ###### Establish the range of x
-    x_range      <- bounds_rounded
-    x_range_p10  <- x_range / 10**x_power10Max
-    x_range_dif  <- x_range_p10[2] - x_range_p10[1]
-
-    ### Determine unit of breaks in power of 10
-    x_unit_p10     <- 0.5
-    x_breaks_p10   <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
-    n_Ticks        <- x_breaks_p10 |> length()
-    if(n_Ticks>nTicks){
-      x_unit_p10   <- 1
-      x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
-      n_Ticks      <- x_breaks_p10 |> length()
-      if(n_Ticks>nTicks){
-        x_unit_p10   <- 2
-        x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
-        n_Ticks      <- x_breaks_p10 |> length()
-      } ### End if(n_Ticks>nTicks)
-    } ### End if(n_Ticks>nTicks)
-    x_breaks       <- x_breaks_p10 * 10**x_power10Max
-    # return(x_breaks)
-
-    ### Create list to return
-    return_list <- list()
-    return_list[["breaks"   ]] <- x_breaks
-    return_list[["limits"   ]] <- df_minMax[["value"]]
-    return_list[["bounds"   ]] <- bounds_rounded
-    return_list[["power10"  ]] <- x_power10Max
-    return_list[["power1000"]] <- x_power1000
-    return_list[["mod1000"  ]] <- x_mod1000
-
-    ### Return
-    gc()
-    return(return_list)
-  }
 
 ####### fredi_slrInterp ######
 fredi_slrInterp <- function(

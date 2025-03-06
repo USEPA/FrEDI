@@ -1,4 +1,4 @@
-###### Documentation ######
+## Documentation ----------------
 #' Project annual average impacts from temperature and sea level change throughout the 21st century for available sectors
 #'
 #'
@@ -173,7 +173,7 @@
 #'
 #'
 #'
-###### run_fredi ######
+## run_fredi ----------------
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi <- function(
     inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
@@ -186,7 +186,7 @@ run_fredi <- function(
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
 ){
-  ###### Load Objects ######
+  ### Load Objects ######
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   fredi_config <- rDataList[["fredi_config"]]
@@ -533,6 +533,7 @@ run_fredi <- function(
   ### Select columns
   filter0    <- c("temp", "slr") |> get_matches(y=inNames)
   df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
+  mTypes0    <- df_drivers |> pull(modelType) |> unique()
   # df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
   rm(filter0)
   # return(df_drivers)
@@ -553,21 +554,26 @@ run_fredi <- function(
   # seScenario |> glimpse()
 
 
-
-
-  ###### Calculate Impacts ######
-  ###### ** Get Scalar Info ######
+  ### Calculate Impacts ----------------
+  #### Select/Filter Scenario Info and Scalars ----------------
+  #### Get Scalar Values ----------------
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity) |> ungroup()
+  df_results   <- seScenario |> initialize_resultsDf(
+    sectors    = sectorIds,
+    mTypes     = mTypes0,
+    minYr0     = minYear,
+    maxYr0     = maxYear,
+    elasticity = elasticity
+  ) ### End initialize_resultsDf
 
-  ###### ** Calculate Scaled Impacts ######
+  #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts
-  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear) |> ungroup()
+  df_impacts   <- df_results |> calc_scaled_impacts_fredi(drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear)
 
-  ###### ** Calculate Total Impacts ######
+  #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, minYr0=minYear, maxYr0=maxYear) |> ungroup()
 
 
 
