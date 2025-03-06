@@ -563,7 +563,7 @@ run_fredi <- function(
 
   ###### ** Calculate Scaled Impacts ######
   ### Get scaled impacts
-  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers) |> ungroup()
+  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear) |> ungroup()
 
   ###### ** Calculate Total Impacts ######
   ### Get impacts
