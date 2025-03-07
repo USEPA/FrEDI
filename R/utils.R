@@ -1744,10 +1744,21 @@ get_slrHiLoInfo <- function(
   cols1 <- c(idCol1, base1)
   ### Get eq, lo, and hi values
   df1   <- df1 |> select(all_of(cols0)) |> arrange_at(c(xCol1))
-  eq0   <- df1 |> filter(xRef == val0) |> last () |> rename_at(c(cols0), ~cols1 |> paste0("Eq"))
-  lo0   <- df1 |> filter(xRef <= val0) |> last () |> rename_at(c(cols0), ~cols1 |> paste0("Lo"))
-  hi0   <- df1 |> filter(xRef >= val0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Hi"))
-  rm(df1)
+  # eq0   <- df1 |> filter(xRef == val0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Eq"))
+  # lo0   <- df1 |> filter(xRef <= val0) |> last () |> rename_at(c(cols0), ~cols1 |> paste0("Lo"))
+  # hi0   <- df1 |> filter(xRef >= val0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Hi"))
+  ### For equal values, get lower value
+  eq0   <- df1 |> filter(xRef == val0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Eq"))
+  ### For lower value, get max value and then get lowest value
+  # lo0   <- df1 |> filter(xRef <= val0) |> last () |> rename_at(c(cols0), ~cols1 |> paste0("Lo"))
+  lo0   <- df1 |> filter(xRef <= val0)
+  max0  <- hi0 |> pull(xRef) |> max()
+  lo0   <- df1 |> filter(xRef == max0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Lo"))
+  ### For higher value, get min value and then get lowest value
+  # hi0   <- df1 |> filter(xRef >= val0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Hi"))
+  hi0   <- df1 |> filter(xRef >= val0)
+  min0  <- hi0 |> pull(xRef) |> min()
+  hi0   <- df1 |> filter(xRef == min0) |> first() |> rename_at(c(cols0), ~cols1 |> paste0("Hi"))
   ### Join
   cols0 <- idCol1 |> paste0(c("Eq", "Lo", "Hi"))
   df0   <- list(df0, eq0, lo0, hi0) |> bind_cols()
