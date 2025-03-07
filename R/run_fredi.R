@@ -573,7 +573,7 @@ run_fredi <- function(
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, minYr0=minYear, maxYr0=maxYear) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, df2=df_drivers) |> ungroup()
 
 
 
