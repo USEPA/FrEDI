@@ -1694,7 +1694,7 @@ calc_impacts_fredi <- function(
     df0, ### Tibble with scalars/initialized results
     df1, ### Tibble with scaled impacts
     df2, ### Tibble with drivers
-    yCol0 = "scaled_impacts",
+    yCol0 = "scaled_impacts"
 ){
   ### Add driver info to df0
   # df_info |> glimpse(); df0 |> filter(year > 2100) |> glimpse()
