@@ -1,4 +1,4 @@
-###### Documentation ######
+## Documentation ----------------
 #' Project annual average impacts from temperature and sea level change throughout the 21st century for available sectors
 #'
 #'
@@ -173,7 +173,7 @@
 #'
 #'
 #'
-###### run_fredi ######
+## run_fredi ----------------
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi <- function(
     inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
@@ -189,6 +189,7 @@ run_fredi <- function(
   ###### Load Objects ######
   ###### ** Create DB connection #####
   conn <-  load_frediDB()
+
 
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
@@ -341,11 +342,13 @@ run_fredi <- function(
   ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
+
   #co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
   co_inputInfo <-  DBI::dbReadTable(conn, "co_inputInfo")
 
-  co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
+
+  # co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
+  # co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
   co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
 
@@ -546,7 +549,9 @@ run_fredi <- function(
   ###### ** Physical Driver Scenario  ######
   ### Select columns
   filter0    <- c("temp", "slr") |> get_matches(y=inNames)
-  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo, info1 = co_modTypes)
+
+  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
+  mTypes0    <- df_drivers |> pull(modelType) |> unique()
   # df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
   rm(filter0)
   # return(df_drivers)
@@ -567,21 +572,29 @@ run_fredi <- function(
   # seScenario |> glimpse()
 
 
-
-
-  ###### Calculate Impacts ######
-  ###### ** Get Scalar Info ######
+  ### Calculate Impacts ----------------
+  #### Select/Filter Scenario Info and Scalars ----------------
+  #### Get Scalar Values ----------------
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(conn = conn, sectors=sectorIds, elasticity=elasticity) |> ungroup()
 
-  ###### ** Calculate Scaled Impacts ######
+  df_results   <- seScenario |> initialize_resultsDf(
+    conn       = conn,
+    sectors    = sectorIds,
+    mTypes     = mTypes0,
+    minYr0     = minYear,
+    maxYr0     = maxYear,
+    elasticity = elasticity
+  ) ### End initialize_resultsDf
+
+  #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts
-  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(conn = conn, drivers0 = df_drivers) |> ungroup()
 
-  ###### ** Calculate Total Impacts ######
+  df_impacts   <- df_results |> calc_scaled_impacts_fredi(conn = conn, drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear)
+
+  #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(conn = conn, df1=df_impacts) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(conn = conn, df1=df_impacts, df2=df_drivers) |> ungroup()
 
 
 
