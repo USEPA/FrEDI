@@ -177,7 +177,7 @@
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi <- function(
     inputsList = list(temp=NULL, slr=NULL, gdp=NULL, pop=NULL), ### List of inputs
-    sectorList = NULL, ### Vector of sectors to get results for
+    sectorList = NULL, ### Vector of sectors for which to get results
     aggLevels  = c("national", "modelaverage", "impactyear", "impacttype"), ### Aggregation levels
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period
@@ -273,21 +273,31 @@ run_fredi <- function(
 
   ###### ** Agg Levels  ######
   ### Types of summarization to do: default
+  ### Update outputList
+  if(outputList) {argsList[["aggLevels"]] <- aggLevels}
   ### Aggregation levels
   aggList0   <- aggList0  |> tolower()
   aggLevels  <- aggLevels |> tolower()
-  ### Update status list
-  statusList[["aggLevels" ]] <- ("all" %in% aggLevels | (aggLevels %in% aggList0) |> all()) |> get_returnListStatus()
-  aggList1   <- aggList0  |> c("all", "none")
-  aggLevels  <- aggLevels |> get_matches(y=aggList1)
+  aggNone0   <- "none" %in% aggLevels
+  aggAll0    <- "all"  %in% aggLevels
+  aggLvlsN   <- 0
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
-  if     ("none" %in% aggLevels) {aggLevels <- c()}
-  else if("all"  %in% aggLevels) {aggLevels <- aggList0}
-  doAgg      <- (aggLevels |> length()) > 0
+  if      (aggNone0 ) {
+    aggLevels <- "none"
+  } else if (aggAll0) {
+    aggLevels <- aggList0
+  } else{
+    aggLevels <- aggLevels |> get_matches(y=aggList0)
+    aggLvlsN  <- aggLevels |> length()
+  } ### End if (aggAll0 )
+  doAgg      <- aggAll0 | aggLvlsN
+  rm(aggList0, aggNone0, aggAll0, aggLvlsN)
   ### Add to list
+  ### Update status list
+  statusList[["aggLevels" ]] <- doAgg |> get_returnListStatus()
   if(outputList) {argsList[["aggLevels"]] <- aggLevels}
-  rm(aggList0, aggList1)
+
 
 
   ###### ** Sectors List ######
