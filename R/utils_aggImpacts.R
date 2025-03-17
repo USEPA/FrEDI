@@ -68,7 +68,7 @@ aggImpacts_adjustColumns <- function(
   scalarStrs0  <- c("Scalar", "Adj", "Multiplier")
   scalarCols0  <- scalarTypes0 |> map(paste0, scalarStrs0) |> unlist()
   scalarNames0 <- scalarCols0  |> paste0("Name")
-  scalarVals0  <- cols0[cols0 |> tolower() |> str_detect(scalarNames0 |> paste0("Value") |> c(scalarCols0) |> tolower() |> collapse="|")]
+  scalarVals0  <- cols0[cols0 |> tolower() |> str_detect(scalarNames0 |> paste0("Value") |> c(scalarCols0) |> tolower() |> paste(collapse="|"))]
   # c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Name")
 
   ### Columns List ----------------

@@ -181,7 +181,7 @@ aggregate_impacts <- function(
   # data |> glimpse()
   baseGroups     <- mainGroups |> get_matches(y=groupCols)
   baseCols       <- c(mTypeCol0, regCols0, yrCol0, natPopCol0, gdpCols0, popCol0, driverCols0)
-  baseScenario   <- mTypes0 |> map(function(
+  baseInfo   <- mTypes0 |> map(function(
     typeX,
     colX    = mTypeCol0,
     groupsX = baseGroups,
@@ -195,20 +195,20 @@ aggregate_impacts <- function(
   #### National Scenario ----------------
   ### If doNat, add national scenario
   if(doNat) {
-    baseScenario <- mTypes0 |> map(function(
+    baseInfo <- mTypes0 |> map(function(
       typeX,
       colX    = mTypeCol0,
       groupsX = baseGroups,
       colsX   = baseCols
     ){
-      baseScenario |>
+      baseInfo |>
         mutate(region = natLbls0$region) |>
         mutate(state  = natLbls0$state ) |>
         mutate(postal = natLbls0$postal) |>
         filter_at(c(colX), function(x){x %in% typeX}) |>
         get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first")
     }) |> bind_rows() |>
-      bind_rows(baseScenario)
+      bind_rows(baseInfo)
   } ### End if(doNat)
 
   #### Other Info ----------------
@@ -235,7 +235,7 @@ aggregate_impacts <- function(
   ### Get group keys
   groupCols     <- groupCols |> c(baseIDCol0)
   data          <- data |> group_by_at(c(otherCols)) |> mutate(baseID=cur_group_id())
-  otherScenario <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
+  otherInfo <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
 
   ### Aggregation ----------------
   #### Select Data
@@ -314,17 +314,17 @@ aggregate_impacts <- function(
 
   ### Join data ----------------
   #### Other Info
-  namesD   <- data |> names
   join0    <- c(baseIDCol0)
-  colsOth  <- otherScenario |> names() |> get_matches(namesD, matches=F) |> c(join0)
-  data     <- data |> left_join(otherScenario |> select(all_of(colsOth)), by=join)
-  rm(join0, otherScenario)
+  namesD   <- data      |> names()
+  colsOth  <- otherInfo |> names() |> get_matches(namesD, matches=F) |> c(join0)
+  data     <- data      |> left_join(otherInfo |> select(all_of(colsOth)), by=join)
+  rm(join0, otherInfo)
 
   #### Base Scenario
-  # data |> glimpse(); baseScenario |> glimpse()
-  namesD   <- data |> names
+  # data |> glimpse(); baseInfo |> glimpse()
+  namesD   <- data     |> names()
   join0    <- baseCols |> get_matches(namesD, matches=T)
-  data     <- data |> left_join(baseScenario, by=join0)
+  data     <- data     |> left_join(baseInfo, by=join0)
   rm(join0)
 
   ### Format Data ----------------
