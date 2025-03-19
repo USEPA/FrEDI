@@ -908,7 +908,7 @@ get_co_sectorsInfo <- function(
     ### - Mutate model in dfModels to be "Interpolation" for "SLR"
     mutate0  <- c("model_id", "model_label")
     dfModels <- dfModels |> mutate_at(mutate0, function(
-    x, y=df_info0[["modelType"]], z="slr", val0="Interpolation"
+    x, y=df0[["modelType"]], z="slr", val0="Interpolation"
     ){
       case_when(y %in% z ~ val0, .default=x)
     }) |> distinct()
