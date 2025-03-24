@@ -35,23 +35,23 @@ get_import_inputs_idCols <- function(
   return(cols0)
 }
 
-###### fun_tryInput ######
+## fun_tryInput ----------------
 ### This function attempts to load a user-specified input file
 fun_tryInput <- function(
     filename = NULL,
     silent   = FALSE, ### Whether to message
-    msg0     = ""     ### Message prefix
+    msg0     = ""      ### Message prefix
 ){
-  ###### Messaging ######
+  ### Messaging ----------------
   msgUser <- !silent
-  msg1    <- msg0 |> paste0("\t")
-  msg2    <- msg1 |> paste0("\t")
-  msg3    <- msg2 |> paste0("\t")
+  msg1    <- msg0 + 1
+  msg2    <- msg0 + 2
+  msg3    <- msg0 + 3
 
-  ###### Initialize results ######
+  ### Initialize results ----------------
   return_list <- list()
 
-  ###### Defaults ######
+  ### Defaults ----------------
   ### Check if the file exists and try to load the file
   ### Set input to null if it doesn't exist
   if(!(filename |> is.null())){
@@ -80,10 +80,11 @@ fun_tryInput <- function(
 
     ### Message the user
     # message("\t", return_list[["fileMsg"]])
-    if(msgUser){ msg0 |> paste0(return_list[["fileMsg"]]) |> message() }
+    msgLast <- return_list[["fileMsg"]]
+    if(msgUser){ msg0 |> paste0(msgLast) |> message() }
   } ### End if(!(filename |> is.null()))
 
-  ###### Return ######
+  ### Return ----------------
   return(return_list)
 }
 
@@ -860,4 +861,139 @@ calc_import_pop <- function(
 
   ###### Return ######
   return(df0)
+}
+
+
+### Get default scenarios
+get_inputInfo <- function(
+    mTypes0 = c("gcm", "slr"),
+    module0 = "fredi"
+){
+  dfInfo <- controlData[["co_moduleScenarios"]] |>
+    filter(module %in% module0) |>
+    rename(inputName = inputType) |>
+    left_join(controlData[["co_inputInfo"]], by="inputName")
+  ### Get list of input names
+  doSlr0       <- mTypes0 |> tolower() |> str_detect("slr")
+  if(!doSlr0) dfInfo <- dfInfo |> filter(!(inputName %in% "slr"))
+  return(dfInfo)
+}
+
+### Add info to data
+get_defaultScenarios <- function(
+    mTypes0 = c("gcm", "slr"),
+    minYr0  = 2010,
+    maxYr0  = 2100,
+    dfInfo
+){
+  ### Get list of input names
+  doSlr0       <- mTypes0 |> tolower() |> str_detect("slr")
+  inputNames0  <- dfInfo  |> pull(inputName)
+  if(!doSlr0) inputNames0 |> get_matches("slr", matches=F)
+  ### Get list of defaults
+  inputDefs    <- inputNames0 |> map(function(name0){
+    ### Conditionals
+    doTemp  <- name0 |> str_detect("temp")
+    doSlr   <- name0 |> str_detect("slr")
+    ### Info
+    info0   <- co_inputInfo |> filter(inputName %in% name0)
+    scen0   <- info0 |> pull(scenarioName)
+    ### Filter scenario
+    df0     <- scenarioData[[name0]] |> filter(scenarioName %in% scen0)
+    if(doTemp) df0 <- df0 |> filter(scenario %in% "ECS_3.0_REF")
+    reg0    <- info0 |> pull(regional)
+    yCol0   <- info0 |> pull(valueCol)
+    idCols0 <- yrCol0
+    if(doTemp   ) yCol0   <- yCol0 |> paste0("_", c("conus", "global"))
+    if(reg0 == 1) idCols0 <- c("region", "state", "postal") |> c(idCols0)
+    cols0   <- idCols0 |> c(yCol0)
+    ### Select columns
+    df0     <- df0 |>
+      select(all_of(cols0)) |>
+      filter(year <= maxYr0)
+    ### Return
+    return(df0)
+  }) |> set_names(inputNames0)
+  return(inputDefs)
+}
+
+
+### Check and format inputs list
+format_inputsList <- function(
+    inNames0,
+    inputsList = list(temp=NULL, slr=NULL, pop=NULL, gdp=NULL),
+    maxYr0     = 2100,
+    dfInfo,
+    msg0       = 0
+){
+  ### Messaging
+  msgN       <- "\\n"
+  ### Figure out which inputs are not null, and filter to that list
+  ### Get input names that match inNames0 and filter to values that are not null
+  inNames    <- inputsList |> names() |> get_matches(inNames0)
+  notNull    <- inNames    |> map(function(name0){!(inputsList[[name0]] |> is.null())}) |> unlist() |> which()
+  inputsList <- inputsList[inNames][notNull]
+  ### Check if there are values
+  nInputs    <- inputsList |> length()
+  nNames     <- inNames    |> length()
+  if (!nNames) {
+    paste0(msg0) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
+    msgN |> paste0(msg0) |> paste0("Exiting...") |> message()
+    return()
+  } else if(!nInputs){
+    return(inputsList)
+  } ### End if(!hasInputs)
+
+
+  ### Check Inputs
+  ### Filter to valid inputs & get info
+  ### Reorganize inputs list
+  # old0       <- c("valueCol", "minYear", "maxYear")
+  # new0       <- c("valCol", "yearMin", "yearMax")
+  cols0      <- c("inputName", "valueCol", "minYear", "maxYear")
+  dfInfo     <- df_inputInfo |>
+    filter(inputName %in% inNames) |>
+    select(all_of(cols0))
+
+  ### Create logicals and initialize inputs list
+  infoNames0 <- dfInfo |> pull(inputName)
+  idCols0    <- dfInfo |> select(c("inputName", "regional")) |>
+    pmap(function(inputName, regional){
+      idColX <- "year"
+      if(regional == 1) idColX <- c("region", "state", "postal") |> c(idColX)
+    }) |> set_names(infoNames0)
+  # idCols0    <- idCols0[inNames]
+
+  ### Check inputs
+  old0       <- c("valueCol", "minYear", "maxYear")
+  new0       <- c("valCol", "yearMin", "yearMax")
+  inputsList <- dfInfo |>
+    rename_at(c(old0), ~new0) |>
+    as.list() |>
+    c(list(idCol   = idCols0   )) |>
+    c(list(inputDf = inputsList)) |>
+    pmap(check_input_data, module=module0) |>
+    set_names(infoNames0)
+
+  ### Format inputs
+  old0       <- c("valueCol", "minYear", "maxYear")
+  new0       <- c("valCol", "yearMin", "yearMax")
+  inputsList <- list(df0 = inputsList) |>
+    c
+    dfInfo |> as.list() |> pmap
+    format_inputScenarios(
+    name0     = name0,
+    hasInput0 = hasInput0,
+    idCols0   = idCols0,
+    valCols0  = valCols0,
+    minYear   = minYear,
+    maxYear   = maxYear,
+    info0     = co_inputInfo
+  )
+
+  inputsList <- inputsList[inNames]
+  # rm(minYrs0, maxYrs0)
+
+  ### Return inputs list
+  return(inputsList)
 }

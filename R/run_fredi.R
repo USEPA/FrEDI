@@ -189,14 +189,16 @@ run_fredi <- function(
   ### Load Objects ######
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
-  fredi_config <- rDataList[["fredi_config"]]
+  module0       <- "fredi"
+  modDataStr0   <- module0 |> paste0("Data")
+  ctrlDataStr0  <- "controlData"
+  fConfigStr0   <- "fredi_config"
+  configLStr0   <- "configData"
+  stateLStr0    <- "stateData"
+
+  # fredi_config  <- "fredi_config"    |> get_frediDataObj(configLStr0, modDataStr0)
   # fredi_config |> names() |> print()
-  for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
-
-  ### Other values
-  co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
-  co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
-
+  # for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ###### Set up the environment ######
   ### Level of messaging (default is to message the user)
@@ -204,11 +206,20 @@ run_fredi <- function(
   msgN         <- "\n"
   msg0         <- ""
   msg1         <- msg0 |> paste0("\t")
+  msg2         <- msg1 |> paste0("\t")
 
   ### Model years and NPD (FrEDI past 2100)
+  minYear0     <- "minYear0" |> get_frediDataObj(configLStr0, modDataStr0)
+  maxYear0     <- "maxYear0" |> get_frediDataObj(configLStr0, modDataStr0)
+  npdYear0     <- "maxYear0" |> get_frediDataObj(configLStr0, modDataStr0)
   minYear      <- minYear0
   maxYear      <- thru2300 |> ifelse(npdYear0, maxYear)
-  do_npd       <- maxYear > maxYear0
+
+  ### Columns
+  yrCol0       <- "year"
+  gcmStr0      <- "gcm"
+  slrStr0      <- "slr"
+  tempStr0     <- "temp"
 
   ###### ** Return List ######
   ### Initialize list to return
@@ -227,7 +238,7 @@ run_fredi <- function(
   if(outputList){
     statusList[["inputsList"]] <- inputsList
     statusList[["sectorList"]] <- (!(sectorList |> is.null())) |> get_returnListStatus()
-    statusList[["aggLevels" ]] <- "placeholder"
+    statusList[["aggLevels" ]] <- c()
     statusList[["elasticity"]] <- (elasticity == 1) |> get_returnListStatus()
     statusList[["maxYear"   ]] <- (maxYear == maxYear0 & !thru2300) |> get_returnListStatus()
     statusList[["thru2300"  ]] <- (!thru2300) |> get_returnListStatus()
@@ -240,8 +251,8 @@ run_fredi <- function(
   ### - inputsList items, sectorList, and aggLevels assessed further below
   if(outputList){
     argsList[["inputsList"]] <- inputsList
-    argsList[["sectorList"]] <- "placeholder"
-    argsList[["aggLevels" ]] <- "placeholder"
+    argsList[["sectorList"]] <- c()
+    argsList[["aggLevels" ]] <- aggLevels
     argsList[["elasticity"]] <- elasticity
     argsList[["maxYear"   ]] <- maxYear
     argsList[["thru2300"  ]] <- thru2300
@@ -250,202 +261,54 @@ run_fredi <- function(
   } ### End if(outputList)
 
 
-  ###### ** Years   ######
-  # cYears0 <- minYear:maxYear
-
-
   ###### ** Elasticity ######
   ### Message user about elasticity
   has_elasticity <- elasticity     |> is.numeric()
+  elasticity0    <- "elasticity0" |> get_frediDataObj(configLStr0, modDataStr0)
   elasticity     <- has_elasticity |> ifelse(elasticity, elasticity0)
   if(!has_elasticity){
-    paste0("\t", "Incorrect value type provided for argument 'elasticity'...") |> message()
-    paste0("\t\t", "Using default elasticity values.") |> message()
+    msg1 |> paste0("Incorrect value type provided for argument 'elasticity'...") |> message()
+    msg2 |> paste0("Using default elasticity values.") |> message()
   } ### End if
   rm(has_elasticity, elasticity0)
 
 
-  ###### ** State Info ######
-  byState        <- TRUE
-  popCol0        <- "pop"
-  stateCols0     <- c("state", "postal")
-
-
   ###### ** Agg Levels  ######
   ### Types of summarization to do: default
-  ### Update outputList
-  if(outputList) {argsList[["aggLevels"]] <- aggLevels}
   ### Aggregation levels
-  aggList0   <- aggList0  |> tolower()
-  aggLevels  <- aggLevels |> tolower()
-  aggNone0   <- "none" %in% aggLevels
-  aggAll0    <- "all"  %in% aggLevels
-  aggLvlsN   <- 0
-  ### If none specified, no aggregation (only SLR interpolation)
-  ### Otherwise, aggregation depends on length of agg levels
-  if      (aggNone0 ) {
-    aggLevels <- "none"
-  } else if (aggAll0) {
-    aggLevels <- aggList0
-  } else{
-    aggLevels <- aggLevels |> get_matches(y=aggList0)
-    aggLvlsN  <- aggLevels |> length()
-  } ### End if (aggAll0 )
-  doAgg      <- aggAll0 | aggLvlsN
-  rm(aggList0, aggNone0, aggAll0, aggLvlsN)
-  ### Add to list
+  aggList0   <- "aggList0" |> get_frediDataObj(configLStr0, modDataStr0)  |> tolower()
+  aggLevels  <- aggLevels |> check_aggLevels(module0="fredi", msg0=0)
   ### Update status list
-  statusList[["aggLevels" ]] <- doAgg |> get_returnListStatus()
+  if(outputList) {statusList[["aggLevels" ]] <- doAgg |> get_returnListStatus()}
   if(outputList) {argsList[["aggLevels"]] <- aggLevels}
 
 
 
   ###### ** Sectors List ######
   ### Initialize sector list if the sectors list is null
-  if(sectorList |> is.null()) sectorList <- co_sectors |> pull(sector_label)
-  ### Sector names & labels
-  dfSectors    <- co_sectors |> filter((sector_label |> tolower()) %in% (sectorList |> tolower()))
-  sectorIds    <- dfSectors  |> pull(sector_id)
-  sectorLbls   <- dfSectors  |> pull(sector_label)
-  sectors0     <- co_sectors |> pull(sector_label) |> unique()
-
-  ### Check sectors
-  # sectorList |> print(); sectorLbls |> print()
-  naSectors0   <- sectorList |> get_matches(y=sectorLbls, matches=F, type="values")
-  ### Message the user
-  if(naSectors0 |> length()){
-    naSectors0  <- "'" |> paste0(naSectors0 |> paste(collapse="', '")) |> paste0("'")
-    msgSectors0 <- "'" |> paste0(sectors0   |> paste(collapse="', '")) |> paste0("'")
-    1 |> get_msgPrefix(newline=T) |> paste0("Warning! Error in `sectorList`:") |> message()
-    2 |> get_msgPrefix() |> paste0("Impacts are not available for sectors: ") |> message()
-    3 |> get_msgPrefix() |> paste0(naSectors0) |> message()
-    2 |> get_msgPrefix(newline=T) |> paste0("Availabler sectors: ") |> message()
-    3 |> get_msgPrefix()|> paste0(msgSectors0) |> message()
-    return()
-  } ### End if(length(missing_sectors)>=1)
+  sectorList   <- sectorList |> check_inputSectors(module0="fredi", msg0=0)
   ### Update in list
-  if(outputList) {argsList[["sectorList"]] <- sectorLbls}
+  if(outputList) {argsList[["sectorList"]] <- sectorList}
 
 
   ###### ** Model Types List ######
   ### Which model types are in play based on sector selection
-  modTypes0    <- co_sectors  |> filter(sector_label %in% sectorLbls) |> pull(modelType) |> unique()
-  # sectorLbls |> print(); modTypes0 |> print(); co_modTypes |> glimpse()
-  modTypesIn0  <- co_modTypes |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
-  doSlr        <- ("slr" %in% modTypes0)
-  doGcm        <- ("gcm" %in% modTypes0)
-  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
-  else      modTypesIn <- modTypesIn0
-  modInputs0   <- c("gdp", "pop") |> c(modTypesIn)
+  modTypes0    <- dfSectors |> pull(model_type) |> unique() |> tolower()
+  doSlr        <- slrStr0 %in% modTypes0
+  doGcm        <- gcmStr0 %in% modTypes0
+
 
   ###### Inputs List ######
-  ###### ** Input Info ######
-  paste0("Checking scenarios...") |> message()
-  ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
-  # co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
-  # co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
-  co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
-
-  ### Initialize subset
-  df_inputInfo <- co_inputInfo
-
-  ### Input info
-  inNames0     <- co_inputInfo |> pull(inputName)
-  # inNames0 |> print()
-
-  ###### ** Input Defaults ######
-  inputDefs    <- inNames0 |> map(function(name0){
-    ### Objects
-    doTemp0  <- "temp" %in% name0
-    doSlr0   <- "slr"  %in% name0
-    defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj("scenarioData")
-    ### Format data
-    if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
-    if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
-    ### Return
-    return(df0)
-  }) |> set_names(inNames0)
-
-
-  ###### ** Input Columns ######
-  ### Get list with expected name of columns used for unique ids
-  ### Get list with expected name of column containing values
-  valCols0     <- co_inputInfo |> pull(valueCol) |> as.list() |> set_names(inNames0)
-  idCols0      <- list(valCols0=valCols0, df0=inputDefs[inNames0]) |> pmap(function(valCols0, df0){
-    df0 |> names() |> get_matches(y=valCols0, matches=F)
-  }) |> set_names(inNames0)
-
-
-  ###### ** Valid Inputs & Input Info ######
-  ### Figure out which inputs are not null, and filter to that list
-  ### inputsList Names
-  inNames      <- inputsList |> names()
-  inLength     <- inputsList |> length()
-  hasNames     <- inNames    |> length()
-  if(hasNames) {
-    # inNames      <- inputsList |> names()
-    # inNames |> print()
-    # inputsList |> map(glimpse)
-    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
-    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-    ### Filter to values that are not NULL
-    inputsList   <- inputsList[inWhich]
-    inNames      <- inputsList |> names()
-    rm(inWhich)
-    ### Check which input names are in the user-provided list
-    inWhich      <- inNames %in% inNames0
-    inNames      <- inNames[inWhich]
-    inputsList   <- inputsList[inNames]
-    hasAnyInputs <- inNames |> length()
-    rm(inWhich)
-    # inNames |> print()
-  } else if (inLength) {
-    paste0(msg1) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
-    msgN |> paste0(msg1) |> paste0("Exiting...") |> message()
-    return()
-  } else {
-    hasAnyInputs <- FALSE
-  } ### End if(!hasInputs)
-
-
-  ###### ** Check Inputs ######
-  ### Filter to valid inputs & get info
-  ### Reorganize inputs list
-  df_inputInfo <- df_inputInfo |> filter(inputName %in% inNames)
-  inNames      <- df_inputInfo |> pull(inputName)
-
-  ### Create logicals and initialize inputs list
-  if(hasAnyInputs) {
-    ### Min ad max years
-    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
-    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
-
-    ### Check inputs
-    inputsList <- list(
-      inputName = inNames,
-      inputDf   = inputsList[inNames],
-      idCol     = idCols0   [inNames],
-      valCol    = valCols0  [inNames],
-      yearMin   = minYrs0,
-      yearMax   = maxYrs0,
-      module    = "fredi" |> rep(inNames |> length())
-    ) |>
-      pmap(check_input_data) |>
-      set_names(inNames)
-    rm(minYrs0, maxYrs0)
-
-    ### Check again for inputs
-    ### Filter to values that are not NULL
-    # inWhich      <- inNames |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
-    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-    inputsList   <- inputsList[inWhich]
-    inNames      <- inputsList |> names()
-    rm(inWhich)
-  } ### if(hasAnyInputs)
-
+  paste0("Checking input scenarios...") |> message()
+  ### Get defaults
+  inputInfo0   <- modTypes0   |> get_inputInfo() |> mutate(maxYear = maxYear)
+  inNames0     <- inputInfo0  |> pull(inputName)
+  inputDefs    <- inNames0    |> get_defaultScenarios(dfInfo=inputInfo0, minYr0=minYear, maxYr0=maxYear, module0="fredi")
+  ### Format inputs list
+  inputsList   <- inNames0    |> format_inputsList(inputsList=inputsList, dfInfo=inputInfo0, msg0=0)
+  inNames      <- inputsList  |> names()
+  nullInputs   <- inputsList  |> is.null()
+  if(nullInputs) return()
 
   ### Update list
   ### For each input:
@@ -611,7 +474,7 @@ run_fredi <- function(
 
   ###### ** Columns List ######
   ### Grouping columns
-  groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0)
+  groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal")
   groupCols0  <- groupCols0 |> c("model_type", "model")
   groupCols0  <- groupCols0 |> c("sectorprimary", "includeaggregate")
   groupCols0  <- groupCols0 |> c("physicalmeasure")
@@ -621,7 +484,7 @@ run_fredi <- function(
   ### Driver columns
   driverCols0 <- c("driverType", "driverUnit", "driverValue")
   ### National & regional scenario columns
-  scenCols0   <- c("gdp_usd", "national_pop", "gdp_percap") |> c(popCol0)
+  scenCols0   <- c("gdp_usd", "national_pop", "gdp_percap", "pop")
   ### Impact columns
   impactCols0 <- c("physical_impacts", "annual_impacts")
   ### Columns to select
