@@ -837,7 +837,7 @@ get_co_sectorsInfo <- function(
     addRegions = FALSE, ### Whether to include regions & states
     addModels  = FALSE, ### Whether to include models
     addId      = TRUE , ### Whether to add scenario ID
-    include    = c,
+    include    = c("region", "state", "postal", "model"),
     colTypes   = c("ids", "labels", "extra"), ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
     ### Get objects from FrEDI
     dfSects  = "co_sectors"     |> get_frediDataObj("frediData"),
@@ -898,19 +898,27 @@ get_co_sectorsInfo <- function(
   if(addRegions) {
     join0    <- c("region_id")
     dfStates <- dfStates |> rename_at(join0 |> str_replace("_id", ""), ~join0) |> left_join(dfReg, by=join0)
-    df0      <- df0      |> cross_join(co_states)
+    df0      <- df0      |> cross_join(dfStates)
     rm(join0)
   } ### End if(addRegions)
-  rm(join0, addRegions, dfStates, dfReg)
+  rm(addRegions, dfStates, dfReg)
 
   ### Join with dfModels if addModels:
   if(addModels) {
     ### - Mutate model in dfModels to be "Interpolation" for "SLR"
-    mutate0  <- c("model_id", "model_label")
+    #mutate0 <- c("model_id", "model_label")
+    mutate0 <- c("modelType")
+
     dfModels <- dfModels |> mutate_at(mutate0, function(
-    x, y=df0[["modelType"]], z="slr", val0="Interpolation"
+    x, z="slr", val0="Interpolation"
     ){
-      case_when(y %in% z ~ val0, .default=x)
+      case_when(x %in% z ~ val0, .default=x)
+    }) |> distinct()
+
+    df0 <- df0 |> mutate_at(mutate0, function(
+    x, z="slr", val0="Interpolation"
+    ){
+      case_when(x %in% z ~ val0, .default=x)
     }) |> distinct()
     rm(mutate0)
     ### - Join
@@ -931,9 +939,9 @@ get_co_sectorsInfo <- function(
   ### Add additional columns
   # if(doExtra) {colsOth0 <- c(colsVars, colsTypes); if(addModels) {colsOth0 <- colsOth0 |> c(colsMods0, colMax0)}} else{colsOth0 <- c()} ### if(doAll)
   colsTypes  <- c(colsAgg0, colsDesc0, colsScalar |> paste0("Name"), colsCoeff)
-  rename0    <- c(colsMain0, regCols, colsMod0)
-  renameIds  <- rename0 |> map(function(x, y=rename0, str0="_ids"){
-    case_when(x %in% y ~ x |> paste0("_", str0), .default=x)
+  rename0    <- c(colsMain0, regCols)
+  renameIds  <- rename0 |> map(function(x, y=rename0, str0="_id"){
+    case_when(x %in% y ~ x |> paste0("", str0), .default=x)
   }) |> unlist()
   renameLabs <- rename0 |> map(function(x, y=rename0, str0="_label"){
     case_when(x %in% y ~ x |> paste0("_", str0), .default=x)
@@ -946,7 +954,7 @@ get_co_sectorsInfo <- function(
   if(doLabs ) select0 <- select0 |> c(renameLabs) |> unique()
   if(doExtra) select0 <- select0 |> c(colsAgg0, colsTypes, modCols) |> unique()
   ### Columns for arranging
-  if(d0Ids  ) {sort0 <- rename0} else if(doLabs){sort0 <- renameLabs}
+  if(doIds  ) {sort0 <- rename0} else if(doLabs){sort0 <- renameLabs}
 
   ### Rename values, select values, sort
   # df0 |> glimpse()
