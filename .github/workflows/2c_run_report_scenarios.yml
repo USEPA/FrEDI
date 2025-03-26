@@ -135,8 +135,8 @@ jobs:
             tPath0      <- pPath0 |> file.path("testing")
             sFiles0     <- sPath0 |> list.files(full.names=TRUE)
             tFiles0     <- tPath0 |> list.files(full.names=TRUE)
-            rmd_file    <- tFiles0[grepl(".rmd",tFiles0)]
-            tFiles0     <- tFiles0[!grepl(".rmd",tFiles0)]
+            rmd_file    <- tFiles0[grepl(".*md",tFiles0)]
+            tFiles0     <- tFiles0[!grepl(".*md",tFiles0)]
             # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
             sFiles0 |> loadCode()
             tFiles0 |> loadCode()
