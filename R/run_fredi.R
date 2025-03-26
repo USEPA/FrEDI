@@ -186,7 +186,8 @@ run_fredi <- function(
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE   ### Whether to message the user
 ){
-  ### Load Objects ######
+  ### Set Up Environment ----------------
+  #### Load Objects ----------------
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   module0       <- "fredi"
@@ -195,12 +196,11 @@ run_fredi <- function(
   fConfigStr0   <- "fredi_config"
   configLStr0   <- "configData"
   stateLStr0    <- "stateData"
-
   # fredi_config  <- "fredi_config"    |> get_frediDataObj(configLStr0, modDataStr0)
   # fredi_config |> names() |> print()
   # for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
-  ###### Set up the environment ######
+  #### Messaging ----------------
   ### Level of messaging (default is to message the user)
   msgUser      <- !silent
   msgN         <- "\n"
@@ -208,6 +208,7 @@ run_fredi <- function(
   msg1         <- msg0 |> paste0("\t")
   msg2         <- msg1 |> paste0("\t")
 
+  #### Values & Columns ----------------
   ### Model years and NPD (FrEDI past 2100)
   minYear0     <- "minYear0" |> get_frediDataObj(configLStr0, modDataStr0)
   maxYear0     <- "maxYear0" |> get_frediDataObj(configLStr0, modDataStr0)
@@ -221,7 +222,7 @@ run_fredi <- function(
   slrStr0      <- "slr"
   tempStr0     <- "temp"
 
-  ###### ** Return List ######
+  #### Initialize Return & Status Lists ----------------
   ### Initialize list to return
   returnList   <- list() ### List to return args, scenarios, and statuses
   argsList     <- list() ### List of arguments
@@ -260,8 +261,8 @@ run_fredi <- function(
     argsList[["silent"    ]] <- silent
   } ### End if(outputList)
 
-
-  ###### ** Elasticity ######
+  ### Format Input Values ----------------
+  #### Elasticity ----------------
   ### Message user about elasticity
   has_elasticity <- elasticity     |> is.numeric()
   elasticity0    <- "elasticity0" |> get_frediDataObj(configLStr0, modDataStr0)
@@ -273,42 +274,48 @@ run_fredi <- function(
   rm(has_elasticity, elasticity0)
 
 
-  ###### ** Agg Levels  ######
+  #### Agg Levels ----------------
   ### Types of summarization to do: default
   ### Aggregation levels
-  aggList0   <- "aggList0" |> get_frediDataObj(configLStr0, modDataStr0)  |> tolower()
+  # aggList0   <- "aggList0" |> get_frediDataObj(configLStr0, modDataStr0)  |> tolower()
   aggLevels  <- aggLevels |> check_aggLevels(module0="fredi", msg0=0)
   ### Update status list
   if(outputList) {statusList[["aggLevels" ]] <- doAgg |> get_returnListStatus()}
   if(outputList) {argsList[["aggLevels"]] <- aggLevels}
 
 
-
-  ###### ** Sectors List ######
+  #### Sectors List ----------------
   ### Initialize sector list if the sectors list is null
   sectorList   <- sectorList |> check_inputSectors(module0="fredi", msg0=0)
   ### Update in list
   if(outputList) {argsList[["sectorList"]] <- sectorList}
 
 
-  ###### ** Model Types List ######
+  #### Model Types ----------------
   ### Which model types are in play based on sector selection
   modTypes0    <- dfSectors |> pull(model_type) |> unique() |> tolower()
   doSlr        <- slrStr0 %in% modTypes0
   doGcm        <- gcmStr0 %in% modTypes0
 
 
-  ###### Inputs List ######
+  ### Format Input Scenarios ----------------
+  #### Initialize Lists ----------------
   paste0("Checking input scenarios...") |> message()
   ### Get defaults
-  inputInfo0   <- modTypes0   |> get_inputInfo() |> mutate(maxYear = maxYear)
+  inputInfo0   <- "fredi"     |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
   inNames0     <- inputInfo0  |> pull(inputName)
-  inputDefs    <- inNames0    |> get_defaultScenarios(dfInfo=inputInfo0, minYr0=minYear, maxYr0=maxYear, module0="fredi")
+  ### minYr0=minYear, maxYr0=maxYear
+  inputDefs    <- inputInfo0  |> get_defaultScenarios(mTypes0=modTypes0, module0="fredi")
   ### Format inputs list
-  inputsList   <- inNames0    |> format_inputsList(inputsList=inputsList, dfInfo=inputInfo0, msg0=0)
-  inNames      <- inputsList  |> names()
-  nullInputs   <- inputsList  |> is.null()
-  if(nullInputs) return()
+  inputsList   <- inputInfo0  |> format_inputsList(
+    # dfInfo0, ### Outputs of get_dfInputInfo
+    inputsList = inputsList,
+    tempType   = "conus",
+    popArea    = "state",
+    msg0       = 0
+  ) ### End format_inputsList
+  inNames      <- inputsList |> names()
+  hasInputs    <- inNames    |> length()
 
   ### Update list
   ### For each input:
@@ -321,106 +328,46 @@ run_fredi <- function(
     argsList  [["inputsList"]] <- inputsList
   } ### End if(outputList)
 
-
-  ### If SLR is missing but user provided a temperature scenario, update with new temperature scenario
-  ### If there are no GCM sectors, drop temperature
-  if(doSlr) {
-    if(!("slr" %in% inNames)) {
-      if("temp" %in% inNames) {
-        inputsList <- inputsList |> (function(list0, y="slr"){list0[!((list0 |> names() %in% y))]})()
-        inputsList[["slr"]] <- inputsList[["temp"]]
-        inNames    <- inNames |> c("slr") |> unique()
-      } ### End if("temp" %in% inNames)
-    } ### End if(!("slr" %in% inNames))
-  } ### End if(doSlr0)
-  # inNames |> print()
-
-  ### If !doGcm, drop temperatures if present
-  if(!doGcm) {
-    inputsList <- inputsList |> (function(list0, y="temp"){list0[!((list0 |> names() %in% y))]})()
-    inputDefs  <- inputDefs  |> (function(list0, y="temp"){list0[!((list0 |> names() %in% y))]})()
-    inNames0   <- inNames0   |> get_matches(y="temp", matches=F)
-    inNames    <- inNames    |> get_matches(y="temp", matches=F)
-  } ### End if(!doGcm)
-
-  ### Update values
-  # inNames |> print()
-  hasInputs    <- inNames      |> length()
-  # df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
-
+  #### Interpolate Values ----------------
   ### Iterate over list and format values
   if(hasInputs) {
     inputsList   <- list(
-      name0     = inNames,
-      df0       = inputsList,
-      hasInput0 = TRUE |> rep(inNames |> length()),
-      idCols0   = idCols0 [inNames],
-      valCols0  = valCols0[inNames]
-    ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
-      df0 |> format_inputScenarios(
-        name0     = name0,
-        hasInput0 = hasInput0,
-        idCols0   = idCols0,
-        valCols0  = valCols0,
-        minYear   = minYear,
-        maxYear   = maxYear,
-        info0     = co_inputInfo
-      ) ### End format_inputScenarios
-    }) |> set_names(inNames)
+      df0     = inputsList,
+      name0   = inNames
+    ) |> pmap(
+      format_inputScenarios,
+      minYear = minYear,
+      maxYear = maxYear,
+      info0   = inputInfo0
+    ) |> set_names(inNames)
   } ### End if(hasInputs)
 
   ### Update inputs with defaults if values are missing
-  inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
-    ### Filter to list
-    list0    <- list0[names0]
-    ### List names
-    names0   <- list0 |> names()
-    ### If user provided a scenario, update defaults list
-    for(name_i in names0) {
-      df_i     <- list1[[name_i]]
-      has_i    <- df_i |> length()
-      if(has_i) list0[[name_i]] <- df_i
-      rm(name_i, df_i, has_i)
-    } ### End for(name_i in names0)
-    ### Return
-    return(list0)
-  })()
-  # inputsList |> names() |> print()
-  ### Update names
-  inNames      <- inputsList |> names()
-  df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames)
-
-  ### Filter to lists
-  inputsList   <- inputsList |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
-    df0 <- df0 |> filter(year >= minYear, year <= maxYear)
-    return(df0)
-  }) |> set_names(inNames)
-
+  inputsList   <- inputDefs |>
+    update_inputDefaults(inputsList=inputsList) |> map(function(df0, minYr0=minYear, maxYr0=maxYear){
+      df0 |> filter(year >= minYear, year <= maxYear)
+    }) |> set_names(inNames0)
+  rm(inputDefs)
   ### Update returnList with Scenario Input Data
-  if(outputList){
-    returnList[["scenarios"]] <- inputsList |> set_names(inNames)
-  } ### End if(outputList)
+  if(outputList){returnList[["scenarios"]] <- inputsList}
 
-  ###### Scenarios ######
-  ###### ** Physical Driver Scenario  ######
-  ### Select columns
-  filter0    <- c("temp", "slr") |> get_matches(y=inNames)
-  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
-  mTypes0    <- df_drivers |> pull(modelType) |> unique()
-  # df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
-  rm(filter0)
-  # return(df_drivers)
+  #### Format Physical Driver Scenario ----------------
+  df_drivers <- inputsList[c("temp", "slr") |> get_matches(y=inNames)] |> combine_driverScenarios()
 
 
-
-  ###### ** Socioeconomic Driver Scenario ######
+  #### Format Socioeconomic Driver Scenario ----------------
   ### Get GDP and Population scenarios
-  gdp_df       <- inputsList[["gdp"]]
-  pop_df       <- inputsList[["pop"]]
+  # gdp_df       <- inputsList[["gdp"]]
+  # pop_df       <- inputsList[["pop"]]
   ### Convert region to region IDs
-  pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+  drop0        <- c("area", "region", "state", "state_order")
+  pop_df       <- inputsList[["pop"]] |>
+    select(-any_of(drop0)) |>
+    left_join(get_frediDataObj("co_states", ctrlDataStr0), by="postal") |>
+    select(c("region", "postal", "state_order", "year", "pop"))
+  rm(drop0)
   ### Calculate national population and update national scenario
-  seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+  seScenario   <- inputsList[["gdp"]] |> create_nationalScenario(pop0 = pop_df)
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
@@ -439,42 +386,39 @@ run_fredi <- function(
     maxYr0     = maxYear,
     elasticity = elasticity
   ) ### End initialize_resultsDf
+  rm(seScenario)
 
   #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts
-  df_impacts   <- df_results |> calc_scaled_impacts_fredi(drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear)
+  df_impacts   <- df_results |> calc_scaled_impacts_fredi(
+      drivers0 = df_drivers,
+      minYr0   = minYear,
+      maxYr0   = maxYear
+  ) ### End calc_scaled_impacts_fredi
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, df2=df_drivers) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(
+    df1 = df_impacts,
+    df2 = df_drivers
+  ) |> ungroup()
+  rm(df_impacts, df_drivers)
 
 
-
-  ###### Refactor Data ######
+  ### Refactor Data ----------------
   ### Add in model info
   paste0("Formatting results", "...") |> message()
 
-  ###### ** Get Labels ######
-  ### Rename sector
-  drop0       <- c("sector", "variant", "impactType", "impactYear", "region", "modelType", "model")
-  renameAt0   <- drop0 |> paste0("_label") |> c("modelUnitDesc", "modelUnit_label", "modelUnitValue")
-  renameTo0   <- drop0 |> c("driverType", "driverUnit", "driverValue")
-  df_results  <- df_results |> select(-any_of(drop0))
-  df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
-  rm(drop0, renameAt0, renameTo0)
+  ### Get labels instead of IDs
+  ### modelUnitDesc
+  oldCols0    <- c("sector", "variant", "impactType", "impactYear", "region", "model_type", "model", "driverUnit")
+  df_results  <- df_results |>
+    select(-any_of(oldCols0)) |>
+    rename_at(c(oldCols0), ~oldCols0 |> paste0("_label"))
   # df_results |> glimpse()
 
-  ### Rename model type
-  renameAt0   <- c("modelType")
-  renameTo0   <- c("model_type")
-  df_results  <- df_results |> rename_at(c(renameAt0), ~renameTo0)
-  rm(renameAt0, renameTo0)
-  # df_results |> pull(region) |> unique() |> print()
-  # return(df_results)
-
-  ###### ** Columns List ######
   ### Grouping columns
-  groupCols0  <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal")
+  mainCols0   <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model_type", "model", "sectorprimary", "includeaggregate")
   groupCols0  <- groupCols0 |> c("model_type", "model")
   groupCols0  <- groupCols0 |> c("sectorprimary", "includeaggregate")
   groupCols0  <- groupCols0 |> c("physicalmeasure")

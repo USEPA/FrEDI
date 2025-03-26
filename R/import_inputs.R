@@ -122,187 +122,201 @@
 #'
 #'
 
-###### import_inputs ######
+## import_inputs ----------------
 ### This function imports data from user-specified file names.
 import_inputs <- function(
-  # tempfile = NULL, ### File path of CSV with temperature inputs
-  # slrfile  = NULL,
-  # gdpfile  = NULL,
-  # popfile  = NULL,
   inputsList = list(gdp=NULL, pop=NULL, temp=NULL, slr=NULL, ch4=NULL, nox=NULL, o3=NULL),
   temptype   = "conus", ### "global", or "conus" (default)
   popArea    = "state", ### "national", "conus", "regional", or "state" (default)
-  module     = "fredi"  ### "fredi", "sv", "methane"
+  module     = "fredi", ### "fredi", "sv", "methane"
+  silent     = FALSE ### Level of messaging
 ){
-  ###### Messaging ######
-  silent  <- TRUE
-  msgUser <- !silent
-  msgN    <- "\n"
-  msg0    <- ""
-  msg1    <- msg0 |> paste0("\t")
-  msg2    <- msg1 |> paste0("\t")
-  msg3    <- msg2 |> paste0("\t")
-  geo_msg <- " state..."
-
+  ### Set Up the Environment ----------------
+  #### Messaging ----------------
+  msgUser    <- !silent
+  sep0       <- ", "
+  msgN       <- "\n"
+  msg0       <- 0
+  msg1       <- msg0 + 1
+  msg2       <- msg0 + 2
+  msg3       <- msg0 + 3
+  geo_msg    <- " state..."
   ### Message the user
-  msgN |> paste0(msg0) |> paste0("In import_inputs():") |> message()
+  msg0 |> get_msgPrefix(newline=T) |> paste0("In import_inputs():") |> message()
 
-  ###### Module Options ######
-  module0    <- module |> tolower()
-  inNames0   <- c("gdp", "pop")
-  doMain     <- "fredi"   %in% module0
-  doSV       <- "sv"      %in% module0
-  doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  #### Columns & Values ----------------
+  #### Columns
 
-  ###### Load Data from FrEDI ######
-  ### Get objects from FrEDI name space
-  ### Get input scenario info: co_info
-  ### Get state info: co_states
-  # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData"   )
-  # co_states <- "co_states"     |> get_frediDataObj("frediData"   )
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  ### Conditionals
+  doTemp0    <- "temp" %in% inNames
 
-  ###### Input Names ######
-  ### Input names, output names
-  # inNames    <- c("temp", "slr", "gdp", "pop")
-  # outNames   <- inNames |> paste0("Input")
-  inNames0   <- co_info |> pull(inputName)
-
-  ### Figure out which inputs are not null, and filter to that list
-  ### inputsList Names
-  inNames    <- inputsList |> names()
-  inLength   <- inputsList |> length()
-  hasNames   <- inNames    |> length()
-  if(hasNames) {
-    # inWhich      <- inNames    |> map(function(name0, list0=inputsList){(!(list0[[name0]] |> is.null())) |> which()}) |> unlist() |> unique()
-    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
-    ### Filter to values that are not NULL
-    inputsList   <- inputsList[inWhich]
-    inNames      <- inputsList |> names()
-    rm(inWhich)
-    ### Check which input names are in the user-provided list
-    inWhich      <- inNames %in% inNames0
-    inNames      <- inNames[inWhich]
-    inputsList   <- inputsList[inNames]
-    rm(inWhich)
-    # inNames |> print()
-  } else if (inLength) {
-    paste0(msg1) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
-    msgN |> paste0(msg1) |> paste0("Exiting...") |> message()
-    return()
-  } ### End if(!hasInputs)
-
-
-
-  ###### Temperature Options ######
-  ### Valid values
+  ### Values
+  ### - tempType values
   tempTypes  <- c("global", "conus")
-  ### Convert string inputs to lower case
   tempType   <- temptype |> tolower()
-  ### Check whether inputs temperatures are already in CONUS degrees
   conus      <- "conus" %in% tempType
-  # conus |> print()
-  ### Check for validity
+  ### - tempType values
+  popAreas   <- c("national", "conus", "regional", "state")
+  popArea    <- popArea |> tolower()
+
+  ### Initialize list
+  list0      <- list()
+
+  #### Module Options ----------------
+  module     <- module |> tolower()
+  inputInfo0 <- module |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
+  # inNames0   <- inputInfo0 |> pull(inputName)
+
+  ### Check Data ----------------
+  #### Check for Named List ----------------
+  #### Check that values are a named list
+  inNames    <- inputsList |> names() |> tolower()
+  inputsList <- inputsList |> set_names(inNames)
+  hasNames   <- inNames    |> length()
+  if(!hasNames) {
+    msg1 |> get_msgPrefix() |> paste0("Argument `inputsList` requires a named list!") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
+    return(list0)
+  } ### End if(!hasNames)
+  rm(hasNames)
+
+  #### Check for Names ----------------
+  #### Join info and tibble with input names
+  #### Check that names match expected names
+  inNames0   <- inputInfo0 |> pull(inputName) |> tolower()
+  matches0   <- inNames    |> get_matches(inNames0)
+  naNames    <- inNames[!matches0]
+  anyNa0     <- naNames |> length()
+  if(anyNa0) {
+    msg1 |> get_msgPrefix() |> paste0("`inputsList` elements '", naNames |> paste(collapse="', '"), "', are not valid input types!") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Dropping these elements from `inputsList`...") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Valid input types for the '", module , "' are: '", inNames0 |> paste(collapse="', '"), "'.") |> message()
+  } ### End if(anyNa0)
+  rm(anyNa0)
+
+  ### Check for any names
+  inputsList <- inputsList[matches0]
+  inNames    <- inputsList |> names()
+  inputInfo0 <- inputInfo0 |> filter(inputName %in% inNames)
+  any0       <- inputInfo0 |> nrow()
+  if(!any0) {
+    msg1 |> get_msgPrefix() |> paste0("No valid inputs in `inputsList`") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
+    return(list0)
+  } ### End if(anyNa0)
+  rm(any0, matches0)
+
+  #### Non-Null Elements ----------------
+  ### Figure out which inputs are not null, and filter to that list
+  inNames0   <- inputInfo0 |> pull(inputName)
+  inputsList <- inputsList[inNames0]
+  inNames    <- inputsList |> names()
+  isNull0    <- inputsList |> map(function(dfX){dfX |> is.null()}) |> unlist()
+  anyNull0   <- isNull0 |> which() |> length()
+  if(anyNull0) {
+    msg1 |> get_msgPrefix() |> paste0("`inputsList` elements '", inNames[isNull0] |> paste(collapse="', '"), "', are NULL...") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Dropping these elements from `inputsList`...") |> message()
+  } ### End if(anyNa0)
+
+  ### Filter to not-null elements
+  inputInfo0 <- inputInfo0 |> filter(!isNull0)
+  inputsList <- inputsList[!isNull0]
+  inNames    <- inputsList |> names()
+
+  #### Check Validity of Arguments ----------------
+  ###% Check temp type for validity
   tempValid  <- tempType %in% tempTypes
-  ### Error messages
-  msgTemp    <- paste0("`tempType` must be either \"global\" or \"conus\", not \"", tempType, "\"!")
   ### If not valid, message and drop those from outputs
   if(!tempValid) {
-    # inputsList[["temp"]] <- NULL
-    msg1 |> paste0(msgTemp) |> message()
+    msg1 |> get_msgPrefix() |> paste0("`tempType` must be one of '", tempTypes |> paste(collapse="' or '"), "', not '", tempType, "'!") |> message()
     msg2 |> paste0("Dropping temp inputs from outputs.") |> message()
-    inputsList <- inputsList |> (function(list0, name0="temp"){list0[!((list0 |> names()) %in% name0)]})()
-    inNames    <- inputsList |> names()
+    inNames    <- inNames    |> get_matches(y="temp", matches=FALSE)
+    inputsList <- inputsList[inNames]
+    inputInfo0 <- inputInfo0 |> filter(!(inputName %in% "temp"))
   } ### End if(!tempValid)
 
-
-
-  ###### Population Options ######
-  ### Valid values
-  popAreas   <- c("national", "conus", "regional", "state")
-  ### Convert string inputs to lower case
-  popArea    <- popArea  |> tolower()
-  ### Check for validity
+  ### Check popArea for validity
   popValid   <- popArea %in% popAreas
-  ### Error messages
-  msgPop     <- paste0("`popArea` must be in \"", popAreas |> paste(collapse="\", \""), ", not \"", popArea, "\", !")
   ### If not valid, message and drop those from outputs
-  if(!popValid){
-    # inputsList[["pop"]] <- NULL
-    msg1 |> paste0(msgPop)
+  if(!popValid) {
+    msg1 |> get_msgPrefix() |> paste0("`popArea` must be one of '", popAreas |> paste(collapse="' or '"), "', not '", popArea, "'!") |> message()
     msg2 |> paste0("Dropping pop inputs from outputs.") |> message()
-    inputsList <- inputsList |> (function(list0, name0="pop"){list0[!((list0 |> names()) %in% name0)]})()
-    inNames    <- inputsList |> names()
-  } ### End if(!popValid)
+    inNames    <- inNames    |> get_matches(y="pop", matches=FALSE)
+    inputsList <- inputsList[inNames]
+    inputInfo0 <- inputInfo0 |> filter(!(inputName %in% "pop"))
+  } ### End if(!tempValid)
 
+  #### Read in Files ----------------
+  ### Try to read in files from remaining elements
+  any0       <- inputInfo0 |> nrow()
+  if(!any0) {
+    msg1 |> get_msgPrefix() |> paste0("No remaining valid inputs in `inputsList`") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
+    return(list0)
+  } else{
+    inputsList <- list(inputName=inNames, filename=inputsList) |> pmap(
+      fun_tryInput,
+      silent    = silent,
+      msg0      = msg1
+    ) ### End pmap
+  } ### End if(anyNa0)
+  rm(any0)
 
+  #### Drop Null Values ----------------
+  isNull0    <- inputsList |> map(function(dfX){dfX |> is.null()}) |> unlist()
+  anyNull0   <- isNull0 |> which() |> length()
+  if(anyNull0) {
+    msg1 |> get_msgPrefix() |> paste0("`inputsList` elements '", inNames[isNull0] |> paste(collapse="', '"), "', are NULL...") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Dropping these elements from `inputsList`...") |> message()
+  } ### End if(anyNa0)
 
-  ###### Valid Inputs & Input Info ######
-  ### Filter to valid inputs & get info
-  ### Reorganize inputs list
-  co_info    <- co_info |> filter(inputName %in% inNames)
-  inNames    <- co_info |> pull(inputName)
-  inputsList <- inputsList[inNames]
-  outNames   <- inNames
-  nInputs    <- inNames |> length()
+  ### Filter to not-null elements
+  inputInfo0 <- inputInfo0 |> filter(!isNull0)
+  inputsList <- inputsList[!isNull0]
+  inNames    <- inputsList |> names()
 
-  ### Message user
-  if(nInputs) {
-    msg1 |> paste0("Loading data...", "\n") |> message()
-  } else {
-    msg1 |> paste0("No inputs specified! Returning an empty list.") |> message()
-    return(list())
-  } ### End if(nInputs)
+  #### Check & Format Remaining Data ----------------
+  ### Check if there are any remaining values
+  any0       <- inputInfo0 |> nrow()
+  if(!any0) {
+    msg1 |> get_msgPrefix() |> paste0("No remaining valid inputs in `inputsList`") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
+    return(list0)
+  } else{
+    ### Format remaining values
+    inputsList <- inputInfo0  |> format_inputsList(
+      inputsList = inputsList,
+      tempType   = temptype,
+      popArea    = popArea,
+      msg0       = msg1
+    ) ### End format_inputsList
+  } ### End if(anyNa0)
+  rm(any0)
 
-  ### Get list with expected name of columns used for unique ids
-  ### Get list with expected name of column containing values
-  # idCols     <- get_import_inputs_idCols (popArea=popArea)
-  # valCols    <- get_import_inputs_valCols(popArea=popArea)
-  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> get_import_inputs_idCols()}) |> set_names(inNames)
-  valCols    <- co_info |> pull(valueCol) |> as.list() |> set_names(inNames)
-  # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
+  #### Drop Null Values ----------------
+  isNull0    <- inputsList |> map(function(dfX){dfX |> is.null()}) |> unlist()
+  anyNull0   <- isNull0 |> which() |> length()
+  if(anyNull0) {
+    msg1 |> get_msgPrefix() |> paste0("`inputsList` elements '", inNames[isNull0] |> paste(collapse="', '"), "', are NULL...") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Dropping these elements from `inputsList`...") |> message()
+  } ### End if(anyNa0)
 
-  ###### Initialize Input File Names List ######
-  ### Initialize list of file names and
-  # fList      <- inNames |> map(function(x){parse(text=x |> paste0("file")) |> eval()}) |> set_names(inNames)
-  fList      <- inputsList
+  ### Filter to not-null elements
+  inputInfo0 <- inputInfo0 |> filter(!isNull0)
+  inputsList <- inputsList[!isNull0]
+  inNames    <- inputsList |> names()
 
-  ###### Initialize Inputs List ######
-  ### If some file names supplied, iterate over list, trying to read in file names
-  inputsList <- list(
-    inputName = inNames,
-    fileName  = inputsList
-  ) |>
-    pmap(run_fun_tryInput) |>
-    set_names(inNames)
-  # inputsList |> print()
+  #### Check & Format Remaining Data ----------------
+  ### Check if there are any remaining values
+  any0       <- inputInfo0 |> nrow()
+  if(!any0) {
+    msg1 |> get_msgPrefix() |> paste0("No remaining valid inputs in `inputsList`") |> message()
+    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
+    return(list0)
+  } ### End if(anyNa0)
+  rm(any0)
 
-  ###### Check the Inputs ######
-  ### Message the user
-  ### Use the input info to check the values make sense
-  if(nInputs) msgN |> paste0(msg1, "Checking input values...") |> message()
-  inputsList <- list(
-    inputName = inNames,
-    inputDf   = inputsList,
-    valCol    = valCols,
-    idCol     = idCols,
-    tempType  = tempType |> rep(nInputs),
-    popArea   = popArea  |> rep(nInputs)
-  ) |>
-    pmap(check_input_data) |>
-    set_names(inNames)
-
-
-  # ###### Rename List
-  # inputsList <- inputsList |> set_names(outNames)
-
-
-  ###### Return ######
+  ### Return ----------------
   ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
   gc()

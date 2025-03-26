@@ -61,144 +61,148 @@
 #' @export
 #' @md
 #'
+### We used HadCrUT4 to determine the appropriate temperature offset between the actual temperature and the equilibrium temperature in 2000.
+### Met Office Hadley Centre observations datasets. https://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/download.html.
+### Kopp Equations
+### dh/dt = a*(T(t) - Te(t)) + c(t)
+### dTe(t)/dt = (T(t) - Te(t))/tau1
+### dc(t)/dt = c/tau2
 ###
-###
-
+### Kopp Constants
+### Phi: (i.e., "c", above) is a temperature-independent rate term with e-folding time tau2. I.e., phi is the multi-millennial contribution to GMSL in mm/year.
+### Scalar: Sensitivity of the GSL rate to a deviation of T(t) from an equilibrium temperature of Te(t).
+### Alpha: The value obtained in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "a").
+### Tau1: the timescale on which the actual temperature relaxes toward the equilibrium temperature. Value obtained  in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "tau").
+### Tau2: e-folding time(scale) for phi. Value obtained  in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "tau_C").
+### phi0       <- 0.14
+### alpha      <- 4.0
+### tau1       <- 174
+### tau2       <- 4175
 temps2slr <- function(
-    temps, years
+    temps,
+    years,
+    .kopp0  = "temps2slr" |> get_frediDataObj("fredi_config", "frediData"),
+    .refYr0 = get_frediDataObj("co_modelTypes", "controlData") |> filter(model_type %in% "slr") |> pull(driverRefYear),
+    .msg0   = 0
 ){
-  ###### Messages ######
-  msg1    <- "\t"
-  ###### Kopp Equations ######
-  ### dh/dt = a*(T(t) - Te(t)) + c(t)
-  ### dTe(t)/dt = (T(t) - Te(t))/tau1
-  ### dc(t)/dt = c/tau2
+  ### Set up Environment ----------------
+  #### Messaging ----------------
+  # msg1    <- "\t"
+  msgUser       <- !silent
+  msgN          <- "\n"
+  msg0          <- .msg0
+  msg1          <- msg0 + 1
+  msg2          <- msg0 + 2
+  # if(msgUser)
 
-  ###### Kopp Constants ######
-  ### Phi: (i.e., "c", above) is a temperature-independent rate term with e-folding time tau2. I.e., phi is the multi-millennial contribution to GMSL in mm/year.
-  ### Scalar: Sensitivity of the GSL rate to a deviation of T(t) from an equilibrium temperature of Te(t).
-  ### Alpha: The value obtained in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "a").
-  ### Tau1: the timescale on which the actual temperature relaxes toward the equilibrium temperature. Value obtained  in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "tau").
-  ### Tau2: e-folding time(scale) for phi. Value obtained  in Mann et al. posterior distribution (Kopp et al., 2016 Figure S5a for "tau_C").
-  phi0       <- 0.14
-  alpha      <- 4.0
-  tau1       <- 174
-  tau2       <- 4175
+  #### Kopp Constants ----------------
+  # .kopp0     <- get_frediDataObj("fredi_config", "frediData")
+  phi0       <- .kopp0[["phi0"]]
+  alpha      <- .kopp0[["alpha"]]
+  tau1       <- .kopp0[["tau1"]]
+  tau2       <- .kopp0[["tau2"]]
+  ### Other constants
+  mm2cm      <- .kopp0[["mm2cm"]]
+  eqTemp0    <- .kopp0[["eqTempOffset"]]
 
-  ###### Initial Values ######
-  ### Reference year 2000 and equilibrium temperature offset for 2000
-  ### Assign reference year from config file (max_year)
-  # fredi_config        <- "fredi_config" |> get_frediDataObj("frediData")
-  fredi_config        <- rDataList[["fredi_config"]]
-  temps2slr_constants <- fredi_config[["temps2slr"]]
-  # temps2slr_constants |> list2env(envir = environment())
-  for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
-  #### Reference year is 2000
-  co_modelTypes <- "co_modelTypes" |> get_frediDataObj("frediData") |> filter(modelType_id == "slr")
-  ref_year0     <- co_modelTypes |> pull(modelRefYear)
-
-  ###### Other constants ######
-  eqtemp_offset <- 0.62
-  mm2cm         <- 0.1 ### Number of centimeters per millimeter
-
-  ### We used HadCrUT4 to determine the appropriate temperature offset between the actual temperature and the equilibrium temperature in 2000.
-  ### Met Office Hadley Centre observations datasets. https://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/download.html.
-  ###### Initialize Data ######
+  ### Initialize Data ----------------
   ### Filter NA values and make sure values are numeric
+  xCol0   <- "year"
+  yCol0   <- "temp_C"
+  yCol1   <- "slr_cm"
   mutate0 <- c("year", "temp_C")
-  df_x0   <- tibble(year = years, temp_C = temps)
-  df_x0   <- df_x0 |> mutate_at(c(mutate0), as.character)
-  df_x0   <- df_x0 |> mutate_at(c(mutate0), as.numeric)
-  df_x0   <- df_x0 |> filter_all(all_vars(!(. |> is.na())))
-  df_x0   <- df_x0 |> arrange_at(c("year"))
+  df0     <- tibble(year = years, temp_C = temps) |>
+    mutate_at(c(xCol0, yCol0), as.numeric) |>
+    filter_all(all_vars(!(. |> is.na()))) |>
+    arrange_at(c(yrCol0))
   rm(mutate0)
 
+  ### Check Data ----------------
+  #### Duplicates ----------------
   ### Filter missing values, then get unique years
-  df_x0   <- df_x0 |> filter_all(all_vars(!(. |> is.na())))
-  years0  <- df_x0 |> pull(year) |> unique()
+  dups0   <- df0 |>
+    group_by_at(c(yrCol0)) |>
+    summarize(n=n(), .groups="drop") |>
+    filter(n > 1)
+
+  ### Check that there are no duplicate rows
+  hasDups <- dups0 |> nrow()
+  if(hasDups){
+    msg1 |> get_msgPrefix(newline=F) |> paste0("Warning: There are duplicate years in the inputs!") |> message()
+    msg1 |> get_msgPrefix(newline=T) |> paste0("Exiting...") |> message()
+    return()
+  } ### End if(hasDups)
+
+  ### Get distinct values
+  df0     <- df0 |> distinct()
+  years0  <- df0 |> pull(year)
   range0  <- years0 |> range()
   min0    <- range0[1]
   max0    <- range0[2]
 
-  ### Check that there are no duplicate rows
-  hasDuplicates <- (df_x0 |> nrow()) > (years0 |> length())
-  if(hasDuplicates){
-    paste0(msg1, "Warning: There are duplicate years in the inputs!") |> message()
-    paste0(msg1, "Exiting...") |> message()
-    return()
-    # message("\t\t\t", "Averaging values for duplicate years...")
-    # df_x0 <- df_x0 |> group_by_at(.vars = c("year")) |> summarize_at(c("temp_C"), mean, na.rm=T)
-  } ### End if(hasDuplicates)
-
+  #### Ref Year ----------------
   ### Check for 2020 (year0)
   ### If 2020 not found, check for values above and below 2000
-  checkRefYear <- (ref_year0 %in% years0)
-  checkRefYear <- (!checkRefYear) |> ifelse(min0 < ref_year0 & max0 > ref_year0, checkRefYear)
-
   ### If 2020 is still not found, message the user and exit
-  ###To-do exit gracefully within tempbin()
   ### Else, if there is a valid temperature series: Calculate temperatures
-  if(!checkRefYear) {
-    message("\t", "Warning:")
-    message("\t\t", "In 'temps2slr()': Missing values for the reference year ", ref_year0 , ".")
-    message("\t\t\t", "The reference year ", ref_year0 , " must be present in the input (or the input must have values above and below the reference year).")
-    message("\n", "\t", "Enter a valid temperature series.")
-    message("\n", "Exiting...")
+  hasRef0 <- min0 <= .refYr0 & max0 >= .refYr0
+  if(!hasRef0) {
+    msg1 |> get_msgPrefix(newline=F) |> paste0("Warning:") |> message()
+    msg2 |> get_msgPrefix(newline=F) |> paste0("In 'temps2slr()': Missing values for the reference year ", .refYr0 , ".") |> message()
+    msg3 |> get_msgPrefix(newline=F) |> paste0("The reference year ", .refYr0 , " must be present in the input (or the input must have values above and below the reference year).") |> message()
+    msg1 |> get_msgPrefix(newline=T) |> paste0(msgN, "Enter a valid temperature series.") |> message()
+    msg0 |> get_msgPrefix(newline=T) |> paste0(msgN, "Exiting...") |> message()
     return()
-  }
+  } ### End if(!hasRef0)
 
-  ###### Standardize data #####
-  ### Filter to years of interest 2000-2100
-  # max_year     <- 2100
-  # new_years    <- seq(ref_year0, max_year)
-  new_years <- ref_year0:max0
-  num_x     <- new_years |> length()
-  ind_x     <- 1:num_x
+  ### Interpolate Values ----------------
+  # xOut0     <- min0:max0
+  df0     <- years0 |> approx(
+    y      = df0 |> pull(temp_C),
+    xout   = min0:max0,
+    method = "linear",
+    rule   = 2
+    ) |>
+    as.data.frame() |>
+    as.tibble() |>
+    rename_at(c("x", "y"), ~c("year", "temp_C")) |>
+    filter(year >= .refYr0)
 
-  ###### Interpolate the data #####
-  ### Interpolated Data
-  # function require annual data
-  df_x1 <- tibble(year = new_years) |> mutate(temp_C = NA)
-  df_x1 <- df_x1 |> mutate(temp_C = approx(
-    x    = df_x0$year,
-    y    = df_x0$temp_C,
-    xout = new_years,
-    rule=1:1
-  ) |> as.data.frame() |> pull(y))
-  ### Filter years
-  df_x1 <- df_x1 |> filter(year >= ref_year0)
-  df_x1 <- df_x1 |> mutate(equilTemp = NA, slr_mm = NA)
-  df_x1 <- df_x1 |> select(c("year", "temp_C", "equilTemp", "slr_mm"))
-  df_x1 <- df_x1 |> mutate(yearFrom0 = year - ref_year0)
-  df_x1 <- df_x1 |> mutate(phi = phi0 * exp(-yearFrom0 / tau2))
-  # df_x1 |> glimpse(); ind_x |> length() |> print()
+  ### Calculate SLR from temperatures ----------------
+  ### Initialize SLR columns
+  df0     <- df0 |>
+    mutate(equilTemp = NA, slr_mm = NA) |>
+    mutate(yearFrom0 = year - .refYr0) |>
+    mutate(phi = phi0 * exp(-yearFrom0 / tau2))
+  # df0 |> glimpse();
 
-  ###### Series ######
+  temp0   <- df0 |> filter(year == .refYr0) |> pull(temp_C)
+
+  ### Iterate over series
   ### Calculate base values
   ### Equilibrium temps
-  df_x  <- df_x1 |> (function(k){
-    for(i in ind_x){
-      if(i == 1){
-        ### Initialize temperature
-        temp_C0        <- (df_x1 |> filter(year==ref_year0))$temp_C[1]
-        k$equilTemp[i] <- temp_C0 - eqtemp_offset
-        k$slr_mm   [i] <- 0
-      } else{
-        k$equilTemp[i] <- k$equilTemp[i - 1] + ( k$temp_C[i] - k$equilTemp[i-1] ) / tau1
-        k$slr_mm   [i] <- k$slr_mm[i-1] + alpha * ( k$temp_C[i] - k$equilTemp[i] ) + k$phi[i]
-      } ### End else
-    } ### End for(i in ind_x)
-    return(k)
-  })()
+  for(i in df0 |> pull(yearFrom0)){
+    if(i == 0){
+      ### Initialize temperature
+      temp_C0        <- df0[["temp_C"]][i]
+      df0[["equilTemp"]][i] <- temp_C0 - eqTemp0
+      df0[["slr_mm"   ]][i] <- 0
+    } else{
+      df0[["equilTemp"]][i] <- df0[["equilTemp"]][i - 1] + ( df0[["temp_C"]][i] - df0[["equilTemp"]][i - 1] ) / tau1
+      df0[["slr_mm"   ]][i] <- df0[["slr_mm"   ]][i - 1] + ( df0[["temp_C"]][i] - df0[["equilTemp"]][i] ) * alpha + df0[["phi"]][i]
+    } ### End else
+    rm(i)
+  } ### End for(i in ind_x)
 
   ### GMSL in cm
-  df_x  <- df_x |> select(c("year", "slr_mm"))
-  df_x  <- df_x |> mutate(slr_cm = slr_mm * mm2cm) ### convert from mm to cm
-  df_x  <- df_x |> select(-c("slr_mm"))
+  cols0   <- c("year", "slr_cm")
+  df0     <- df0 |>
+    mutate(slr_cm = slr_mm * mm2cm) |>
+    select(all_of(cols0))
 
-  ###### Return ######
-  return(df_x)
+  ### Return ----------------
+  return(df0)
 
 }
 
