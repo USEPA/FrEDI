@@ -523,7 +523,10 @@ run_fredi <- function(
     return(df0)
   }) |> set_names(inNames)
 
-
+  ### Update returnList with Scenario Input Data
+  if(outputList){
+    returnList[["scenarios"]] <- inputsList |> set_names(inNames)
+  } ### End if(outputList)
 
   ###### Scenarios ######
   ###### ** Physical Driver Scenario  ######
@@ -664,7 +667,7 @@ run_fredi <- function(
   ###### ** Arrange Columns ######
   ### Convert levels to character
   ### Order the rows, then order the columns
-  arrange0   <- groupCols0 |> c("year") |> get_matches(y = df_results |> names())
+  arrange0   <- groupCols0 |> get_matches(y = df_results |> names()) |> c("year") |> unique()
   # arrange0 |> print()
   ### Select columns
   df_results <- df_results |> arrange_at(c(arrange0))

@@ -12,20 +12,6 @@ name: 2d. Test FrEDI Package
 on:
   workflow_dispatch:
     inputs:
-      # dow_totals:
-      #   type: choice
-      #   description: Summarizing scenario results for all sectors?
-      #   required: true
-      #   options:
-      #   - no
-      #   - yes
-      # dow_appendix:
-      #   type: choice
-      #   description: Create sector-specific appendix figures?
-      #   required: true
-      #   options:
-      #   - no
-      #   - yes
       sector:
         type: string
         description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name
@@ -38,6 +24,7 @@ on:
         options:
         - Appendix figures
         - Sector comparison
+        - Both
       workflow_id:
         type: string
         description: Enter the workflow run ID from which to retrieve the scenario results
@@ -58,8 +45,6 @@ jobs:
       - name: Send input status
         run: |
           echo "ref_name     = ${{ github.ref_name }}"
-          # echo "dow_totals   = ${{ inputs.dow_totals }}"
-          # echo "dow_appendix = ${{ inputs.dow_appendix }}"
           echo "sector       = ${{ inputs.sector }}"
           echo "figure_type  = ${{ inputs.figure_type }}"
           echo "workflow_id  = ${{ inputs.workflow_id }}"
@@ -97,10 +82,6 @@ jobs:
         #   inputs.dow_totals == 'true' ||
         #   inputs.dow_appendix == 'true'
         run: |
-          # echo "dow_totals   = ${{ inputs.dow_totals }}"
-          # echo "dow_appendix = ${{ inputs.dow_appendix }}"
-          # echo "dow_totals | dow_appendix = ${{ inputs.dow_appendix == 'true' || inputs.dow_appendix == 'true' }}"
-          # echo "dow_totals | dow_appendix is true. Proceeding with the task."
           ls -R ./scenario_results
 
 
@@ -119,27 +100,17 @@ jobs:
             require(ggpubr)
 
             ###### Workflow Inputs ######
-            # doSumFig    <- "${{ inputs.dow_totals   }}" %in% c("true", "yes")
-            # doAppFig    <- "${{ inputs.dow_appendix }}" %in% c("true", "yes")
-            # doFigures   <- doSumFig | doAppFig
-            # doTotals    <- doSumFig
             newBranch <- "${{ github.ref_name    }}"
             sectors0  <- "${{ inputs.sector      }}"
             figTypes0 <- "${{ inputs.figure_type }}"
 
+            ###### Functions ######
+            loadCode  <- function(files0){for(file_i in files0){file_i |> source(); rm(file_i)}}
+
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
             rPath0   <- ".";
-            # pPath0   <- rPath0 |> file.path("FrEDI")
             pPath0   <- rPath0
-
-            ### Load scripts and testing functions
-            sPath0   <- pPath0 |> file.path("scripts")
-            tPath0   <- pPath0 |> file.path("testing")
-            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
-            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
-            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
-            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
             ### Where to save results
             oPath0   <- pPath0 |> file.path("data_tests")
@@ -148,116 +119,137 @@ jobs:
 
             ### Check if path exists and, if not, create it
             exists0  <- oPath0 |> dir.exists()
-            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+            if(!exists0) {oPath0 |> dir.create(recursive=TRUE)}
 
             ### Artifact path
             artDir   <- pPath0  |> file.path("scenario_results")
             oPath0  |> list.files() |> print();
             artDir  |> list.files() |> print();
 
-            ###### Action Arguments ######
+            ###### Code ######
+            ### Load scripts and testing functions
+            sPath0   <- pPath0 |> file.path("scripts")
+            tPath0   <- pPath0 |> file.path("testing")
+            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            sFiles0 |> loadCode()
+            tFiles0 |> loadCode()
+            # for(file_i in sFiles0){file_i |> source(); rm(file_i)}
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+
+            ###### Install FrEDI from New Branch ######
+            ### Action Arguments
             urlRepo  <- "https://github.com/USEPA/FrEDI"
             c(newBranch) |> print()
 
-            ###### Install FrEDI from New Branch ######
-            ### Install FrEDI from new branch
-            devtools::install_github(
-              repo=urlRepo, ref=newBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
-            ) ### End install_github
-            require(FrEDI)
+            ### Load FrEDI from source
+            pPath0 |> devtools::load_all()
 
-            ###### Sectors & Years ######
+            ###### Sectors ######
             ### Format sector names
             sectors0 |> print()
-            sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
-            sectorsLC0 <- sectors0 |> tolower()
-            doAll      <- "all" %in% sectorsLC0
-            doGcm      <- "gcm" %in% sectorsLC0
-            doSlr      <- "slr" %in% sectorsLC0
-            if     (doAll) sectors <- FrEDI::get_sectorInfo() else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
-            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T)  else
-            sectors <- sectors0
+            sectors    <- sectors0 |> get_action_sectors()
             sectors |> print()
 
+
+            ###### Figure Types ######
             ### Format figure types
-            figsLC0   <- figTypes0 |> tolower()
-            doAppx    <- figsLC0 |> tolower() |> str_detect("appendix")
-            doTotals  <- figsLC0 |> tolower() |> str_detect("sector")
+            figsLC0    <- figTypes0 |> tolower()
+            doAppx     <- figsLC0 |> str_detect("appendix|both")
+            doComp     <- figsLC0 |> str_detect("sector|both")
+            ### Create a list
+            doTotals   <- NULL
+            figNames   <- c()
+            if(doAppx){doTotals <- doTotals |> c(FALSE); figNames <- figNames |> c("appx")}
+            if(doComp){doTotals <- doTotals |> c(TRUE ); figNames <- figNames |> c("comp")}
 
             ### Whether to make figures
             hasSectors <- (sectors |> length()) & !(sectors |> is.null())
-            hasFigures <- doAppx | doTotals
-            doAny      <- FALSE
-
-            ### Which years to report on for GCM, SLR sectors
-            gcmYears0 <- c(2010, 2090)
-            slrYears0 <- c(2050, 2090)
+            hasFigures <- doAppx | doComp
+            hasData    <- FALSE
 
 
-            ###### Create Figures ######
+            ###### Load Data ######
             ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
             "Making figures..." |> print()
 
+            ### GCM and SLR sectors
+            ### Which data to load
+            gcmSectors <- FrEDI::get_sectorInfo(gcmOnly=T)
+            slrSectors <- FrEDI::get_sectorInfo(slrOnly=T)
+            doGcm      <- (sectors %in% gcmSectors) |> any()
+            doSlr      <- (sectors %in% slrSectors) |> any()
+
+            ### Which years to report on for GCM, SLR sectors
+            gcmYears0  <- c(2010, 2090)
+            slrYears0  <- c(2050, 2090)
+
             ### Initialize data
-            gcmData0 <- NULL
-            slrData0 <- NULL
+            gcmData0   <- NULL
+            slrData0   <- NULL
 
             ### Check if file exists and, if it does, load it
             ### - Load GCM data
-            gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
-            gcmPath   <- artDir  |> file.path(gcmName)
-            gcmExists <- gcmPath |> file.exists()
-            c(gcmPath) |> print(); gcmExists |> print()
-            if(gcmExists) {
-              gcmPath |> load()
-              gcmData0 <- obj0
-              rm(obj0)
-              doGcm    <- !(gcmData0 |> is.null())
-              doAny    <- doAny | doGcm
-            } ### End if(gcmExists)
+            if (doGcm) {
+              gcmName   <- "gcm_DOW_scenario_results" |> paste0(".", "rda")
+              gcmPath   <- artDir  |> file.path(gcmName)
+              gcmExists <- gcmPath |> file.exists()
+              c(gcmPath) |> print(); gcmExists |> print()
+              if(gcmExists) {
+                gcmPath |> load()
+                gcmData0 <- obj0
+                rm(obj0)
+                doGcm    <- !(gcmData0 |> is.null())
+                hasData  <- hasData | doGcm
+              } ### End if(gcmExists)
+            } ### End if(doGcm)
+
 
             ### - Load SLR data
-            slrName   <- "slr_scenario_results" |> paste0(".", "rda")
-            slrPath   <- artDir  |> file.path(slrName)
-            slrExists <- slrPath |> file.exists()
-            c(slrPath) |> print(); slrExists |> print()
-            if(slrExists) {
-              slrPath |> load()
-              slrData0 <- obj0
-              rm(obj0)
-              doSlr    <- !(slrData0 |> is.null())
-              doAny    <- doAny | doSlr
-            } ### End if(slrExists)
+            if (doSlr) {
+              slrName   <- "slr_scenario_results" |> paste0(".", "rda")
+              slrPath   <- artDir  |> file.path(slrName)
+              slrExists <- slrPath |> file.exists()
+              c(slrPath) |> print(); slrExists |> print()
+              if(slrExists) {
+                slrPath |> load()
+                slrData0 <- obj0
+                rm(obj0)
+                doSlr    <- !(slrData0 |> is.null())
+                hasData  <- hasData | doSlr
+              } ### End if(slrExists)
+            } ### End if(doSlr)
 
 
+            ###### Create Figures ######
             ### Whether to run the test
-            makePlots <- hasSectors & hasFigures & doAny
+            makePlots  <- hasSectors & hasFigures & hasData
             makePlots |> print()
             ### gcmData=Dataframe with data for GCM sectors
             ### slrData=Dataframe with data for SLR sectors
             if(makePlots) {
               ### Number of digits for formatting sector names
               digits0   <- 16
-              ### Create plots
-              dfPlots   <- create_DOW_plots(
-                sectors  = sectors,
-                gcmData  = gcmData0,
-                slrData  = slrData0,
-                gcmYears = gcmYears0,
-                slrYears = slrYears0,
-                totals   = doTotals,
-                aggOnly  = doTotals,
-                digits   = digits,
-                silent   = TRUE ,
-                testing  = FALSE,
-                loadCode = "project",
-                fpath    = "."  ,
-                saveFile = TRUE ,
-                outPath  = oPath0,
-                img_dev  = "pdf",
-                return   = FALSE
-              ) ### End create_DOW_plotsfunction
+              listPlots <- doTotals |> map(function(true0){
+                create_DOW_plots(
+                  sectors  = sectors,
+                  gcmData  = gcmData0,
+                  slrData  = slrData0,
+                  gcmYears = gcmYears0,
+                  slrYears = slrYears0,
+                  totals   = true0,
+                  aggOnly  = true0,
+                  digits   = digits0,
+                  silent   = TRUE ,
+                  testing  = FALSE,
+                  loadCode = "project",
+                  fpath    = "."  ,
+                  saveFile = TRUE ,
+                  outPath  = oPath0,
+                  img_dev  = "pdf",
+                  return   = FALSE
+                ) ### End create_DOW_plotsfunction
+              })
             } ### End if(makePlots)
             "Finished creating figures..." |> print()
             oPath0 |> list.files() |> print()

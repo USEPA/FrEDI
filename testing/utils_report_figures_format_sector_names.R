@@ -323,6 +323,8 @@ get_newSectorLine <- function(
   word_i    <- df0[["word"    ]][index0]
   # df0[index0, ] |> print()
   add_i     <- maxLines0 - lines_i
+  add1_i    <- add_i %% 2
+  add2_i    <- add_i - add1_i
   ### Whether there are lines to add
   has_i     <- add_i > 0
   # word_i |> print(); lines_i |> print(); add_i |> print()
@@ -330,9 +332,13 @@ get_newSectorLine <- function(
   ### New word
   if(has_i){
     ### Lines to add
-    str_i   <- add_i |> repCollapse()
+    str_i   <- add_i  |> repCollapse()
+    str1_i  <- add1_i |> repCollapse()
+    str2_i  <- add2_i |> repCollapse()
     ### New string
-    word_i  <- str_i |> paste0(word_i)
+    # word_i  <- str_i |> paste0(word_i)
+    # word_i  <- str1_i |> paste0(word_i, str2_i)
+    word_i  <- str2_i |> paste0(word_i, str1_i)
   } ### End else
   # word_i|> print()
   ### Return
