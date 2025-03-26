@@ -3,7 +3,7 @@
 \docType{data}
 \name{gdpDefault}
 \alias{gdpDefault}
-\title{Scenario with values for U.S. Gross Domestic Product (GDP), which can be passed as an input to \code{\link[=run_fredi]{run_fredi()}} or \code{\link[=run_fredi_methane]{run_fredi_methane()}}.}
+\title{Scenario with values for U.S. Gross Domestic Product (GDP), which can be passed as an input to \code{\link[=run_fredi]{run_fredi()}} or \code{\link[=run_fredi_ghg]{run_fredi_ghg()}}.}
 \format{
 A data frame with 91 rows and 2 columns:
 \describe{
@@ -29,13 +29,13 @@ gdpDefault
 \code{ch4Default} is a data frame object that contains projections with changes in annual US methane concentrations, at the national level, for the period from 2020 to 2100. Values for changes in annual US methane concentrations are provided in parts per billion by volume (ppbv) relative to a 1995-2006 baseline era. This scenario represents the SSP245 mean emissions pathway from RCMIP5, with methane concentrations produced using the FaIR model. For more information on the SSP245 mean emissions pathway and the FaIR model, see Nichols et al. (2020) and Leach, et al. (2021), respectively.
 }
 \details{
-To use \code{gdpDefault} as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element \code{gdp} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=run_fredi]{run_fredi()}} and/or \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, respectively, e.g.: \code{run_fredi(inputsList=list(gdp=gdpDefault))}. \code{gdpDefault} can also be combined with other provided scenarios (\code{gcamScenarios}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
+To use \code{gdpDefault} as an input to FrEDI and/or the FrEDI Methane module, pass the data frame via the named element \code{gdp} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=run_fredi]{run_fredi()}} and/or \code{\link[=FrEDI:run_fredi_ghg]{FrEDI:run_fredi_ghg()}}, respectively, e.g.: \code{run_fredi(inputsList=list(gdp=gdpDefault))}. \code{gdpDefault} can also be combined with other provided scenarios (\code{gcamScenarios}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=run_fredi]{run_fredi()}}, \code{\link[=FrEDI:run_fredi_ghg]{FrEDI:run_fredi_ghg()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 
 Chen, Y.-H. H., S. Paltsev, J. M. Reilly, J. F. Morris, and M. H. Babiker. 2015. The MIT EPPA6 Model: Economic Growth, Energy Use, and Food Consumption. MIT Joint Program on the Science and Policy of Global Change, No. 278.
 
 EPA. 2017. \url{DOI:10.13140/RG.2.2.14466.79045}.
 
-To use \code{ch4Default} as an input to the FrEDI Methane module, pass the data frame via the named element \code{ch4} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, e.g.: \code{run_fredi_methane(inputsList=list(ch4=ch4Default))}. \code{ch4Default} can also be combined with other provided scenarios (\code{gdpDefault}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=FrEDI:run_fredi_methane]{FrEDI:run_fredi_methane()}}, and \code{\link[=import_inputs]{import_inputs()}}.
+To use \code{ch4Default} as an input to the FrEDI Methane module, pass the data frame via the named element \code{ch4} in a list passed to the \code{inputsList} argument in function calls to \code{\link[=FrEDI:run_fredi_ghg]{FrEDI:run_fredi_ghg()}}, e.g.: \code{run_fredi_ghg(inputsList=list(ch4=ch4Default))}. \code{ch4Default} can also be combined with other provided scenarios (\code{gdpDefault}, \code{popDefault}) in function calls (e.g., \code{run_fredi(inputsList=list(gdp=gdpDefault, pop=popDefault))}) or user-provided data frames. For more information, see documentation for \code{\link[=FrEDI:run_fredi_ghg]{FrEDI:run_fredi_ghg()}}, and \code{\link[=import_inputs]{import_inputs()}}.
 
 Leach, N. J., Jenkins, S., Nicholls, Z., Smith, C. J., Lynch, J., Cain, M., Walsh, T., Wu, B., Tsutsui, J., and Allen, M. R. 2021. \url{https://doi.org/10.5194/gmd-14-3007-2021}.
 
