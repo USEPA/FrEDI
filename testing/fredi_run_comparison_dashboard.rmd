@@ -68,11 +68,11 @@ grid.arrange(ref_temp,comp_temp, ncol=2)
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 
 ref_slr <- ref_2300$scenarios$slr |>
-    ggplot() + geom_line(aes(x=year, y=)) +
+    ggplot() + geom_line(aes(x=year, y=slr_cm)) +
   ggtitle(glue("params$ref FrEDI SLR"))
 
 comp_slr <- comp_2300$scenarios$slr |>
-  ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
+  ggplot() + geom_line(aes(x=year, y=slr_cm)) +
   ggtitle(glue("params$comp FrEDI SLR"))
 
 
