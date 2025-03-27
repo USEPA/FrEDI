@@ -769,10 +769,17 @@ check_input_data <- function(
 ###### calc_import_pop ######
 ### Function to calculate state population from inputs
 calc_import_pop <- function(
-    df0      = NULL,    ### Population data
-    popArea  = "state", ### One of: c("state", "regional", "conus", "national")
-    module   = "fredi", #### "fredi", "sv", or "methane"
-    msgLevel = 1        ### Level of messaging
+    df0       = NULL,    ### Population data
+    popArea   = "state", ### One of: c("state", "regional", "conus", "national")
+    module    = "fredi", #### "fredi", "sv", or "methane"
+    df_ratios = "popRatiosData" |>
+      get_frediDataObj("scenarioData") |>
+      fun_extendVals(
+        from0 = 2100,
+        to0   = 2300,
+        sort0 = c("area", "region", "state", "year")
+      ), ### End fun_extendVals
+    msgLevel  = 1        ### Level of messaging
 ){
   ###### Messages ######
   msgN     <- "\n"
@@ -797,7 +804,7 @@ calc_import_pop <- function(
   ### Get state info: co_states
   co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
   ###### Data Info ######
   hasPop   <- df0 |> length()

@@ -9,6 +9,7 @@ inst/doc
 analysis/*
 
 *.html
+*.zip
 .github/*.html
 
 data_tests/*
@@ -22,6 +23,5 @@ FrEDI/.Rproj.user/*
 FrEDI/.Rproj.user
 FrEDI/.Rhistory
 # FrEDI/data_tests/report_figures/*
-
 
 

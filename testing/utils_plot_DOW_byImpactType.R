@@ -165,9 +165,11 @@ plot_DOW_byImpactType <- function(
   ###### Add in Model info ######
   if(do_gcm)  {
     ### Get model info
-    select0   <- c("model_id", "maxUnitValue")
-    rename0   <- c("model_id")
+    # select0   <- c("model_id", "maxUnitValue")
+    # rename0   <- c("model_id")
+    rename0   <- c("model_label")
     rename1   <- c("model")
+    select0   <- rename0 |> c("maxUnitValue")
     co_models <- "co_models" |> get_frediDataObj("frediData")
     co_models <- co_models |> filter((modelType |> tolower()) == "gcm")
     co_models <- co_models |> select(all_of(select0))

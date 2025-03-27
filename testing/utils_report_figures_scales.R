@@ -272,7 +272,7 @@ fun_limitsByGroup <- function(
   print_msg  <- !silent
   msg0       <- msg
   msg1       <- "\t" |> paste0(msg0)
-  if(print_msg){ msg0 |> paste0("Running fun_limitsByGroup()...") |> message()}
+  if(print_msg) msg0 |> paste0("Running fun_limitsByGroup()...") |> message()
   ###### Data ######
   names0     <- data |> names()
   sumCols0   <- sumCols
@@ -286,18 +286,16 @@ fun_limitsByGroup <- function(
   ### Conditions
   anySumCols   <- hasSumCols |> any()
   multSumCols  <- nSumCols > 1
-  hasNaSumCols <- length(naSumCols) > 0
+  hasNaSumCols <- (naSumCols |> length()) > 0
   ### Messaging
-  msgSumCols   <-
-    ### If no summary columns
-    if     (!anySumCols ){
-      if(print_msg){msg1 |> paste0("Summary columns ", paste(sumCols0, collapse=", "), " not present in data...") |> message()}
-      if(print_msg){msg1 |> paste0("Exiting...") |> message()}
-      return()
-    } ### End if(!hasSumCols)
-  else if(hasNaSumCols){
-    if(print_msg){msg1 |> paste0("Summary columns ", paste(naSumCols, collapse=", "), " not present in data...") |> message()}
-  }
+  ### If no summary columns
+  if     (!anySumCols ){
+    if(print_msg) msg1 |> paste0("Summary columns ", paste(sumCols0, collapse=", "), " not present in data...") |> message()
+    if(print_msg) msg1 |> paste0("Exiting...") |> message()
+    return()
+  } else if(hasNaSumCols){
+    if(print_msg) msg1 |> paste0("Summary columns ", paste(naSumCols, collapse=", "), " not present in data...") |> message()
+  } ### End if(!hasSumCols)
   ### IF multiple columns
   # if(multSumCols){
   #   if(print_msg){ "\t" |> paste0("More than one summary column provided. Summarizing the first column only...") |> message()}
@@ -316,18 +314,17 @@ fun_limitsByGroup <- function(
   hasNaGroupCols <- length(naGroupCols) > 0
   ### If no grouping columns
   if     (!anyGroupCols ){
-    if(print_msg){msg1 |> paste0("Group columns ", paste(groupCols0, collapse=", "), " not present in data...") |> message()}
-    if(print_msg){msg1 |> paste0("Exiting...") |> message()}
+    if(print_msg) msg1 |> paste0("Group columns ", paste(groupCols0, collapse=", "), " not present in data...") |> message()
+    if(print_msg) msg1 |> paste0("Exiting...") |> message()
     return()
+  } else if(hasNaGroupCols){
+    if(print_msg) msg1 |> paste0("Group columns ", paste(naGroupCols, collapse=", "), " not present in data...") |> message()
   } ### End if(!hasGroupCols)
-  else if(hasNaGroupCols){
-    if(print_msg){msg1 |> paste0("Group columns ", paste(naGroupCols, collapse=", "), " not present in data...") |> message()}
-  }
 
   ###### Summarize Values ######
   ### Message the user
-  if(print_msg){msg1 |> paste0("Summarizing values for columns ", paste(sumCols, collapse=", "), "...") |> message()}
-  if(print_msg){msg1 |> paste0("Grouping by columns ", paste(groupCols, collapse=", "), "...") |> message()}
+  if(print_msg) msg1 |> paste0("Summarizing values for columns ", paste(sumCols, collapse=", "), "...") |> message()
+  if(print_msg) msg1 |> paste0("Grouping by columns ", paste(groupCols, collapse=", "), "...") |> message()
   # ### Summarize values by sector
   # lim_bySector <- data |>
   #   group_by_at (c(groupCols)) |>
@@ -462,7 +459,8 @@ get_sector_plotInfo <- function(
   ###### Number of Rows & Columns ######
   ### Initialize rows & columns
   nCol      <- nCol
-  nRow      <- n_sectors %/% nCol
+  # nRow      <- n_sectors %/% nCol
+  nRow      <- (n_sectors / nCol) |> ceiling()
   nRow      <- (nRow == 0) |> ifelse(1, nRow)
   ### Get Number of Rows & Columns
   if(byType) nCol <- n_variants

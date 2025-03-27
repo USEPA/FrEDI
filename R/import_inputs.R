@@ -157,15 +157,25 @@ import_inputs <- function(
   dListSub0  <- doFredi |> ifelse("frediData", "package")
   dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
+
+  ##### Connect to FrEDI Database
+  conn <-  load_frediDB()
+
+
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
   # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData"   )
   # co_states <- "co_states"     |> get_frediDataObj("frediData"   )
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
+  # co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
+  co_info   <- DBI::dbReadTable(conn, "co_inputInfo")
+  co_states <- DBI::dbReadTable(conn, "co_states")
+  df_ratios <- DBI::dbReadTable(conn, "popRatiosData")
 
   ###### Input Names ######
   ### Input names, output names
@@ -305,6 +315,8 @@ import_inputs <- function(
   ###### Return ######
   ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
+  ### Disconnect from DB
+  dbDisconnect(conn)
   gc()
   return(inputsList)
 }
