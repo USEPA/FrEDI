@@ -9,10 +9,6 @@ params:
     value: ref_temp
   comp:
     value: comp_branch
-  inputs_ref:
-    value: inputs_2300comp
-  inputs_comp:
-    value: inputs_2300Ref
 ---
 
 ```{r loadPackages , include =FALSE}
@@ -55,11 +51,11 @@ ref_2300 <- readRDS("../data_tests/refResults.rds")
 
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 
- ref_temp <- params$inputs_ref$tempInput |> 
+ ref_temp <- ref_2300$scenarios$temp |> 
    ggplot() + geom_line(aes(x=year, y= temp_C)) +
   ggtitle(glue("{params$ref} FrEDI Temp C"))
 
- comp_temp <- params$inputs_comp$temp |> 
+ comp_temp <- comp_2300$scenarios$temp |> 
   ggplot() + geom_line(aes(x=year, y=temp_C)) +
    ggtitle(glue("{params$comp} FrEDI Temp C"))
  
@@ -67,30 +63,31 @@ ref_2300 <- readRDS("../data_tests/refResults.rds")
 grid.arrange(ref_temp,comp_temp, ncol=2)
 ```
 
+##### SLR Inputs
+
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
-# ##### SLR Inputs
-# 
-# ref_slr <- params$inputs_ref$slr |>
-#     ggplot() + geom_line(aes(x=year, y=)) +
-#   ggtitle(glue("params$ref FrEDI SLR"))
-# 
-# comp_slr <- params$inputs_comp$slr |>
-#   ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
-#   ggtitle(glue("params$comp FrEDI SLR"))
-# 
-# 
-# grid.arrange(ref_slr,comp_slr,  ncol=2)
+
+ref_slr <- ref_2300$scenarios$slr |>
+    ggplot() + geom_line(aes(x=year, y=)) +
+  ggtitle(glue("params$ref FrEDI SLR"))
+
+comp_slr <- comp_2300$scenarios$slr |>
+  ggplot() + geom_line(aes(x=year, y=modelUnitValue)) +
+  ggtitle(glue("params$comp FrEDI SLR"))
+
+
+grid.arrange(ref_slr,comp_slr,  ncol=2)
 ```
 
 ##### GDP Inputs
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 
-ref_gdp <- params$inputs_ref$gdpInput |>
+ref_gdp <-ref_2300$scenarios$gdp |>
   ggplot() + geom_line(aes(x=year, y=gdp_usd)) +
   ggtitle(glue("{params$ref} FrEDI GDP"))
 
 
-comp_gdp <- params$inputs_comp$gdp |>
+comp_gdp <- comp_2300$scenarios$gdp |>
   ggplot() + geom_line(aes(x=year, y=gdp_usd)) +
   ggtitle(glue("{params$comp} FrEDI GDP"))
 
@@ -102,16 +99,16 @@ grid.arrange(ref_gdp,comp_gdp,  ncol=2)
 ##### Population Inputs
 ```{r echo =FALSE, fig.height = 7, fig.width = 15}
 
-  ref_pop <- params$inputs_comp$pop |>
+  ref_pop <- ref_2300$scenarios$pop |>
   group_by(region,year) |>
   summarize(reg_pop = sum(pop)) |>
   ggplot() + geom_line(aes(x=year, y=reg_pop/1e6, color = region)) +
   ggtitle(glue("{params$ref} FrEDI Pop"))
 
 
-comp_pop <- params$inputs_ref$pop |>
+comp_pop <- comp_2300$scenarios$pop|>
   group_by(region,year) |>
-  summarize(reg_pop = sum(state_pop)) |>
+  summarize(reg_pop = sum(pop)) |>
   ggplot() + geom_line(aes(x=year, y=reg_pop/1e6, color = region)) +
   ggtitle(glue("{params$comp} FrEDI Pop"))
 
