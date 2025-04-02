@@ -78,6 +78,7 @@ plot_DOW_byModelType <- function(
   c_sectors  <- infoList0[["cSectors"  ]]
   n_sectors  <- infoList0[["nSectors"  ]]
   nRow       <- infoList0[["nRow"      ]]
+  # "rows:" |> print(); nRow |> print()
   # df_info |> print()
 
   ###### ** Get X Scale ######
@@ -113,6 +114,7 @@ plot_DOW_byModelType <- function(
   ### Add list names
   # # x |> length() |> print()
   plotList_x <- plotList_x |> set_names(c_sectors)
+  # plotList_x |> print()
 
   ###### ** Create Reference Plot ######
   ### Create a reference plot
@@ -154,20 +156,32 @@ plot_DOW_byModelType <- function(
   ###### ** Arrange Main Grid ######
   ### Arrange main grid and add plot_xTitle
   ### Add spacer and add plot_yTitle
+  # "got here1" |> print(); plotList_x |> print()
   main_grid     <- ggarrange(plotlist=plotList_x, ncol=nCol, nrow=nRow, legend="none", align="h", common.legend=T)
+  # # "got here2" |> print(); main_grid |> print()
   main_grid     <- main_grid |> annotate_figure(bottom=plot_xTitle)
-  ### Add spacer
+  # ### Add spacer
+  # "got here3" |> print(); main_grid |> print()
   plotList0     <- list(x=plot_spacer, y=main_grid, z=plot_spacer)
+  # rm(main_grid)
+  # # "got here4" |> print(); plotList0 |> print()
   main_grid     <- ggarrange(plotlist=plotList0, ncol=3, nrow=1, legend="none", align="h", widths=c(0.2, nCol * 2, 0.2))
+  # # "got here5" |> print(); main_grid |> print()
   main_grid     <- main_grid |> annotate_figure(left=plot_yTitle)
-  ### Add Legend
+  # ### Add Legend
+  # # "got here6" |> print(); main_grid |> print()
   plotList0     <- list(x=plot_spacer, y=main_grid, w=plot_spacer, z=plot_legend, u=plot_spacer)
+  # rm(main_grid)
+  # # "got here7" |> print(); plotList0 |> print()
   main_plot     <- ggarrange(plotlist=plotList0, ncol=1, heights=c(0.2, nRow + 1, 0.1, 1, 0.1))
+  # # "got here8" |> print(); main_plot |> print()
   main_plot     <- main_plot |> annotate_figure(top=plot_title)
-
+  # "got here9" |> print(); main_plot |> print()
+  # "got here10" |> print()
   ###### Return ######
   ### Return
   if(print_msg) message("Finished.")
+  # return(plotList_x)
   return(main_plot)
 } ### End function
 
