@@ -786,7 +786,7 @@ check_inputData <- function(
   calcPop0  <- !(popArea |> str_detect("state")) & doPop0
   if(calcPop0) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Calculating state population from ", popArea, " values...") |> message()
-    inputDf <- inputDf |> calc_import_pop(
+    inputDf <- inputDf |> calc_popFromArea(
       minYr0  = minYr0,
       maxYr0  = maxYr0,
       valCol0 = valCol0,
@@ -822,7 +822,7 @@ check_inputData <- function(
 
 ## Calculate state population ----------------
 ### Calculate state population from area or region
-calc_import_pop
+#calc_import_pop
 calc_popFromArea <- function(
     df0,      ### Population data
     minYr0    = 2010,

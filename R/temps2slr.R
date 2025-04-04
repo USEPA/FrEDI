@@ -83,7 +83,8 @@ temps2slr <- function(
     years,
     .kopp0  = "temps2slr" |> get_frediDataObj("fredi_config", "frediData"),
     .refYr0 = get_frediDataObj("co_modelTypes", "controlData") |> filter(model_type %in% "slr") |> pull(driverRefYear),
-    .msg0   = 0
+    .msg0   = 0,
+    silent  = TRUE
 ){
   ### Set up Environment ----------------
   #### Messaging ----------------
@@ -95,7 +96,7 @@ temps2slr <- function(
   msg2          <- msg0 + 2
   # if(msgUser)
 
-  #### Kopp Constants ----------------
+    #### Kopp Constants ----------------
   # .kopp0     <- get_frediDataObj("fredi_config", "frediData")
   phi0       <- .kopp0[["phi0"]]
   alpha      <- .kopp0[["alpha"]]
@@ -115,14 +116,14 @@ temps2slr <- function(
   df0     <- tibble(year = years, temp_C = temps) |>
     mutate_at(c(xCol0, yCol0), as.numeric) |>
     filter_all(all_vars(!(. |> is.na()))) |>
-    arrange_at(c(yrCol0))
+    arrange_at(c(yCol0))
   rm(mutate0)
 
   ### Check Data ----------------
   #### Duplicates ----------------
   ### Filter missing values, then get unique years
   dups0   <- df0 |>
-    group_by_at(c(yrCol0)) |>
+    group_by_at(c(xCol0)) |>
     summarize(n=n(), .groups="drop") |>
     filter(n > 1)
 
