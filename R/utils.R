@@ -592,8 +592,7 @@ interpolate_byGroup <- function(
 
   ### Interpolate values, add to tibble, rename columns, and join with group data
   ### - Initialize values
-  df0      <- tibble() |>
-    mutate(x = xOut0) |>
+  df0      <- tibble(x = xOut0) |>
     rename_at(c("x"), ~xCol0)
   ### - Interpolate values and bind
   df0      <- yCols0 |>
