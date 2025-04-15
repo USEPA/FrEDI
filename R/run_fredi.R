@@ -210,9 +210,9 @@ run_fredi <- function(
 
   #### Values & Columns ----------------
   ### Model years and NPD (FrEDI past 2100)
-  minYear0     <- "minYear0" |> get_frediDataObj(configLStr0, modDataStr0)
-  maxYear0     <- "maxYear0" |> get_frediDataObj(configLStr0, modDataStr0)
-  npdYear0     <- "maxYear0" |> get_frediDataObj(configLStr0, modDataStr0)
+  minYear0     <- "minYear0" |> get_frediDataObj(fConfigStr0, modDataStr0)
+  maxYear0     <- "maxYear0" |> get_frediDataObj(fConfigStr0, modDataStr0)
+  npdYear0     <- "npdYear0" |> get_frediDataObj(fConfigStr0, modDataStr0)
   minYear      <- minYear0
   maxYear      <- thru2300 |> ifelse(npdYear0, maxYear)
 
@@ -293,6 +293,7 @@ run_fredi <- function(
 
   #### Model Types ----------------
   ### Which model types are in play based on sector selection
+  dfSectors    <- "co_sectors" |> get_frediDataObj(configLStr0, modDataStr0) |> filter(sector_label %in% sectorList)
   modTypes0    <- dfSectors |> pull(model_type) |> unique() |> tolower()
   doSlr        <- slrStr0 %in% modTypes0
   doGcm        <- gcmStr0 %in% modTypes0
@@ -305,11 +306,11 @@ run_fredi <- function(
   inputInfo0   <- "fredi"     |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
   inNames0     <- inputInfo0  |> pull(inputName)
   ### minYr0=minYear, maxYr0=maxYear
-  inputDefs    <- inputInfo0  |> get_defaultScenarios(mTypes0=modTypes0, module0="fredi")
+  inputDefs    <- get_defaultScenarios(dfInfo = inputInfo0, mTypes0=modTypes0)
   ### Format inputs list
-  inputsList   <- inputInfo0  |> format_inputsList(
-    # dfInfo0, ### Outputs of get_dfInputInfo
-    inputsList = inputsList,
+  inputsList   <- format_inputsList(
+    dfInfo0    = inputInfo0,
+    inputsList = inputDefs,
     tempType   = "conus",
     popArea    = "state",
     msg0       = 0

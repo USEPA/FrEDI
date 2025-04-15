@@ -63,7 +63,8 @@ get_matches <- function(
     y,
     matches = TRUE,
     type    = "values",
-    comp    = "in"
+    comp    = "in",
+    ...
 ){
   ### Convert to lower
   comp  <- comp |> tolower()
@@ -142,8 +143,8 @@ get_matches_list <- function(
 ### This function makes it easier to get data objects from the sysdata.rda file
 get_frediDataObj <- function(
     x        = NULL,        ### Object name
-    listSub  = "frediData", ### Sublist name
-    listName = "rDataList",
+    listSub  = "", ### Sublist name
+    listName = "frediData", ### Could be ScenarioData
     pkg      = "FrEDI",
     listall  = FALSE,
     lib.loc  = .libPaths()[1], ### Library path to look for packages
@@ -294,7 +295,7 @@ check_inputSectors <- function(
   if(!hasSectors) sectorList <- co_sectors |> pull(sector_label)
   ### Sector names & labels
   dfSectors    <- tibble(sector0 = sectorList) |>
-    mutate(sectorLC = sector |> tolower()) |>
+    mutate(sectorLC = sector0 |> tolower()) |>
     left_join(co_sectors, by="sectorLC")
 
   ### Check sectors
@@ -335,7 +336,7 @@ check_aggLevels <- function(
     msg0    = 0
 ){
   ### Aggregation levels
-  aggList0   <- "aggList0" |> get_frediDataObj("configData", module |> paste0("Data"))  |> tolower()
+  aggList0   <- "aggList0" |> get_frediDataObj("configData", module0 |> paste0("Data"))  |> tolower()
   aggLevels  <- aggLevels |> tolower()
   aggNone0   <- "none" %in% aggLevels
   aggAll0    <- "all"  %in% aggLevels
@@ -375,7 +376,7 @@ format_inputScenarios <- function(
   ### If no input provided, return empty value
   hasInput0 <- df0   |> length()
   if(!hasInput0) { return() }
-
+   browser()
   ### Columns
   yrCol0    <- "year"
   ### Values
