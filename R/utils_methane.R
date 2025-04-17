@@ -75,7 +75,7 @@ format_methane_drivers <- function(
     df1=listMethane$package$state_rrScalar
 ){
   ### Format data
-  idCols0  <- c("region", "state", "postal", "model")
+  idCols0  <- c("region", "state", "postal", "model", "year")
   sumCols0 <- c("state_o3response_pptv_per_ppbv", "state_mortScalar")
   select0  <- idCols0 |> c(sumCols0)
   df1      <- df1     |> select(all_of(select0))
