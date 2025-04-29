@@ -304,6 +304,20 @@ run_fredi <- function(
   paste0("Checking input scenarios...") |> message()
   ### Get defaults
   inputInfo0   <- "fredi"     |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
+  ######DELETE AFTER FIXX
+  inputInfo0   <- inputInfo0 |>
+                  mutate(regional = c(0,1,0),
+                         valueCol = c("gdp_usd", "pop","temp_c"),
+                         valueColLC  = c("gdp_usd", "pop","temp_c"),
+                         inputType  = c("GDP","Population","Temperature"),
+                         inputArgType = c(NA, "popArea", "tempType"),
+                         inputArgVal = c(NA,"state","global"),
+                         inputUnit = c("2015$", "capita", "degrees Celsius"),
+                         inputMin = c(0,0,0),
+                         minYear = c(2010,2010,2000)
+                         )
+  inputInfo0
+  ######
   inNames0     <- inputInfo0  |> pull(inputName)
   ### minYr0=minYear, maxYr0=maxYear
   inputDefs    <- get_defaultScenarios(dfInfo = inputInfo0, mTypes0=modTypes0)
@@ -364,11 +378,11 @@ run_fredi <- function(
   drop0        <- c("area", "region", "state", "state_order")
   pop_df       <- inputsList[["pop"]] |>
     select(-any_of(drop0)) |>
-    left_join(get_frediDataObj("co_states", ctrlDataStr0), by="postal") |>
-    select(c("region", "postal", "state_order", "year", "pop"))
+    left_join(controlData[["co_states"]], by="postal") |>
+    select(c("region","state", "postal", "state_order", "year", "pop"))
   rm(drop0)
   ### Calculate national population and update national scenario
-  seScenario   <- inputsList[["gdp"]] |> create_nationalScenario(pop0 = pop_df)
+  seScenario   <-  create_nationalScenario(gdp0 = inputsList[["gdp"]], pop0 = pop_df)
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
@@ -380,9 +394,10 @@ run_fredi <- function(
   #### Get Scalar Values ----------------
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(
-    sectors    = sectorIds,
-    mTypes     = mTypes0,
+  df_results   <-   initialize_resultsDf(
+    df_se      = seScenario,
+    sectors    = dfSectors$sector,
+    mTypes     = modTypes0,
     minYr0     = minYear,
     maxYr0     = maxYear,
     elasticity = elasticity

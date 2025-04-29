@@ -66,7 +66,7 @@ get_dfInputInfo <- function(
 get_defaultScenarios <- function(
     dfInfo,
     mTypes0 = c("gcm", "slr"),
-    minYr0  = 2010,
+    minYr0  = 2000,
     maxYr0  = 2100,
     yrCol0  = "year"
 ){
@@ -606,7 +606,6 @@ check_valCols <- function(
   ### Rename columns
   ### Provide info to list
   rename0   <- !(matchCol0 == valColRef)
-  browser()
   if(any(rename0)) {
     msg1 |> get_msgPrefix() |> paste0("Renaming column '", matchCol0, "' to '", valColRef, "'...") |> message()
     inputDf   <- inputDf |> rename_at(c(matchCol0), ~valColRef)
@@ -679,6 +678,7 @@ check_inputData <- function(
   nullData   <- inputDf |> is.null()
   if(nullData) return()
   #### Check Regions ----------------
+
   if(doReg0) {
     inputDf  <- inputDf |> check_regions(type0=type0, module=module, msg0=msg1)
     nullData <- inputDf |> is.null()

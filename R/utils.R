@@ -376,7 +376,7 @@ format_inputScenarios <- function(
   ### If no input provided, return empty value
   hasInput0 <- df0   |> length()
   if(!hasInput0) { return() }
-   browser()
+  #browser()
   ### Columns
   yrCol0    <- "year"
   ### Values
@@ -385,7 +385,7 @@ format_inputScenarios <- function(
   label0    <- info0 |> pull(inputType)
   valCol0   <- info0 |> pull(valueCol)
   refYr0    <- info0 |> pull(refYear)
-  idCols0   <- df0   |> names() |> get_matches(y=c(yrCol0, valCol0), matches=F)
+  idCols0   <- df0   |> names() |> get_matches(y=c(yrCol0, valCol0), matches=T)
   df0       <- df0   |>
     filter_all(all_vars(!(. |> is.na()))) |>
     arrange_at (c(idCols0, yrCol0)) |>
@@ -410,7 +410,9 @@ format_inputScenarios <- function(
 
   ### Otherwise, interpolate values
   if(doTemp0) {
-    df0 <- df0 |> group_map(
+    #if(any(doInterp)) {
+    #browser()
+    df0 <- df0 |> ungroup() |> group_map(
       format_tempData_byGroup,
       xCol0     = yrCol0,
       yCol0     = valCol0,
@@ -419,15 +421,23 @@ format_inputScenarios <- function(
       method0   = "linear",
       rule0     = 1
     ) |> bind_rows()
+    #}
+
   } else{
-    df0 <- df0 |> group_map(
-      interpolate_byGroup,
-      xCol0   = yrCol0,
-      yCols0  = valCol0,
-      xOut0   = minYear:maxYear,
-      method0 = "linear",
-      rule0   = 1
-    ) |> bind_rows()
+
+    doInterp <- ifelse(unique(df0$year) == unique(minYear:maxYear), FALSE, TRUE)
+
+    if(any(doInterp)) {
+      df0 <- df0 |> group_map(
+        interpolate_byGroup,
+        xCol0   = yrCol0,
+        yCols0  = valCol0,
+        xOut0   = minYear:maxYear,
+        method0 = "linear",
+        rule0   = 1
+      ) |> bind_rows()
+    }
+
   } ### End if(doTemp0)
 
   # ### Filter to appropriate years
@@ -569,7 +579,7 @@ interpolate_byGroup <- function(
   names0   <- .x     |> names()
   xCol0    <- xCol0  |> get_matches(y=names0)
   yCols0   <- yCols0 |> get_matches(y=names0)
-
+  #browser()
   ### Arrange data
   select0  <- c(xCol0, yCols0)
   .x       <- .x |>
@@ -644,6 +654,7 @@ format_tempData_byGroup <- function(
   # xVals0 |> range() |> print()
 
 
+
   ### Values and columns
   doGlobal  <- tempType0 |> str_detect(globalStr)
   tempType1 <- tempType0
@@ -654,7 +665,7 @@ format_tempData_byGroup <- function(
     .y      = .y,
     xCol0   = xCol0,
     yCols0  = yCol0,
-    xOut0   = xOut0,
+    xOut0   = .x |> pull(year),
     from0   = from0,
     to0     = to0,
     method0 = method0,
@@ -669,21 +680,22 @@ format_tempData_byGroup <- function(
     mutate(y2 = .x |> pull(all_of(yCol0)) |> convertTemps(from=tempType0)) |>
     rename_at(c(old0), ~new0)
   # .x |> glimpse()
-
+  #browser()
   ### Slr values
   dfSlr     <- .x    |>
     pull(temp_C_global) |>
     temps2slr(years=.x |> pull(all_of(xCol0))) |>
     rename_at(c("year"), ~xCol0) |>
     left_join(.x, by=xCol0) |>
-    filter(!(slr_cm |> is.na()))
+    filter(!(slr_cm |> is.na())) |>
+    filter( year %in% xOut0)
   # df0 |> glimpse()
 
   # ### Add model data
   # .x        <- .y |> cross_join(.x)
 
   ### Return
-  return(.x)
+  return(dfSlr)
 }
 
 
@@ -847,11 +859,11 @@ create_nationalScenario <- function(
   pop0     <- pop0 |> select(any_of(colsP0))
   ### Join GDP and national population by year
   nat0     <- gdp0 |> left_join(natPop0, by=yrCol0)
-  rm(gdp0, nat0)
+  rm(gdp0)
   ### Calculate GDP per capita
   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
   ### Join nat0 with state population by year
-  nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
+  nat0     <- nat0 |> left_join(pop0, by=yrCol0, relationship="many-to-many")
   ### Arrange by colsP0
   sort0    <- c(regCols0, yrCol0)
   nat0     <- nat0 |> arrange_at(vars(sort0))
@@ -1466,13 +1478,13 @@ match_scalarValues_byGroup <- function(
 get_sectorScalars <- function(
     sectors,
     mTypes,
-    maxYr0   = "maxYear0"      |> get_frediDataObj("fredi_config", "rDataList"),
-    refYear0 = "co_slrScalars" |> get_frediDataObj("frediData", "rDataList") |> pull(refYear) |> unique() |> min()
+    maxYr0   = "maxYear0"      |> get_frediDataObj("fredi_config", "frediData"),
+    refYear0 = "co_slrScalars" |> get_frediDataObj("configData", "frediData") |> pull(refYear) |> unique() |> min()
 ){
   ### Subset sector scalar info
   ## Filter to years, update with info from socioeconomic scenario
   scalars <- "co_sectorScalars" |>
-    get_frediDataObj("frediData", "rDataList") |>
+    get_frediDataObj("configData", "frediData") |>
     filter(sector %in% sectors) |>
     pull(scalarName) |>
     unique()
@@ -1487,7 +1499,7 @@ get_sectorScalars <- function(
   ### Which scalars to do for SLR
   if(doSlr0) {
     scalars <- "co_slrScalars" |>
-      get_frediDataObj("frediData", "rDataList") |>
+      get_frediDataObj("configData", "frediData") |>
       filter(sector %in% sectors) |>
       select(all_of(colsSlr)) |>
       pivot_longer(names_to="name", values_to="value") |>
@@ -1502,16 +1514,17 @@ get_sectorScalars <- function(
 initialize_resultsDf <- function(
     df_se      = create_nationalScenario(), ### SE scenario
     elasticity = NULL,
-    minYr0     = "minYear0"      |> get_frediDataObj("fredi_config", "rDataList"),
-    maxYr0     = "maxYear0"      |> get_frediDataObj("fredi_config", "rDataList"),
-    sectors    = "co_sectors"    |> get_frediDataObj("frediData", "rDataList") |> pull(sector_id) |> unique(), ### Vector of sectors
-    mTypes     = "co_models"     |> get_frediDataObj("frediData", "rDataList") |> pull(modelType) |> unique(),
+    minYr0     = "minYear0"      |> get_frediDataObj("fredi_config", "frediData"),
+    maxYr0     = "maxYear0"      |> get_frediDataObj("fredi_config", "frediData"),
+    sectors    = "co_sectors"    |> get_frediDataObj("configData", "frediData") |> pull(sector) |> unique(), ### Vector of sectors
+    mTypes     = "co_models"     |> get_frediDataObj("configData", "frediData") |> pull(model_type) |> unique(),
     types0     = controlData[["co_scalarTypes"]] |> pull(scalarType),
-    refYear0   = "co_slrScalars" |> get_frediDataObj("frediData", "rDataList") |> pull(refYear) |> unique() |> min(),
+    refYear0   = "co_slrScalars" |> get_frediDataObj("configData", "frediData") |> pull(refYear) |> unique() |> min(),
     msg0       = "\t"
 ){
   ### Messaging ----------------
   ### Messaging
+  #browser()
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Formatting initial results", "...") |> message()
 
@@ -1532,12 +1545,12 @@ initialize_resultsDf <- function(
   slrStr0    <- "slr"
   hasSlr     <- slrStr0 %in% mTypes
   doExtr0    <- maxYr0 > refYear0
-  doSlr0     <- hasSlr0 & doExtr0
+  doSlr0     <- hasSlr & doExtr0
 
   ### Sector Info ----------------
   # select0    <- c(mainCols0, regCols0, mTypeCol0, modCol0, colsScalar, colsCoeff)
-  df0        <- "co_sectorInfo" |>
-    get_frediDataObj("frediData", "rDataList") |>
+  df0        <- "co_sectorsInfo" |>
+    get_frediDataObj("configData", "frediData") |>
     # filter(sector %in% sectors) |>
     # select(-any_of(dropCols0))
     filter(sector %in% sectors)
@@ -1556,13 +1569,14 @@ initialize_resultsDf <- function(
   ### - Filter to relevant scalars, years, and update with seScalars
   sectScalars <- sectors |> get_sectorScalars(mTypes=mTypes, maxYr0=maxYr0)
   seScalars   <- df_se   |> update_popScalars()
-  df_scalars  <- "df_scalars" |>
-    get_frediDataObj("stateData", "rDataList") |>
+  df_scalars  <- "scalarData" |>
+    get_frediDataObj("stateData", "frediData") |>
     filter(scalarName %in% sectScalars) |>
     filter(year >= minYr0, year <= maxYr0) |>
     # filter_at(c(yrCol0  ), function(x, minYr0=minYr0, maxYr0=maxYr0){x >= minYr0 & x <= maxYr0})|>
     # select(-any_of(dropCols0)) |>
-    update_popScalars(seScalars)
+    #update_popScalars(seScalars)
+    left_join(seScalars)
   # ### Update scalars
   # df_scalars <- df_scalars |> update_popScalars(df_se, popCol="pop")
   rm(seScalars)
@@ -1571,11 +1585,11 @@ initialize_resultsDf <- function(
   ### Update scalar info:
   ### Physical scalars, Physical adjustment, Damage Adjustment
   ### Economic scalar, Economic multiplier
-  df0        <- df0 |> match_scalarValues(sectors=sectors0, scalars=df_scalars, scalarType="physScalar")
-  df0        <- df0 |> match_scalarValues(sectors=sectors0, scalars=df_scalars, scalarType="physAdj")
-  df0        <- df0 |> match_scalarValues(sectors=sectors0, scalars=df_scalars, scalarType="damageAdj")
-  df0        <- df0 |> match_scalarValues(sectors=sectors0, scalars=df_scalars, scalarType="econScalar")
-  df0        <- df0 |> match_scalarValues(sectors=sectors0, scalars=df_scalars, scalarType="econMultiplier")
+  df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, scalarType="physScalar")
+  df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, scalarType="physAdj")
+  df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, scalarType="damageAdj")
+  df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, scalarType="econScalar")
+  df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, scalarType="econMultiplier")
   # df0        <- types0
   # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
