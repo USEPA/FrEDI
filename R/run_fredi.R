@@ -331,6 +331,7 @@ run_fredi <- function(
   ) ### End format_inputsList
   inNames      <- inputsList |> names()
   hasInputs    <- inNames    |> length()
+  hasInputs |> prinht()
 
   ### Update list
   ### For each input:
