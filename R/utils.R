@@ -274,8 +274,10 @@ get_scenario_id <- function(
     msg1 |> get_msgPrefix(newline=F) |> paste0("Creating ", idCol0 , " from columns '", cols0 |> paste(collapse=sepM), "'...") |> message()
   } ### End if(naNum0)
   ### Select columns and get scenario IDs
-  vals0  <- df0   |> select(all_of(cols0))
-  vals0  <- df0   |> select(all_of(cols0)) |>
+  # vals0  <- df0 |> select(all_of(cols0))
+  vals0  <- df0 |>
+    ungroup() |>
+    select(all_of(cols0)) |>
     apply(1, function(x){
       x |> as.vector() |> paste(collapse=sep0)
     }) |> unlist()
@@ -1716,8 +1718,8 @@ initialize_resultsDf <- function(
     filter(scalarName %in% sectScalars) |>
     filter(year >= minYr0, year <= maxYr0)
   # df0 |> glimpse();
-  df_scalars |> glimpse()
-  df_scalars |> filter(scalarType=="physScalar") |> pull(scalarName) |> unique() |> print()
+  # df_scalars |> glimpse()
+  # df_scalars |> filter(scalarType=="physScalar") |> pull(scalarName) |> unique() |> print()
 
   ### Update variable scalars
   df_scalars  <- df_se |>
@@ -1728,7 +1730,7 @@ initialize_resultsDf <- function(
     #     x %in% y ~ z,
     #     .default = x
     #   )})
-  df_scalars |> filter(scalarType=="physScalar") |> pull(scalarName) |> unique() |> print()
+  # df_scalars |> filter(scalarType=="physScalar") |> pull(scalarName) |> unique() |> print()
   ### Add in scenario info
   # df_scalars |> glimpse(); seScalars |> glimpse()
   # df_scalars  <- df_scalars |> left_join(seScalars)
@@ -1759,12 +1761,12 @@ initialize_resultsDf <- function(
   df0        <- df0 |> match_scalarValues(sectors=sectors, scalars=df_scalars, module0=module0, minYr0=minYr0, maxYr0=maxYr0, scalarType="econMultiplier", doAdj0=T)
   df0        <- df0 |> rename_at(c(from0), ~to0)
   rm(from0, to0)
-  "got here2" |> print()
+  # "got here2" |> print()
 
   ### Calculate Scalars ----------------
   ### Calculate scalars
   df0        <- df0 |> calcScalars(extendSlr=F, elasticity=elasticity, module0=module0)
-  "got here3" |> print()
+  # "got here3" |> print()
 
   ### Extend SLR Scalars for Years > 2090 ----------------
   ### Scalars for SLR past 2090
@@ -1794,7 +1796,7 @@ initialize_resultsDf <- function(
 
   ### Join and Arrange ----------------
   ### Drop columns
-  # drop0      <- c("region", "postal", "modelType") |> c(colsScalar, colsCoeff)
+  # drop0      <- c("region", "postal", "model_type") |> c(colsScalar, colsCoeff)
   # drop0      <- c("region", "postal") |> c(colsScalar, colsCoeff)
   # df0        <- df0 |> select(-any_of(drop0))
   # rm(drop0)
@@ -1803,7 +1805,7 @@ initialize_resultsDf <- function(
   # df0        <- df_info0 |> left_join(df0, by=join0, relationship="many-to-many")
   # rm(join0, df_info0)
   # ### Arrange data
-  sort0      <- mainCols0 |> c("state_order") |> c(yrCol0)
+  sort0      <- mainCols0 |> c("state_order") |> c(modCol0, yrCol0)
   df0        <- df0 |> arrange_at(c(sort0))
 
 
@@ -1923,7 +1925,7 @@ get_gcmScaledImpacts <- function(
 
   ### List of impact functions
   ### Get list of groups with unique impact functions
-  funList0   <- module0 |>
+  funList0   <- modData0 |>
     get_frediDataObj("stateData", "gcmFuns", msg0=msg1) |>
     get_matches_list(y=ids0, type="values", lType="names", comp="in")
 
@@ -2137,13 +2139,14 @@ map_getScaledImpacts <- function(
     df0  , ### Tibble with sector info (e.g., initialize_resultsDf)
     df1  , ### Tible with driver info
     module0 = "fredi",
-    minYr0 = "frediData" |> get_frediDataObj("fredi_config", "minYear0"),
-    maxYr0 = "frediData" |> get_frediDataObj("fredi_config", "maxYear0"),
-    idCol0 = "scenario_id",
-    yCol0  = "scaled_impacts",
-    yrCol0 = "year",
-    drCol0 = "modelUnitValue",
-    msg0   = 0
+    minYr0  = "frediData" |> get_frediDataObj("fredi_config", "minYear0"),
+    maxYr0  = "frediData" |> get_frediDataObj("fredi_config", "maxYear0"),
+    idCol0  = "scenario_id",
+    yCol0   = "scaled_impacts",
+    yrCol0  = "year",
+    drCol0  = "driverValue",
+    # drCol0  = "modelUnitValue",
+    msg0    = 0
 ){
   ### Messaging
   # msg1       <- msg0 |> paste0("\t")
@@ -2197,16 +2200,15 @@ calc_scaled_impacts_fredi <- function(
 
   ### Calculate Scaled Impacts ----------------
   # df_info0 |> pull(region) |> unique() |> print()
-  mTypes0  <- drivers0 |> pull(modelType) |> unique()
-  df0      <- mTypes0  |>
-    map(
-      map_getScaledImpacts,
-      df0     = results0,
-      df1     = drivers0,
-      module0 = module0,
-      minYr0  = minYr0,
-      maxYr0  = maxYr0
-    ) |>
+  mTypes0  <- drivers0 |> pull(model_type) |> unique()
+  df0      <- mTypes0  |> map(
+    map_getScaledImpacts,
+    df0     = results0,
+    df1     = drivers0,
+    module0 = module0,
+    minYr0  = minYr0,
+    maxYr0  = maxYr0
+  ) |>
     set_names(mTypes0) |>
     bind_rows(.id="model_type")
   rm(mTypes0)
