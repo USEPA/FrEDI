@@ -90,7 +90,7 @@ get_defaultScenario <- function(
   info0    <- dfInfo |> filter(inputName %in% name0)
   idColX   <- info0  |> pull(idCol0)
   scen0    <- info0  |> pull(all_of(idColX))
-  refYr0   <- info0  |> pull(refYr0)
+  refYr0   <- info0  |> pull(refYear)
   doReg0   <- info0  |> pull(doReg0)
   yCol0    <- info0  |> pull(valueCol)
 
@@ -262,7 +262,7 @@ format_inputsList <- function(
   return(inputsList)
 }
 
-### Update defaults
+### Update defaults ----------------
 update_inputDefault <- function(
     type0,
     dfInfo,
@@ -281,11 +281,14 @@ update_inputDefault <- function(
 
   ### Data
   dfDef      <- defaultsList[[type0]] |> filter(year >= minYear, year <= maxYear) |> ungroup()
-  dfIn       <- inputsList  [[type0]] |> filter(year >= minYear, year <= maxYear) |> ungroup()
+  dfIn       <- inputsList  [[type0]]
 
   ### If input is present, return the data
   hasIn      <- dfIn |> is.data.frame()
-  if(hasIn) return(dfIn)
+  if(hasIn) {
+    dfIn <- dfIn |> filter(year >= minYear, year <= maxYear) |> ungroup()
+    return(dfIn)
+  } ### End if(hasIn)
 
   ### Otherwise, check if the input is temp or slr
   ### Reference names from dfInfo0
@@ -307,21 +310,22 @@ update_inputDefault <- function(
   doSlr0     <- slrStr0  %in% inNames0
   ### If isTemp0 & !doTemp0, return NULL
   if(isTemp0 & !doTemp0) return()
+
+  ### Get ref years
+  infoT  <- dfInfo |> filter(inputName %in% tempStr0)
+  infoS  <- dfInfo |> filter(inputName %in% slrStr0 )
+  ### Column
+  yrCol0 <- "year"
+  idCol0 <- "scenario"
+  yColT  <- infoT |> pull(valueCol)
+  drop0  <- yColT |> paste0("_", c("conus", "global")) |> c(idCol0)
+
   ### If isSlr0: Check if there is a temperature input
   ### If there is a temperature input, calculate global temps, slr height
   if(isSlr0) {
     dfTemp  <- inputsList[[tempStr0]]
     hasTemp <- dfTemp |> is.data.frame()
     if(hasTemp) {
-      ### Get ref years
-      infoT  <- dfInfo |> filter(inputName %in% tempStr0)
-      infoS  <- dfInfo |> filter(inputName %in% slrStr0 )
-      ### Column
-      yrCol0 <- "year"
-      idCol0 <- "scenario"
-      drop0  <- infoT |> pull(valueCol) |>
-        paste0("_", c("conus", "global")) |>
-        c(idCol0)
       ### Calculate global temperatures and SLR
       dfTemp <- dfTemp |>
         mutate(scenario = type0) |>
@@ -330,7 +334,7 @@ update_inputDefault <- function(
           .x |> format_tempData_byGroup(
             .y        = .y,
             xCol0     = yrCol0,
-            yCol0     = infoT |> pull(valueCol),
+            yCol0     = yColT,
             xOut0     = infoT |> pull(refYear) |> seq(maxYear),
             tempType0 = "conus",
             method0   = "linear",
@@ -355,7 +359,11 @@ update_inputDefault <- function(
     return(dfDef)
   } ### End if(isSlr0)
 
-  ### Otherwise, return default
+  ### Otherwise, rename and drop columns
+  dfDef[[yColT]] <- dfDef[[yColT |> paste0("_global")]]
+  dfDef      <- dfDef |> select(-any_of(drop0))
+
+  ### Return
   return(dfDef)
 }
 

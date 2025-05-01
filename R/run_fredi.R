@@ -231,15 +231,15 @@ run_fredi <- function(
   argsList     <- list() ### List of arguments
   userList     <- list()
   modelList    <- list()
-  ### Scenarios
-  scenarioList <- list() ### Initial list for scenarios
+  # ### Scenarios
+  # scenarioList <- list() ### Initial list for scenarios
 
   #### Return Obj ----------------
   ### Initialize return list: add scenarios
   if(outputList) {
     returnObj[["statusList"]] <- statusList
     returnObj[["argsList"  ]] <- argsList
-    returnObj[["scenarios" ]] <- scenarioList
+    returnObj[["scenarios" ]] <- list()
     returnObj[["results"   ]] <- tibble()
   } ### End
 
@@ -330,7 +330,7 @@ run_fredi <- function(
   ### Check if elasticity is equal to the default
   if(outputList) {
     statusList[["elasticity"]] <- (elasticity0 != elasticity) |> get_returnListStatus()
-    argsList  [["elasticity"]] <- elasticity
+    modelList [["elasticity"]] <- elasticity
   } ### End if(outputList)
   rm(elasticity0)
 
@@ -393,7 +393,7 @@ run_fredi <- function(
 
   ### Format inputs list
   inputsList   <- format_inputsList(
-    dfInfo0    = inputInfo0,
+    dfInfo     = inputInfo0,
     inputsList = inputsList,
     tempType   = "conus",
     popArea    = "state",
@@ -405,19 +405,20 @@ run_fredi <- function(
 
   ### Update list
   if(outputList) {
+    modelList [["inputsList"]] <- inputsList
     statusList[["inputsList"]] <- inNames0 |>
       map(check_nullListElement, list0=inputsList) |>
       map(get_returnListStatus) |>
       set_names(inNames0)
-    argsList  [["inputsList"]] <- inputsList
+    ### Update status list for temps, slr
   } ### End if(outputList)
 
   #### Interpolate Values ----------------
   ### Check if there are inputs
+  ### If there are, iterate over list and format values
   inNames      <- inputsList |> names()
   hasInputs    <- inNames    |> length()
-  hasInputs |> print()
-  ### If there are, iterate over list and format values
+  # hasInputs |> print()
   if(hasInputs) {
     inputsList   <- list(
       df0     = inputsList,
@@ -430,40 +431,45 @@ run_fredi <- function(
     ) |> set_names(inNames)
   } ### End if(hasInputs)
 
+  #### Update Defaults ----------------
   ### Update inputs with defaults if values are missing
-  inputsList   <- inNames0 |> update_inputDefaults(
+  inputsList   <- inNames0 |> map(
+    update_inputDefault,
+    dfInfo     = inputInfo0,
     defaults   = inputDefs,
     inputsList = inputsList,
-    dfInfo     = inputInfo0
+    minYear    = minYear,
+    maxYear    = maxYear
   ) |>
-    map(function(df0, minYr0=minYear, maxYr0=maxYear){
-      df0 |> filter(year >= minYear, year <= maxYear)
-    }) |> set_names(inNames0)
+    # map(function(df0, minYr0=minYear, maxYr0=maxYear){
+    #   df0 |> filter(year >= minYear, year <= maxYear)
+    # }) |>
+    set_names(inNames0)
   rm(inputDefs)
   ### Update returnList with Scenario Input Data
-  if(outputList){returnList[["scenarios"]] <- inputsList}
+  if(outputList) {
+    returnObj[["scenarios"]] <- inputsList
+  } ### End if(outputList)
+  ### Drop any Null scenarios
+  inputsList   <- inputsList |> drop_nullListElements()
+  inNames      <- inputsList |> names()
 
+
+  ### Driver Scenarios ----------------
   #### Format Physical Driver Scenario ----------------
-  df_drivers <- inputsList[c("temp", "slr") |> get_matches(y=inNames)] |> combine_driverScenarios()
+  physDrivers  <- inNames |> get_matches(y=c(tempStr0, slrStr0))
+  df_drivers   <- inputsList[physDrivers] |> combine_physDrivers()
 
 
   #### Format Socioeconomic Driver Scenario ----------------
-  ### Get GDP and Population scenarios
-  # gdp_df       <- inputsList[["gdp"]]
-  # pop_df       <- inputsList[["pop"]]
-  ### Convert region to region IDs
-  drop0        <- c("area", "region", "state", "state_order")
-  pop_df       <- inputsList[["pop"]] |>
-    select(-any_of(drop0)) |>
-    left_join(controlData[["co_states"]], by="postal") |>
-    select(c("region","state", "postal", "state_order", "year", "pop"))
-  rm(drop0)
   ### Calculate national population and update national scenario
-  seScenario   <-  create_nationalScenario(gdp0 = inputsList[["gdp"]], pop0 = pop_df)
+  seScenario   <-  inputsList[["gdp"]] |> create_nationalScenario(pop0 = inputsList[["pop"]])
+  rm(inputsList)
+  # seScenario |> glimpse()
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
-  rm(gdp_df, pop_df)
-  # seScenario |> glimpse()
+
+
 
 
   ### Calculate Impacts ----------------

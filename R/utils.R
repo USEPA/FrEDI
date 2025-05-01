@@ -515,7 +515,7 @@ drop_nullListElements <- function(
 }
 
 
-### format_inputScenarios ----------------
+## Format Input Scenarios ----------------
 ### This function helps format input scenarios
 # if(doTemp0) {
 #   df0 <- df0 |> group_map(
@@ -618,41 +618,95 @@ format_inputScenarios <- function(
 }
 
 
-combine_driverScenarios <- function(
-    list0 ### List of driver scenarios
-    # list0, ### List of driver scenarios
-    # info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-    # info1 = get_frediDataObj("co_modelTypes", "controlData")
+
+### Function to rename physical drivers
+rename_physDrivers <- function(
+    nameX,
+    listX,
+    infoX,
+    idColX = "inputName",
+    yColX  = "driverValue"
+){
+  colX <- infoX |> filter(inputName %in% nameX) |> pull(valueCol)
+  dfX  <- listX[[nameX]] |> rename_at(c(colX), ~yColX)
+  return(dfX)
+}
+
+### Combine driver scewnarios
+combine_physDrivers <- function(
+    list0, ### List of driver scenarios
+    info0,
+    idCol0   = "inputName",
+    idColNew = "driverName",
+    yColNew  = "driverValue"
 ){
   ### Rename columns
   names0   <- list0 |> names()
-  list0    <- names0 |> map(function(name0){
-    doTemp0 <- name0 |> str_detect("temp")
-    info0   <- "controlData" |> get_frediDataObj("co_modelTypes") |>
-      filter(inputName %in% name0) |>
-      rename_at(c("inputName"), ~c("driverName"))
-    valCol0 <- info0 |> pull(valueCol) |> paste0(case_when(doTemp0 ~ "_conus", .default=""))
-    ### Rename and select columns
-    select0 <- c("year", "driverValue")
-    df0     <- list0[[name0]] |>
-      rename_at(c(valueCol0), ~"driverValue") |>
-      select(all_of(select0)) |>
-      cross_join(info0)
-    ### Return
-    return(df0)
-  }) |> bind_rows()
+
+  ### Iterate over list and change name of columns, then bind
+  df0      <- names0 |> map(
+    rename_physDrivers,
+    listX  = list0,
+    infoX  = info0,
+    idColX = idCol0,
+    yColX  = yColNew
+  ) |>
+    set_names(names0) |>
+    bind_rows(.id="inputName")
+  rm(list0)
+
+  ### Add model types info
+  ### Model types info
+  dfMTypes <- "controlData" |>
+    get_frediDataObj("co_modelTypes") |>
+    filter(inputName %in% names0)
+
+  ### Join data and info
+  join0    <- "inputName"
+  from0    <- "inputName"
+  to0      <- "driverName"
+  df0      <- df0 |>
+    left_join(dfMTypes, by=join0) |>
+    rename_at(c(idCol0), ~idColNew)
+  rm(dfMTypes)
 
   ### Return
-  gc()
+  # gc()
   return(df0)
 }
 
+# combine_physDrivers <- function(
+    #     list0 ### List of driver scenarios
+#     # list0, ### List of driver scenarios
+#     # info0, ### Dataframe with scenario info, e.g.: df_inputInfo
+#     # info1 = get_frediDataObj("co_modelTypes", "controlData")
+# ){
+#   ### Rename columns
+#   names0   <- list0 |> names()
+#   list0    <- names0 |> map(function(name0){
+#     doTemp0 <- name0 |> str_detect("temp")
+#     info0   <- "controlData" |> get_frediDataObj("co_modelTypes") |>
+#       filter(inputName %in% name0) |>
+#       rename_at(c("inputName"), ~c("driverName"))
+#     valCol0 <- info0 |> pull(valueCol) |> paste0(case_when(doTemp0 ~ "_conus", .default=""))
+#     ### Rename and select columns
+#     select0 <- c("year", "driverValue")
+#     df0     <- list0[[name0]] |>
+#       rename_at(c(valueCol0), ~"driverValue") |>
+#       select(all_of(select0)) |>
+#       cross_join(info0)
+#     ### Return
+#     return(df0)
+#   }) |> bind_rows()
+#
+#   ### Return
+#   gc()
+#   return(df0)
+# }
 
 
 
-
-
-## interpolate_annual ----------------
+## Interpolate annual values ----------------
 ### Interpolate Annual Values
 interpolate_byGroup <- function(
     .x,       ### Data, filtered to a scenario
@@ -874,46 +928,46 @@ zero_out_scenario <- function(
 # }
 
 
-### Update population and GDP scenarios ----------------
+## Update population and GDP scenarios ----------------
 ## Interpolate GDP scenario
 ### df0 is a data frame with columns c("year", "gdp_usd")
-interpolate_gdp <- function(df0){
-  ### Import Functions to Namespace
-  # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
-  ### Select columns
-  select0 <- c("year", "gdp_usd")
-  df0     <- df0 |> select(all_of(select0))
-  ### Get years
-  years0  <- df0 |> pull(year) |> get_years_fromData()
-  ### Add region="NationalTotal"
-  df0     <- df0 |> mutate(region = "NationalTotal")
-  ### Interpolate annual
-  sum0    <- c("gdp_usd")
-  df0     <- df0 |> interpolate_annual(years=years0, column=sum0, rule=1, byState=F)
-  ### Drop region
-  drop0   <- c("region")
-  df0     <- df0 |> select(-any_of(drop0))
-  ### Return
-  return(df0)
-}
-
-
-## Interpolate population
-### df0 is a data frame with columns c("region", "state", "postal", "year", "pop")
-interpolate_pop <- function(df0){
-  ### Import Functions to Namespace
-  # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
-  ### Select column
-  select0 <- c("region", "state", "postal", "year", "pop")
-  df0     <- df0 |> select(all_of(select0))
-  ### Get years
-  years0  <- df0 |> pull(year) |> get_years_fromData()
-  ### Interpolate annual
-  sum0    <- c("pop")
-  df0     <- df0 |> interpolate_annual(years=years0, column=sum0, rule=1, byState=T)
-  ### Return
-  return(df0)
-}
+# interpolate_gdp <- function(df0){
+#   ### Import Functions to Namespace
+#   # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
+#   ### Select columns
+#   select0 <- c("year", "gdp_usd")
+#   df0     <- df0 |> select(all_of(select0))
+#   ### Get years
+#   years0  <- df0 |> pull(year) |> get_years_fromData()
+#   ### Add region="NationalTotal"
+#   df0     <- df0 |> mutate(region = "NationalTotal")
+#   ### Interpolate annual
+#   sum0    <- c("gdp_usd")
+#   df0     <- df0 |> interpolate_annual(years=years0, column=sum0, rule=1, byState=F)
+#   ### Drop region
+#   drop0   <- c("region")
+#   df0     <- df0 |> select(-any_of(drop0))
+#   ### Return
+#   return(df0)
+# }
+#
+#
+# ## Interpolate population
+# ### df0 is a data frame with columns c("region", "state", "postal", "year", "pop")
+# interpolate_pop <- function(df0){
+#   ### Import Functions to Namespace
+#   # interpolate_annual <- utils::getFromNamespace("interpolate_annual", "FrEDI")
+#   ### Select column
+#   select0 <- c("region", "state", "postal", "year", "pop")
+#   df0     <- df0 |> select(all_of(select0))
+#   ### Get years
+#   years0  <- df0 |> pull(year) |> get_years_fromData()
+#   ### Interpolate annual
+#   sum0    <- c("pop")
+#   df0     <- df0 |> interpolate_annual(years=years0, column=sum0, rule=1, byState=T)
+#   ### Return
+#   return(df0)
+# }
 
 ## Calculate national population
 ### df0 is a data frame with columns c("region", "state", "postal", "year", "pop")
@@ -956,6 +1010,41 @@ calc_nationalPop <- function(df0){
 ### Create national scenario from national population and GDP information
 ### gdp0 is a data frame with columns c("year", "gdp_usd")
 ### pop0 is a data frame with columns c("region", "state", "postal", "year", "pop")
+# create_nationalScenario <- function(
+#     gdp0,
+#     pop0,
+#     # gdp0    = "scenarioData" |> get_frediDataObj("gdp_default"),
+#     # pop0    = "scenarioData" |> get_frediDataObj("pop_default"),
+#     natPop0 = NULL
+# ){
+#   ### If national population is NULL, calculate national population
+#   nullNpop <- natPop0 |> is.null()
+#   if(nullNpop) natPop0 <- pop0 |> calc_nationalPop()
+#   ### Columns
+#   yrCol0   <- c("year")
+#   popCol0  <- c("pop")
+#   natCol0  <- c("national_pop")
+#   gdpCols0 <- c("gdp_usd", "gdp_percap")
+#   regCols0 <- c("region", "state", "postal")
+#   ### Select columns
+#   colsG0   <- c(yrCol0, gdpCols0)
+#   colsP0   <- c(regCols0, yrCol0, popCol0)
+#   colsN0   <- c(yrCol0, natCol0)
+#   gdp0     <- gdp0 |> select(any_of(colsG0))
+#   pop0     <- pop0 |> select(any_of(colsP0))
+#   ### Join GDP and national population by year
+#   nat0     <- gdp0 |> left_join(natPop0, by=yrCol0)
+#   rm(gdp0)
+#   ### Calculate GDP per capita
+#   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
+#   ### Join nat0 with state population by year
+#   nat0     <- nat0 |> left_join(pop0, by=yrCol0, relationship="many-to-many")
+#   ### Arrange by colsP0
+#   sort0    <- c(regCols0, yrCol0)
+#   nat0     <- nat0 |> arrange_at(vars(sort0))
+#   ### Return
+#   return(nat0)
+# }
 create_nationalScenario <- function(
     gdp0,
     pop0,
@@ -963,35 +1052,52 @@ create_nationalScenario <- function(
     # pop0    = "scenarioData" |> get_frediDataObj("pop_default"),
     natPop0 = NULL
 ){
+  ### Standarize population data
+  drop0    <- c("area", "region", "state", "state_order")
+  join0    <- c("postal")
+  select0  <- c("region","state", "postal", "state_order", "year", "pop")
+  pop0     <- pop0 |>
+    select(-any_of(drop0)) |>
+    left_join(controlData[["co_states"]], by=join0) |>
+    select(all_of(select0))
+  rm(drop0, join0, select0)
+
   ### If national population is NULL, calculate national population
   nullNpop <- natPop0 |> is.null()
   if(nullNpop) natPop0 <- pop0 |> calc_nationalPop()
+
   ### Columns
   yrCol0   <- c("year")
   popCol0  <- c("pop")
   natCol0  <- c("national_pop")
   gdpCols0 <- c("gdp_usd", "gdp_percap")
   regCols0 <- c("region", "state", "postal")
+
   ### Select columns
   colsG0   <- c(yrCol0, gdpCols0)
   colsP0   <- c(regCols0, yrCol0, popCol0)
   colsN0   <- c(yrCol0, natCol0)
   gdp0     <- gdp0 |> select(any_of(colsG0))
   pop0     <- pop0 |> select(any_of(colsP0))
+
   ### Join GDP and national population by year
   nat0     <- gdp0 |> left_join(natPop0, by=yrCol0)
   rm(gdp0)
+
   ### Calculate GDP per capita
   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
+
   ### Join nat0 with state population by year
   nat0     <- nat0 |> left_join(pop0, by=yrCol0, relationship="many-to-many")
+  rm(pop0)
+
   ### Arrange by colsP0
   sort0    <- c(regCols0, yrCol0)
   nat0     <- nat0 |> arrange_at(vars(sort0))
+
   ### Return
   return(nat0)
 }
-
 
 
 
