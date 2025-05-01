@@ -473,13 +473,13 @@ run_fredi <- function(
 
 
   ### Calculate Impacts ----------------
-  #### Select/Filter Scenario Info and Scalars ----------------
   #### Get Scalar Values ----------------
   ### Calculate physical scalars and economic multipliers then calculate scalars
   msg0 |> get_msgPrefix() |> paste0("Calculating impacts...") |> message()
   df_results   <- initialize_resultsDf(
     df_se      = seScenario,
-    sectors    = dfSectors$sector,
+    sectors    = sectorList,
+    # sectors    = dfSectors$sector,
     mTypes     = modTypes0,
     minYr0     = minYear,
     maxYr0     = maxYear,
