@@ -43,34 +43,34 @@
 get_sectorInfo <- function(
     description = F,
     gcmOnly     = F,
-    slrOnly     = F
+    slrOnly     = F,
+    module0     = "fredi"
 ){
   ### Values
   module0    <- "fredi"
-  modData0   <- module0 |> paste0("Data")
-  ### Get objects
-  df_sectors <- get_frediDataObj(listSub="co_sectorsRef", listName=modData0)
-  ### Select, rename, and arrange
-  drop0      <- c("sector_id")
-  to0        <- c("sector", "model_type")
-  mutate0    <- c("model_type")
-  df_sectors <- df_sectors |>
-    select(-any_of(drop0)) |>
-    rename_at(c(to0), ~to0 |> paste0("_label")) |>
-    mutate_at(c(mutate0), toupper) |>
-    # rename(sector     = sector_label) |>
-    # rename(model_type = modelType) |>
-    # mutate(model_type = model_type |> toupper()) |>
-    arrange_at(c(to0))
-  # ### Sort
-  # df_sectors <- df_sectors |> arrange_at(c(to0))
-  ### GCM or SLR
-  gcm_string <- "GCM"
+  module0    <- module0 |> tolower()
+  modData0   <- module0 |> fun_moduleDataStr()
+
+  ### Filter to GCM or SLR if gcmOnly or slrOnly
+  gcmStr0    <- "gcm"
   if(gcmOnly){
     df_sectors <- df_sectors |> filter(model_type == gcm_string)
   } else if(slrOnly){
     df_sectors <- df_sectors |> filter(model_type != gcm_string)
   } ### End if(gcmOnly)
+
+  ### Get objects
+  df_sectors <- modData0 |> get_frediDataObj("configData", "co_sectorsRef")
+
+  ### Select, rename, and arrange
+  drop0      <- c("sector")
+  to0        <- c("sector")
+  mutate0    <- c("model_type")
+  df_sectors <- df_sectors |>
+    select(-any_of(drop0)) |>
+    rename_at(c(to0 |> paste0("_label")), ~to0) |>
+    mutate_at(c(mutate0), toupper) |>
+    arrange_at(c(to0))
 
   ### If not description, return names only
   if(!description){

@@ -23,7 +23,7 @@ get_inputsIDCols <- function(
   ### Initialize list
   cols0 <- c()
   ### If doReg
-  if(!is.na(doReg0) & doReg0) {
+  if(doReg0) {
     ### If doPop0, get popArea
     if(doPop0) {
       doState <- popArea |> str_detect("state")
@@ -50,61 +50,104 @@ get_inputsIDCols <- function(
 get_dfInputInfo <- function(
     module0 = "fredi",
     mTypes0 = c("gcm", "slr")
-
 ){
-  ###
-  dfInfo <- controlData[["co_moduleScenarios"]] |>
-    filter(module %in% module0) |>
-    left_join(controlData[["co_inputInfo"]])
-  ### Get list of input names
-  doSlr0       <- mTypes0 |> tolower() |> str_detect("slr")
-  if(any(!doSlr0)) dfInfo <- dfInfo |> filter(!(inputName %in% "slr"))
-  return(dfInfo)
+  ### Values
+  module0 <- module0 |> tolower()
+  mTypes0 <- mTypes0 |> tolower()
+
+  ### Data from namespace
+  ### Scenarios
+  df0     <- "controlData" |>
+    get_frediDataObj("co_moduleScenarios") |>
+    filter(module %in% module0)
+
+  ### Drop SLR if not present
+  slrStr0 <- "slr"
+  doSlr0  <- mTypes0 |> str_detect(slrStr0) |> any()
+  if(!doSlr0) df0 <- df0 |> filter(!(inputName %in% slrStr0))
+
+  ### Return
+  return(df0)
+}
+
+### Function to get default scenario
+get_defaultScenario <- function(
+    name0,
+    dfInfo,
+    minYr0  = 2010,
+    maxYr0  = 2100,
+    yrCol0  = "year",
+    module0 = "fredi"
+){
+  ### Conditionals
+  tempStr0 <- "temp"
+  slrStr0  <- "slr"
+  doTemp   <- name0 |> str_detect(tempStr0)
+  doSlr    <- name0 |> str_detect(slrStr0)
+  index0   <- doSlr |> ifelse(tempStr0, name0)
+
+  ### Info
+  info0    <- dfInfo |> filter(inputName %in% name0)
+  idColX   <- info0  |> pull(idCol0)
+  scen0    <- info0  |> pull(all_of(idColX))
+  refYr0   <- info0  |> pull(refYr0)
+  doReg0   <- info0  |> pull(doReg0)
+  yCol0    <- info0  |> pull(valueCol)
+
+  ### Conditionals
+  doRefYr0 <- !(refYr0 |> is.na())
+  minYr0   <- doRefYr0 |> ifelse(refYr0, minYr0)
+  # c(name0, index0, idColX, scen0) |> print()
+
+  ### Get input data, then filter to scenario
+  df0      <- "scenarioData" |>
+    get_frediDataObj(index0) |>
+    filter_at(c(idColX), function(x, y=scen0){x %in% y})
+
+  ### Filter to years
+  df0     <- df0 |>
+    filter(year >= minYr0) |>
+    filter(year <= maxYr0)
+
+  ### Select columns
+  idCols0  <- yrCol0
+  if(doTemp) yCol0   <- yCol0 |> paste0("_", c("conus", "global")) |> c("slr_cm")
+  if(doReg0) idCols0 <- c("postal") |> c(idCols0)
+  cols0   <- idCols0 |> c(yrCol0, yCol0)
+  df0     <- df0 |> select(all_of(cols0))
+  # df0 |> glimpse()
+
+  ### Return
+  return(df0)
 }
 
 ### Add info to data
 get_defaultScenarios <- function(
     dfInfo,
     mTypes0 = c("gcm", "slr"),
-    minYr0  = 2000,
+    minYr0  = 2010,
     maxYr0  = 2100,
-    yrCol0  = "year"
+    yrCol0  = "year",
+    module0 = "fredi"
 ){
-  ### Get list of input names
-  inputNames0  <- dfInfo  |> pull(inputName)
-
   ### Drop SLR if that is not present
-  doSlr0       <- mTypes0 |> tolower() |> str_detect("slr")
-  if(any(!doSlr0)) inputNames0 |> get_matches("slr", matches=F)
+  ### Get list of input names
+  slrStr0      <- "slr"
+  mTypes0      <- mTypes0 |> tolower()
+  doSlr0       <- slrStr0 %in% mTypes0
+  if(!doSlr0) dfInfo |> filter(!(inputName %in% slrStr0))
+  inputNames0  <- dfInfo  |> pull(inputName)
+  # mTypes0 |> print(); doSlr0 |> print(); inputNames0 |> print()
 
   ### Get list of defaults
-  inputDefs    <- inputNames0 |> map(function(name0){
-    ### Conditionals
-    doTemp  <- name0 |> str_detect("temp")
-    doSlr   <- name0 |> str_detect("slr")
-    ### Info
-    info0   <- dfInfo |> filter(inputName %in% name0)
-    idCol0  <- info0 |> pull(idCol0)
-    scen0   <- info0 |> pull(scenarioName)
-    ### Filter scenario
-    df0     <- scenarioData[[name0]] |> filter_at(c(idCol0), function(x, y=scen0){x %in% y})
-    # if(doTemp) df0 <- df0 |> filter(scenario %in% "ECS_3.0_REF")
-    reg0    <- df0 |> pull(regional)
-    yCol0   <- df0 |> pull(valueCol)
-    idCols0 <- yrCol0
-    if(doTemp   ) yCol0   <- yCol0 |> paste0("_", c("conus", "global"))
-    if(any(reg0 == 1)) idCols0 <- c("region", "state", "postal") |> c(idCols0)
-    cols0   <- idCols0 |> c(yrCol0, yCol0)
-    ### Select columns
-    df0     <- df0 |>
-      select(all_of(cols0)) |>
-      filter(year <= maxYr0)
-    ### If hasMin0, filter min
-    hasMin0 <- !(minYr0 |> is.null())
-    if(hasMin0) df0 <- df0 |> filter(year >= minYr0)
-    ### Return
-    return(df0)
-  }) |> set_names(inputNames0)
+  inputDefs    <- inputNames0 |> map(
+    get_defaultScenario,
+    dfInfo  = dfInfo,
+    minYr0  = 2010,
+    maxYr0  = 2100,
+    yrCol0  = "year",
+    module0 = "fredi"
+  ) |> set_names(inputNames0)
 
   ### Return
   return(inputDefs)
@@ -112,91 +155,240 @@ get_defaultScenarios <- function(
 
 
 ### Check and format inputs list
+# notNull    <- inNames    |> map(function(name0){!(inputsList[[name0]] |> is.null())}) |> unlist() |> which()
+# ### Filter values and update inNames
+# inputsList <- inputsList[inNames][notNull]
+# inNames    <- inputsList |> names()
+# dfInfo     <- dfInfo     |> filter(inputName %in% inNames)
+# inNames    <- dfInfo     |> pull(inputName)
+# inputsList <- inputsList[inNames]
+# ### Check if there are values
+# nInputs    <- inputsList |> length()
+# nNames     <- inNames    |> length()
+# if (!nNames) {
+#   paste0(msg0) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
+#   msgN |> paste0(msg0) |> paste0("Exiting...") |> message()
+#   return()
+# } else if(!nInputs){
+#   return(inputsList)
+# } ### End if(!hasInputs)
+
 format_inputsList <- function(
-    dfInfo0, ### Outputs of get_dfInputInfo
+    dfInfo,   ### Outputs of get_dfInputInfo
     inputsList = list(temp=NULL, slr=NULL, pop=NULL, gdp=NULL),
     # maxYr0     = 2100,
     tempType   = "conus",
     popArea    = "state",
-    module0    = "fredi",
+    silent     = FALSE,
     msg0       = 0
 ){
   ### Messaging
   msgN       <- "\n"
-  ### Figure out which inputs are not null, and filter to that list
-  ### Get input names that match inNames0 and filter to values that are not null
-  inNames0   <- dfInfo0     |> pull(inputName)
+
+  ### Input strings
+  tempStr0   <- "temp"
+  slrStr0    <- "slr"
+  popStr0    <- "pop"
+  o3Str0     <- "o3"
+
+  ### Reference names from dfInfo0
+  inNames0   <- dfInfo     |> pull(inputName)
+
+  # ### Check which user-supplied inputs are missing
+  # ### Get input names that match inNames0 and filter to values that are not null
+  # isNullIn   <- inNames0   |> map(check_nullListElement, list0=inputsList) |> set_names(inNames0)
+
+  ### Drop NULL list elements from inputsList
+  ### Order inputsList by order of inNames0
+  inputsList <- inputsList |> drop_nullListElements()
   inNames    <- inNames0   |> get_matches(y=inputsList |> names())
-  notNull    <- inNames    |> map(function(name0){
-    !(inputsList[[name0]] |> is.null())
-  }) |> unlist() |> which()
-  ### Filter values and update inNames
-  inputsList <- inputsList[inNames][notNull]
-  inNames    <- inputsList |> names()
-  dfInfo     <- dfInfo0    |> filter(inputName %in% inNames)
-  inNames    <- dfInfo     |> pull(inputName)
   inputsList <- inputsList[inNames]
-  ### Check if there are values
   nInputs    <- inputsList |> length()
   nNames     <- inNames    |> length()
-  if (!nNames) {
+
+  ### Check if there are values
+  if(!nInputs) {
+    return(inputsList)
+  } else if (!nNames) {
     paste0(msg0) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
     msgN |> paste0(msg0) |> paste0("Exiting...") |> message()
+    # return(list())
     return()
-  } else if(!nInputs){
-    return(inputsList)
-  } ### End if(!hasInputs)
+  } else if(!(nNames = nInputs)){
+    paste0(msg0) |> paste0("Error! Number of names of `inputsList` must equal number of list elements.") |> message()
+    msgN |> paste0(msg0) |> paste0("Exiting...") |> message()
+    # return(list())
+    return()
+  } ### End if(!nInputs)
 
-
-  ### Check Inputs
-  ### Filter to valid inputs & get info
-  ### Reorganize inputs list
-  old0       <- c("inputName", "minYear", "maxYear", "inputMin", "inputMax", "regional", "valueCol")
-  new0       <- c("type0", "minYr0", "maxYr0", "inputMin0", "inputMax0", "doReg0", "valCol0")
-  cols0      <- old0 |> c("doPop0", "doO3", "popArea")
-  dfInfo0    <- dfInfo0 |>
-    #select(all_of(cols0)) |>
-    mutate(regional = regional == 1) |>
-    mutate(doTemp0  = inputName |> str_detect("temp")) |>
-    mutate(doPop0   = inputName |> str_detect("pop")) |>
-    mutate(doO3     = inputName |> str_detect("o3")) |>
+  ### If there are inputs, filter dfInfo to values in inNames
+  ### Rename and select columns
+  ### Add values
+  # old0       <- c("inputName", "minYear", "maxYear", "inputMin", "inputMax", "regional", "valueCol")
+  # new0       <- c("type0", "minYr0", "maxYr0", "inputMin0", "inputMax0", "doReg0", "valCol0")
+  old0       <- c("inputName", "minYear", "maxYear", "inputMin", "inputMax", "valueCol")
+  new0       <- c("type0", "minYr0", "maxYr0", "inputMin0", "inputMax0", "valCol0")
+  cols0      <- new0 |> c("doReg0", "doTemp0", "doPop0", "doO3")
+  dfInfo     <- dfInfo |>
+    filter(inputName %in% inNames) |>
+    rename_at(c(old0), ~c(new0)) |>
+    select(all_of(cols0)) |>
     mutate(tempType = case_when(doTemp0 ~ tempType, .default = NA)) |>
-    mutate(popArea  = case_when(doPop0  ~ popArea , .default = NA)) |>
-    rename_at(c(old0), ~c(new0))
+    mutate(popArea  = case_when(doPop0  ~ popArea , .default = NA))
 
-  ### Create logicals and initialize inputs list
-  select0   <- c("type0", "doReg0", "doPop0", "doO3", "popArea")
-  idCols    <- dfInfo0 |>
-    select(any_of(select0)) |>
+  ### Get ID columns
+  select0    <- c("type0", "doReg0", "doPop0", "doO3", "popArea")
+  idCols0    <- dfInfo |>
+    select(all_of(select0)) |>
     pmap(get_inputsIDCols) |>
-    set_names(inNames0)
+    set_names(inNames)
+  rm(select0)
 
-  ### Check inputs
-  # old0       <- c("valueCol", "minYear", "maxYear")
-  # new0       <- c("valCol", "yearMin", "yearMax")
-  inNames0 |> print()
-  inputsList <- dfInfo0 |>
-    # select(-c("doReg0")) |>
+  ### Check input data
+  inputsList <- dfInfo |>
     as.list() |>
-    c(list(idCols0  = idCols   )) |>
-    c(list(inputDf = inputsList))
-  inputsList |> glimpse()
-  inputsList <- inputsList |>
-    pmap(check_inputData) |>
+    c(list(idCols  = idCols0   )) |>
+    c(list(inputDf = inputsList)) |>
+    pmap(check_inputData, module=module0) |>
     set_names(inNames)
 
-  ### Check which are not null
-  notNull    <- inputsList |> map(function(obj0){
-    !(obj0 |> is.null())
-  }) |> unlist() |> which()
-  inputsList <- inputsList[notNull]
+  ### Drop NULL list elements from inputsList
+  ### Order inputsList by order of inNames0
+  inputsList <- inputsList |> drop_nullListElements()
+  inNames    <- inNames0   |> get_matches(y=inputsList |> names())
+  inputsList <- inputsList[inNames]
 
   ### Return inputs list
   return(inputsList)
 }
 
+### Update defaults
+update_inputDefault <- function(
+    type0,
+    dfInfo,
+    defaultsList,
+    inputsList = list(),
+    minYear = "frediData" |> get_frediDataObj("fredi_config", "minYear"),
+    maxYear = "frediData" |> get_frediDataObj("fredi_config", "maxYear")
+){
+  ### Messaging
+  msgN       <- "\n"
+
+  ### Input strings
+  tempStr0   <- "temp"
+  slrStr0    <- "slr"
 
 
+  ### Data
+  dfDef      <- defaultsList[[type0]] |> filter(year >= minYear, year <= maxYear) |> ungroup()
+  dfIn       <- inputsList  [[type0]] |> filter(year >= minYear, year <= maxYear) |> ungroup()
+
+  ### If input is present, return the data
+  hasIn      <- dfIn |> is.data.frame()
+  if(hasIn) return(dfIn)
+
+  ### Otherwise, check if the input is temp or slr
+  ### Reference names from dfInfo0
+  inNames0   <- dfInfo |> pull(inputName)
+
+  ### Check whether temp, slr is present in inNames0:
+  ### - If !doSlr0 & hasSlr: Not possible with how values are defined
+  ### - If doSlr0 & !hasSlr:
+  ###     - If hasTemp, calculate temps2slr from user input
+  ### Current type
+  isTemp0    <- tempStr0 %in% type0
+  isSlr0     <- slrStr0  %in% type0
+  isTempSlr  <- isTemp0 | isSlr0
+  if(!isTempSlr) return(dfDef)
+
+  ### If temp or slr, check for additional conditionals
+  ### - Check whether temp, slr are in names
+  doTemp0    <- tempStr0 %in% inNames0
+  doSlr0     <- slrStr0  %in% inNames0
+  ### If isTemp0 & !doTemp0, return NULL
+  if(isTemp0 & !doTemp0) return()
+  ### If isSlr0: Check if there is a temperature input
+  ### If there is a temperature input, calculate global temps, slr height
+  if(isSlr0) {
+    dfTemp  <- inputsList[[tempStr0]]
+    hasTemp <- dfTemp |> is.data.frame()
+    if(hasTemp) {
+      ### Get ref years
+      infoT  <- dfInfo |> filter(inputName %in% tempStr0)
+      infoS  <- dfInfo |> filter(inputName %in% slrStr0 )
+      ### Column
+      yrCol0 <- "year"
+      idCol0 <- "scenario"
+      drop0  <- infoT |> pull(valueCol) |>
+        paste0("_", c("conus", "global")) |>
+        c(idCol0)
+      ### Calculate global temperatures and SLR
+      dfTemp <- dfTemp |>
+        mutate(scenario = type0) |>
+        group_by_at(c(idCol0)) |>
+        group_map(
+          .x |> format_tempData_byGroup(
+            .y        = .y,
+            xCol0     = yrCol0,
+            yCol0     = infoT |> pull(valueCol),
+            xOut0     = infoT |> pull(refYear) |> seq(maxYear),
+            tempType0 = "conus",
+            method0   = "linear",
+            rule0     = 1
+          ) ### End format_tempData_byGroup
+        ) |> bind_rows() |>
+        ungroup() |>
+        select(-any_of(drop0))
+      ### Zero out values
+      dfTemp <- dfTemp |> zero_out_scenario(
+        refYr0  = infoS |> pull(refYear) ,
+        xCol0   = yrCol0,
+        yCol0   = infoS |> pull(valueCol),
+        idCols0 = idCols0
+      ) ### End zero_out_scenario
+      ### Filter to years
+      dfTemp <- dfTemp |> filter(year >= minYear, year <= maxYear)
+      ### Return
+      return(dfTemp)
+    } ### End if(hasTemp)
+    ### Otherwise, return default
+    return(dfDef)
+  } ### End if(isSlr0)
+
+  ### Otherwise, return default
+  return(dfDef)
+}
+
+# update_inputDefaults <- function(
+    #
+#     defaultsList,
+#     inputsList
+# ){
+#   ### Names
+#   names0 <- defaultsList |> names()
+#   ### Iterate over names and replace data
+#   list0  <- names0 |> map(function(name0){
+#     doSlr0  <- name0 |> str_detect("slr")
+#     nullIn0 <- inputsList[[name0]] |> is.null()
+#     if(!nullIn0) {
+#       df0 <- inputsList[[name0]]
+#     } else{
+#       if(doSlr0) {
+#         nullIn0 <- inputsList[["temp"]] |> is.null()
+#         if(!nullIn0) {
+#           df0 <- inputsList[["temp"]]
+#         } else{
+#           df0 <- defaultsList[[name0]]
+#         } ### End if(!nullIn0)
+#       } else {
+#         df0 <- defaultsList[[name0]]
+#       } ### End if(doSlr0)
+#     } ### End  ### End if(!nullIn0)
+#     return(df0)
+#   }) |> set_names(names0)
+#   ### Return
+#   return(list0)
+# }
 
 ## Functions to Load Inputs ----------------
 ### This function attempts to load a user-specified input file
@@ -271,7 +463,7 @@ fun_tryInput <- function(
 ###### Deprecated: run_fun_tryInput ######
 # ### Function to iterate over a list of file names
 # run_fun_tryInput <- function(
-    #     inputName = "temp",      ### Type of input; one of: c("temp", "slr", "gdp", "pop")
+#     inputName = "temp",      ### Type of input; one of: c("temp", "slr", "gdp", "pop")
 #     fileName  = "temps.csv", ### File path and name of CSV to be imported
 #     msgLevel  = 1
 # ){
@@ -439,37 +631,35 @@ check_regions <- function(
   ### Values
   names0     <- df0 |> names()
   checkCols0 <- c()
-  doReg0     <- names0 |> str_detect("region") |> any()
-  doState0   <- names0 |> str_detect("state" ) |> any()
+  doReg0     <- names0 |> str_detect("region")
+  doState0   <- names0 |> str_detect("state" )
   ### Standardize region, if present
-
-  if(doReg0) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
-  if(doReg0) checkCols0 <- checkCols0 |> c(regCol0  )
+  if(doRegion) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
+  if(doReg0  ) checkCols0 <- checkCols0 |> c(regCol0  )
   if(doState0) checkCols0 <- checkCols0 |> c(stateCol0)
 
 
   #### Module Options ----------------
   module0    <- module |> tolower()
-  areas0     <- controlData[["co_moduleAreas"]] |>
+  areas0     <- "controlData" |> get_frediDataObj("co_moduleAreas") |>
     filter_at(c("module"), function(x, y=module){x %in% y}) |>
     pull(all_of(areaCol0))
-  co_states  <- controlData[["co_states"]] |>
+  co_states  <- "controlData" |> get_frediDataObj("co_states") |>
     filter_at(c(areaCol0), function(x, y=areas0){x %in% y}) |>
     # select(-any_of(area))
     select(any_of(regIdCols0))
-  names_co_states <- co_states |> names()
+
   ### Format Data ----------------
   ### Drop missing values and rename column
-  join0      <- names0  |> get_matches(names_co_states)
+  join0      <- names0  |> get_matches(co_states)
   old0       <- colIds0 |> get_matches(join0)
   df0        <- df0 |>
     filter_all(all_vars(!(. |> is.na()))) |>
     rename_at(c(old0), ~old0 |> paste0(lblStr0))
 
-  join1 <- df0 |> names() |> get_matches(names_co_states)
   ### Join data into states
   df0        <- co_states |>
-    left_join(df0, by=join1) |>
+    left_join(df0, by=join0) |>
     arrange_at(c(orderCol0, yrCol0)) |>
     select(-any_of(colIds0)) |>
     rename_at(c(old0 |> paste0(lblStr0)), ~old0)
@@ -499,9 +689,9 @@ check_regions <- function(
 
   ### Filter to non-NA values
   df0        <- df0 |>
-    filter_all(all_vars(!(. |> is.na()))) #|>
-  #select(-any_of(colIds0)) |>
-  #rename_at(c(old0 |> paste0(lblStr0)), ~old0)
+    filter_all(all_vars(!(. |> is.na()))) |>
+    select(-any_of(colIds0)) |>
+    rename_at(c(old0 |> paste0(lblStr0)), ~old0)
 
   ### Return ----------------
   return(df0)
@@ -512,17 +702,17 @@ check_regions <- function(
 ## check_valCols
 ### Check value columns
 check_valCols <- function(
-    #inputDf,   ### Data frame of values
-  inputName = "temp", ### Input name c("temp", "slr", "gdp", "pop")
-  valCol0   = "temp_C", ### Value column
-  doTemp0   = TRUE,
-  doPop0    = FALSE,
-  # argVal0 = NA,
-  tempType  = "conus", ### One of: c("conus", "global")
-  popArea   = "state", ### One of: c("state", "regional", "conus", "national")
-  inputDf,   ### Data frame of values
-  msg0      = 0
-  # msgLevel  = 2
+    # inputDf,   ### Data frame of values
+    inputName = "temp", ### Input name c("temp", "slr", "gdp", "pop")
+    valCol0   = "temp_C", ### Value column
+    doTemp0   = TRUE,
+    doPop0    = FALSE,
+    # argVal0 = NA,
+    tempType  = "conus", ### One of: c("conus", "global")
+    popArea   = "state", ### One of: c("state", "regional", "conus", "national")
+    inputDf,   ### Data frame of values
+    msg0      = 0
+    # msgLevel  = 2
 ) {
   ### Set Up the Environment ----------------
   #### Messaging ----------------
@@ -553,7 +743,7 @@ check_valCols <- function(
   ### Match values
   colMatch0 <- valColRef |> get_matches(namesRef, type="matches")
   lcMatch0  <- valColLC0 |> get_matches(namesLC0, type="matches")
-  strMatch0 <- namesRef  |> str_detect(inNameLC0)
+  strMatch0 <- namesLC0  |> str_detect(inNameLC0, type="matches")
   if     (doTemp0) argMatch0 <- namesLC0  |> str_detect(tempType)
   else if(doPop0 ) argMatch0 <- namesLC0  |> str_detect(popArea )
   else             argMatch0 <- T
@@ -571,38 +761,36 @@ check_valCols <- function(
   msgStrQuo <- "' "
   msgStrNot <- "' not found in "
   msgStrFnd <- "' found in "
-  msgDots   <- "..."
-  msgData   <- " data" |> paste0(msgDots)
   msgStrInp <- inNameRef |> paste0(" file data...")
   msgCol0   <- paste0(msgStrCol, valCol0, msgStrQuo, inNameRef, msgStrInp)
-  msgNCol0  <- paste0("Column '", valCol0, "' not found in ", inNameRef, msgData)
+  msgNCol0  <- paste0("Column '", valCol0, "' not found in ", inNameRef, "file data...")
   if(colMatchN) {
-    msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrFnd, msgData) |> message()
-    matchCol0 <- str_subset(namesRef,valCol0)
+    msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrFnd, "...") |> message()
+    matchCol0 <- namesRef[colMatch0]
   } else {
-    msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrNot, msgData) |> message()
-    msg1 |> get_msgPrefix() |> paste0("Looking for column '", valColLC0, "'", msgDots) |> message()
+    msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrNot, "...") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Looking for column '", valColLC0, "'...") |> message()
     if(lcMatchN) {
-      msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrFnd, msgDots) |> message()
+      msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrFnd, "...") |> message()
       matchCol0 <- namesRef[lcMatch0]
     } else {
-      msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrNot, msgDots) |> message()
-      msg1 |> get_msgPrefix() |> paste0("Looking for column names matching string '", inNameLC0, "'", msgDots) |> message()
-      if (any(strMatch0)) {
-        msg1 |> get_msgPrefix() |> paste0("Column name(s) matching string ", inNameLC0, msgStrFnd, msgDots) |> message()
+      msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrNot, "...") |> message()
+      msg1 |> get_msgPrefix() |> paste0("Looking for column names matching string '", inNameLC0, "'...") |> message()
+      if (strMatch0) {
+        msg1 |> get_msgPrefix() |> paste0("Column name(s) matching string ", inNameLC0, msgStrFnd, "...") |> message()
         if(strMatchN == 1) {
           matchCol0 <- namesRef[strMatch0]
         } else if(strMatchN > 1) {
-          msg2 |> get_msgPrefix() |> paste0("Multiple matches found", msgDots)
+          msg2 |> get_msgPrefix() |> paste0("Multiple matches found...")
           matches0 <- strMatch0 & argMatch0
           matchesN <- matches0 |> which() |> length()
           if     (matchesN == 1) {matchCol0 <- namesRef[matches0]}
           else if(matchesN >  1) {matchCol0 <- namesRef[matches0[1]]}
           else                   {matchCol0 <- namesRef[strMatch0][1]}
         } else {
-          msg1 |> get_msgPrefix() |> paste0("No column names matching string '", inNameLC0, "' found", msgDots) |> message()
+          msg1 |> get_msgPrefix() |> paste0("No column names matching string '", inNameLC0, "' found...") |> message()
           # msg1 |> get_msgPrefix() |> paste0("Returning NULL value...") |> message()
-          msg0 |> get_msgPrefix() |> paste0("No matches found! Exiting", msgDots) |> message()
+          msg0 |> get_msgPrefix() |> paste0("No matches found! Exiting...") |> message()
           return()
         } ### End if(strMatchN == 1)
         ### Get info on argument
@@ -610,15 +798,15 @@ check_valCols <- function(
         # else if(doPop0 ) popArea  <- matchCol0  |> str_detect(popArea )
       } ### End if(strMatch0)
     } ### End if(lcMatchN)
-    msg2 |> get_msgPrefix() |> paste0("Using column '", matchCol0, "'", msgDots)
+    msg2 |> get_msgPrefix() |> paste0("Using column '", matchCol0, "'...")
   } ### End if(colMatchN)
 
   ### Return List ----------------
   ### Rename columns
   ### Provide info to list
   rename0   <- !(matchCol0 == valColRef)
-  if(any(rename0)) {
-    msg1 |> get_msgPrefix() |> paste0("Renaming column '", matchCol0, "' to '", valColRef, "'", msgDots) |> message()
+  if(rename0) {
+    msg1 |> get_msgPrefix() |> paste0("Renaming column '", matchCol0, "' to '", valColRef, "'...") |> message()
     inputDf   <- inputDf |> rename_at(c(matchCol0), ~valColRef)
   } ### End if(rename0)
 
@@ -644,34 +832,32 @@ check_inputData <- function(
     maxYr0   , ### Max year
     inputMin0, ### Min value
     inputMax0, ### Max value
+    valCol0  , ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
     doReg0    = FALSE,
     doTemp0   = TRUE,
     doPop0    = FALSE,
     doO3      = FALSE,
     tempType  = "conus",  ### One of: c("conus", "global")
     popArea   = "state",  ### One of: c("state", "regional", "conus", "national")
-    valCol0  ,     ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
-    idCols0  ,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
+    idCols0  , ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
     inputDf   = NULL,     ### Tibble of inputs (e.g., as output from run_fun_tryInput)
-    # module00  = "fredi",  #### "fredi", "sv", or "methane"
-    module    = "fredi",  #### "fredi", "sv", or "methane"
-    msg0      = 0,
-    ...### Level of messaging
+    module0   = "fredi",  #### "fredi", "sv", or "methane"
+    msg0      = 0 ### Level of messaging
     # msgLevel  = 2         ### Level of messaging
 ){
   # inputDf |> glimpse()
   ### Set Up the Environment ----------------
   #### Messaging ----------------
-  sep0      <- ", "
-  msgN      <- "\n"
-  # msg0      <- msgLevel
-  msg1      <- msg0 + 1
-  msg2      <- msg0 + 2
-  msg3      <- msg0 + 3
+  sep0       <- ", "
+  msgN       <- "\n"
+  # msg0       <- msgLevel
+  msg1       <- msg0 + 1
+  msg2       <- msg0 + 2
+  msg3       <- msg0 + 3
 
   #### Columns & Values ----------------
   #### Columns
-  yrCol0    <- "year"
+  yrCol0      <- "year"
   #### Conditionals
   # doTemp    <- "temp" %in% type0
   # doPop     <- "pop"  %in% type0
@@ -679,21 +865,18 @@ check_inputData <- function(
   # doTemp |> print()
 
   #### Module Options ----------------
-  # module    <- module0 |> tolower()
-  # dListSub0 <- module0 |> paste0("Data")
-  module    <- module |> tolower()
-  dListSub0 <- module |> paste0("Data")
-  cDataStr0 <- "controlData"
+  module0    <- module0 |> tolower()
+  dListSub0  <- module0 |> paste0("Data")
+  cDataStr0  <- "controlData"
 
   ### Check Data ----------------
   #### NULL Data ----------------
   ### Check that data exists
   ### If it does not, return NULL
-  nullData  <- inputDf |> is.null()
+  nullData   <- inputDf |> is.null()
   if(nullData) return()
 
   #### Check Regions ----------------
-  # type0 |> print()
   if(doReg0) {
     inputDf  <- inputDf |> check_regions(type0=type0, module=module, msg0=msg1)
     nullData <- inputDf |> is.null()
@@ -701,15 +884,14 @@ check_inputData <- function(
   } ### End if(doPop | doO3)
 
   #### Check for Value Column ----------------
-  inputDf   <- check_valCols(
-    inputName = type0, ### Input name c("temp", "slr", "gdp", "pop")
-    valCol0   = valCol0, ### Value column
-    doTemp0   = doTemp0,
-    doPop0    = doPop0,
-    tempType  = tempType, ### One of: c("conus", "global")
-    popArea   = popArea , ### One of: c("state", "regional", "conus", "national")
-    inputDf   = inputDf,   ### Data frame of values
-    msg0      = msg1
+  inputDf   <- type0 |> check_valCols(
+    valCol0  = valCol0, ### Value column
+    doTemp0  = doTemp0,
+    doPop0   = doPop0,
+    tempType = tempType, ### One of: c("conus", "global")
+    popArea  = popArea , ### One of: c("state", "regional", "conus", "national")
+    inputDf  = inputDf,   ### Data frame of values
+    msg0     = msg1
   ) ### End check_valCols
   nullData   <- inputDf |> is.null()
   if(nullData) return()
@@ -718,7 +900,7 @@ check_inputData <- function(
   othCols0  <- c(idCols0, yrCol0) |> unique()
   matches0  <- othCols0 |> get_matches(inputDf |> names(), type="matches")
   naCols0   <- othCols0[!matches0]
-  if(any(naCols0)) {
+  if(naCols0) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Data is missing the following required columns: " ) |> message()
     msg2 |> get_msgPrefix(newline=F) |> paste0("'", naCols0 |> paste(collapse="', '"), "'...") |> message()
     msg2 |> get_msgPrefix(newline=F) |> paste0("Exiting...") |> message()
@@ -762,8 +944,7 @@ check_inputData <- function(
     xmax  = maxYr0,
     in0   = FALSE ### Whether data needs to be inside or outside of range
   ) ### End check_inputs
-  passYr0   <- checkYr0[["check"]]
-  if(!passYr0) {
+  if(!checkYr0[["check"]]) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Warning:") |> message()
     msg2 |> get_msgPrefix(newline=F) |>
       paste0("Data must have at least one non-missing value for years ") |>
@@ -779,8 +960,7 @@ check_inputData <- function(
     xmax  = inputMax0,
     in0   = TRUE ### Whether data needs to be inside or outside of range
   ) ### End check_inputs
-  passVal0  <- checkVal0[["check"]]
-  if(!passVal0) {
+  if(!checkVal0[["check"]]) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Warning:") |> message()
     msg2 |> get_msgPrefix(newline=F) |>
       paste0("Data values must be ") |>
@@ -830,7 +1010,7 @@ check_inputData <- function(
     msg1 |> get_msgPrefix(newline=F) |> paste0("Converting temperatures from global to CONUS using convertTemps(from='global')...") |> message()
     inputDf <- inputDf |> mutate_at(c(valCol0), convertTemps, from=tempType, msg0=msg2)
   } ### End if(doTemp & doConvert)
-  #rm(doConvert)
+  rm(doConvert)
 
   ### Return ----------------
   msg1 |> get_msgPrefix(newline=F) |> paste0("Values passed.") |> message()
@@ -888,7 +1068,7 @@ calc_popFromArea <- function(
 
   #### Ratios Data ----------------
   nullRatios <- df_ratios |> is.null()
-  if(nullRatios) df_ratios <- get_frediDataObj("popRatios", "scenarioData") # |> filter(year >= minYr0, year <= maxYr0)
+  if(nullRatios) df_ratios <- "scenarioData" |> get_frediDataObj("popRatios") # |> filter(year >= minYr0, year <= maxYr0)
   select0    <- c(postCol0, orderCol0, yrCol0) |> c("area2nat", "reg2area", "state2reg")
   df_ratios  <- df_ratios |> select(any_of(select0))
   rm(select0)
@@ -932,33 +1112,7 @@ calc_popFromArea <- function(
 
 
 
-### Update defaults
-update_inputDefaults <- function(
-    defaultsList,
-    inputsList
-){
-  ### Names
-  names0 <- defaultsList |> names()
-  ### Iterate over names and replace data
-  list0  <- names0 |> map(function(name0){
-    doSlr0  <- name0 |> str_detect("slr")
-    nullIn0 <- inputsList[[name0]] |> is.null()
-    if(!nullIn0) {
-      df0 <- inputsList[[name0]]
-    } else{
-      if(doSlr0) {
-        nullIn0 <- inputsList[["temp"]] |> is.null()
-        if(!nullIn0) {
-          df0 <- inputsList[["temp"]]
-        } else{
-          df0 <- defaultsList[[name0]]
-        } ### End if(!nullIn0)
-      } else {
-        df0 <- defaultsList[[name0]]
-      } ### End if(doSlr0)
-    } ### End  ### End if(!nullIn0)
-    return(df0)
-  }) |> set_names(names0)
-  ### Return
-  return(list0)
-}
+
+
+
+## End script ----------------
