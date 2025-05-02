@@ -63,12 +63,12 @@ addData2Map <- function(
     gons0 = getStatePolygons()
 ){
   ### Add impact data to state map data
-  df0   <- df0 |> mutate(state_lc=state |> tolower())
-  gons0 <- gons0 |> left_join(df0, by="state_lc") |> relocate(c("state_lc"), .after="state")
-  gons0 |> pull(state_lc) |> unique() |> print()
+  df0   <- df0   |> mutate(state_lc = state |> tolower(), .after="state")
+  gons0 <- gons0 |> left_join(df0, by="state_lc", relationship="many-to-many")
+  # gons0 |> pull(state_lc) |> unique() |> print()
   ### Filter data
   gons0 <- gons0 |> filter(!(state |> is.na()))
-  gons0 |> pull(state_lc) |> unique() |> print()
+  # gons0 |> pull(state_lc) |> unique() |> print()
   ### Return
   return(gons0)
 }
@@ -83,10 +83,10 @@ getMapTheme <- function(x=1){
     theme(legend.key.size   = unit(1, "cm")) +
     theme(legend.box.margin = margin(t = 1, l = 1)) +
     ### Axis ticks
-    theme(axis.ticks.x=element_blank()) +
-    theme(axis.ticks.y=element_blank()) +
-    theme(axis.text.x = element_blank()) +
-    theme(axis.text.y = element_blank()) +
+    theme(axis.ticks.x = element_blank()) +
+    theme(axis.ticks.y = element_blank()) +
+    theme(axis.text.x  = element_blank()) +
+    theme(axis.text.y  = element_blank()) +
     ### Panel
     theme(panel.background = element_rect(linewidth=0.5, linetype="solid", colour="white", fill="white")) +
     theme(panel.grid.major = element_line(linewidth=0.5, linetype="solid", colour="white")) +
@@ -105,7 +105,9 @@ plotStateMap <- function(
       mid      = "white",
       high     = "#701201",
       na.value = "grey",
-      n.breaks = 6
+      gradType = "2", ### Or "n"
+      n.breaks = NULL
+      # n.breaks = 6
     ), ### End list
     outline   = "gray8",
     xLab0     = "",
@@ -115,23 +117,90 @@ plotStateMap <- function(
     subTitle0 = "Subset of Climate-Related Impacts",
     theme0    = getMapTheme()
 ){
+  ### Edit limits
+  hasLims0 <- lims0 |> length()
+  if(hasLims0) {
+    lims0 |> print()
+    lims0[1] <- lims0[1] |> floor()
+    lims0[2] <- lims0[2] |> ceiling()
+    lims0 |> print()
+  } ### End if(hasLims0)
+
+  ### Colors
+  clrCols <- colors0 |> names()
+  clrCols |> print()
+  colors0 <- colors0 |>
+    as.list() |> set_names(clrCols) |> map(function(x0){
+      x0 |> is.na() |> ifelse(NULL, x0)
+    }) |> set_names(clrCols)
+  # colors0 |> print()
+
+  ### Gradient
+  gradType <- colors0[["gradType"]]
+  gradType |> print()
+  doGrad   <- !(gradType |> is.null())
+  doGradN  <- doGrad |> ifelse(!(gradType %in% "2"), F)
+
+  ### Print values
+  col0  |> print()
+  df0   |> pull(all_of(col0)) |> range(na.rm=T) |> print()
+  lims0 |> print()
+
+  ### Initialize plot
   plot0 <- df0 |> ggplot(aes(long, lat, group=group))
-  ### Create plot 1
-  plot0 <- plot0 +
-    geom_polygon(aes(fill=.data[[col0]]), color=outline) +
-    scale_fill_gradient2(
-      name     = lgdLab0[[1]],
-      limits   = lims0,
-      low      = colors0[["low"]],
-      mid      = colors0[["mid"]],
-      high     = colors0[["high"]],
-      na.value = colors0[["na.value"]],
-      n.breaks = colors0[["n.breaks"]],
-      guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
-    ) ### End scale_fill_gradient2
+  ### Add geom
+  plot0 <- plot0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+  ### Add colors
+  if(doGrad) {
+    if(doGradN) {
+      rm(plot0)
+      clrs0 <- c(colors0[["low"]], colors0[["mid"]], colors0[["high"]])
+      # vals0 <- lims0 |> c(0) |> sort()
+      df0   <- df0 |>
+        mutate(colVal   = df0 |> pull(all_of(col0))) |>
+        mutate(colAbs   = colVal |> abs()) |>
+        mutate(colLog10 = colAbs |> log10() |> na_if(-Inf) |> replace_na(0)) |>
+        mutate(colAdj   = colLog10 * colAbs / colVal ) |>
+        mutate(colAdj   = colAdj |> na_if(-Inf) |> na_if(Inf) |> replace_na(0))
+
+      ### Initialize plot
+      plot0 <- df0 |> ggplot(aes(long, lat, group=group))
+      ### Add geom
+      plot0 <- plot0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+      ### Add gradient
+      plot0 <- plot0 + scale_fill_gradientn(
+        # name     = lgdLab0[[1]],
+        name     = lgdLab0[[1]],
+        limits   = lims0,
+        colors   = clrs0,
+        # values   = vals0 |> scales::rescale(),
+        na.value = colors0[["na.value"]],
+        n.breaks = colors0[["n.breaks"]],
+        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
+        oob      = scales::squish
+      ) ### End scale_fill_gradient2
+    } else{
+      plot0 <- plot0 + scale_fill_gradient2(
+        # name     = lgdLab0[[1]],
+        name     = lgdLab0[[1]],
+        limits   = lims0,
+        low      = colors0[["low"]],
+        mid      = colors0[["mid"]],
+        high     = colors0[["high"]],
+        na.value = colors0[["na.value"]],
+        n.breaks = colors0[["n.breaks"]],
+        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
+        oob      = scales::squish
+      ) ### End scale_fill_gradient2
+    } ### End if(doGradN)
+  } ### End if(doGrad)
+
+  ### Add themes, labels, titles
   plot0 <- plot0 + theme0
   plot0 <- plot0 + xlab(xLab0[[1]]) + ylab(yLab0[[1]])
   plot0 <- plot0 + ggtitle(ggTitle0[[1]], subTitle0[[1]])
+
+  ### Return
   return(plot0)
 }
 
@@ -148,8 +217,12 @@ map2StateMap <- function(
       mid      = "white",
       high     = "#DD8047",
       na.value = "grey",
-      n.breaks = 6
-    ), ### End list
+      gradType = "2", ### Or "n"
+      n.breaks = NULL
+      # n.breaks = 6
+    ) |> (function(listX){
+      list(p1=listX, p2=listX)
+    })(), ### End list
     outlines  = "gray8",
     xLabs0    = list(p1="", p2=""),
     yLabs0    = list(p1="", p2=""),
@@ -159,21 +232,25 @@ map2StateMap <- function(
     theme0    = getMapTheme(),
     doGrid0   = TRUE
 ){
+  ### Names & values
+  names0  <- names0  |> unlist()
+  # names0 <- names0[1]
+  # names0 |> print()
+
   ### Initialize list and plot
   # list0 <- list()
-  print("GOT HERE2")
+  # "got here2" |> print()
+  # plot0  <- df0 |> ggplot(aes(long, lat, group=group))
 
-  names0 <- names0 |> unlist()
-  plot0  <- df0 |> ggplot(aes(long, lat, group = group))
   ### Create plot 1
-  print("GOT HERE3")
-  df0 |> glimpse()
-  print(names0)
+  # "got here3" |> print()
+  # df0 |> glimpse()
   list0  <- cols0 |> length() |> seq_len() |> map(function(i, col_i=cols0[[i]]){
     df0 |> plotStateMap(
       col0      = col_i,
       lims0     = lims0[[i]],
-      colors0   = colors0, ### End list
+      colors0   = colors0[[i]], ### End list
+      # colors0   = colors0, ### End list
       outline   = outlines,
       xLab0     = xLabs0[[i]],
       yLab0     = yLabs0[[i]],
@@ -185,11 +262,12 @@ map2StateMap <- function(
   }) |> set_names(names0)
   # ### Add plot 1 to list
   # list0[["totals"]] <- plot1
-  print("GOT HERE4")
+  # "got here4" |> print()
 
   ### Arrange the plots in a grid
   if(doGrid0) plot0 <- ggarrange(plotlist=list0, nrow=2)
-  print("GOT HERE5")
+  else        return(list0)
+  # "got here5" |> print()
 
   ### Return
   return(plot0)

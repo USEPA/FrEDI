@@ -117,7 +117,7 @@ create_sector_maps <- function(
   # stateGons() |> ggplot(aes(long, lat, group = group, fill=order)) + geom_polygon(colour = "grey50") + coord_quickmap()
 
   stateMapData <- frediAdjSum |> addData2Map(join0="state_lc"); stateMapData |> glimpse()
-  print("GOT HERE1")
+
 
   ### Maps -----------------------------------------------------
   #### Totals -----------------------------------------------------
