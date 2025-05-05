@@ -189,7 +189,7 @@ run_fredi <- function(
   ###### Load Objects ######
   ###### ** Create DB connection #####
   conn <-  load_frediDB()
-
+  print(conn)
 
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
@@ -357,16 +357,19 @@ run_fredi <- function(
   inNames0     <- co_inputInfo |> pull(inputName)
   # inNames0 |> print()
 
+   #browser()
+   scenarioData   <- DBI::dbReadTable(conn,"scenarioData")
+   scenarioData   <- unserialize(scenarioData$value |> unlist())
+
   ###### ** Input Defaults ######
-  inputDefs    <- inNames0 |> map(function(name0){
+  inputDefs    <- inNames0 |> map(function(name0, sData= scenarioData){
     #browser()
     ### Objects
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    scenarioData   <- DBI::dbReadTable(conn,"scenarioData")
-    scenarioData   <- unserialize(scenarioData$value |> unlist())
-    df0      <-  scenarioData[[defName0]]
+
+    df0      <-  sData[[defName0]]
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
