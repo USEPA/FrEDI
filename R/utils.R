@@ -1,7 +1,7 @@
 ###### Helpers ######
 ### Get column as vector
 # get_vector <- function(
-#     data, column = NULL
+    #     data, column = NULL
 # ){
 #   ### Select column and get values as vector
 #   col0  <- column |> is.null() |> ifelse(c(), column)
@@ -12,7 +12,7 @@
 
 # ### Get unique values from a dataframe column
 # get_uniqueValues <- function(
-#     data, column = NULL, sort=TRUE
+    #     data, column = NULL, sort=TRUE
 # ){
 #   ### Select column and get values as vector
 #   vals0 <- data  |> get_vector(column)
@@ -324,7 +324,7 @@ interpolate_annual <- function(
 ### Function to zero out values for temperature and SLR scenarios
 zero_out_scenario     <- function(
     df0,    ### Tibble with scenario and years, value column
-    conn, ### DB Connection Object
+    conn,   ### DB Connection Object
     type0   = "temp", ### Or SLR
     valCol0 = NULL  , ### If NULL, function will use default
     yrRef0  = NULL  , ### If NULL, function will use default
@@ -374,8 +374,8 @@ zero_out_scenario     <- function(
 ###### format_inputScenarios ######
 ### This function helps format input scenarios
 format_inputScenarios <- function(
-    df0,       ### Scenario input data frame to format,
-    conn,      ### DB Connection Object
+    df0,       ### Scenario input data frame to format
+    conn,      ### DB COnnection Object
     name0,     ### Name of input c("temp, "slr", "gdp", "pop")
     hasInput0, ### Whether the user provided an input
     idCols0,   ### ID columns
@@ -413,7 +413,7 @@ format_inputScenarios <- function(
   if(hasInput0) {
     ### Zero out values if temp or slr
     doZero0 <- name0 %in% c("temp", "slr")
-    if(doZero0) df0 <- df0 |> zero_out_scenario(conn = conn,type0=name1)
+    if(doZero0) df0 <- df0 |> zero_out_scenario(conn = conn, type0=name1)
 
     ### Calculate values
     yrs0 <- yrRef0:maxYear |> unique()
@@ -438,7 +438,7 @@ format_inputScenarios <- function(
       df1     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
       df0     <- df0 |> left_join(df1, by=join0)
       df0     <- df0 |> select(-any_of(drop0))
-      df0     <- df0 |> zero_out_scenario(type0=name0)
+      df0     <- df0 |> zero_out_scenario(conn = conn, type0=name0)
       rm(join0, drop0)
     } ### End if(doSlr)
   } ### End if(hasInput0)
@@ -633,9 +633,10 @@ update_popScalars <- function(
 ### Scalars for SLR past 2090
 extend_slrScalars2 <- function(
     df0,        ### Tibble of initial results
+    conn,       ### DB Connection Object
     # df_se,      ### Socioeconomic scenario
-    conn,
     df_scalars, ### Tibble of scalar values: df_Scalars
+    refYear0    = DBI::dbReadTable(conn,"co_slrScalars") |> pull(refYear) |> unique() |> first(),
     elasticity  = NULL
 ){
   ###### State columns ######
@@ -645,10 +646,7 @@ extend_slrScalars2 <- function(
 
   ###### Ref Year ######
   ### Filter to years >= refYear (2090)
-  #df_info    <- "co_slrScalars" |> get_frediDataObj("frediData")
   df_info    <- DBI::dbReadTable(conn,"co_slrScalars")
-  refYear0   <- (df_info   |> pull(refYear) |> unique())[1]
-
   df_scalars <- df_scalars |> filter(year >= refYear0)
   df_se      <- df_se      |> filter(year >= refYear0)
   df0        <- df0        |> filter(year >= refYear0)
@@ -719,13 +717,13 @@ extend_slrScalars2 <- function(
 
   ###### CHECK for ECON Value "none" and add 1 #####
   df0        <- df0 |> mutate(econAdjValue = case_when(
-                                 econAdjName == "none" ~ 1,
-                                  .default = econAdjValue
-                                  ),
-                              econMultiplierValue = case_when(
-                                econMultiplierName == "none" ~ 1,
-                                .default = econMultiplierValue
-                              ))
+    econAdjName == "none" ~ 1,
+    .default = econAdjValue
+  ),
+  econMultiplierValue = case_when(
+    econMultiplierName == "none" ~ 1,
+    .default = econMultiplierValue
+  ))
 
 
   ###### Economic Multiplier & Scalar ######
@@ -772,13 +770,13 @@ extend_slrScalars2 <- function(
 
   ###### CHECK for PHYS Value "none" and add 1 #####
   df0        <- df0 |> mutate(physScalarValue = case_when(
-                                physScalarName== "none" ~ 1,
-                                    .default = physScalarValue
-                                  ),
-                              physAdjValue = case_when(
-                                physScalarName == "none" ~ 1,
-                                    .default = physAdjValue
-                              ))
+    physScalarName== "none" ~ 1,
+    .default = physScalarValue
+  ),
+  physAdjValue = case_when(
+    physScalarName == "none" ~ 1,
+    .default = physAdjValue
+  ))
 
   ###### Physical Scalar & Phys Econ Scalar ######
   ### Calculate econ scalar values
@@ -798,9 +796,9 @@ extend_slrScalars2 <- function(
 
 extend_slrScalars <- function(
     df0,        ### Tibble of initial results
-    conn,       ### DB Connection Object
+    conn,
     scalars,    ### Tibble of scalar values: df_Scalars
-    #slrScalars  = "co_slrScalars" |> get_frediDataObj("frediData"),
+    slrScalars  = DBI::dbReadTable(conn,"co_slrScalars"),
     refYear0    = slrScalars |> pull(refYear) |> unique() |> min(),
     elasticity  = NULL
 ){
@@ -824,9 +822,6 @@ extend_slrScalars <- function(
   ###### Rename Columns ######
   renameAt0  <- c("refYear")
   renameTo0  <- c("year0")
-
-  slrScalars    <- DBI::dbReadTable(conn,"co_slrScalars")
-
   slrScalars <- slrScalars |> rename_at(c(renameAt0), ~renameTo0)
   slrScalars <- slrScalars |> mutate(year0 = year0 |> as.character())
   rm(renameAt0, renameTo0)
@@ -851,7 +846,7 @@ extend_slrScalars <- function(
 
   ###### Update Scalars ######
   ### Physical scalars
-  df0        <- df0 |> match_scalarValues(scalars=scalars, scalarType="physScalar")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=scalars, scalarType="physScalar")
   # df0 |> glimpse()
   ### Physical scalar adjustment values
   renameAt0  <- c("physScalarAdj") |> paste0(c("Name", "Value"))
@@ -862,7 +857,7 @@ extend_slrScalars <- function(
   # df0 |> glimpse()
 
   ### Economic multiplier
-  df0        <- df0 |> match_scalarValues(scalars=scalars, scalarType="econMultiplier")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=scalars, scalarType="econMultiplier")
   # df0 |> glimpse()
   ### Get economic adjustment values
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
@@ -902,13 +897,13 @@ extend_slrScalars <- function(
 ### This helper function helps get info about sector groups
 get_co_sectorsInfo <- function(
     sectors0   = NULL,  ### Sector IDs
-    conn,                ### DB Connection Object
+    conn,               ### DB Connection Object
     addRegions = FALSE, ### Whether to include regions & states
     addModels  = FALSE, ### Whether to include models
     colTypes   = c("ids", "labels", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
 ){
   ### Get objects from FrEDI
-  #co_sectors  <- "co_sectors"     |> get_frediDataObj("frediData")
+  # co_sectors  <- "co_sectors"     |> get_frediDataObj("frediData")
   # co_variants <- "co_variants"    |> get_frediDataObj("frediData")
   # co_impTypes <- "co_impactTypes" |> get_frediDataObj("frediData")
   # co_impYears <- "co_impactYears" |> get_frediDataObj("frediData")
@@ -916,8 +911,6 @@ get_co_sectorsInfo <- function(
   # co_states   <- "co_states"      |> get_frediDataObj("frediData")
   # co_modTypes <- "co_modelTypes"  |> get_frediDataObj("frediData")
   # co_models   <- "co_models"      |> get_frediDataObj("frediData")
-
-
   co_sectors  <- DBI::dbReadTable(conn,"co_sectors")
   co_variants <- DBI::dbReadTable(conn,"co_variants")
   co_impTypes <- DBI::dbReadTable(conn,"co_impactTypes")
@@ -1047,7 +1040,11 @@ get_co_sectorsInfo <- function(
 match_scalarValues <- function(
     df0,       ### Initial results dataframe
     conn,      ### DB Connection Object
-    scalars,   ### Scalars Dataframe
+    scalars    = DBI::dbReadTable(conn,"stateData") |> (function(stateData){
+                                                       stateData    <- unserialize(stateData$value |> unlist())
+                                                       scalars      <- stateData[["df_scalars"]]
+                                                       return(scalars)
+                                                      })()   ,
     scalarType ### Type of scalar (one of: c("damageAdj", "econScalar", "physAdj", "phsScalar"))
 ){
   # df0 |> glimpse(); scalars |> glimpse()
@@ -1168,16 +1165,13 @@ match_scalarValues <- function(
 ### Function "get_econAdjValues" replaces "get_econMultipliers"
 get_scalarAdjValues <- function(
     data,       ### Initial results dataframe
-    conn,       ###  DB Connection Object
+    conn,       ### DB Connection Object
     scalars,    ### Scalars data frame
-    scalarType0 = "econMultiplier"
+    scalarType0 = "econMultiplier",
+    multipliers = DBI::dbReadTable(conn,"co_econMultipliers") |> pull(econMultiplierName) |> get_matches(y="none", matches=FALSE) # multipliers ### List of multipliers
 ){
   ###### Multipliers
   none0       <- "none"
-
-  multipliers <- DBI::dbReadTable(conn,"co_econMultipliers") |> pull(econMultiplierName)
-
-  multipliers <- multipliers |> get_matches(y=none0, matches=FALSE)
 
   ###### Format data
   ### - Add adjName column
@@ -1291,8 +1285,11 @@ get_scalarAdjValues <- function(
 initialize_resultsDf <- function(
     df_se,     ### Dataframe with socioeconomic scenario
     conn,      ### DB Connection Object
-    sectors,   ### Vector of sectors
+    sectors    = DBI::dbReadTable(conn,"co_sectors") |> pull(sector_id), ### Vector of sectors
     elasticity = NULL,
+    #df_scalars = "df_scalars" |> get_frediDataObj("stateData"),  ### Tibble of main scalars
+    slrScalars = DBI::dbReadTable(conn,"co_slrScalars"),
+    refYear0   = slrScalars |> pull(refYear) |> unique() |> min(),
     msg0       = "\t"
 ){
   ###### Values ######
@@ -1309,21 +1306,11 @@ initialize_resultsDf <- function(
   minYr0     <- years0 |> min()
   maxYr0     <- years0 |> max()
 
-  ###### FrEDI Data ######
-  ### Get FrEDI data objects and format data
-  # df_info    <- "co_sectorsInfo" |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
-  # slrScalars <- "co_slrScalars"  |> get_frediDataObj("frediData")  ### Tibble with info on SLR scalars
-  slrScalars   <- DBI::dbReadTable(conn,"co_slrScalars")     ### Tibble with info on SLR scalars
-  refYear0   = slrScalars |> pull(refYear) |> unique() |> min()
-
-  #df_scalars <- "df_scalars"     |> get_frediDataObj("stateData")  ### Tibble of main scalars
-  stateDat   <- DBI::dbReadTable(conn,"stateData")
-  stateDat   <- unserialize(stateDat$value |> unlist())
-  df_scalars  <- stateDat |> pluck("df_scalars")  ### Tibble of main scalars
-
-
   ### Format scalars
   ### Filter to years, update with info from socioeconomic scenario
+  stateData   <- DBI::dbReadTable(conn,"stateData")
+  stateData    <- unserialize(stateData$value |> unlist())
+  df_scalars      <- stateData[["df_scalars"]]
   df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
   df_scalars <- df_scalars |> update_popScalars(df_se, popCol=popCol0)
 
@@ -1363,17 +1350,17 @@ initialize_resultsDf <- function(
   ###### Update Scalar Info ######
   ### Update scalar info
   ### Physical scalars
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physScalar")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physScalar")
   ### Physical adjustment
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="physAdj")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physAdj")
   ### Damage adjustment
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="damageAdj")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="damageAdj")
   ### Economic scalar
   # df0 |> glimpse(); df_scalars |> glimpse()
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econScalar")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econScalar")
   ### Economic multiplier
   # df0 |> glimpse(); df_scalars |> glimpse()
-  df0        <- df0 |> match_scalarValues(scalars=df_scalars, scalarType="econMultiplier")
+  df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econMultiplier")
   # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
 
   ###### Economic Adjustment Values ######
@@ -1399,8 +1386,8 @@ initialize_resultsDf <- function(
 
     ### Get extended scalars
     df_slr0    <- extend_slrScalars(
-      conn = conn,
       df0        = df_slr0,
+      conn       = conn,
       scalars    = df_scalars,
       refYear0   = refYear0,
       elasticity = elasticity
@@ -1484,13 +1471,14 @@ calcScalars <- function(
 ###### get_gcmScaledImpacts ######
 get_gcmScaledImpacts <- function(
     df0, ### Tibble of initial results for GCM sectors, with scenario ID
-    conn, ### DB Connection Object
     df1, ### Tibble of drivers
+    conn, ### DB Connection Object
     msg0 = "\t"
 ){
   ###### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Calculating temperature-driven scaled impacts", "...") |> message()
+  browser()
 
   ### State Columns
   stateCols0 <- c("state", "postal")
@@ -1504,7 +1492,7 @@ get_gcmScaledImpacts <- function(
   years0     <- df1 |> pull(year)
 
   ### Get list of unique impact functions
-  #funList0   <- "gcmImpFuncs" |> get_frediDataObj("stateData")
+  #funList0 <- "gcmImpFuncs" |> get_frediDataObj("stateData")
   stateDat   <- DBI::dbReadTable(conn,"stateData")
   stateDat   <- unserialize(stateDat$value |> unlist())
   funList0   <- stateDat |> pluck("gcmImpFuncs")
@@ -1556,7 +1544,6 @@ get_gcmScaledImpacts <- function(
   arrange0    <- c("scenario_id", "year")
   df0         <- df0 |> arrange_at(c(arrange0))
   # df0 |> glimpse()
-
   ### Return
   gc()
   return(df0)
@@ -1565,8 +1552,8 @@ get_gcmScaledImpacts <- function(
 ###### get_slrScaledImpacts ######
 get_slrScaledImpacts <- function(
     df0, ### Initial results for SLR sectors
-    conn,### DB Connection Object
     df1, ### Driver data frames
+    conn,### DB Connection Object
     msg0 = "\t"
 ){
   ###### Messaging
@@ -1585,7 +1572,6 @@ get_slrScaledImpacts <- function(
   stateDat   <- unserialize(stateDat$value |> unlist())
   df_ext0    <- stateDat |> pluck("slrExtremes")
   df_imp0    <- stateDat |> pluck("slrImpacts")
-
   ###### Format Data #######
   ### Filter to appropriate model types
   ### Filter to appropriate driver values
@@ -1765,8 +1751,8 @@ get_slrScaledImpacts <- function(
 ####### calc_scaled_impacts_fredi ######
 calc_scaled_impacts_fredi <- function(
     sectors0, ### Sector IDs
-    conn,     ### DB Connection Object
-    drivers0  ### Tibble with driver scenarios
+    drivers0,  ### Tibble with driver scenarios
+    conn ### DB Connection Object
 ){
   ### Column names
   popCol0    <- "pop"
@@ -1777,7 +1763,6 @@ calc_scaled_impacts_fredi <- function(
   select0    <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType", "model")
   drop0      <- c("maxUnitValue")
   mutate0    <- c("model", "model_label")
-  #df_info0   <- "co_sectorsInfo" |> get_frediDataObj("frediData")
   df_info0   <- DBI::dbReadTable(conn,"co_sectorsInfo")
   df_info0   <- df_info0 |> filter(sector %in% sectors0)
   df_info0   <- df_info0 |> select(-any_of(drop0))
@@ -1814,8 +1799,7 @@ calc_scaled_impacts_fredi <- function(
   ### Calculate scaled impacts, then bind impacts and info
   if(nrow_gcm) {
     select0    <- c("scenario_id", "year") |> c("scaled_impacts")
-    df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(conn = conn,df1=drivers0)
-    # df_gcm0    <- df_gcm0    |> left_join(gcmInfo0, by=c())
+    df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(conn = conn, df1=drivers0)
     df_gcm0    <- df_gcm0    |> select(all_of(select0))
     dfImpacts0 <- dfImpacts0 |> rbind(df_gcm0)
     dfGroups0  <- dfGroups0  |> rbind(gcmInfo0)
@@ -1853,18 +1837,18 @@ calc_scaled_impacts_fredi <- function(
 ####### calc_impacts_fredi ######
 calc_impacts_fredi <- function(
     df0, ### Tibble with scalars/initialized results
-    conn,### DB Connection Object
-    df1  ### Tibble with scaled impacts
+    df1,  ### Tibble with scaled impacts
+    conn### DB Connection Object
 ){
   ### Column names
   stateCols0 <- c("state", "postal")
   sectors0   <- df0 |> pull(sector) |> unique()
 
   ### Get info
-  df_info  <- sectors0 |> get_co_sectorsInfo(
+  df_info    <- sectors0 |> get_co_sectorsInfo(
     conn = conn,
-    addRegions = FALSE, ### Whether to include regions & states
-    addModels  = TRUE,  ### Whether to include models
+    addRegions = FALSE,   ### Whether to include regions & states
+    addModels  = TRUE ,   ### Whether to include models
     colTypes   = c("ids") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
   ) ### End get_co_sectorsInfo()
 
@@ -2059,10 +2043,10 @@ get_annual_model_stats <- function(
 ###### interp_slr_byYear ######
 ### utils for aggregate_impacts
 interp_slr_byYear <- function(
-    data, ### Driver scenario with columns year, slr_cm
-    conn, ### DB Connecton Object
-    yCol = "driverValue", ### Column to look for the driver value
-    silent=TRUE
+    data,  ### Driver scenario with columns year, slr_cm
+    conn,  ### DB connection object
+    yCol   = "driverValue", ### Column to look for the driver value
+    silent = TRUE
 ){
   ###### Defaults ######
   ### Rename y Column
@@ -2079,6 +2063,7 @@ interp_slr_byYear <- function(
   #slr_df     <- "slr_cm"    |> get_frediDataObj("frediData")
   co_models  <- DBI::dbReadTable(conn, "co_models")
   slr_df     <- DBI::dbReadTable(conn, "slr_cm")
+
   ###### Assign data ######
   ### SLR scenario info
   co_slrs    <- co_models |> filter(modelType=="slr") |> rename(model=model_label)
@@ -2288,87 +2273,87 @@ fun_getScale <- function(
     scaleCol = "driverValue",
     # zero = F,
     nTicks = 5
-  ){
-    ### Defaults
-    if(scaleCol |> is.null()){scaleCol <- "driverValue"}
-    ### Default is not to zero out in case there are negative numbers
-    # if(is.null(zero))     zero <- F
-    if(nTicks   |> is.null()){nTicks <- 5}
+){
+  ### Defaults
+  if(scaleCol |> is.null()){scaleCol <- "driverValue"}
+  ### Default is not to zero out in case there are negative numbers
+  # if(is.null(zero))     zero <- F
+  if(nTicks   |> is.null()){nTicks <- 5}
 
-    ### Min/max values
-    xMin <- data[[scaleCol]] |> min(na.rm=T)
-    xMax <- data[[scaleCol]] |> max(na.rm=T)
+  ### Min/max values
+  xMin <- data[[scaleCol]] |> min(na.rm=T)
+  xMax <- data[[scaleCol]] |> max(na.rm=T)
 
-    ### Set minimum to zero unless the minimum is less than zero
-    if(xMin > 0){xMin <- 0}
-    if(xMax < 0){xMax <- 0}
+  ### Set minimum to zero unless the minimum is less than zero
+  if(xMin > 0){xMin <- 0}
+  if(xMax < 0){xMax <- 0}
 
-    ### Min/max values
-    ### Limit names, values, bounds, etc
-    df_minMax <- tibble(
-      name  = c("min", "max"),
-      value =  c(xMin, xMax),
-      bound =  c(floor(xMin), ceiling(xMax)),
-      boundType = c("floor", "ceiling")
-    ) ### End tibble
+  ### Min/max values
+  ### Limit names, values, bounds, etc
+  df_minMax <- tibble(
+    name  = c("min", "max"),
+    value =  c(xMin, xMax),
+    bound =  c(floor(xMin), ceiling(xMax)),
+    boundType = c("floor", "ceiling")
+  ) ### End tibble
 
-    ### Absolute value, Power of 10 and y-scale info
-    df_minMax <- df_minMax |> mutate(bound_abs = bound |> abs())
-    ### Calculate log 10 and replace values of infinity with 0
-    df_minMax <- df_minMax |> mutate(log10 = (bound_abs |> log10()))
-    df_minMax <- df_minMax |> mutate(log10 = log10 |> abs() |> na_if(Inf))
-    df_minMax <- df_minMax |> mutate(log10 = log10 |> replace_na(0))
-    ### Then get the floor of the log10 value
-    df_minMax <- df_minMax |> mutate(power10 = log10 |> floor())
+  ### Absolute value, Power of 10 and y-scale info
+  df_minMax <- df_minMax |> mutate(bound_abs = bound |> abs())
+  ### Calculate log 10 and replace values of infinity with 0
+  df_minMax <- df_minMax |> mutate(log10 = (bound_abs |> log10()))
+  df_minMax <- df_minMax |> mutate(log10 = log10 |> abs() |> na_if(Inf))
+  df_minMax <- df_minMax |> mutate(log10 = log10 |> replace_na(0))
+  ### Then get the floor of the log10 value
+  df_minMax <- df_minMax |> mutate(power10 = log10 |> floor())
 
-    ### Get maximum power of 10, then scale to zero for negative numbers
-    ### Integer division of power of 10 by 3 to get number of thousands
-    ### Then get the modulus of the thousands
-    x_power10Max <- df_minMax[["power10"]] |> max(na.rm=T)
-    x_power1000  <- x_power10Max  %/% 3
-    x_mod1000    <- x_power10Max  %% 3
+  ### Get maximum power of 10, then scale to zero for negative numbers
+  ### Integer division of power of 10 by 3 to get number of thousands
+  ### Then get the modulus of the thousands
+  x_power10Max <- df_minMax[["power10"]] |> max(na.rm=T)
+  x_power1000  <- x_power10Max  %/% 3
+  x_mod1000    <- x_power10Max  %% 3
 
-    ### Rounded bounded values (round to 1 essentially)
-    divideByPower         <- x_power10Max - 1
-    minMax_scaled         <- df_minMax[["value"]] / 10**divideByPower
-    bounds_scaled_rounded <- minMax_scaled[1] |> floor() |> c(minMax_scaled[2] |> ceiling())
-    bounds_rounded        <- bounds_scaled_rounded * 10**divideByPower
+  ### Rounded bounded values (round to 1 essentially)
+  divideByPower         <- x_power10Max - 1
+  minMax_scaled         <- df_minMax[["value"]] / 10**divideByPower
+  bounds_scaled_rounded <- minMax_scaled[1] |> floor() |> c(minMax_scaled[2] |> ceiling())
+  bounds_rounded        <- bounds_scaled_rounded * 10**divideByPower
 
-    ###### Establish the range of x
-    x_range      <- bounds_rounded
-    x_range_p10  <- x_range / 10**x_power10Max
-    x_range_dif  <- x_range_p10[2] - x_range_p10[1]
+  ###### Establish the range of x
+  x_range      <- bounds_rounded
+  x_range_p10  <- x_range / 10**x_power10Max
+  x_range_dif  <- x_range_p10[2] - x_range_p10[1]
 
-    ### Determine unit of breaks in power of 10
-    x_unit_p10     <- 0.5
-    x_breaks_p10   <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
-    n_Ticks        <- x_breaks_p10 |> length()
+  ### Determine unit of breaks in power of 10
+  x_unit_p10     <- 0.5
+  x_breaks_p10   <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
+  n_Ticks        <- x_breaks_p10 |> length()
+  if(n_Ticks>nTicks){
+    x_unit_p10   <- 1
+    x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
+    n_Ticks      <- x_breaks_p10 |> length()
     if(n_Ticks>nTicks){
-      x_unit_p10   <- 1
+      x_unit_p10   <- 2
       x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
       n_Ticks      <- x_breaks_p10 |> length()
-      if(n_Ticks>nTicks){
-        x_unit_p10   <- 2
-        x_breaks_p10 <- seq(x_range_p10[1], x_range_p10[2], by=x_unit_p10)
-        n_Ticks      <- x_breaks_p10 |> length()
-      } ### End if(n_Ticks>nTicks)
     } ### End if(n_Ticks>nTicks)
-    x_breaks       <- x_breaks_p10 * 10**x_power10Max
-    # return(x_breaks)
+  } ### End if(n_Ticks>nTicks)
+  x_breaks       <- x_breaks_p10 * 10**x_power10Max
+  # return(x_breaks)
 
-    ### Create list to return
-    return_list <- list()
-    return_list[["breaks"   ]] <- x_breaks
-    return_list[["limits"   ]] <- df_minMax[["value"]]
-    return_list[["bounds"   ]] <- bounds_rounded
-    return_list[["power10"  ]] <- x_power10Max
-    return_list[["power1000"]] <- x_power1000
-    return_list[["mod1000"  ]] <- x_mod1000
+  ### Create list to return
+  return_list <- list()
+  return_list[["breaks"   ]] <- x_breaks
+  return_list[["limits"   ]] <- df_minMax[["value"]]
+  return_list[["bounds"   ]] <- bounds_rounded
+  return_list[["power10"  ]] <- x_power10Max
+  return_list[["power1000"]] <- x_power1000
+  return_list[["mod1000"  ]] <- x_mod1000
 
-    ### Return
-    gc()
-    return(return_list)
-  }
+  ### Return
+  gc()
+  return(return_list)
+}
 
 ####### fredi_slrInterp ######
 fredi_slrInterp <- function(
@@ -2505,7 +2490,7 @@ fredi_slrInterp <- function(
 combine_driverScenarios <- function(
     list0, ### List of driver scenarios
     info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-    info1 =  DBI::dbReadTable(conn,"co_modelTypes") ### co_modelTypes
+    info1 = DBI::dbReadTable(conn,"co_modelTypes")
 ){
   ### Rename columns
   names0   <- list0 |> names()
@@ -2542,7 +2527,3 @@ combine_driverScenarios <- function(
   gc()
   return(df0)
 }
-
-
-
-
