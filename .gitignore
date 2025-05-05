@@ -13,6 +13,7 @@ analysis/*
 .github/*.html
 
 data_tests/*
+*.db
 
 ../docs/
 docs
