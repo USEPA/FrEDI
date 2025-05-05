@@ -292,8 +292,7 @@ run_fredi <- function(
   aggLevels  <- aggLevels |> get_matches(y=aggList1)
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
-  if     ("none" %in% aggLevels) {aggLevels <- c()}
-  else if("all"  %in% aggLevels) {aggLevels <- aggList0}
+  if     ("none" %in% aggLevels) {aggLevels <- c()}  else if("all"  %in% aggLevels) {aggLevels <- aggList0}
   doAgg      <- (aggLevels |> length()) > 0
   ### Add to list
   if(outputList) {argsList[["aggLevels"]] <- aggLevels}
@@ -334,8 +333,7 @@ run_fredi <- function(
   modTypesIn0  <- co_modTypes |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
   doSlr        <- ("slr" %in% modTypes0)
   doGcm        <- ("gcm" %in% modTypes0)
-  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
-  else      modTypesIn <- modTypesIn0
+  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)else      modTypesIn <- modTypesIn0
   modInputs0   <- c("gdp", "pop") |> c(modTypesIn)
 
   ###### Inputs List ######
@@ -361,13 +359,14 @@ run_fredi <- function(
 
   ###### ** Input Defaults ######
   inputDefs    <- inNames0 |> map(function(name0){
+    #browser()
     ### Objects
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    #df0      <- defName0 |> get_frediDataObj("scenarioData")
-    df0 <-  DBI::dbReadTable(conn, defName0)
-
+    scenarioData   <- DBI::dbReadTable(conn,"scenarioData")
+    scenarioData   <- unserialize(scenarioData$value |> unlist())
+    df0      <-  scenarioData[[defName0]]
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
@@ -581,20 +580,21 @@ run_fredi <- function(
   df_results   <- seScenario |> initialize_resultsDf(
     conn       = conn,
     sectors    = sectorIds,
-    mTypes     = mTypes0,
-    minYr0     = minYear,
-    maxYr0     = maxYear,
+    #mTypes     = mTypes0,
+    #minYr0     = minYear,
+    #maxYr0     = maxYear,
     elasticity = elasticity
   ) ### End initialize_resultsDf
 
   #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts
 
-  df_impacts   <- df_results |> calc_scaled_impacts_fredi(conn = conn, drivers0=df_drivers, minYr0=minYear, maxYr0=maxYear)
+  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers, conn = conn)
+                                                          #minYr0=minYear, maxYr0=maxYear)
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(conn = conn, df1=df_impacts, df2=df_drivers) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(conn = conn, df1=df_impacts) |> ungroup()
 
 
 

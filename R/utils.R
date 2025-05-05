@@ -2505,7 +2505,7 @@ fredi_slrInterp <- function(
 combine_driverScenarios <- function(
     list0, ### List of driver scenarios
     info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-    info1  ### co_modelTypes
+    info1 =  DBI::dbReadTable(conn,"co_modelTypes") ### co_modelTypes
 ){
   ### Rename columns
   names0   <- list0 |> names()
