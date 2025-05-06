@@ -435,7 +435,7 @@ format_inputScenarios <- function(
       ### Then, calculate SLR heights
       join0   <- c("year")
       drop0   <- c("temp_C")
-      df1     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year))
+      df1     <- temps2slr(temps = df0 |> pull(temp_C), years = df0 |> pull(year),conn = conn)
       df0     <- df0 |> left_join(df1, by=join0)
       df0     <- df0 |> select(-any_of(drop0))
       df0     <- df0 |> zero_out_scenario(conn = conn, type0=name0)
