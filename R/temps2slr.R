@@ -97,7 +97,7 @@ temps2slr <- function(
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   #### Reference year is 2000
-  co_modelTypes <- DBI::dbReadTable(conn,"co_modelTypes")
+  co_modelTypes <- DBI::dbReadTable(conn,"co_modelTypes") |> filter(modelType_id == "slr")
   ref_year0     <- co_modelTypes |> pull(modelRefYear)
 
   ###### Other constants ######
@@ -136,7 +136,7 @@ temps2slr <- function(
   ### Check for 2020 (year0)
   ### If 2020 not found, check for values above and below 2000
   checkRefYear <- (ref_year0 %in% years0)
-  checkRefYear <- (!checkRefYear) |> ifelse(min0 < ref_year0 & max0 > ref_year0, checkRefYear)
+  checkRefYear <- (any(!checkRefYear)) |> ifelse(min0 < ref_year0 & max0 > ref_year0, checkRefYear)
 
   ### If 2020 is still not found, message the user and exit
   ###To-do exit gracefully within tempbin()
@@ -179,6 +179,7 @@ temps2slr <- function(
   ###### Series ######
   ### Calculate base values
   ### Equilibrium temps
+
   df_x  <- df_x1 |> (function(k){
     for(i in ind_x){
       if(i == 1){
