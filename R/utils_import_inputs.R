@@ -507,7 +507,6 @@ check_valCols <- function(
 ### Check input data...newer version of check_inputs
 check_input_data <- function(
     inputName = "temp",   ### Type of input; one of: c("temp", "slr", "gdp", "pop")
-    conn,
     inputDf   = NULL,     ### Tibble of inputs (e.g., as output from run_fun_tryInput)
     valCol    = NULL,     ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
@@ -527,17 +526,17 @@ check_input_data <- function(
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
   doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
-
+  #dListSub0  <- doFredi |> ifelse("frediData", "package")
+  #dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  con <- load_frediDB()
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_info   <- DBI::dbReadTable(conn,"co_inputInfo")
-  co_states <- DBI::dbReadTable(conn,"co_states")
+  co_info   <- DBI::dbReadTable(con,"co_inputInfo")
+  co_states <- DBI::dbReadTable(con,"co_states")
 
   # co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
@@ -738,7 +737,7 @@ check_input_data <- function(
   if(doPop | doO3) {
     msg_reg <- paste0("Checking that all states, etc. are present...")
     paste0(msg1_i, msg_reg) |> message()
-    inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
+    inputDf  <- inputDf   |> check_regions(conn = con, module=module, msgLevel=msgLevel + 1)
     regPass  <- !(inputDf |> is.null())
     ### Message if error
     msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
@@ -764,7 +763,7 @@ check_input_data <- function(
     } ### End if(doCalc)
   } ### End if(doPop)
 
-
+  DBI::dbDisconnect(con)
   ###### Return ######
   paste0(msg0_i, "Values passed.") |> message()
   return(inputDf)
