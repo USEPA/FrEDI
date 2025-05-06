@@ -154,8 +154,8 @@ import_inputs <- function(
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
   doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  #dListSub0  <- doFredi |> ifelse("frediData", "package")
+  #dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
 
   ##### Connect to FrEDI Database
@@ -175,7 +175,9 @@ import_inputs <- function(
 
   co_info   <- DBI::dbReadTable(conn, "co_inputInfo")
   co_states <- DBI::dbReadTable(conn, "co_states")
-  df_ratios <- DBI::dbReadTable(conn, "popRatiosData")
+  scenDat   <- DBI::dbReadTable(conn,"scenarioData")
+  scenDat   <- unserialize(scenDat$value |> unlist())
+  df_ratios <-scenDat["popRatiosData"]
 
   ###### Input Names ######
   ### Input names, output names
