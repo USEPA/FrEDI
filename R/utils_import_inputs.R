@@ -507,6 +507,7 @@ check_valCols <- function(
 ### Check input data...newer version of check_inputs
 check_input_data <- function(
     inputName = "temp",   ### Type of input; one of: c("temp", "slr", "gdp", "pop")
+    conn,
     inputDf   = NULL,     ### Tibble of inputs (e.g., as output from run_fun_tryInput)
     valCol    = NULL,     ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
     idCol     = NULL,     ### E.g., "state" or "region" if popArea is "state" or "region", respectively; empty character (i.e., c()) otherwise
