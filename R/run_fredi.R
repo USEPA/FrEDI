@@ -205,7 +205,7 @@ run_fredi <- function(
   ### Level of messaging (default is to message the user)
   msgUser      <- !silent
   msgN         <- "\n"
-  msg0         <- 1
+  msg0         <- 0
   msg1         <- msg0 + 1
   msg2         <- msg0 + 2
   # msg0         <- ""
@@ -220,6 +220,7 @@ run_fredi <- function(
   gcmStr0      <- "gcm"
   slrStr0      <- "slr"
   tempStr0     <- "temp"
+  natPost0     <- "US"
 
   ### Initialize Return & Status Lists ----------------
   #### Initialize Lists ----------------
@@ -264,15 +265,6 @@ run_fredi <- function(
   #### Status List ----------------
   ### Add to list
   if(outputList){
-    ### Conditionals for arguments that start as NULL
-    ### - inputsList items, sectorList, aggLevels, elasticity assessed further below
-    # hasInSectors <- sectorList |> length() |> as.logical() |> get_returnListStatus()
-    # hasInputList <- inputsList |> (function(list0){
-    #   list0 |> map(function(x0){
-    #     x0 |> is.null() |> get_returnListStatus()
-    #   }) |> set_names(list0 |> names())
-    # })()
-
     ### get_returnListStatus()
     statusList[["inputsList"]] <- ""
     statusList[["sectorList"]] <- sectorList |> length() |> as.logical() |> get_returnListStatus()
@@ -314,7 +306,6 @@ run_fredi <- function(
     statusList[["maxYear"]] <- (maxYear0 != maxYear) |> get_returnListStatus()
     modelList [["maxYear"]] <- maxYear
   } ### End if(outputList)
-  rm(elasticity0)
 
   #### Elasticity ----------------
   ### Default elasticity value
@@ -340,6 +331,9 @@ run_fredi <- function(
   ### Aggregation levels
   aggLevels0 <- modData0  |> get_frediDataObj(configLStr0, "aggList0")  |> tolower()
   aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=1)
+  aggLevelsN <- aggLevels |> get_matches(y="none", matches=F) |> length()
+  aggAll0    <- "all" %in% aggLevels
+  doAgg      <- aggAll0 | aggLevelsN
   ### Check if aggLevels is equal to the default
   if(outputList) {
     statusList[["aggLevels"]] <- aggLevels0 |> get_matches(y=aggLevels, type="matches") |> all() |> get_returnListStatus()
@@ -398,7 +392,8 @@ run_fredi <- function(
     inputsList = inputsList,
     tempType   = "conus",
     popArea    = "state",
-    msg0       = 0
+    module0    = module0,
+    msg0       = 1
   ) ### End format_inputsList
   ### Exit if inputs aren't valid
   validInputs  <- inputsList |> is.list()
@@ -428,12 +423,16 @@ run_fredi <- function(
       format_inputScenarios,
       minYear = minYear,
       maxYear = maxYear,
-      info0   = inputInfo0
+      info0   = inputInfo0,
+      msg0    = msg1
     ) |> set_names(inNames)
   } ### End if(hasInputs)
 
   #### Update Defaults ----------------
   ### Update inputs with defaults if values are missing
+  # inputDefs |> glimpse()
+  # defNames     <- inNames0 |> get_matches(inNames
+  # msg1 |> get_msgPrefix() |> paste0("Using default scenarios for ", , "inputs...") |> message()
   inputsList   <- inNames0 |> map(
     update_inputDefault,
     dfInfo     = inputInfo0,
@@ -441,37 +440,38 @@ run_fredi <- function(
     inputsList = inputsList,
     minYear    = minYear,
     maxYear    = maxYear
-  ) |>
-    # map(function(df0, minYr0=minYear, maxYr0=maxYear){
-    #   df0 |> filter(year >= minYear, year <= maxYear)
-    # }) |>
-    set_names(inNames0)
+  ) |> set_names(inNames0)
   rm(inputDefs)
   ### Update returnList with Scenario Input Data
   if(outputList) {
     returnObj[["scenarios"]] <- inputsList
   } ### End if(outputList)
   ### Drop any Null scenarios
-  inputsList   <- inputsList |> drop_nullListElements()
+  # inputsList |> glimpse()
+  # return(inputsList)
+  inputsList   <- inputsList |> drop_nullListElements(matches=FALSE)
   inNames      <- inputsList |> names()
 
 
   ### Driver Scenarios ----------------
   #### Format Physical Driver Scenario ----------------
   # physDrivers  <- inNames |> get_matches(y=c(tempStr0, slrStr0))
-  physDrivers  <- inNames[modInTypes0]
-  df_drivers   <- inputsList[physDrivers] |> combine_physDrivers()
+  # inNames |> print(); inputsList |> glimpse(); modInTypes0 |> print()
+  # physDrivers  <- inNames[modInTypes0]
+  physDrivers  <- modInTypes0
+  df_drivers   <- inputsList[physDrivers] |> combine_physDrivers(info0=inputInfo0)
 
 
   #### Format Socioeconomic Driver Scenario ----------------
   ### Calculate national population and update national scenario
-  seScenario   <-  inputsList[["gdp"]] |> create_nationalScenario(pop0 = inputsList[["pop"]])
+  seScenario   <- inputsList[["gdp"]] |> create_nationalScenario(pop0 = inputsList[["pop"]])
   rm(inputsList)
   # seScenario |> glimpse()
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
 
   ### Sector Info ----------------
+  msg0 |> get_msgPrefix() |> paste0("Getting sector info...") |> message()
   ### Get data
   dfSectorInfo <- modData0 |>
     get_frediDataObj("configData", "co_sectorsInfo", msg0=msg1) |>
@@ -485,8 +485,8 @@ run_fredi <- function(
   ### Calculate Impacts ----------------
   #### Get Scalar Values ----------------
   ### Calculate physical scalars and economic multipliers then calculate scalars
-  msg0 |> get_msgPrefix() |> paste0("Calculating impacts...") |> message()
-  df_results   <- initialize_resultsDf(
+  msg0 |> get_msgPrefix() |> paste0("Calculating scalars...") |> message()
+  df_initial   <- initialize_resultsDf(
     df0        = dfSectorInfo,
     df_se      = seScenario,
     # sectors    = sectorList,
@@ -494,28 +494,36 @@ run_fredi <- function(
     mTypes     = modTypes0,
     minYr0     = minYear,
     maxYr0     = maxYear,
-    elasticity = elasticity
+    elasticity = elasticity,
+    silent     = silent,
+    msg0       = msg1
   ) ### End initialize_resultsDf
-  rm(seScenario)
+  # return(df_initial)
+  # rm(seScenario)
 
   #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts: Use dfSectorInfo instead of df_results
-  df_impacts   <- df0 |> calc_scaled_impacts_fredi(
-      drivers0 = df_drivers,
-      minYr0   = minYear,
-      maxYr0   = maxYear,
-      xCol0    = "driverValue",
-      yCol0    = "scaled_impacts"
-  ) ### End calc_scaled_impacts_fredi
-  return(df_results)
+  msg0 |> get_msgPrefix() |> paste0("Calculating scaled impacts...") |> message()
+  df_impacts   <- dfSectorInfo |> get_scaledImpacts(
+    drivers0 = df_drivers,
+    minYr0   = minYear,
+    maxYr0   = maxYear,
+    xCol0    = "driverValue",
+    yCol0    = "scaled_impacts",
+    silent   = silent,
+    msg0     = msg1
+  ) ### End get_scaledImpacts
+  # return(df_impacts)
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(
+  msg0 |> get_msgPrefix() |> paste0("Calculating physical and annual impacts...") |> message()
+  df_results   <- df_initial |> calc_impacts_fredi(
     df1 = df_impacts,
-    df2 = df_drivers
+    df2 = df_drivers,
+    df3 = seScenario
   ) |> ungroup()
-  rm(df_impacts, df_drivers)
+  rm(df_initial, df_impacts, df_drivers, seScenario)
 
 
   ### Select Columns ----------------
@@ -523,37 +531,43 @@ run_fredi <- function(
   msg0 |> get_msgPrefix() |> paste0("Formatting results", "...") |> message()
 
   #### Drop ID Columns ----------------
-  ### modelUnitDesc
-  oldCols0    <- c("sector", "variant", "impactType", "impactYear", "region", "model_type", "model", "driverUnit")
+  ### Result names
+  # lblIdCols0  <- c("sector", "variant", "impactType", "impactYear", "region", "model_type", "model", "driverUnit")
+  resultCols0 <- df_results |> names()
+
+  ### Drop ID columns and rename label columns
+  lblStr0     <- "_label"
+  lblCols0    <- resultCols0[resultCols0 |> str_detect(lblStr0)]
+  lblIdCols0  <- lblCols0 |> str_replace(lblStr0, "")
   df_results  <- df_results |>
-    select(-any_of(oldCols0)) |>
-    rename_at(c(oldCols0), ~oldCols0 |> paste0("_label"))
+    select(-any_of(lblIdCols0)) |>
+    rename_at(c(lblCols0), ~lblIdCols0)
   # df_results |> glimpse()
 
-  #### Organize Grouping Columns ----------------
+  #### Arrange Values ----------------
+  sortCols0   <- c("sector", "variant", "impactType", "impactYear", "state_order", "model")
+  df_results  <- df_results |> arrange_at(c(sortCols0))
+
+  #### Column Groups ----------------
+  ### Main grouping columns
+  mainIdCols0 <- c("sector", "variant", "impactType", "impactYear")
+  regCols0    <- c("region", "state", "postal")
+  modelCols0  <- c("model_type", "model")
+  logicCols0  <- c("sectorprimary", "includeaggregate")
+  physMeas0   <- c("physicalmeasure")
   ### Grouping columns
-  mainCols0   <- c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model_type", "model", "sectorprimary", "includeaggregate")
-  groupCols0  <- groupCols0 |> c("model_type", "model")
-  groupCols0  <- groupCols0 |> c("sectorprimary", "includeaggregate")
-  groupCols0  <- groupCols0 |> c("physicalmeasure")
-  groupCols0  <- groupCols0 |> get_matches(y=df_results |> names(), matches=TRUE)
-  groupCols0  <- groupCols0 |> unique()
+  groupCols0  <- mainIdCols0 |> c(regCols0, modelCols0, logicCols0, physMeas0)
+  groupCols0  <- groupCols0  |> unique() |> get_matches(y=resultCols0)
   # groupCols0 |> print()
+
   ### Driver columns
-  driverCols0 <- c("driverType", "driverUnit", "driverValue")
   ### National & regional scenario columns
-  scenCols0   <- c("gdp_usd", "national_pop", "gdp_percap", "pop")
   ### Impact columns
+  seCols0     <- c("gdp_usd", "national_pop", "gdp_percap", "pop")
+  driverCols0 <- c("driverType", "driverUnit", "driverValue")
   impactCols0 <- c("physical_impacts", "annual_impacts")
-  ### Columns to select
-  select0     <- groupCols0 |> c(driverCols0, scenCols0) |> c("year")
 
-  #### Relocate Columns ----------------
-  # df_results |> glimpse()
-  df_results  <- df_results |> relocate(all_of(select0))
-  # df_results  <- df_results |> relocate(any_of(select0))
-
-  #### Scalar columns ----------------
+  #### Scalar columns
   scalarCols0 <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier")
   infoCols0   <- c("c0", "c1", "exp0", "year0")
   suffix0     <- c("Name", "Value")
@@ -562,75 +576,59 @@ run_fredi <- function(
   scalarCols0 <- scalarCols0 |> c("scaled_impacts")
   scalarCols0 <- infoCols0   |> c(scalarCols0)
   rm(suffix0, infoCols0)
-  ### Rearrange or drop scalar columns
-  if(allCols){
-    df_results  <- df_results |> relocate(any_of(scalarCols0), .after=all_of(select0))
-  } else{
-    df_results  <- df_results |> select(-any_of(scalarCols0))
+
+  #### Select & Relocate Columns ----------------
+  # df_results |> glimpse()
+  ### Columns to move/select
+  moveCols0   <- groupCols0 |> c(driverCols0, seCols0, yrCol0, impactCols0)
+  ### Select columns
+  if(allCols) {
+    otherCols0  <- resultCols0 |> get_matches(y=c(moveCols0, scalarCols0), matches=F)
+    df_results  <- df_results  |> select(-any_of(otherCols0))
+  } else {
+    df_results <- df_results   |> select(any_of(moveCols0))
   } ### End if(allCols)
 
-  #### Other Columns ----------------
-  # excludeCols
-  # otherCols0  <- df_results |> names() |> (function(x){x[!(x %in% c(select0, scalarCols0, impactCols0))]})()
-  otherCols0  <- df_results |> names() |> get_matches(y=c(select0, scalarCols0, impactCols0), matches=FALSE)
-  df_results  <- df_results |> select(-all_of(otherCols0))
+  ### Relocate columns
+  mutate0     <- groupCols0 |> get_matches(y=logicCols0, matches=F)
+  df_results  <- df_results |>
+    relocate(any_of(moveCols0)) |>
+    relocate(any_of(scalarCols0), .after=any_of(impactCols0)) |>
+    mutate_at(c(mutate0), as.character)
+  # df_results  <- df_results |> relocate(any_of(select0))
 
-  ### Convert to character and drop sector id
-  df_results  <- df_results |> mutate_at(c(groupCols0), as.character)
-
-  #### Primary Columns ----------------
-  mutate0     <- c("sectorprimary", "includeaggregate")
-  df_results  <- df_results |> mutate_at(c(mutate0), as.numeric)
-  rm(mutate0)
   # df_results |> glimpse()
   # df_results |> pull(region) |> unique() |> print()
   # return(df_results)
-
 
   ### Aggregate Results ----------------
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(doAgg) {
     msg0 |> get_msgPrefix() |> paste0("Aggregating impacts", "...") |> message()
-    # aggLevels |> length(); doAgg |> print()
-    group0     <- groupCols0
     df_results <- df_results |> aggregate_impacts(
       aggLevels   = aggLevels,
-      groupByCols = group0,
+      groupByCols = groupCols0,
       columns     = impactCols0
     ) |> ungroup() ### End aggregate_impacts
   } ### End if(doAgg)
 
 
   #### Format Results ----------------
-  #### Arrange Results ----------------
+  #### Arrange Results
+  #### Format as a tibble
   ### Arrange results and select which columns are in the front
-  arrange0   <- groupCols0 |> get_matches(y = df_results |> names()) |> c("year") |> unique()
-  df_results <- df_results |> arrange_at(c(arrange0))
-  df_results <- df_results |> relocate(any_of(select0))
-  rm(arrange0)
+  sortCols0   <- c("sector", "variant", "impactType", "impactYear", "state_order", "model")
+  sort0       <- df_results |> names() |> get_matches(y=sortCols0) |> c(yrCol0)
+  df_results  <- df_results |>
+    arrange_at(c(sort0)) |>
+    relocate(any_of(moveCols0)) |>
+    as_tibble()
 
-
-  #### Format as Tibble ----------------
-  ### Update results in list
-  df_results   <- df_results |> as_tibble()
-
-
+  ### Add to list
   #### Format Return Object ----------------
   ### Add items to list/reorganize list
   if(outputList) {
-    ### Initialize list
-    returnObj <- list()
-    ### Add status list
-    returnObj[["statusList"]] <- statusList
-    rm(statusList)
-    ### Add arguments
-    returnObj[["argsList"  ]] <- argsList
-    rm(argsList)
-    ### Add scenarios
-    returnObj[["scenarios" ]] <- returnList[["scenarios"]]
-    rm(returnList)
-    ### Add results
-    returnObj[["results"   ]] <- df_results
+    returnObj[["results"]] <- df_results
     rm(df_results)
   } else {
     returnObj <- df_results
@@ -638,12 +636,11 @@ run_fredi <- function(
 
 
 
-  ###### Return ######
+  ### Return ----------------
   ### Message, clear unused memory, return
-  message("\n", "Finished", ".")
+  msg0 |> get_msgPrefix() |> message("Finished", ".")
   gc()
   return(returnObj)
-
 } ### End function
 
 

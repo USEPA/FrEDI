@@ -179,6 +179,7 @@ format_inputsList <- function(
     # maxYr0     = 2100,
     tempType   = "conus",
     popArea    = "state",
+    module0    = "fredi",
     silent     = FALSE,
     msg0       = 0
 ){
@@ -200,7 +201,7 @@ format_inputsList <- function(
 
   ### Drop NULL list elements from inputsList
   ### Order inputsList by order of inNames0
-  inputsList <- inputsList |> drop_nullListElements()
+  inputsList <- inputsList |> drop_nullListElements(matches=FALSE)
   inNames    <- inNames0   |> get_matches(y=inputsList |> names())
   inputsList <- inputsList[inNames]
   nInputs    <- inputsList |> length()
@@ -254,7 +255,7 @@ format_inputsList <- function(
 
   ### Drop NULL list elements from inputsList
   ### Order inputsList by order of inNames0
-  inputsList <- inputsList |> drop_nullListElements()
+  inputsList <- inputsList |> drop_nullListElements(matches=FALSE)
   inNames    <- inNames0   |> get_matches(y=inputsList |> names())
   inputsList <- inputsList[inNames]
 
