@@ -1326,7 +1326,6 @@ match_scalarValues <- function(
     scalarType = "physScalar", ### Type of scalar (one of: c("damageAdj", "econScalar", "physAdj", "phsScalar"))
     df0,       ### Initial results dataframe
     scalars,
-    # scalars    = "df_scalars" |> get_frediDataObj("stateData", "rDataList"),
     # sectors0   = NULL,
     doAdj0     = FALSE,
     adjYr0     =  "frediData" |> get_frediDataObj("fredi_config", "minYear0"),
@@ -1412,6 +1411,7 @@ match_scalarValues <- function(
   # sort0     <- c("group_id", "postal", "year")
   from0     <- c(nameCol0, valCol0)
   to0       <- scalarType0 |> paste0(adjStr0, c("Name", "Value")) |> str_replace("MultiplierAdj|ScalarAdj", "Adj")
+  # df0 |> glimpse()
   df0       <- df0 |>
     # select(-any_of(typeCol0)) |>
     mutate_at(c(nameCol0), replace_na, "none") |>
@@ -1569,6 +1569,7 @@ initialize_resultsDf <- function(
     filter(year >= minYr0, year <= maxYr0) |>
     filter(scalarName %in% allScalars) |>
     select(-any_of(drop0))
+  # df_scalars |> pull(year) |> range() |> print()
   # allScalars |> print(); df_scalars |> pull(scalarType) |> unique() |> print()
 
   ### Update with dynamic sectors
@@ -1603,8 +1604,6 @@ initialize_resultsDf <- function(
   dfAdj0      <- "econMultiplier" |> match_scalarValues(
     df0     = dfGroups0,
     scalars = df_scalars |> filter(scalarName %in% mainScalars),
-    # minYr0  = minYr0,
-    # maxYr0  = maxYr0,
     doAdj0  = T,
     adjYr0  = 2010,
     module0 = module0
@@ -1637,12 +1636,12 @@ initialize_resultsDf <- function(
   ) ### End calcScalars
   # "got here2" |> print()
 
-  ### Extend SLR Scalars for Years > 2090 ----------------
+  ### Extend SLR Scalars ----------------
+  ### Methods to extend scalars for SLR sectors for Years > 2100
   if(doSlr0) {
+    # doSlr0 |> print()
     dfResults <- dfResults |> extend_slrScalars(
       scalars    = df_scalars |> filter(scalarName %in% slrScalars),
-      # minYr0     = minYr0,
-      # maxYr0     = maxYr0,
       refYear0   = refYear0,
       elasticity = elasticity,
       module0    = module0
@@ -1654,13 +1653,15 @@ initialize_resultsDf <- function(
   ### Join & Arrange ----------------
   ### Join scalars with initial group info
   # join0      <- df_se |> names() |> get_matches(df0 |> names())
+  # slrScalars |> print()
   join0      <- idCols0
   names0     <- df0 |> names()
   resultCols <- dfResults |> names()
-  drop0      <- names0 |> get_matches(y=join0, matches=F) |> get_matches(y=resultCols)
+  drop0      <- names0    |> get_matches(y=join0, matches=F) |> get_matches(y=resultCols)
   # drop0 |> print()
   df0        <- df0       |> select(-any_of(drop0))
   df0        <- dfResults |> left_join(df0, by=join0) |> relocate(any_of(names0))
+  # df0 |> pull(year) |> range() |> print()
   rm(join0, names0, resultCols, drop0, dfResults)
 
   ### Arrange data
@@ -1729,7 +1730,7 @@ calcScalars <- function(
   } ### End if(extendSlr)
 
 
-  ###### Return ----------------
+  ### Return ----------------
   # gc()
   return(data)
 }
@@ -1765,13 +1766,13 @@ extend_slrScalars <- function(
   ### Get SLR scalar info and format it
   # from0      <- c("refYear")
   # to0        <- c("year0")
-  from0      <- c("refYear", )
+  from0      <- c("refYear")
   to0        <- c("year0")
   dfSlr0     <- modData0 |>
     get_frediDataObj("configData", "co_slrScalars", msg0=msg0) |>
     rename_at(c(from0), ~to0) |>
     mutate(year0 = year0 |> as.character())
-  rm(from0, to0, idCols0)
+  rm(from0, to0)
 
   ### Separate Data ----------------
   #### SLR and non-SLR data
@@ -1798,40 +1799,55 @@ extend_slrScalars <- function(
   econCols0  <- "econ" |> paste0("Multiplier", "Adj") |> map(paste0, c("", "Name", "Value")) |> unlist()
   othCols0   <- c("econMultiplier", "physEconScalar")
   kCols0     <- c("c1", "c2", "exp0", "year0")
-  drop0      <- c(physCols0, econCons0, othCols0, kCols0)
+  drop0      <- c(physCols0, econCols0, othCols0, kCols0)
   df0        <- df0 |> select(-any_of(drop0))
   rm(drop0)
 
   #### Pivot SLR Scalars ----------------
-  idCols0    <- c("sector", "impactType", "c1", "c2", "exp0", "refYear")
+  idCols0    <- c("sector", "impactType", "c1", "c2", "exp0", "refYear", "year0")
   select0    <- c("sector", "impactType", "scalarType", "scalarName")
+  dfK0       <- dfSlr0 |> select(any_of(idCols0)) |> distinct()
   dfSlr0     <- dfSlr0 |> pivot_longer(
     -any_of(idCols0),
     names_to  = "scalarType",
     values_to = "scalarName",
-  ) |> select(all_of(select0))
+  ) |>  ### End pivot_longer
+    ### Replace "Name" in scalarType values
+    mutate_at(c("scalarType"), str_replace, "Name", "") |>
+    select(all_of(select0))
   rm(idCols0, select0)
 
   #### Get Data Groups ----------------
   groupCols0 <- c("sector", "impactType", "group_id", "model_type", "postal")
+  joinCols0  <- groupCols0 |> c("year")
   join0      <- c("sector", "impactType")
   dfGroups0  <- df0 |>
     select(all_of(groupCols0)) |>
     distinct() |>
     left_join(dfSlr0, by=join0)
   rm(join0)
+  # dfGroups0 |> glimpse(); scalars |> glimpse()
+
 
   ##### Format SLR Scalars ----------------
   ##### Match SLR scalars ----------------
-  types0     <- dfSlr0 |> pull(scalarType) |> unique()
-  slrScalars <- dfSlr0 |> pull(scalarName) |> unique()
+  # types0     <- dfSlr0 |> pull(scalarType) |> unique()
+  # slrScalars <- dfSlr0 |> pull(scalarName) |> unique()
+  types0     <- dfGroups0 |> pull(scalarType) |> unique()
+  slrScalars <- dfGroups0 |> pull(scalarName) |> unique()
+  # types0 |> print(); slrScalars |> print()
   dfResults0 <- types0 |> map(
     match_scalarValues,
     df0     = dfGroups0,
     scalars = scalars |> filter(scalarName %in% slrScalars),
     doAdj0  = F,
     module0 = module0
-  ) ### End pivot_longer
+  ) |> ### End pivot_longer
+    set_names(types0)
+  ### Reduce
+  # dfResults0 |> glimpse()
+  dfResults0 <- dfResults0 |> reduce(left_join, by=joinCols0)
+  # dfResults0 |> pull(year) |> range() |> print()
 
   ##### Adjustments ----------------
   dfResults1 <- types0 |> map(
@@ -1841,16 +1857,36 @@ extend_slrScalars <- function(
     doAdj0  = T,
     adjYr0  = refYear0,
     module0 = module0
-  ) ### End pivot_longer
+  ) |> ### End pivot_longer
+    set_names(types0)
+  ### Reduce
+  # dfResults1 |> glimpse()
+  dfResults1 <- dfResults1 |> reduce(left_join, by=groupCols0)
   rm(dfGroups0)
 
   #### Join Scalars ----------------
-  ### Join scalars and adjusments
+  ### Join scalars, adjustments, and constants
+  # dfResults0 |> nrow() |> print(); dfResults1 |> nrow() |> print()
+  dfResults0 <- dfResults0 |>
+    left_join(dfResults1, by=groupCols0) |>
+    left_join(dfK0, by=c("sector", "impactType"))
+  rm(dfResults1, dfK0)
+  # dfResults0 |> nrow() |> print()
+
   ### Join with info
-  join0      <- groupCols0 |> c("year")
-  dfResults0 <- dfResults0 |> left_join(dfResults1, by=join0)
-  df0        <- df0        |> left_join(dfResults0, by=join0)
-  rm(dfResults1)
+  # dfResults0 |> glimpse(); df0 |> glimpse()
+  # df0 |> nrow() |> print()
+  names0     <- df0 |> names()
+  ### Columns to drop
+  drop0      <- names0 |>
+    get_matches(y=joinCols0 , matches=F) |>
+    get_matches(y=dfResults0 |> names(), matches=T)
+  ### Drop columns and join data
+  df0        <- df0 |>
+    select(-any_of(drop0)) |>
+    left_join(dfResults0, by=joinCols0)
+  # df0 |> nrow() |> print(); df0 |> glimpse()
+  rm(dfResults0)
 
 
   ### Calculate Scalars ----------------
@@ -1860,12 +1896,15 @@ extend_slrScalars <- function(
 
   ### Drop Columns ----------------
   ### Drop columns
+  # df0 |> pull(year) |> range() |> print()
   drop0      <- c("c2")
   df0        <- df0 |>
     select(-any_of(drop0)) |>
     select(all_of(names0)) |>
     filter(year > refYear0)
   rm(drop0)
+  # refYear0 |> print()
+  # df0 |> pull(year) |> range() |> print()
 
   ### Bind Results ----------------
   ### Bind results back in
@@ -2384,9 +2423,10 @@ calc_impacts_fredi <- function(
   drop3      <- names3 |> get_matches(join3, matches=F) |> get_matches(names0)
   df3        <- df3    |> select(-any_of(drop3))
   # df_se |> glimpse(); df0 |> glimpse()
-  df0        <- df0 |> left_join(df3, by=join3)
+  df0        <- df0    |> left_join(df3, by=join3)
   rm(join3, drop3, df3)
   # "got here4" |> print()
+
 
   ### Return
   # gc()

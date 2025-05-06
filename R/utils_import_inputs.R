@@ -79,6 +79,7 @@ get_defaultScenario <- function(
     yrCol0  = "year",
     module0 = "fredi"
 ){
+  # name0 |> print();
   ### Conditionals
   tempStr0 <- "temp"
   slrStr0  <- "slr"
@@ -105,9 +106,12 @@ get_defaultScenario <- function(
     filter_at(c(idColX), function(x, y=scen0){x %in% y})
 
   ### Filter to years
+  # c(minYr0, maxYr0) |> print()
+  # df0 |> pull(year) |> range() |> print()
   df0     <- df0 |>
     filter(year >= minYr0) |>
     filter(year <= maxYr0)
+  # df0 |> pull(year) |> range() |> print()
 
   ### Select columns
   idCols0  <- yrCol0
@@ -118,6 +122,8 @@ get_defaultScenario <- function(
   # df0 |> glimpse()
 
   ### Return
+  # name0 |> print();
+  # df0 |> pull(year) |> range() |> print()
   return(df0)
 }
 
@@ -143,8 +149,8 @@ get_defaultScenarios <- function(
   inputDefs    <- inputNames0 |> map(
     get_defaultScenario,
     dfInfo  = dfInfo,
-    minYr0  = 2010,
-    maxYr0  = 2100,
+    minYr0  = minYr0,
+    maxYr0  = maxYr0,
     yrCol0  = "year",
     module0 = "fredi"
   ) |> set_names(inputNames0)

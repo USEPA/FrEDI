@@ -276,9 +276,11 @@ run_fredi <- function(
   } ### End if(outputList)
 
 
-  ### Format Input Values ----------------
+  ### Check & Format Input Values ----------------
   #### Model Years ----------------
+  msg0 |> get_msgPrefix() |> paste0("Checking input arguments...") |> message()
   ### Model years and NPD (FrEDI past 2100)
+  maxYear |> print()
   minYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "minYear0")
   maxYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "maxYear0")
   npdYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "npdYear0")
@@ -300,7 +302,8 @@ run_fredi <- function(
   rm(hasMaxYear)
   ### Update max year values
   # maxYear      <- thru2300 |> ifelse(npdYear0, maxYear)
-  maxYear      <- case_when(thru2300 ~ npdYear0, .default=maxYear0)
+  maxYear      <- case_when(thru2300 ~ npdYear0, .default=maxYear)
+  maxYear |> print()
   ### Check if maxYear is equal to the default
   if(outputList) {
     statusList[["maxYear"]] <- (maxYear0 != maxYear) |> get_returnListStatus()
@@ -460,7 +463,7 @@ run_fredi <- function(
   # physDrivers  <- inNames[modInTypes0]
   physDrivers  <- modInTypes0
   df_drivers   <- inputsList[physDrivers] |> combine_physDrivers(info0=inputInfo0)
-
+  # "gothere0" |> print(); df_drivers |> pull(year) |> range() |> print()
 
   #### Format Socioeconomic Driver Scenario ----------------
   ### Calculate national population and update national scenario
@@ -469,6 +472,7 @@ run_fredi <- function(
   # seScenario |> glimpse()
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
+  # seScenario |> pull(year) |> range() |> print()
 
   ### Sector Info ----------------
   msg0 |> get_msgPrefix() |> paste0("Getting sector info...") |> message()
@@ -500,6 +504,7 @@ run_fredi <- function(
   ) ### End initialize_resultsDf
   # return(df_initial)
   # rm(seScenario)
+  # "gothere1" |> print(); df_initial |> pull(year) |> range() |> print()
 
   #### Calculate Scaled Impacts ----------------
   ### Get scaled impacts: Use dfSectorInfo instead of df_results
@@ -514,6 +519,8 @@ run_fredi <- function(
     msg0     = msg1
   ) ### End get_scaledImpacts
   # return(df_impacts)
+  # "gothere2" |> print(); df_impacts |> pull(year) |> range() |> print()
+
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
@@ -538,7 +545,7 @@ run_fredi <- function(
   ### Drop ID columns and rename label columns
   lblStr0     <- "_label"
   lblCols0    <- resultCols0[resultCols0 |> str_detect(lblStr0)]
-  lblIdCols0  <- lblCols0 |> str_replace(lblStr0, "")
+  lblIdCols0  <- lblCols0   |> str_replace(lblStr0, "")
   df_results  <- df_results |>
     select(-any_of(lblIdCols0)) |>
     rename_at(c(lblCols0), ~lblIdCols0)
@@ -586,7 +593,7 @@ run_fredi <- function(
     otherCols0  <- resultCols0 |> get_matches(y=c(moveCols0, scalarCols0), matches=F)
     df_results  <- df_results  |> select(-any_of(otherCols0))
   } else {
-    df_results <- df_results   |> select(any_of(moveCols0))
+    df_results  <- df_results   |> select(any_of(moveCols0))
   } ### End if(allCols)
 
   ### Relocate columns
@@ -617,7 +624,8 @@ run_fredi <- function(
   #### Arrange Results
   #### Format as a tibble
   ### Arrange results and select which columns are in the front
-  sortCols0   <- c("sector", "variant", "impactType", "impactYear", "state_order", "model")
+  # sortCols0   <- c("sector", "variant", "impactType", "impactYear", "state_order", "model")
+  sortCols0   <- mainIdCols0 |> c("postal") |> c(modelCols0)
   sort0       <- df_results |> names() |> get_matches(y=sortCols0) |> c(yrCol0)
   df_results  <- df_results |>
     arrange_at(c(sort0)) |>
