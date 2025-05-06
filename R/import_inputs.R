@@ -159,7 +159,7 @@ import_inputs <- function(
 
 
   ##### Connect to FrEDI Database
-  conn <-  load_frediDB()
+  conn <-  FrEDI:::load_frediDB()
 
 
   ###### Load Data from FrEDI ######
@@ -275,7 +275,7 @@ import_inputs <- function(
   ### Get list with expected name of column containing values
   # idCols     <- get_import_inputs_idCols (popArea=popArea)
   # valCols    <- get_import_inputs_valCols(popArea=popArea)
-  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> get_import_inputs_idCols()}) |> set_names(inNames)
+  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> FrEDI:::get_import_inputs_idCols()}) |> set_names(inNames)
   valCols    <- co_info |> pull(valueCol) |> as.list() |> set_names(inNames)
   # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
 
@@ -290,7 +290,7 @@ import_inputs <- function(
     inputName = inNames,
     fileName  = inputsList
   ) |>
-    pmap(run_fun_tryInput) |>
+    pmap(FrEDI:::run_fun_tryInput) |>
     set_names(inNames)
   # inputsList |> print()
 
@@ -306,7 +306,7 @@ import_inputs <- function(
     tempType  = tempType |> rep(nInputs),
     popArea   = popArea  |> rep(nInputs)
   ) |>
-    pmap(check_input_data) |>
+    pmap(FrEDI:::check_input_data) |>
     set_names(inNames)
 
 

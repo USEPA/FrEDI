@@ -180,6 +180,7 @@ check_inputs <- function(
 ### Check that all regions, states, present in data
 check_regions <- function(
     df0,                ### Tibble with population info
+    conn,               ### DB Connection Object
     module   = "fredi", #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
 ){
@@ -197,8 +198,10 @@ check_regions <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- DBI::dbReadTable(conn,"co_states")
+  co_region <- DBI::dbReadTable(conn,"co_regions")
 
   ###### Messages ######
   msgN       <- "\n"
@@ -530,8 +533,11 @@ check_input_data <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_info   <- DBI::dbReadTable(conn,"co_inputInfo")
+  co_states <- DBI::dbReadTable(conn,"co_states")
+
   # co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
 
@@ -772,9 +778,13 @@ calc_import_pop <- function(
     df0       = NULL,    ### Population data
     popArea   = "state", ### One of: c("state", "regional", "conus", "national")
     module    = "fredi", #### "fredi", "sv", or "methane"
-    df_ratios = "popRatiosData" |>
-      get_frediDataObj("scenarioData") |>
-      fun_extendVals(
+    df_ratios =  DBI::dbReadTable(conn,"scenarioData") |>
+      (function(scenData){
+        scenData    <- unserialize(scenData$value |> unlist())
+        pop_ratios      <- scenData[["popRatiosData"]]
+        return(pop_ratios)
+      })()  |>
+      FrEDI:::fun_extendVals(
         from0 = 2100,
         to0   = 2300,
         sort0 = c("area", "region", "state", "year")
@@ -802,8 +812,10 @@ calc_import_pop <- function(
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_info   <- DBI::dbReadTable(conn,"co_inputInfo")
+  co_states <- DBI::dbReadTable(conn,"co_states")
   # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
 
   ###### Data Info ######
