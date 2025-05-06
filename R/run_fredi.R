@@ -376,6 +376,7 @@ run_fredi <- function(
   modTypes0    <- dfSectors |> pull(model_type) |> unique() |> tolower()
   doSlr        <- slrStr0 %in% modTypes0
   doGcm        <- gcmStr0 %in% modTypes0
+  modInTypes0  <- modTypes0 |> str_replace(gcmStr0, tempStr0)
 
 
   ### Format Input Scenarios ----------------
@@ -457,7 +458,8 @@ run_fredi <- function(
 
   ### Driver Scenarios ----------------
   #### Format Physical Driver Scenario ----------------
-  physDrivers  <- inNames |> get_matches(y=c(tempStr0, slrStr0))
+  # physDrivers  <- inNames |> get_matches(y=c(tempStr0, slrStr0))
+  physDrivers  <- inNames[modInTypes0]
   df_drivers   <- inputsList[physDrivers] |> combine_physDrivers()
 
 
@@ -469,7 +471,15 @@ run_fredi <- function(
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
 
+  ### Sector Info ----------------
+  ### Get data
+  dfSectorInfo <- modData0 |>
+    get_frediDataObj("configData", "co_sectorsInfo", msg0=msg1) |>
+    filter(sector %in% sectorList)
 
+  ### Drop US region
+  # if(!doNational)
+  dfSectorInfo <- dfSectorInfo |> filter(!(postal %in% natPost0))
 
 
   ### Calculate Impacts ----------------
@@ -477,8 +487,9 @@ run_fredi <- function(
   ### Calculate physical scalars and economic multipliers then calculate scalars
   msg0 |> get_msgPrefix() |> paste0("Calculating impacts...") |> message()
   df_results   <- initialize_resultsDf(
+    df0        = dfSectorInfo,
     df_se      = seScenario,
-    sectors    = sectorList,
+    # sectors    = sectorList,
     # sectors    = dfSectors$sector,
     mTypes     = modTypes0,
     minYr0     = minYear,
@@ -488,12 +499,15 @@ run_fredi <- function(
   rm(seScenario)
 
   #### Calculate Scaled Impacts ----------------
-  ### Get scaled impacts
-  df_impacts   <- df_results |> calc_scaled_impacts_fredi(
+  ### Get scaled impacts: Use dfSectorInfo instead of df_results
+  df_impacts   <- df0 |> calc_scaled_impacts_fredi(
       drivers0 = df_drivers,
       minYr0   = minYear,
-      maxYr0   = maxYear
+      maxYr0   = maxYear,
+      xCol0    = "driverValue",
+      yCol0    = "scaled_impacts"
   ) ### End calc_scaled_impacts_fredi
+  return(df_results)
 
   #### Calculate Total Impacts ----------------
   ### Get impacts
