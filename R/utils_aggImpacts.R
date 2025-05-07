@@ -102,15 +102,15 @@ aggImpacts_adjustColumns <- function(
   ### Check Columns ----------------
   ### Values
   checkCols    <- listCols |>
-    map(function(x0, cols0=cols0){
-      cols0 |> get_matches(y=x0[["colsX"]], matches=x0[["matchX"]], type="matches")
+    map(function(x0, colsX=cols0){
+      colsX |> get_matches(y=x0[["colsX"]], matches=x0[["matchX"]], type="matches")
     }) |> set_names(listNames)
-  dropCols     <- checkCols |> map(function(x, y=cols0, z=commaStr){y[!x]}) |> set_names(listNames)
-  dropStrs     <- checkCols |> map(function(x){x |> paste(collapse=z)}) |> set_names(listNames)
+  dropCols     <- checkCols |> map(function(x, y=cols0){y[!x]}) |> set_names(listNames)
+  dropStrs     <- checkCols |> map(function(x, z=commaStr){x |> paste(collapse=z)}) |> set_names(listNames)
   dropVals     <- checkCols |> (function(x0, y0=`&`){Reduce(y0, x0)})()
   cols0        <- cols0[dropVals]
   ### Message user if some columns aren't present
-  nCols0       <- cols0 |> length()
+  nCols0       <- cols0    |> length()
   nDrop0       <- dropCols |> map(function(x){x |> length()}) |> set_names(listNames)
   nDrops0      <- dropVals |> sum()
   warning0     <- nDrops0  |  !nCols0

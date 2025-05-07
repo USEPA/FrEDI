@@ -426,18 +426,18 @@ check_aggLevels <- function(
 ){
   ### Messaging
   # msg1       <- msg0 |> paste0("\t")
-  msgN     <- "\n"
-  msg1     <- msg0 + 1
-  msg2     <- msg0 + 2
+  msgN       <- "\n"
+  msg1       <- msg0 + 1
+  msg2       <- msg0 + 2
   ### Values
   module0    <- module0 |> tolower()
   modData0   <- module0 |> fun_moduleDataStr()
   ### Aggregation levels
-  aggList0   <- modData0 |> get_frediDataObj("configData", "aggList0", msg0=msg1)  |> tolower()
+  aggList0   <- modData0 |> get_frediDataObj("fredi_config", "aggList0", msg0=msg1)  |> tolower()
   aggLevels  <- aggLevels |> tolower()
+  # aggList0 |> print(); aggLevels |> print()
   aggNone0   <- "none" %in% aggLevels
   aggAll0    <- "all"  %in% aggLevels
-  aggLvlsN   <- 0
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
   if      (aggNone0 ) {
@@ -448,9 +448,9 @@ check_aggLevels <- function(
     aggLevels <- aggLevels |> get_matches(y=aggList0)
     # aggLvlsN  <- aggLevels |> length()
   } ### End if (aggAll0 )
-  rm(aggList0, aggNone0, aggAll0, aggLvlsN)
+  rm(aggList0, aggNone0, aggAll0)
 
-  ### return()
+  ### Return
   return(aggLevels)
 }
 
