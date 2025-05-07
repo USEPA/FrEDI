@@ -332,7 +332,7 @@ run_fredi <- function(
   ### Types of summarization to do: default
   ### Aggregation levels
   aggLevels0 <- modData0  |> get_frediDataObj(configLStr0, "aggList0")  |> tolower()
-  aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=1)
+  aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=msg1)
   aggLevelsN <- aggLevels |> get_matches(y="none", matches=F) |> length()
   aggAll0    <- "all" %in% aggLevels
   doAgg      <- aggAll0 | aggLevelsN
@@ -346,7 +346,7 @@ run_fredi <- function(
 
   #### Sectors List ----------------
   ### Initialize sector list if the sectors list is null
-  checkSectors <- sectorList |> check_inputSectors(module0, msg0=1)
+  checkSectors <- sectorList |> check_inputSectors(module0, msg0=msg1)
   sectorLbls0  <- checkSectors[["lbls0"]]
   sectorList   <- checkSectors[["ids0" ]]
   nSectors     <- sectorLbls0 |> length()

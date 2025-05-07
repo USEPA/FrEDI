@@ -42,8 +42,17 @@ aggImpacts_adjustColumns <- function(
     doNat   = FALSE, ### Aggregate over national
     doIType = TRUE , ### Aggregate over impact types
     type0   = "group", ### Or sum
-    msg0    = ""
+    # msg0    = ""
+    msg0    = 0
 ){
+  #### Messaging ----------------
+  ### Not used currently; preserving it in messaging logicals for the future
+  msgN        <- "\n"
+  msg0        <- 0
+  msg1        <- msg0 + 1
+  msg2        <- msg0 + 2
+  msg3        <- msg0 + 3
+
   ### Columns & Values ----------------
   ### Cols
   cols0        <- cols0 |> unique()
@@ -52,9 +61,9 @@ aggImpacts_adjustColumns <- function(
   sumStr0      <- "sum"
   commaStr     <- ", "
   tabStr       <- "\t"
-  msg1         <- msg0 |> paste0(tabStr |> rep(1) |> paste(collapse=""))
-  msg2         <- msg0 |> paste0(tabStr |> rep(2) |> paste(collapse=""))
-  msg3         <- msg0 |> paste0(tabStr |> rep(3) |> paste(collapse=""))
+  # msg1         <- msg0 |> paste0(tabStr |> rep(1) |> paste(collapse=""))
+  # msg2         <- msg0 |> paste0(tabStr |> rep(2) |> paste(collapse=""))
+  # msg3         <- msg0 |> paste0(tabStr |> rep(3) |> paste(collapse=""))
   ### Conditionals
   type0        <- type0 |> tolower()
   doGroup      <- groupStr0 %in% type0
@@ -147,20 +156,20 @@ aggImpacts_adjustColumns <- function(
 
   ### Message User ----------------
   if(warning0) {
-    msg1 |> paste0("Warning for ", colStr0, ":") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Warning for ", colStr0, ":") |> message()
     ### Specific columns
     msgsW  <- list(name0=listNames, x0=nDrop0, y0=dropStrs, list0=listMsg) |>
       pmap(function(name0, x0, y0, list0){
         if(x0) {
-          msg2 |> paste0(list0$str1, list0$str0, " = c(", y0, ")", list0$str2, "!") |> message()
-          msg2 |> paste0("Dropping these columns from ", colStr0, "...") |> message()
+          msg2 |> get_msgPrefix() |> paste0(list0$str1, list0$str0, " = c(", y0, ")", list0$str2, "!") |> message()
+          msg2 |> get_msgPrefix() |> paste0("Dropping these columns from ", colStr0, "...") |> message()
         } ### End if(x0)
         return()
       }) ### End pmap
     ### Empty column warning
     if(!nCols0) {
-      msg2 |> paste0(remainStr0 |> str_to_title(), colStr0, " = c() has length=0!") |> message()
-      msg3 |> paste0(str3, "...")
+      msg2 |> get_msgPrefix() |> paste0(remainStr0 |> str_to_title(), colStr0, " = c() has length=0!") |> message()
+      msg3 |> get_msgPrefix() |> paste0(str3, "...")
       # return()
     } ### End if(!nGroups)
   } ### End if(msgG & msgUser)
@@ -172,125 +181,171 @@ aggImpacts_adjustColumns <- function(
 ## Aggregation Functions ----------------
 ### Function to interpolate between impact years
 ### Separate into years after 2090 and before 2090
+# dfYrs0  = "frediData" |>
+#   get_frediDataObj("stateData", "co_impactYears") |>
+#   (function(df0, col0="impactYear_label", col1="impYr", naStr="N/A"){
+#     df0 <- df0 |> mutate_at(c(col0), na_if, naStr)
+#     df0 <- df0 |> filter_at(c(col0), function(x){!(x |> is.na())})
+#     df0 <- df0 |> select(all_of(col0)) |> distinct() |> arrange_at(c(col0))
+#     df0 <- df0 |> rename_at(c(col0), ~col1)
+#     df0 <- df0 |> mutate(impYrNum = impYr |> as.numeric())
+#     df0 <- df0 |> mutate(row0 = row_number())
+#     df0 <- df0 |> arrange_at(c(col1), desc)
+#     return(df0)
+#   })()
 interpolate_impYear <- function(
     data,
     col0    = c("impactYear"),
     group0  = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model", "model_type"),
     sum0    = c("physical_impacts", "annual_impacts"),
+    lbl0    = c("Interpolation"),
+    naStr0  = c("N/A", "Interpolation"),
     yrCol0  = c("year"),
-    naStr0  = c("N/A"),
-    newStr0 = c("Interpolation"),
-    dfYrs0  = "co_impactYears" |>
-      get_frediDataObj("frediData", "rDataList") |>
-      (function(df0, col0="impactYear_label", col1="impYr", naStr="N/A"){
-        df0 <- df0 |> mutate_at(c(col0), na_if, naStr)
-        df0 <- df0 |> filter_at(c(col0), function(x){!(x |> is.na())})
-        df0 <- df0 |> select(all_of(col0)) |> distinct() |> arrange_at(c(col0))
-        df0 <- df0 |> rename_at(c(col0), ~col1)
-        df0 <- df0 |> mutate(impYrNum = impYr |> as.numeric())
-        df0 <- df0 |> mutate(row0 = row_number())
-        df0 <- df0 |> arrange_at(c(col1), desc)
-        return(df0)
-      })(),
-    maxYr0  = dfYrs0 |> pull(impYrNum) |> max()
+    dfYrs0  = "controlData" |>
+      get_frediDataObj("co_impYrLvls") |>
+      filter(!(impYrNum |> is.na())) |>
+      arrange_at(c("impYrNum")) |>
+      select(c("impYrNum", "row0")) |>
+      rename_at(c("impYrNum", "row0"), ~c("yr0", "num0"))
 ){
   # if(msgUser){msg0 (1) |> paste0("Interpolating between impact year estimates...") |> message()}
-  ### Columns ----------------
-  names0        <- data   |> names()
-  group0        <- group0 |> get_matches(y=names0) |> get_matches(y=c(col0, yrCol0), matches=F)
-  sum0          <- sum0   |> get_matches(y=names0)
+  ### Columns & Values ----------------
+  ### Columns
+  idCol0   <- "id"
+  xCol0    <- "x"
+  numCol0  <- "yr0"
+  typeCol0 <- "impYrType"
+  names0   <- data   |> names() |> c(idCol0)
+  group0   <- group0 |> get_matches(y=col0, matches=F)
+  sum0     <- sum0   |> get_matches(y=names0)
+
+  ### Values
+  minYr0   <- dfYrs0 |> pull(all_of(numCol0)) |> min()
+  maxYr0   <- dfYrs0 |> pull(all_of(numCol0)) |> max()
 
   ### Format data ----------------
-  ### Ungroup first, then add columns to help with processing data
-  data          <- data |>
-    group_by_at(c(group0), .add=FALSE) |>
+  ### Group and add id
+  ### Add info about impact year
+  data     <- data |>
+    group_by_at(c(group0), .add=F) |>
     mutate(id=cur_group_id()) |>
-    mutate_at(c(col0), na_if, naStr0) |>
-    mutate(impYrNum  = data |> pull(all_of(col0)) |> as.numeric()) |>
+    rename_at(c(col0), ~xCol0) |>
+    mutate(x = case_when(x %in% naStr0 ~ NA, .default=x)) |>
+    mutate_at(c(xCol0), as.numeric) |>
     mutate(impYrType = case_when(
-      impYrNum |> is.na() ~ 0,
-      year > maxYr0 ~ case_when(impYrNum == maxYr0 ~ 1, .default = 2),
+      x |> is.na() ~ 0,
+      year > maxYr0 ~ case_when(
+        x == maxYr0 ~ 1, .default = 2),
       .default = 3
     ))
+  # return(data)
+  # data |> glimpse()
 
   ### Filter data ----------------
   ### - Data that doesn't need interpolation:
-  ###   - Filter to impYrType < 2
-  ###   - For impYrType == 1, filter to higher impact year estimate
-  filter0       <- c("impYrType")
-  dataNA        <- data |>
-    filter_at(c(filter0), function(x, y=2){x < y}) |>
-    select(-any_of(filter0)) |>
-    ungroup()
-  ### - Data that does need interpolation:
-  data          <- data |>
-    filter_at(c(filter0), function(x, y=2){x > y}) |>
-    select(-any_of(filter0))
-  ### Drop filter0
-  rm(filter0)
+  ###   - Filter to impYrType < 2 (NA or year > maxYr0)
+  dataNA   <- data |>
+    filter_at(c(typeCol0), function(x, y=c(0, 1)){x %in% y}) |>
+    select(-any_of(typeCol0)) |>
+    rename_at(c(xCol0), ~col0)
+  ### - Data that does need interpolation: Filter and rename
+  data     <- data |>
+    filter_at(c(typeCol0), function(x, y=3){x %in% y}) |>
+    select(-any_of(typeCol0))
+  # dataNA |> glimpse(); data |> glimpse();
 
   ### Interpolate Data ----------------
   ### Separate and Join Interpolation Data ----------------
   ## Group data and separate into group data and necessary data
-  # rename_at(c("id"), ~idCol0)
-  idCol0        <- c("id")
-  xCol0         <- c("x")
-  impYrCol0     <- c("impYrNum")
-  join0         <- c(idCol, yrCol0)
-  select0       <- c(join0, cols0)
-  ids0          <- data    |> pull(id) |> unique()
-  dataKeys      <- data    |> group_keys() |> mutate(id = ids0)
-  data          <- data    |> ungroup()    |> select(all_of(select0))
-  data          <- dfYrs0  |>
-    select(c("impYr", "row0")) |>
-    map(function(impYr, row0, colX=impYrCol0, colsX=c(impYrCol0, sum0), colsY=xCol0 |> c(sum0)){
-    data |>
-        filter_at(c(colX), function(x, y=impYr){x %in% y}) |>
-        rename_at(c(colsX), ~colsY |> paste0(row0))
-    }) |> reduce(left_join, by=join0)
-  rm(join0, select0, ids0)
+  hasData  <- data  |> nrow()
+  if(hasData) {
+    join0    <- c(idCol0, yrCol0)
+    select0  <- join0 |> c(xCol0) |> c(sum0)
+    # select0   <- c(join0, cols0)
+    ids0     <- data |> pull(id) |> unique()
+    dataKeys <- data |> group_keys() |> mutate(id = ids0)
+    # data      <- data |> ungroup()    |> select(all_of(select0))
+    data     <- data |> group_by_at(c(join0)) |> select(all_of(select0))
+    ### Filter data
+    data     <- dfYrs0 |>
+      pmap(filter_impYrs, col0=xCol0, sum0=sum0, df0=data) |>
+      reduce(left_join, by=join0)
 
-  ### Calculate Impacts ----------------
-  ### Calculate year adjustment
-  rows0         <- dfYrs0 |> pull(row0) |> unique()
-  sumCols2      <- sum0   |> paste0(rows0 |> max())
-  sumCols1      <- sum0   |> paste0(rows0 |> min())
-  drop0         <- xCol0  |> paste0(rows0) |> c(sumCols2, sumCols1)
-  data          <- data   |>
-    mutate(numer = year - x1) |>
-    mutate(denom = x2 - x1) |>
-    mutate(adj   = numer / denom)
-  ### Calculate value
-  data[,sum0]   <- data[,sumCols1] + (data[,sumCols2] - data[,sumCols1]) * (data$adj)
-  ### Drop columns
-  data          <- data |> select(-any_of(drop0))
+    ### Calculate Impacts ----------------
+    ### Calculate year adjustment
+    # sumCols0 <- dfYrs0 |> pull(row0) |> map(function(x, y=sum0){y |> paste0(x)})
+    sumCols1 <- sum0 |> paste0(1)
+    sumCols2 <- sum0 |> paste0(2)
+    data     <- data   |>
+      mutate(numer = year - x1) |>
+      mutate(denom = x2 - x1) |>
+      mutate(adj   = numer / denom)
+    ### Calculate value
+    data[,sum0] <- data[,sumCols1] + (data[,sumCols2] - data[,sumCols1]) * (data$adj)
 
-  ### Join and Bind Data ----------------
-  ### Join data with keys
-  join0         <- c(idCol, yrCol0)
-  data          <- data |> left_join(dataKeys, by=join0)
-  rm(dataKeys)
+    ### Join and Bind Data ----------------
+    ### Join data with keys
+    data     <- data |>
+      left_join(dataKeys, by=idCol0) |>
+      mutate(x = NA)
+    rm(dataKeys)
+  } ### End if(hasData)
+
+  ### Rename xCol0 to col0
+  data     <- data   |> rename_at(c(xCol0), ~col0)
   ### Bind data
-  data          <- data |> bind_rows(dataNA)
+  dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
+  data     <- data   |> ungroup() |> select(all_of(names0))
+  data     <- data   |> bind_rows(dataNA)
   rm(dataNA)
-  ### Arrange, mutate, drop
-  data          <- data |>
-    arrange_at(c(join0)) |>
-    rename_at(c(impYrCol0), ~col0) |>
+  ### Mutate column value, arrange, drop id column
+  sort0    <- c(idCol0, col0, yrCol0)
+  data     <- data |>
     mutate_at(c(col0), as.character) |>
-    mutate_at(c(col0), function(x, y=naStr0){y})
-  # rm(dataKeys, dataNA)
+    mutate_at(c(col0), function(x, y=lbl0){y}) |>
+    arrange_at(c(sort0)) |>
+    select(-any_of(idCol0))
 
   ### Return ----------------
   return(data)
 } ### if(doIYear)
 
+### Function to filter data to specific impact years
+filter_impYrs <- function(
+    yr0  = 2010, ### Impact year, as.numeric (or same type as data in col0)
+    num0 = 1, ### Order of the year (1 for lower, 2 for upper)
+    col0 = "impactYear",
+    sum0 = "annual_impacts",
+    df0  ### Data to filter
+){
+  ### Values
+  from0 <- c(col0, sum0)
+  to0   <- from0 |> paste0(num0)
+  ### Filter and rename columns
+  df0   <- df0 |>
+    filter_at(c(col0), function(x, y=yr0){x %in% y}) |>
+    rename_at(c(from0), ~to0)
+  ### Return
+  return(df0)
+}
+
 ### Function to summarize, accounting for non-NA values
+map_nonNAValues <- function(
+    col0   = "annual_impacts",
+    fun0   = "sum",
+    df0,
+    # naStr0 = "_na",
+    na.rm  = TRUE
+){
+  df0 |> get_nonNAValues(col0=col0, fun0=fun0, na.rm=na.rm)
+}
+
+
 get_nonNAValues <- function(
     df0,
     col0   = "annual_impacts",
     fun0   = "sum",
-    naStr0 = "_na",
+    # naStr0 = "_na",
     na.rm  = TRUE
 ){
   ### colX |> paste0(naStrX)
@@ -322,62 +377,57 @@ get_nonNAValues <- function(
 ### Function to calculate model averages
 calc_modelAves <- function(
     data,  ### Grouped data
-    cols0  = c("model"),
+    col0   = c("model"),
     group0 = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model", "model_type"),
     sum0   = c("physical_impacts", "annual_impacts"),
     lbl0   = c("Average"),
     fun0   = c("mean"),
-    slrStr = c("slr"),
+    naStr0 = c("Interpolation", "Average"),
+    # slrStr = c("slr"),
     yrCol0 = c("year"),
     na.rm  = TRUE
 ){
   ### Calculate number of non missing values
-  # idCol1 <- idCol0 |> paste0("X")
-  # data[[idCol1]] <- data[[idCol0]] |> paste0("_", data[[yrCol0]])
-  idCol0   <- c("id")
-  group0   <- group0 |> get_matches(y=cols0, matches=F)
-  names0   <- data |> names() |> unique()
+  idCol0   <- "id"
+  group0   <- group0 |> get_matches(y=col0, matches=F)
+  names0   <- data |> names() |> c(idCol0) |> unique()
   data     <- data |>
     group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
 
+  ### Add column label to NA strings
   ### Separate data into values that require interpolation and those that don't
-  slrStr   <- slrStr |> tolower()
-  dataNA   <- data |> filter_at(c(cols0), function(x, y=slrStr){(x |> tolower()) %in% y})
-  data     <- data |> filter_at(c(cols0), function(x, y=slrStr){!((x |> tolower()) %in% y)})
+  naStr0   <- naStr0 |> c(lbl0) |> unique()
+  dataNA   <- data |> filter_at(c(col0), function(x, y=naStr0){x %in% y})
+  data     <- data |> filter_at(c(col0), function(x, y=naStr0){!(x %in% y)})
   ### Select data
-  # select0  <- c(idCol0, sum0)
   join0    <- c(idCol0, yrCol0)
   select0  <- join0 |> c(sum0)
-  naStr0   <- "_na"
-  naCols0  <- sum0  |> paste0(naStr0)
   ids0     <- data  |> pull(id) |> unique()
   dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
   dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
   dfSum    <- sum0  |>
-    map(function(col0){
-      dfSum |> get_nonNAValues(col0=col0, fun0=fun0)
-    }) |>
-    set_names(sum0) |>
-    reduce(left_join, by=join0)
-  ### Join data and keys
-  dfSum    <- dfKeys |>
-    left_join(dfSum, by=idCol0) |>
-    mutate(model = lbl0)
+    map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
+    set_names(sum0)
+  ### Join data and add label
+  dfSum    <- dfSum |>
+    reduce(left_join, by=join0) |>
+    left_join(dfKeys, by=idCol0) |>
+    mutate(colVal = lbl0) |>
+    rename_at(c("colVal"), ~col0)
   ### Bind data
   dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
-  data     <- data   |> ungroup() |> select(all_of(names0))
   dfSum    <- dfSum  |> ungroup() |> select(all_of(names0))
+  data     <- data   |> ungroup() |> select(all_of(names0))
   data     <- data   |>
     bind_rows(dfSum) |>
     bind_rows(dataNA)
   rm(dfSum, dataNA)
-  ### Add impact type and arrange data
-  # data     <- data  |>
-  #   mutate_at(c(cols0), function(x, y=lbl0){y})
-  #   # arrange_at(c(idCol0, col0)) |>
-  #   # mutate_at(c(cols0), function(x, y=lbl0){y}) |>
-  #   # select(-any_of(idCol0))
+  ### Arrange data, drop id column
+  sort0    <- c(idCol0, col0, yrCol0)
+  data     <- data  |>
+    arrange_at(c(sort0)) |>
+    select(-any_of(idCol0))
   ### Return
   return(data)
 }
@@ -398,45 +448,50 @@ sum_national <- function(
     na.rm    = TRUE
 ){
   ### Calculate number of non missing values
-  # idCol1 <- idCol0 |> paste0("X")
-  # data[[idCol1]] <- data[[idCol0]] |> paste0("_", data[[yrCol0]])
-  idCol0   <- c("id")
+  idCol0   <- "id"
+  postCol0 <- "postal"
   # group0   <- group0 |> get_matches(y=cols0, matches=F) |> c(yrCol0)
   group0   <- group0 |> get_matches(y=cols0, matches=F)
-  names0   <- data |> names() |> unique()
+  # names0   <- data   |> names() |> c(idCol0) |> unique()
+  names0   <- data   |> names() |> get_matches(y=c(group0, cols0, yrCol0, sum0)) |> c(idCol0) |> unique()
   # data |> glimpse()
+  # select0  <- names0 |> get_matches(y=c(group0, cols0, yrCol0, sum0))
   data     <- data |>
+    # select(all_of(select0)) |>
     group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
   # data |> glimpse()
+  ### Drop any national values
+  lblCols0 <- natLbls0 |> names()
+  naStr0   <- natLbls0 |> pull(all_of(postCol0))
+  data     <- data     |> filter_at(c(postCol0), function(x, y=naStr0){!(x %in% y)})
   ### Select data
   join0    <- c(idCol0, yrCol0)
   select0  <- join0 |> c(sum0)
-  naStr0   <- "_na"
-  naCols0  <- sum0  |> paste0(naStr0)
   ids0     <- data  |> pull(id) |> unique()
   dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
   # dfSum    <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
   dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
   dfSum    <- sum0  |>
-    map(function(col0){
-      dfSum |> get_nonNAValues(col0=col0, fun0=fun0)
-    }) |>
-    set_names(sum0) |>
-    reduce(left_join, by=join0)
-  ### Join data and keys
-  ### Add labels
-  dfSum    <- dfKeys |>
-    left_join(dfSum, by=idCol0) |>
+    map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
+    set_names(sum0)
+  ### Join data and keys, add labels
+  # dfKeys |> glimpse()
+  # return(dfSum)
+  dfSum    <- dfSum |>
+    reduce(left_join, by=join0) |>
+    left_join(dfKeys, by=idCol0) |>
     cross_join(natLbls0)
+  # return(dfSum)
   ### Bind data
   data     <- data  |> ungroup() |> select(all_of(names0))
   dfSum    <- dfSum |> ungroup() |> select(all_of(names0))
   data     <- data  |> bind_rows(dfSum)
   rm(dfSum)
-  ### Arrange data and drop columns
+  ### Arrange data and drop id column
+  sort0    <- c(idCol0, postCol0, yrCol0)
   data     <- data  |>
-    arrange_at(c(idCol0, cols0)) |>
+    arrange_at(c(sort0)) |>
     select(-any_of(idCol0))
   # data |> glimpse()
   ### Return
@@ -447,66 +502,62 @@ sum_national <- function(
 ### Function to sum over impact types
 sum_impType <- function(
     data,  ### Grouped data
-    cols0  = c("impactType"),
+    col0   = c("impactType"),
     group0 = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model", "model_type"),
     sum0   = c("physical_impacts", "annual_impacts"),
-    lbl0   = c("all"),
-    fun0   = c("sum"),
-    naStr0 = c("N/A", "NA"),
-    yrCol0 = c("year"),
+    lbl0   = "all",
+    naStr0 = c("N/A", "NA", "all"),
+    fun0   = "sum",
+    yrCol0 = "year",
     na.rm  = TRUE
 ){
   ### Calculate number of non missing values
-  # idCol1 <- idCol0 |> paste0("X")
-  # data[[idCol1]] <- data[[idCol0]] |> paste0("_", data[[yrCol0]])
-  idCol0   <- c("id")
-  group0   <- group0 |> get_matches(y=cols0, matches=F)
-  names0   <- data   |> names() |> unique()
+  idCol0   <- "id"
+  group0   <- group0 |> get_matches(y=col0, matches=F)
+  names0   <- data   |> names() |> c(idCol0) |> unique()
   data     <- data |>
     group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
-
+  # lbl0 |> glimpse(); idCol0 |> glimpse(); col0 |> glimpse(); yrCol0 |> glimpse()
+  ### Add impact type label to NA strings
   ### Separate data into values that require interpolation and those that don't
-  dataNA   <- data |> filter_at(c(cols0), function(x, y=naStr0){x %in% y})
-  data     <- data |> filter_at(c(cols0), function(x, y=naStr0){!(x %in% y)})
-  hasData  <- data |> nrow()
+  naStr0   <- naStr0 |> c(lbl0) |> unique()
+  dataNA   <- data |> filter_at(c(col0), function(x, y=naStr0){x %in% y})
+  # data     <- data |> filter_at(c(col0), function(x, y=naStr0){!(x %in% y)})
+  data     <- data |> filter_at(c(col0), function(x, y=naStr0){!(x %in% y)})
+  # rm(data)
+  hasData  <- data  |> nrow()
   if(hasData) {
     # data |> glimpse()
     ### Select data
     join0    <- c(idCol0, yrCol0)
     select0  <- join0 |> c(sum0)
     # select0  <- c(idCol0, sum0)
-    naStr0   <- "_na"
-    naCols0  <- sum0  |> paste0(naStr0)
     ids0     <- data  |> pull(id) |> unique()
     dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
-    # data     <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
-    dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
+    data     <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
     data     <- sum0  |>
-      map(function(col0){
-        data |> get_nonNAValues(col0=col0, fun0=fun0)}
-      ) |>
-      set_names(sum0) |>
-      reduce(left_join, by=join0)
-    ### Join data and keys
-    data     <- dfKeys |>
-      left_join(data, by=idCol0) |>
-      # mutate(impactType = NA)
-      mutate(impactType = NA)
+      map(map_nonNAValues, fun0=fun0, df0=data , na.rm=na.rm) |>
+      set_names(sum0)
+    ### Join data and add label
+    data     <- data  |>
+      reduce(left_join, by=join0) |>
+      left_join(dfKeys, by=idCol0) |>
+      mutate(colVal = lbl0) |>
+      rename_at(c("colVal"), ~col0)
   } ### End if(hasData)
   ### Bind data
-  # names0 |> print()
-  data     <- data  |>
-    ungroup() |>
-    select(-any_of(idCol0)) |>
-    select(all_of(names0)) |>
-    bind_rows(dataNA) |>
-    mutate_at(c(cols0), function(x, y=lbl0){y})
+  dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
+  data     <- data   |> ungroup() |> select(all_of(names0))
+  data     <- data   |> bind_rows(dataNA)
   rm(dataNA)
-  # ### Add impact type and arrange data
-  # data     <- data  |>
-  #   # arrange_at(c(idCol0, yrCol0)) |>
-  #   mutate_at(c(col0), function(x, y=lbl0){y})
+  ### Add impact type, arrange data, drop id column
+  sort0    <- c(idCol0, col0, yrCol0)
+  # lbl0 |> glimpse(); idCol0 |> glimpse(); col0 |> glimpse(); yrCol0 |> glimpse()
+  data     <- data   |>
+    mutate_at (c(col0), function(x, y=lbl0){y}) |>
+    arrange_at(c(sort0)) |>
+    select(-any_of(idCol0))
   ### Return
   return(data)
 }
