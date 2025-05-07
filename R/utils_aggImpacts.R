@@ -101,6 +101,7 @@ aggImpacts_adjustColumns <- function(
 
   ### Check Columns ----------------
   ### Values
+  # listNames |> print()
   checkCols    <- listCols |>
     map(function(x0, colsX=cols0){
       colsX |> get_matches(y=x0[["colsX"]], matches=x0[["matchX"]], type="matches")
@@ -108,18 +109,22 @@ aggImpacts_adjustColumns <- function(
   dropCols     <- checkCols |> map(function(x, y=cols0){y[!x]}) |> set_names(listNames)
   dropStrs     <- checkCols |> map(function(x, z=commaStr){x |> paste(collapse=z)}) |> set_names(listNames)
   dropVals     <- checkCols |> (function(x0, y0=`&`){Reduce(y0, x0)})()
+  # dropVals |> print()
   cols0        <- cols0[dropVals]
+  # cols0 |> print()
   ### Message user if some columns aren't present
   nCols0       <- cols0    |> length()
   nDrop0       <- dropCols |> map(function(x){x |> length()}) |> set_names(listNames)
-  nDrops0      <- dropVals |> sum()
+  # nDrops0      <- dropVals |> sum()
+  nDrops0      <- (!dropVals) |> sum()
+  # nDrops0 |> print()
   warning0     <- nDrops0  |  !nCols0
 
   ### Message Info ----------------
   ### Message strings
   colStr0      <- type0    |> paste0("Cols")
   actionStr0   <- doSum    |> ifelse("aggregate over ", "group by ")
-  otherStr0    <- doSum    |> ifelse("grouping columns ", "summary columns ")
+  otherStr0    <- doSum    |> ifelse("summary columns ", "grouping columns ")
   str3         <- doSum    |> ifelse("At least one column required for aggregating", "This could results in non-sensical or double-counted results")
   remainStr0   <- nDrops0  |> ifelse("remaining ", "")
   msgW         <- warning0 |> ifelse(msg2, msg1)
@@ -142,7 +147,7 @@ aggImpacts_adjustColumns <- function(
 
   ### Message User ----------------
   if(warning0) {
-    msg1 |> paste0("Warning for", colStr0, ":") |> message()
+    msg1 |> paste0("Warning for ", colStr0, ":") |> message()
     ### Specific columns
     msgsW  <- list(name0=listNames, x0=nDrop0, y0=dropStrs, list0=listMsg) |>
       pmap(function(name0, x0, y0, list0){
@@ -285,16 +290,31 @@ get_nonNAValues <- function(
     df0,
     col0   = "annual_impacts",
     fun0   = "sum",
-    naStr0 = "_na"
+    naStr0 = "_na",
+    na.rm  = TRUE
 ){
   ### colX |> paste0(naStrX)
-  naCol <- "check"
-  yCol  <- "yVal"
-  df0   <- df0 |> mutate(yVal  = df0 |> pull(all_of(col0)))
-  df0   <- df0 |> mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1))
-  df0   <- df0 |> summarize_at(c(yCol, naCol), .funs=c(fun0), na.rm=na.rm)
-  df0   <- df0 |> mutate(yVal  = case_when(check == 0 ~ NA, .default = yVal))
-  df0   <- df0 |> rename_at(c(naCol, yCol), ~col0 |> paste0(c("", naStrX)))
+  naCol  <- "check"
+  yCol   <- "yVal"
+  vals0  <- df0 |> pull(all_of(col0))
+  # df0 |> glimpse(); vals0 |> length() |> print()
+  ### Rename value
+  # df0    <- df0 |> mutate(yVal  = vals0)
+  df0    <- df0 |>
+    rename_at(c(col0), ~yCol) |>
+    mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1)) |>
+    summarize_at(c(yCol, naCol), .funs=c(fun0), na.rm=na.rm)
+  ### Sum vs average
+  doSum0 <- "sum"  %in% fun0
+  doAve0 <- "mean" %in% fun0
+  ### Mutate vals
+  if(doSum0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal))
+  if(doAve0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal / check))
+  ### Rename and drop check column
+  df0   <- df0 |>
+    # rename_at(c(naCol, yCol), ~col0 |> paste0(c("", naStrX)))
+    rename_at(c(yCol), ~col0) |>
+    select(-any_of(naCol))
   ### Return
   return(df0)
 }
@@ -354,43 +374,53 @@ calc_modelAves <- function(
 ### Function to calculate non-NA values
 sum_national <- function(
     data,   ### Grouped data
-    cols0  = c("region", "state", "postal"),
-    group0 = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model", "model_type"),
-    sum0   = c("physical_impacts", "annual_impacts"),
-    lbls0  = list(region="National Total", state="All", postal="US"),
-    fun0   = c("sum"),
-    yrCol0 = c("year"),
-    na.rm  = TRUE
+    cols0    = c("region", "state", "postal"),
+    group0   = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model", "model_type"),
+    sum0     = c("physical_impacts", "annual_impacts"),
+    # lbls0    = list(region="National Total", state="All", postal="US"),
+    natLbls0 = controlData$co_states |>
+      filter(postal %in% "US") |>
+      select(c("region_label", "state", "postal")) |>
+      rename_at(c("region_label"), ~"region"),
+    fun0     = c("sum"),
+    yrCol0   = c("year"),
+    na.rm    = TRUE
 ){
   ### Calculate number of non missing values
   # idCol1 <- idCol0 |> paste0("X")
   # data[[idCol1]] <- data[[idCol0]] |> paste0("_", data[[yrCol0]])
   idCol0   <- c("id")
-  group0   <- group0 |> get_matches(y=cols0, matches=F) |> c(yrCol0)
+  # group0   <- group0 |> get_matches(y=cols0, matches=F) |> c(yrCol0)
+  group0   <- group0 |> get_matches(y=cols0, matches=F)
   names0   <- data |> names() |> c(idCol0) |> unique()
+  # data |> glimpse()
   data     <- data |>
-    group_by_at(c(group0), .add=F) |>
+    group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
+  # data |> glimpse()
   ### Select data
-  select0  <- c(idCol0, sum0)
+  join0    <- c(idCol0, yrCol0)
+  select0  <- join0 |> c(sum0)
   naStr0   <- "_na"
   naCols0  <- sum0  |> paste0(naStr0)
   ids0     <- data  |> pull(id) |> unique()
   dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
-  dfSum    <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
+  # dfSum    <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
+  dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
   dfSum    <- sum0  |>
-    map(function(col0){dfSum |> get_nonNAValues(col0=col0, fun0=fun0)}) |>
-    reduce(left_join, by=idCol0)
+    map(function(col0){
+      dfSum |> get_nonNAValues(col0=col0, fun0=fun0)
+    }) |>
+    set_names(sum0) |>
+    reduce(left_join, by=join0)
   ### Join data and keys
-  dfSum    <- dfKeys |> left_join(dfSum, by=idCol0)
   ### Add labels
-  dfSum    <- dfSum |>
-    mutate(region=lbls0$region) |>
-    mutate(state =lbls0$state) |>
-    mutate(postal=lbls$postal)
+  dfSum    <- dfKeys |>
+    left_join(dfSum, by=idCol0) |>
+    cross_join(natLbls0)
   ### Bind data
-  data     <- data  |> select(all_of(names0))
-  dfSum    <- dfSum |> select(all_of(names0))
+  data     <- data  |> ungroup() |> select(all_of(names0))
+  dfSum    <- dfSum |> ungroup() |> select(all_of(names0))
   data     <- data  |> bind_rows(dfSum)
   rm(dfSum)
   ### Arrange data and drop columns

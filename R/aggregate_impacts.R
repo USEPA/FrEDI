@@ -128,8 +128,13 @@ aggregate_impacts <- function(
   ### "Average", "Model Average"
   years0       <- data |> pull(all_of(yrCol0)) |> unique()
   mTypes0      <- data |> pull(all_of(mTypeCol0)) |> unique()
-  natLbls0     <- list(region="National Total", state="All", postal="US")
-  natLbl0      <- c("National Total")
+  natLbls0     <- controlData$co_states |>
+    filter(postal %in% "US") |>
+    select(c("region_label", "state", "postal")) |>
+    rename_at(c("region_label"), ~"region")
+  # natLbls0     <- list(region="National Total", state="All", postal="US")
+  # natLbl0      <- c("National Total")
+  natLbl0      <- natLbls0 |> pull(region)
   modAveLbl0   <- c("Average")
   doGcm        <- "gcm" %in% (mTypes0 |> tolower())
 
@@ -141,7 +146,7 @@ aggregate_impacts <- function(
   data         <- data |> ungroup()
   oNames0      <- data |> names()
   names0       <- oNames0
-  if(doNat  ){data <- data |> filter(!(region %in% natLbls0$region))}
+  if(doNat  ){data <- data |> filter(!(region %in% natLbl0))}
   if(doMAves){data <- data |> filter(!(model  %in% modAveLbl0))}
 
   ### Grouping and Summary Columns ----------------
@@ -161,7 +166,7 @@ aggregate_impacts <- function(
     names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
     doIType = doIType, ### Aggregate over impact types
-    type0   = "group", ### Or sum
+    type0   = "sum", ### Or sum
     msg0    = get_msg_prefix(2)
   ) ### End aggImpacts_adjustColumns
   ### Message user
@@ -172,9 +177,10 @@ aggregate_impacts <- function(
 
   #### Select Columns from Data
   ### Add scenario columns
+  # select0 |> print();
   select0      <- c(groupCols, yrCol0, sumCols)
   dropCols0    <- names0 |> get_matches(y=select0, matches=F)
-  data         <- data |> select(-all_of(dropCols0))
+  data         <- data |> select(-any_of(dropCols0))
   names0       <- data |> names()
   rm(select0, dropCols0)
 
@@ -186,6 +192,7 @@ aggregate_impacts <- function(
   # data |> glimpse()
   baseGroups     <- mainGroups |> get_matches(y=groupCols)
   baseCols       <- c(mTypeCol0, regCols0, yrCol0, natPopCol0, gdpCols0, popCol0, driverCols0)
+  # "got here1" |> print()
   baseInfo   <- mTypes0 |> map(function(
     typeX,
     colX    = mTypeCol0,
@@ -196,31 +203,31 @@ aggregate_impacts <- function(
       filter_at(c(colX), function(x){x %in% typeX}) |>
       get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first")
   }) |> bind_rows()
+  # "got here2" |> print()
 
   #### National Scenario ----------------
-  ### If doNat, add national scenario
+  ### If doNat, add national scenario to base
+  # baseInfo |> glimpse()
   if(doNat) {
     baseInfo <- mTypes0 |> map(function(
       typeX,
       colX    = mTypeCol0,
-      groupsX = baseGroups,
+      groupsX = baseGroups |> get_matches(y=regCols0, matches=F),
       colsX   = baseCols
     ){
       baseInfo |>
-        mutate(region = natLbls0$region) |>
-        mutate(state  = natLbls0$state ) |>
-        mutate(postal = natLbls0$postal) |>
-        filter_at(c(colX), function(x){x %in% typeX}) |>
-        get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first")
+        get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first") |>
+        cross_join(natLbls0)
     }) |> bind_rows() |>
       bind_rows(baseInfo)
   } ### End if(doNat)
+  # "got here3" |> print()
 
   #### Other Info ----------------
   otherCols      <- c(sectVarCols0, mTypeCol0, condCols0) |> (function(
     colsX,
     colsY   = baseCols,
-    groupsX = groupColumns
+    groupsX = groupCols
   ){
     ### Columns to exclude
     if(doIType) colsY <- colsY |> c(iTypeCol0)
@@ -230,6 +237,7 @@ aggregate_impacts <- function(
     ### Get unique values
     colsY    <- colsY |> unique()
     ### Get matches
+    # groupsX |> print(); colsY |> print()
     groupsX  <- groupsX |> get_matches(y=colsY, matches=F)
     ### Columns
     colsX    <- colsX |> c(groupsX) |> unique()
@@ -238,9 +246,11 @@ aggregate_impacts <- function(
   })()
   ### Group data
   ### Get group keys
+  # otherCols |> print()
   groupCols     <- groupCols |> c(baseIDCol0)
   data          <- data |> group_by_at(c(otherCols)) |> mutate(baseID=cur_group_id())
-  otherInfo <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
+  otherInfo     <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
+  # otherInfo |> glimpse()
 
   ### Aggregation ----------------
   #### Select Data
@@ -290,12 +300,13 @@ aggregate_impacts <- function(
     if(msgUser){get_msg_prefix (1) |> paste0("Calculating national totals...") |> message()}
     ### Ungroup first
     data <- data |> sum_national(
-      cols0  = regCols0,
-      group0 = groupCols,
-      sum0   = sumCols,
-      lbls0  = natLbls0,
-      fun0   = c("sum"),
-      na.rm  = TRUE
+      cols0    = regCols0,
+      group0   = groupCols,
+      sum0     = sumCols,
+      natLbls0 = natLbls0,
+      # lbls0  = natLbls0,
+      fun0     = c("sum"),
+      na.rm    = TRUE
     ) ### End sum_national
   } ### End if national
 
@@ -322,7 +333,7 @@ aggregate_impacts <- function(
   join0    <- c(baseIDCol0)
   namesD   <- data      |> names()
   colsOth  <- otherInfo |> names() |> get_matches(namesD, matches=F) |> c(join0)
-  data     <- data      |> left_join(otherInfo |> select(all_of(colsOth)), by=join)
+  data     <- data      |> left_join(otherInfo |> select(all_of(colsOth)), by=join0)
   rm(join0, otherInfo)
 
   #### Base Scenario
