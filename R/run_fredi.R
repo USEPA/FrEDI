@@ -188,7 +188,7 @@ run_fredi <- function(
     silent     = TRUE   ### Whether to message the user
 ){
   ### Set Up Environment ----------------
-  #### Load Objects ----------------
+  #### Module Info ----------------
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   module0       <- "fredi"
@@ -214,7 +214,6 @@ run_fredi <- function(
 
   #### Values & Columns ----------------
   ### Values
-
   ### Columns
   yrCol0       <- "year"
   gcmStr0      <- "gcm"
@@ -280,7 +279,7 @@ run_fredi <- function(
   #### Model Years ----------------
   msg0 |> get_msgPrefix() |> paste0("Checking input arguments...") |> message()
   ### Model years and NPD (FrEDI past 2100)
-  maxYear |> print()
+  # maxYear |> print()
   minYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "minYear0")
   maxYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "maxYear0")
   npdYear0     <- modData0 |> get_frediDataObj(fConfigStr0, "npdYear0")
@@ -303,7 +302,7 @@ run_fredi <- function(
   ### Update max year values
   # maxYear      <- thru2300 |> ifelse(npdYear0, maxYear)
   maxYear      <- case_when(thru2300 ~ npdYear0, .default=maxYear)
-  maxYear |> print()
+  # maxYear |> print()
   ### Check if maxYear is equal to the default
   if(outputList) {
     statusList[["maxYear"]] <- (maxYear0 != maxYear) |> get_returnListStatus()
@@ -371,10 +370,9 @@ run_fredi <- function(
   ### Which model types are in play based on sector selection
   dfSectors    <- modData0  |> get_frediDataObj(configLStr0, "co_sectors") |> filter(sector %in% sectorList)
   modTypes0    <- dfSectors |> pull(model_type) |> unique() |> tolower()
+  modInTypes0  <- modTypes0 |> str_replace(gcmStr0, tempStr0)
   doSlr        <- slrStr0 %in% modTypes0
   doGcm        <- gcmStr0 %in% modTypes0
-  modInTypes0  <- modTypes0 |> str_replace(gcmStr0, tempStr0)
-
 
   ### Format Input Scenarios ----------------
   #### Initialize Lists ----------------

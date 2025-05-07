@@ -15,13 +15,16 @@ get_msg_prefix <- function(
 # get_import_inputs_idCols
 get_inputsIDCols <- function(
     type0   = "temp", ### c("gdp", "pop", "temp", "slr", "ch4", "nox", "o3"),
+    doTemp0 = TRUE,
     doReg0  = FALSE,
     doPop0  = FALSE,
     doO3    = FALSE,
-    popArea = "state" ### One of: c("state", "regional", "area", "national")
+    popArea = "state", ### One of: c("state", "regional", "area", "national")
+    module0 = "sv"
 ){
   ### Initialize list
   cols0 <- c()
+
   ### If doReg
   if(doReg0) {
     ### If doPop0, get popArea
@@ -37,6 +40,14 @@ get_inputsIDCols <- function(
       cols0   <- cols0 |> c("model")
     } ### End if(doO3)
   } ### End if(doReg0)
+
+  ### If doTemp0 & doSv0: Add scenario column
+  doSv0   <- "sv"  %in% module0
+  doSlr0  <- "slr" %in% type0
+  doScen0 <- doSv0 & (doTemp | doSlr0)
+  if(doScen0) {
+    cols0 <- cols0 |> c("scenario")
+  } ### End if(doSv0 & doTemp)
 
   ### Add year
   cols0 <- cols0 |> c("year")
@@ -65,6 +76,11 @@ get_dfInputInfo <- function(
   slrStr0 <- "slr"
   doSlr0  <- mTypes0 |> str_detect(slrStr0) |> any()
   if(!doSlr0) df0 <- df0 |> filter(!(inputName %in% slrStr0))
+
+  ### Drop GDP if SV
+  gdpStr0 <- "gdp"
+  doGdp0  <- !(module0 %in% "sv")
+  if(!doGdp0) df0 <- df0 |> filter(!(inputName %in% gdpStr0))
 
   ### Return
   return(df0)
@@ -240,7 +256,7 @@ format_inputsList <- function(
   # new0       <- c("type0", "minYr0", "maxYr0", "inputMin0", "inputMax0", "doReg0", "valCol0")
   old0       <- c("inputName", "minYear", "maxYear", "inputMin", "inputMax", "valueCol")
   new0       <- c("type0", "minYr0", "maxYr0", "inputMin0", "inputMax0", "valCol0")
-  cols0      <- new0 |> c("doReg0", "doTemp0", "doPop0", "doO3")
+  cols0      <- new0 |> c("doTemp0", "doReg0", "doPop0", "doO3")
   dfInfo     <- dfInfo |>
     filter(inputName %in% inNames) |>
     rename_at(c(old0), ~c(new0)) |>
@@ -249,7 +265,7 @@ format_inputsList <- function(
     mutate(popArea  = case_when(doPop0  ~ popArea , .default = NA))
 
   ### Get ID columns
-  select0    <- c("type0", "doReg0", "doPop0", "doO3", "popArea")
+  select0    <- c("type0", "doTemp0", "doReg0", "doPop0", "doO3", "popArea")
   idCols0    <- dfInfo |>
     select(all_of(select0)) |>
     pmap(get_inputsIDCols) |>
@@ -870,8 +886,8 @@ check_inputData <- function(
     inputMin0, ### Min value
     inputMax0, ### Max value
     valCol0  , ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
-    doReg0    = FALSE,
     doTemp0   = TRUE,
+    doReg0    = FALSE,
     doPop0    = FALSE,
     doO3      = FALSE,
     tempType  = "conus",  ### One of: c("conus", "global")

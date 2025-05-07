@@ -550,15 +550,6 @@ format_inputScenarios <- function(
     yCol0   = valCol0,
     idCols0 = idCols0
   ) ### End zero_out_scenario
-  # if(doRef0) {
-  #   df0 <- df0 |> filter(year > refYr0)
-  #   df0 <- df0 |> summarize_at(c(yrCol0), min) |>
-  #     mutate_at(c(yrCol0), function(x, y=refYr0){y}) |>
-  #     mutate(y = 0) |>
-  #     rename_at(c("y"), ~valCol0) |>
-  #     bind_rows(df0) |>
-  #     arrange_at (c(idCols0, yrCol0))
-  # } ### End if(doRef0)
 
 
   ### Check if interpolation is required
