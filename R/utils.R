@@ -468,7 +468,9 @@ drop_nullListElements <- function(
     matches = FALSE
 ){
   ### Figure out which elements are null, then subset list
+  # names0    <- list0 |> names()
   isNull0   <- list0 |> map(is.null) |> unlist()
+  # isNull0  |> glimpse()
   if(!matches) match0 <- !isNull0
   else         match0 <- isNull0
   list0     <- list0 [match0]

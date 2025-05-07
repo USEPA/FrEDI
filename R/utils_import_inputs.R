@@ -199,7 +199,11 @@ format_inputsList <- function(
   o3Str0     <- "o3"
 
   ### Reference names from dfInfo0
-  inNames0   <- dfInfo     |> pull(inputName)
+  inNames0   <- dfInfo |> pull(inputName)
+
+  ### If there are no elements in inputsList, return an empty list
+  nInputs    <- inputsList |> length()
+  if(!nInputs) return(list())
 
   # ### Check which user-supplied inputs are missing
   # ### Get input names that match inNames0 and filter to values that are not null
@@ -207,6 +211,7 @@ format_inputsList <- function(
 
   ### Drop NULL list elements from inputsList
   ### Order inputsList by order of inNames0
+  # inputsList |> glimpse()
   inputsList <- inputsList |> drop_nullListElements(matches=FALSE)
   inNames    <- inNames0   |> get_matches(y=inputsList |> names())
   inputsList <- inputsList[inNames]
@@ -252,6 +257,7 @@ format_inputsList <- function(
   rm(select0)
 
   ### Check input data
+  # dfInfo |> glimpse()
   inputsList <- dfInfo |>
     as.list() |>
     c(list(idCols  = idCols0   )) |>
@@ -616,9 +622,9 @@ check_inputs <- function(
 ### Check that all regions, states, present in data
 check_regions <- function(
     df0,                ### Tibble with population info
-    type0  = "pop"  , ### Label for type of input
-    module = "fredi", #### "fredi", "sv", or "methane"
-    msg0   = 0        ### Level of messaging
+    type0   = "pop"  , ### Label for type of input
+    module0 = "fredi", #### "fredi", "sv", or "methane"
+    msg0    = 0        ### Level of messaging
 ){
   ### Set Up the Environment ----------------
   #### Messaging ----------------
@@ -628,7 +634,7 @@ check_regions <- function(
   msg1       <- msg0 + 1
   msg2       <- msg0 + 2
   msg3       <- msg0 + 3
-  msg0 |> get_msgPrefix(newline=T) |> paste0("Checking regions, states in ", type0 , "file data...") |> message()
+  msg0 |> get_msgPrefix(newline=F) |> paste0("Checking regions, states in ", type0 , " data...") |> message()
 
   #### Columns & Values ----------------
   #### Columns
@@ -646,18 +652,18 @@ check_regions <- function(
   ### Values
   names0     <- df0 |> names()
   checkCols0 <- c()
-  doReg0     <- names0 |> str_detect("region")
-  doState0   <- names0 |> str_detect("state" )
+  doReg0     <- names0 |> str_detect("region") |> any()
+  doState0   <- names0 |> str_detect("state" ) |> any()
   ### Standardize region, if present
-  if(doRegion) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
-  if(doReg0  ) checkCols0 <- checkCols0 |> c(regCol0  )
+  if(doReg0)   df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
+  if(doReg0)   checkCols0 <- checkCols0 |> c(regCol0  )
   if(doState0) checkCols0 <- checkCols0 |> c(stateCol0)
 
 
   #### Module Options ----------------
-  module0    <- module |> tolower()
+  module0    <- module0 |> tolower()
   areas0     <- "controlData" |> get_frediDataObj("co_moduleAreas") |>
-    filter_at(c("module"), function(x, y=module){x %in% y}) |>
+    filter_at(c("module"), function(x, y=module0){x %in% y}) |>
     pull(all_of(areaCol0))
   co_states  <- "controlData" |> get_frediDataObj("co_states") |>
     filter_at(c(areaCol0), function(x, y=areas0){x %in% y}) |>
@@ -665,19 +671,26 @@ check_regions <- function(
     select(any_of(regIdCols0))
 
   ### Format Data ----------------
-  ### Drop missing values and rename column
-  join0      <- names0  |> get_matches(co_states)
-  old0       <- colIds0 |> get_matches(join0)
-  df0        <- df0 |>
-    filter_all(all_vars(!(. |> is.na()))) |>
-    rename_at(c(old0), ~old0 |> paste0(lblStr0))
+  ### Drop missing values and drop area, region, columns
+  drop0      <- colIds0 |> get_matches(names0)
+  df0        <- df0 |> filter_all(all_vars(!(. |> is.na())))
+  # df0        <- df0 |>
+  #   filter_all(all_vars(!(. |> is.na()))) |>
+  #   rename_at(c(old0), ~new0)
 
   ### Join data into states
+  namesState <- co_states |> names()
+  join0      <- names0  |> get_matches(y=namesState)
+  # co_states |> names() |> print(); names0 |> print(); join0 |> print()
+  # old0       <- colIds0 |> get_matches(y=join0)
+  old0       <- colIds0
+  new0       <- old0    |> paste0(lblStr0)
+  # old0 |> print(); new0 |> print()
   df0        <- co_states |>
+    select(-any_of(old0)) |>
+    rename_at(c(new0), ~old0) |>
     left_join(df0, by=join0) |>
-    arrange_at(c(orderCol0, yrCol0)) |>
-    select(-any_of(colIds0)) |>
-    rename_at(c(old0 |> paste0(lblStr0)), ~old0)
+    arrange_at(c(orderCol0, yrCol0))
 
   ### Check Data ----------------
   ### Get any NA values
@@ -704,9 +717,11 @@ check_regions <- function(
 
   ### Filter to non-NA values
   df0        <- df0 |>
-    filter_all(all_vars(!(. |> is.na()))) |>
-    select(-any_of(colIds0)) |>
-    rename_at(c(old0 |> paste0(lblStr0)), ~old0)
+    filter_all(all_vars(!(. |> is.na())))
+  # df0        <- df0 |>
+  #   filter_all(all_vars(!(. |> is.na()))) |>
+  #   select(-any_of(colIds0)) |>
+  #   rename_at(c(new0), ~old0)
 
   ### Return ----------------
   return(df0)
@@ -731,18 +746,18 @@ check_valCols <- function(
 ) {
   ### Set Up the Environment ----------------
   #### Messaging ----------------
-  sep0       <- ", "
-  msgN       <- "\n"
-  # msg0       <- msgLevel
-  msg1       <- msg0 + 1
-  msg2       <- msg0 + 2
-  msg3       <- msg0 + 3
+  sep0      <- ", "
+  msgN      <- "\n"
+  # msg0      <- msgLevel
+  msg1      <- msg0 + 1
+  msg2      <- msg0 + 2
+  msg3      <- msg0 + 3
   msg0 |> get_msgPrefix(newline=F) |> paste0("Checking for column '", valCol0, "' in ", inputName, " data...") |> message()
 
   #### Columns & Values ----------------
   #### Conditionals
-  doTemp0    <- "temp" %in% inputName
-  doPop0     <- "pop"  %in% inputName
+  doTemp0   <- "temp" %in% inputName
+  doPop0    <- "pop"  %in% inputName
 
   ### Initial names and values
   valColRef <- valCol0
@@ -752,15 +767,17 @@ check_valCols <- function(
   valColLC0 <- valCol0   |> tolower()
   inNameLC0 <- inputName |> tolower()
   namesLC0  <- namesRef  |> tolower()
-
+  # namesRef |> print(); c(valColRef) |> print()
 
   ### Get matches ----------------
   ### Match values
-  colMatch0 <- valColRef |> get_matches(namesRef, type="matches")
-  lcMatch0  <- valColLC0 |> get_matches(namesLC0, type="matches")
-  strMatch0 <- namesLC0  |> str_detect(inNameLC0, type="matches")
-  if     (doTemp0) argMatch0 <- namesLC0  |> str_detect(tempType)
-  else if(doPop0 ) argMatch0 <- namesLC0  |> str_detect(popArea )
+  # colMatch0 <- valColRef |> get_matches(namesRef, type="matches")
+  # lcMatch0  <- valColLC0 |> get_matches(namesLC0, type="matches")
+  colMatch0 <- namesRef |> get_matches(valColRef, type="matches")
+  lcMatch0  <- namesLC0 |> get_matches(valColLC0, type="matches")
+  strMatch0 <- namesLC0 |> str_detect(inNameLC0)
+  if     (doTemp0) argMatch0 <- namesLC0 |> str_detect(tempType)
+  else if(doPop0 ) argMatch0 <- namesLC0 |> str_detect(popArea )
   else             argMatch0 <- T
   # inputDf   <- inputDf   |> set_names(namesDf)
 
@@ -774,32 +791,36 @@ check_valCols <- function(
   ### Check if there are any string matches, and get number of matches
   msgStrCol <- "Column '"
   msgStrQuo <- "' "
-  msgStrNot <- "' not found in "
-  msgStrFnd <- "' found in "
-  msgStrInp <- inNameRef |> paste0(" file data...")
+  msgStrNot <- "' not found in data"
+  msgStrFnd <- "' found in data"
+  msgStrInp <- inNameRef |> paste0(" data...")
   msgCol0   <- paste0(msgStrCol, valCol0, msgStrQuo, inNameRef, msgStrInp)
-  msgNCol0  <- paste0("Column '", valCol0, "' not found in ", inNameRef, "file data...")
+  msgNCol0  <- paste0("Column '", valCol0, "' not found in ", inNameRef, " data...")
   if(colMatchN) {
     msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrFnd, "...") |> message()
+    colMatch0 <- colMatch0 |> which()
     matchCol0 <- namesRef[colMatch0]
+    # matchCol0 |> print()
   } else {
     msg1 |> get_msgPrefix() |> paste0(msgStrCol, valCol0, msgStrNot, "...") |> message()
     msg1 |> get_msgPrefix() |> paste0("Looking for column '", valColLC0, "'...") |> message()
     if(lcMatchN) {
       msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrFnd, "...") |> message()
+      lcMatch0  <- lcMatch0 |> which()
       matchCol0 <- namesRef[lcMatch0]
     } else {
       msg1 |> get_msgPrefix() |> paste0(msgStrCol, valColLC0, msgStrNot, "...") |> message()
       msg1 |> get_msgPrefix() |> paste0("Looking for column names matching string '", inNameLC0, "'...") |> message()
-      if (strMatch0) {
+      if (strMatchN) {
         msg1 |> get_msgPrefix() |> paste0("Column name(s) matching string ", inNameLC0, msgStrFnd, "...") |> message()
         if(strMatchN == 1) {
+          strMatch0 <- strMatch0 |> which()
           matchCol0 <- namesRef[strMatch0]
         } else if(strMatchN > 1) {
           msg2 |> get_msgPrefix() |> paste0("Multiple matches found...")
           matches0 <- strMatch0 & argMatch0
           matchesN <- matches0 |> which() |> length()
-          if     (matchesN == 1) {matchCol0 <- namesRef[matches0]}
+          if     (matchesN == 1) {matchCol0 <- namesRef[matches0 |> which()]}
           else if(matchesN >  1) {matchCol0 <- namesRef[matches0[1]]}
           else                   {matchCol0 <- namesRef[strMatch0][1]}
         } else {
@@ -819,6 +840,7 @@ check_valCols <- function(
   ### Return List ----------------
   ### Rename columns
   ### Provide info to list
+  # c(matchCol0, valColRef) |> print(); inputDf |> glimpse()
   rename0   <- !(matchCol0 == valColRef)
   if(rename0) {
     msg1 |> get_msgPrefix() |> paste0("Renaming column '", matchCol0, "' to '", valColRef, "'...") |> message()
@@ -869,6 +891,7 @@ check_inputData <- function(
   msg1       <- msg0 + 1
   msg2       <- msg0 + 2
   msg3       <- msg0 + 3
+  msg0 |> get_msgPrefix(newline=T) |> paste0("Checking '", type0, " data...") |> message()
 
   #### Columns & Values ----------------
   #### Columns
@@ -893,19 +916,19 @@ check_inputData <- function(
 
   #### Check Regions ----------------
   if(doReg0) {
-    inputDf  <- inputDf |> check_regions(type0=type0, module=module, msg0=msg1)
+    inputDf  <- inputDf |> check_regions(type0=type0, module0=module0, msg0=msg1)
     nullData <- inputDf |> is.null()
     if(nullData) return()
   } ### End if(doPop | doO3)
 
   #### Check for Value Column ----------------
   inputDf   <- type0 |> check_valCols(
+    inputDf  = inputDf, ### Data frame of values
     valCol0  = valCol0, ### Value column
     doTemp0  = doTemp0,
-    doPop0   = doPop0,
+    doPop0   = doPop0 ,
     tempType = tempType, ### One of: c("conus", "global")
     popArea  = popArea , ### One of: c("state", "regional", "conus", "national")
-    inputDf  = inputDf,   ### Data frame of values
     msg0     = msg1
   ) ### End check_valCols
   nullData   <- inputDf |> is.null()
@@ -915,7 +938,8 @@ check_inputData <- function(
   othCols0  <- c(idCols0, yrCol0) |> unique()
   matches0  <- othCols0 |> get_matches(inputDf |> names(), type="matches")
   naCols0   <- othCols0[!matches0]
-  if(naCols0) {
+  naColsN0  <- naCols0 |> length()
+  if(naColsN0) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Data is missing the following required columns: " ) |> message()
     msg2 |> get_msgPrefix(newline=F) |> paste0("'", naCols0 |> paste(collapse="', '"), "'...") |> message()
     msg2 |> get_msgPrefix(newline=F) |> paste0("Exiting...") |> message()
@@ -923,7 +947,7 @@ check_inputData <- function(
   } else{
     msg1 |> get_msgPrefix(newline=F) |> paste0("All required columns present." ) |> message()
   } ### End if(naCols0)
-  rm(matches0, naCols0)
+  rm(matches0, naCols0, naColsN0)
 
   #### Check Numeric ----------------
   msg1 |> get_msgPrefix(newline=F) |> paste0("Checking that columns 'year', '", valCol0, "', are numeric..." ) |> message()
@@ -1010,6 +1034,7 @@ check_inputData <- function(
       msg0    = msg2
     ) ### End calc_import_pop
   } ### End if(doPop)
+  rm(calcPop0)
 
   ### Drop state_order column from pop
   if(doPop0) {
@@ -1017,6 +1042,7 @@ check_inputData <- function(
     inputDf <- inputDf |> select(-any_of(drop0))
     rm(drop0)
   } ### End if(doPop0)
+  rm(doPop0)
 
   #### Convert Temperatures ----------------
   ### If doTemp & tempType == "global", mutate temperatures
@@ -1025,7 +1051,7 @@ check_inputData <- function(
     msg1 |> get_msgPrefix(newline=F) |> paste0("Converting temperatures from global to CONUS using convertTemps(from='global')...") |> message()
     inputDf <- inputDf |> mutate_at(c(valCol0), convertTemps, from=tempType, msg0=msg2)
   } ### End if(doTemp & doConvert)
-  rm(doConvert)
+  rm(doTemps0)
 
   ### Return ----------------
   msg1 |> get_msgPrefix(newline=F) |> paste0("Values passed.") |> message()
