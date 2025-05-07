@@ -96,6 +96,15 @@ run_fredi_sv <- function(
     .testing    = FALSE
 ){
   ### Set up the environment ----------------
+  #### Messaging ----------------
+  ### Level of messaging (default is to message the user)
+  msgUser  <- !silent
+  msgN     <- "\n"
+  msg0     <- 0
+  msg1     <- msg0 + 1
+  msg2     <- msg0 + 2
+  msg3     <- msg0 + 3
+
   #### Module Info ----------------
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
@@ -109,14 +118,6 @@ run_fredi_sv <- function(
   configLStr0   <- "configData"
   stateLStr0    <- "stateData"
 
-  #### Messaging ----------------
-  ### Level of messaging (default is to message the user)
-  silent     <- (silent |> is.null()) |> ifelse(T, silent)
-  msgUser    <- !silent
-  msg0       <- ""
-  msg1       <- msg0 |> paste0("\t")
-  msg2       <- msg1 |> paste0("\t")
-  msg3       <- msg2 |> paste0("\t")
 
   #### Paths ----------------
   pkgPath       <- NULL
@@ -129,7 +130,7 @@ run_fredi_sv <- function(
   # fredi_config  <- "frediData"  |> get_frediDataObj("fredi_config")
   ### Assign config files
   # fredi_config |> list2env(envir = environment())
-  for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
+  # for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Values & Columns ----------------
   ### Values
@@ -144,9 +145,10 @@ run_fredi_sv <- function(
   c_svGroupTypes <- svDataList0 |> get_frediDataObj("c_svGroupTypes")
   ### Model years and NPD (FrEDI past 2100)
   # maxYear |> print()
-  minYear0     <- frediData0 |> get_frediDataObj(fConfigStr0, "minYear0")
-  maxYear0     <- frediData0 |> get_frediDataObj(fConfigStr0, "maxYear0")
-  minYear      <- minYear0
+  minYear      <- frediData0 |> get_frediDataObj(fConfigStr0, "minYear0")
+  maxYear      <- frediData0 |> get_frediDataObj(fConfigStr0, "maxYear0")
+  maxYear      <- 2020
+  # minYear      <- minYear0
   yearsBy5     <- minYear |> seq(maxYear, by=5)
 
   # ### Testing
@@ -209,16 +211,18 @@ run_fredi_sv <- function(
 
   ### Format Input Scenarios ----------------
   #### Initialize Lists ----------------
-  msg0 |> get_msgPrefix() |> paste0("Checking input scenarios...") |> message()
+  msg1 |> get_msgPrefix() |> paste0("Checking input scenarios...") |> message()
   ### Get input info
   inputInfo0   <- module0 |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
   inNames0     <- inputInfo0 |> pull(inputName)
   ### Get defaults
   inputDefs    <- inputInfo0 |> get_defaultScenarios(
     mTypes0 = modTypes0,
-    minYr0  = minYear0,
-    maxYr0  = maxYear
+    minYr0  = minYear,
+    maxYr0  = maxYear,
+    module0 = module0
   ) ### End get_defaultScenarios
+  # inputDefs |> glimpse()
 
   ### Format inputs list
   inputsList   <- format_inputsList(
@@ -232,16 +236,6 @@ run_fredi_sv <- function(
   ### Exit if inputs aren't valid
   validInputs  <- inputsList |> is.list()
   if(!validInputs) {return()}
-
-  ### Update list
-  if(outputList) {
-    modelList [["inputsList"]] <- inputsList
-    statusList[["inputsList"]] <- inNames0 |>
-      map(check_nullListElement, list0=inputsList) |>
-      map(get_returnListStatus) |>
-      set_names(inNames0)
-    ### Update status list for temps, slr
-  } ### End if(outputList)
 
   #### Interpolate Values ----------------
   ### Check if there are inputs
@@ -261,6 +255,7 @@ run_fredi_sv <- function(
       msg0    = msg1
     ) |> set_names(inNames)
   } ### End if(hasInputs)
+  # inputsList |> glimpse()
 
   #### Update Defaults ----------------
   ### Update inputs with defaults if values are missing
@@ -273,19 +268,16 @@ run_fredi_sv <- function(
     defaults   = inputDefs,
     inputsList = inputsList,
     minYear    = minYear,
-    maxYear    = maxYear
+    maxYear    = maxYear,
+    module0    = module0
   ) |> set_names(inNames0)
   rm(inputDefs)
-  ### Update returnList with Scenario Input Data
-  if(outputList) {
-    returnObj[["scenarios"]] <- inputsList
-  } ### End if(outputList)
   ### Drop any Null scenarios
   # inputsList |> glimpse()
   # return(inputsList)
   inputsList   <- inputsList |> drop_nullListElements(matches=FALSE)
   inNames      <- inputsList |> names()
-
+  # inputsList |> glimpse()
 
 
   ### Format Scenarios  ----------------
@@ -293,147 +285,78 @@ run_fredi_sv <- function(
   ### Get unique scenarios
   physDrivers  <- modInTypes0
   df_drivers   <- inputsList[physDrivers] |>
-    combine_physDrivers(info0=inputInfo0) |>
+    combine_physDrivers(info0=inputInfo0, module0=module0) |>
     filter(year %in% yearsBy5)
   c_scenarios  <- df_drivers  |> pull(scenario) |> unique()
   # "gothere0" |> print(); df_drivers |> pull(year) |> range() |> print()
 
 
   #### Population Scenario  ----------------
-  ### Standardize population data
+  # ### Standardize population data
+  ### Get areas
+  areas0    <- "controlData" |>
+    get_frediDataObj("co_moduleAreas") |>
+    filter(module %in% module0) |>
+    filter(!(area %in% "US")) |>
+    pull(area)
+  # areas0 |> print()
+  ### Get states
+  dfRegions <- "controlData" |>
+    get_frediDataObj("co_states") |>
+    filter(area %in% areas0) |>
+    select(region_label, state, postal) |>
+    rename_at(c("region_label"), ~"region")
+  # dfRegions |> glimpse(); inputsList[["pop"]] |> glimpse()
+  ### Standardize pop
+  joinPop      <- "postal"
   pop_df       <- inputsList[["pop"]] |>
-    mutate(region = region |> str_replace_all("\\.", " ")) |>
+    left_join(dfRegions, by=joinPop) |>
+    # mutate(region = region |> str_replace_all("\\.", " ")) |>
     filter(year %in% yearsBy5)
+  rm(inputsList)
   # pop_df <- pop_df |> mutate(region = region |> str_replace_all(" ", " "))
 
   ### Calculate county population
-  message(msg1, "Calculating county population from state population...")
-  df_popProj <- pop_df |> get_countyPop(
+  msg1 |> get_msgPrefix() |> paste0("Calculating county population from state population...") |> message()
+  pop_df       <- pop_df |> get_countyPop(
     years   = yearsBy5,
     xCol0   = "year",     ### X column in df0
-    yCol0   = "state_pop" ### Y column in df0
+    yCol0   = "pop" ### Y column in df0
   ) ### End get_countyPop
-
+  # return(df_popProj)
 
   ### Calculate Impacts ----------------
   ### Iterate over adaptations/variants
   listResults <- list()
+  # c_tracts    <- pop_df$geoid0 |> unique()
   cRows       <- df_sectorInfo |> nrow() |> seq_len()
-  msgSector   <- "Calculating impacts for sector='" |> paste0(c_sector, "'")
-  # message(msg1, msgSector)
+  # msgSector   <- "Calculating impacts for sector='" |> paste0(c_sector, "'")
+  df_impacts  <- cRows |> map_svVariant(
+    info_i      = df_sectorInfo, ### df_sectorInfo
+    sector_i    = c_sector,
+    # tracts_i    = c_tracts,
+    scenarios_i = c_scenarios, ### List of scenarios
+    df0         = df_drivers, ### Dataframe of driver values for one scenario with columns driverValue, driverUnit, year
+    funPath     = impactsPath,
+    xCol        = "driverValue",
+    popData     = pop_df,
+    svGroups    = c_svGroupTypes,
+    dfGroups    = df_validGroups,
+    dataExt = rDataType,
+    sleep   = 1e-7,
+    silent  = FALSE,
+    .msg0   = msg1
+  ) |> bind_rows() ### End map_svVariant
 
   ### Iterate over variants
-  for(row_i in cRows) {
-    ### Which SV data to use
-    svName_i     <- (c_sector=="Coastal Properties") |> ifelse("svDataCoastal", "svData")
-    svInfo_i     <- svDataList[[svName_i]]
-
-    # scenarios_x |> print(); # svName_i |> print()
-    sectorAbbr_i <- df_sectorInfo[["impactList_fileExt"]][row_i]
-    varLabel_i   <- df_sectorInfo[["variant_label"     ]][row_i]
-    varAbbr_i    <- df_sectorInfo[["variant_abbr"      ]][row_i]
-    weightsCol_i <- df_sectorInfo[["popWeightCol"      ]][row_i]
-
-    ### Which impacts list to use
-    # varAbbr_i     <- varAbbr_i |> (function(y){y |> is.na() |> ifelse(NULL, y)})()
-    if(varAbbr_i |> is.na()){varAbbr_i <- NULL}
-    msgVar_i      <- "variant=\"" |> paste0(varLabel_i, "\"")
-
-    ### Read in the file
-    impactsName_i <- "impactsList" |> c(sectorAbbr_i, varAbbr_i) |> paste(collapse="_")
-    impactsPath_i <- impactsPath   |> file.path(impactsName_i) |> paste0(".", rDataType)
-    impactsList   <- impactsPath_i |> readRDS()
-    exists_i      <- "impactsList" |> exists()
-
-    #### Calculate Scaled Impacts ----------------
-    ### Iterate over scenarios, and calculate tract impacts
-    impacts_i     <- list()
-    for(scenario_j in c_scenarios) {
-      ### Message user
-      msgScen_j <- "scenario=\"" |> paste0(scenario_j, "\"")
-      "\n" |> paste0(msg1, msgSector) |> paste(msgVar_i, msgScen_j, sep=", ") |> paste0("...") |> message()
-      ### Filter drivers
-      drivers_j <- df_drivers |> filter(scenario == scenario_j)
-      ### Calculate scaled impacts
-      impacts_j <- calc_tractScaledImpacts(
-        funList      = impactsList,
-        driverValues = drivers_j,
-        silent       = silent,
-        .msg0        = msg2
-      ) ### End calc_tractScaledImpacts
-      impacts_j <- impacts_j |> ungroup()
-      ### Add to list and drop values
-      impacts_i[[scenario_j]] <- impacts_j
-      rm(scenario_j, drivers_j, impacts_j)
-    } ### End for(scenario_j in c_scenarios)
-    ### Add list names
-    impacts_i     <- impacts_i |> set_names(c_scenarios)
-    if(exists_i){remove(list=c("impactsList"), inherits=T)}
-    exists_i      <- "impactsList" |> exists()
-    if(exists_i){rm(impactsList)}
-
-    #### Calculate Tract Impacts ----------------
-    ### Iterate over scenarios, calculate tract impacts
-    for(scenario_j in c_scenarios) {
-      ##### Get Impacts List ----------------
-      ### Message user
-      # msgScen_j <- "scenario=\"" |> paste0(scenario_j, "\"")
-      # "\n" |> paste0(msg1, msgSector) |> paste(msgVar_i, msgScen_j, sep=", ") |> paste0("...")
-      ### Confirm year is numeric and filter out missing impacts
-      impacts_j <- impacts_i[[scenario_j]]
-      impacts_j <- impacts_j |> mutate(year = year |> as.character() |> as.numeric())
-
-      #### Calculate Tract Impacts ----------------
-      ### Calculate impacts by tract
-      impacts_j <- impacts_j |> calc_tractImpacts(
-        sector    = c_sector,
-        popData   = df_popProj,
-        svInfo    = svInfo_i,
-        svGroups  = c_svGroupTypes,
-        weightCol = weightsCol_i,
-        years     = yearsBy5,
-        silent    = silent,
-        .msg0     = msg2,
-        .testing  = .testing
-      ) ### End calc_tractImpacts
-      impacts_j <- impacts_j |> ungroup()
-      ### Add to list and drop values
-      impacts_i[[scenario_j]] <- impacts_j
-      rm(scenario_j, impacts_j)
-    } ### End for(scenario_j in c_scenarios)
-
-    #### Bind Results ----------------
-    ### Bind results and add variant level
-    impacts_i <- impacts_i |> bind_rows(.id="scenario")
-    impacts_i <- impacts_i |> mutate(variant = varLabel_i)
-    impacts_i <- impacts_i |> relocate(c("scenario"))
-
-    #### Adjust SV Group Values ----------------
-    if(!.testing){
-      valSuff0  <- c("ref", "sv")
-      ### Join and adjust results valueAdj
-      valCols0  <- c("impPop", "impact", "national_highRiskPop", "regional_highRiskPop", "aveRate")
-      valCols1  <- valCols0  |> map(function(col_j){col_j |> paste(valSuff0, sep="_")}) |> unlist()
-      drop0     <- c("validGroups", "weightCol", "validType", "valueAdj")
-      ### Adjust results
-      impacts_i <- impacts_i |> left_join(df_validGroups, by = c("svGroupType"))
-      impacts_i <- impacts_i |> mutate_at(vars(valCols1), function(col_j){col_j * impacts_i$valueAdj})
-      impacts_i <- impacts_i |> select(-all_of(drop0))
-      rm(drop0)
-    } ### End if(!.testing)
-    ### Add impacts_i to list
-    listResults[[row_i]] <- impacts_i
-    rm(row_i, impacts_i)
-  } ### End for(row_i in cRows)
-
 
 
   ### Format Results  ----------------
   ### Bind results and relocate columns
   move0       <- c("sector", "variant", "scenario")
-  listResults <- listResults |> bind_rows()
-  listResults <- listResults |> mutate(sector = c_sector)
-  listResults <- listResults |> relocate(all_of(move0))
+  listResults <- df_impacts |>
+    mutate(sector = c_sector) |>
+    relocate(any_of(move0))
 
   # if(.testing) {listResults <- list(results = listResults, county_pop = df_popProj)}
   # else         {listResults <- listResults}
@@ -442,7 +365,7 @@ run_fredi_sv <- function(
 
   ### Return  ----------------
   ### Message, clear unused memory, return
-  msg1 |> paste0("Finished.") |> message()
+  msg1 |> get_msgPrefix(newline=T) |> paste0("Finished.") |> message()
   gc()
   return(listResults)
 }

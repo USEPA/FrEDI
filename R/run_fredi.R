@@ -292,9 +292,9 @@ run_fredi <- function(
     maxYear <- maxYear0
   } else {
     ### Check that max year is less than or equal to NPD year
-    hasMaxYear <- maxYear >= minYear0 & maxYear <= npdYear0
+    hasMaxYear <- maxYear >= minYear & maxYear <= npdYear0
     if(!hasMaxYear) {
-      msg1 |> get_msgPrefix() |> paste0("Argument `maxYear` must be >= ", minYear0, ", and <= ", npdYear0, "...") |> message()
+      msg1 |> get_msgPrefix() |> paste0("Argument `maxYear` must be >= ", minYear, ", and <= ", npdYear0, "...") |> message()
       msg2 |> get_msgPrefix() |> paste0("Setting `maxYear=", maxYear0, "`.") |> message()
     } ### End if(!hasMaxYear)
   } ### End if(!hasMaxYear)
@@ -383,7 +383,7 @@ run_fredi <- function(
   ### Get defaults
   inputDefs    <- inputInfo0 |> get_defaultScenarios(
     mTypes0 = modTypes0,
-    minYr0  = minYear0,
+    minYr0  = minYear,
     maxYr0  = maxYear
   ) ### End get_defaultScenarios
 

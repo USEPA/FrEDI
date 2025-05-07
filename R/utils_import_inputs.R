@@ -44,7 +44,7 @@ get_inputsIDCols <- function(
   ### If doTemp0 & doSv0: Add scenario column
   doSv0   <- "sv"  %in% module0
   doSlr0  <- "slr" %in% type0
-  doScen0 <- doSv0 & (doTemp | doSlr0)
+  doScen0 <- doSv0 & (doTemp0 | doSlr0)
   if(doScen0) {
     cols0 <- cols0 |> c("scenario")
   } ### End if(doSv0 & doTemp)
@@ -131,13 +131,34 @@ get_defaultScenario <- function(
     filter(year <= maxYr0)
   # df0 |> pull(year) |> range() |> print()
 
+  ### Regions
+  ### Get areas
+  areas0   <- "controlData" |>
+    get_frediDataObj("co_moduleAreas") |>
+    filter(module %in% module0) |>
+    filter(!(area %in% "US")) |>
+    pull(area)
+  # areas0 |> print()
+  ### Get states
+  postals0 <- "controlData" |>
+    get_frediDataObj("co_states") |>
+    filter(area %in% areas0) |>
+    pull(postal)
+  # doSv0 |> print()
   ### Select columns
   idCols0  <- yrCol0
-  if(doSv0 ) idCols0 <- "scenario" |> c(idCols0)
-  if(doTemp) yCol0   <- yCol0 |> paste0("_", c("conus", "global")) |> c("slr_cm")
-  if(doReg0) idCols0 <- c("postal") |> c(idCols0)
+  ### If do regions
+  if(doReg0) {
+    regCols0 <- "postal"
+    # if(isSvMod0) regCols0 <- c("region", "state") |> c(regCols0)
+    idCols0  <- regCols0 |> c(idCols0)
+    df0      <- df0      |> filter(postal %in% postals0)
+  } ### End if(doReg0)
+
+  if(doTemp) yCol0 <- yCol0 |> paste0("_", c("conus", "global")) |> c("slr_cm")
+  if(doSv0 ) idCols0  <- "scenario" |> c(idCols0)
   cols0   <- idCols0 |> c(yrCol0, yCol0) |> unique()
-  df0     <- df0 |> select(all_of(cols0))
+  df0     <- df0     |> select(all_of(cols0))
   # df0 |> glimpse()
 
   ### Return
@@ -294,14 +315,15 @@ format_inputsList <- function(
   return(inputsList)
 }
 
-### Update defaults ----------------
+### Update defaults
 update_inputDefault <- function(
     type0,
     dfInfo,
     defaultsList,
     inputsList = list(),
     minYear = "frediData" |> get_frediDataObj("fredi_config", "minYear"),
-    maxYear = "frediData" |> get_frediDataObj("fredi_config", "maxYear")
+    maxYear = "frediData" |> get_frediDataObj("fredi_config", "maxYear"),
+    module0 = "fredi"
 ){
   ### Messaging
   msgN       <- "\n"
@@ -340,6 +362,7 @@ update_inputDefault <- function(
   ### - Check whether temp, slr are in names
   doTemp0    <- tempStr0 %in% inNames0
   doSlr0     <- slrStr0  %in% inNames0
+  doSv0      <- "sv" %in% module0
   ### If isTemp0 & !doTemp0, return NULL
   if(isTemp0 & !doTemp0) return()
 
@@ -350,7 +373,8 @@ update_inputDefault <- function(
   yrCol0 <- "year"
   idCol0 <- "scenario"
   yColT  <- infoT |> pull(valueCol)
-  drop0  <- yColT |> paste0("_", c("conus", "global")) |> c(idCol0)
+  drop0  <- yColT |> paste0("_", c("conus", "global"))
+  if(!doSv0) drop0 <- drop0 |> c(idCol0)
 
   ### If isSlr0: Check if there is a temperature input
   ### If there is a temperature input, calculate global temps, slr height
@@ -500,7 +524,7 @@ fun_tryInput <- function(
 }
 
 
-###### Deprecated: run_fun_tryInput ######
+## Deprecated: run_fun_tryInput ----------------
 # ### Function to iterate over a list of file names
 # run_fun_tryInput <- function(
 #     inputName = "temp",      ### Type of input; one of: c("temp", "slr", "gdp", "pop")
@@ -563,7 +587,7 @@ fun_tryInput <- function(
 
 
 
-## check_inputs
+## check_inputs ----------------
 ### Check Input Ranges
 ### If input range is outside the range, return "flag" and row numbers of flagged values
 ### If input range is all inside the range, return "allgood"

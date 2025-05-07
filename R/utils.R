@@ -481,29 +481,6 @@ drop_nullListElements <- function(
 
 ## Format Input Scenarios ----------------
 ### This function helps format input scenarios
-# if(doTemp0) {
-#   df0 <- df0 |> group_map(
-#     .x |> format_tempData_byGroup(
-#       .y        = .y,
-#       xCol0     = yrCol0,
-#       yCol0     = valCol0,
-#       xOut0     = minYr0:maxYear,
-#       tempType0 = "conus",
-#       method0   = "linear",
-#       rule0     = 1
-#     ) ### End format_tempData_byGroup
-#   ) |> bind_rows()
-# } else{
-#   df0 <- df0 |> group_map(
-#     interpolate_byGroup,
-#     xCol0   = yrCol0,
-#     yCols0  = valCol0,
-#     xOut0   = minYear:maxYear,
-#     method0 = "linear",
-#     rule0   = 1
-#   ) |> bind_rows()
-# } ### End if(doTemp0)
-
 format_inputScenarios <- function(
     df0,       ### Scenario input data frame to format
     name0,     ### Name of input c("temp, "slr", "gdp", "pop")
@@ -577,6 +554,7 @@ rename_physDrivers <- function(
     listX,
     infoX,
     idColX  = "inputName",
+    idColsX = "year",
     valColX = "valueCol",
     yColX   = "driverValue"
 ){
@@ -589,7 +567,7 @@ rename_physDrivers <- function(
   ### Rename column
   dfX   <- dfX   |> rename_at(c(colX), ~yColX)
   ### Select columns
-  colsX <- c("year") |> c(yColX)
+  colsX <- idColsX |> c(yColX)
   dfX   <- dfX   |> select(all_of(colsX))
   ### Return
   return(dfX)
@@ -600,8 +578,10 @@ combine_physDrivers <- function(
     list0, ### List of driver scenarios
     info0,
     idCol0   = "inputName",
+    idCols0  = "year",
     idColNew = "driverName",
     yColNew  = "driverValue",
+    module0  = "fredi",
     msg0     = 0
 ){
   ### Messaging
@@ -612,15 +592,18 @@ combine_physDrivers <- function(
 
   ### Rename columns
   names0   <- list0 |> names()
+  doSv0    <- "sv" %in% module0
+  if(doSv0) idCols0 <- "scenario" |> c(idCols0)
   # names0 |> print(); list0 |> glimpse()
 
   ### Iterate over list and change name of columns, then bind
   df0      <- names0 |> map(
     rename_physDrivers,
-    listX  = list0,
-    infoX  = info0,
-    idColX = idCol0,
-    yColX  = yColNew
+    listX   = list0,
+    infoX   = info0,
+    idColX  = idCol0,
+    idColsX = idCols0,
+    yColX   = yColNew
   ) |>
     set_names(names0) |>
     bind_rows(.id="inputName")
@@ -646,34 +629,6 @@ combine_physDrivers <- function(
   return(df0)
 }
 
-# combine_physDrivers <- function(
-    #     list0 ### List of driver scenarios
-#     # list0, ### List of driver scenarios
-#     # info0, ### Dataframe with scenario info, e.g.: df_inputInfo
-#     # info1 = get_frediDataObj("co_modelTypes", "controlData")
-# ){
-#   ### Rename columns
-#   names0   <- list0 |> names()
-#   list0    <- names0 |> map(function(name0){
-#     doTemp0 <- name0 |> str_detect("temp")
-#     info0   <- "controlData" |> get_frediDataObj("co_modelTypes") |>
-#       filter(inputName %in% name0) |>
-#       rename_at(c("inputName"), ~c("driverName"))
-#     valCol0 <- info0 |> pull(valueCol) |> paste0(case_when(doTemp0 ~ "_conus", .default=""))
-#     ### Rename and select columns
-#     select0 <- c("year", "driverValue")
-#     df0     <- list0[[name0]] |>
-#       rename_at(c(valueCol0), ~"driverValue") |>
-#       select(all_of(select0)) |>
-#       cross_join(info0)
-#     ### Return
-#     return(df0)
-#   }) |> bind_rows()
-#
-#   ### Return
-#   gc()
-#   return(df0)
-# }
 
 
 
