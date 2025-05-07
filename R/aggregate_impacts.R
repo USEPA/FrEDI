@@ -316,6 +316,7 @@ aggregate_impacts <- function(
   if(doIType){
     if(msgUser){get_msg_prefix (1) |> paste0("Summing across impact types...") |> message()}
     ### Ungroup first
+    # data |> glimpse()
     data  <- data |> sum_impType(
       data,  ### Grouped data
       cols0  = iTypeCol0,

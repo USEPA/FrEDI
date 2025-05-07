@@ -427,6 +427,7 @@ sum_national <- function(
   data     <- data  |>
     arrange_at(c(idCol0, cols0)) |>
     select(-any_of(idCol0))
+  # data |> glimpse()
   ### Return
   return(data)
 }
@@ -448,37 +449,53 @@ sum_impType <- function(
   # idCol1 <- idCol0 |> paste0("X")
   # data[[idCol1]] <- data[[idCol0]] |> paste0("_", data[[yrCol0]])
   idCol0   <- c("id")
-  group0   <- group0 |> get_matches(y=cols0, matches=F) |> c(yrCol0)
-  names0   <- data |> names() |> c(idCol0) |> unique()
+  group0   <- group0 |> get_matches(y=cols0, matches=F)
+  names0   <- data   |> names() |> unique()
   data     <- data |>
-    group_by_at(c(group0), .add=F) |>
+    group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
 
   ### Separate data into values that require interpolation and those that don't
   dataNA   <- data |> filter_at(c(cols0), function(x, y=naStr0){x %in% y})
   data     <- data |> filter_at(c(cols0), function(x, y=naStr0){!(x %in% y)})
-  ### Select data
-  select0  <- c(idCol0, sum0)
-  naStr0   <- "_na"
-  naCols0  <- sum0  |> paste0(naStr0)
-  ids0     <- data  |> pull(id) |> unique()
-  dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
-  data     <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
-  data     <- sum0  |>
-    map(function(col0){data |> get_nonNAValues(col0=col0, fun0=fun0)}) |>
-    reduce(left_join, by=idCol0)
-  ### Join data and keys
-  data     <- dfKeys |>
-    left_join(data, by=idCol0) |>
-    mutate(impactType = NA)
+  hasData  <- data |> nrow()
+  if(hasData) {
+    # data |> glimpse()
+    ### Select data
+    join0    <- c(idCol0, yrCol0)
+    select0  <- join0 |> c(sum0)
+    # select0  <- c(idCol0, sum0)
+    naStr0   <- "_na"
+    naCols0  <- sum0  |> paste0(naStr0)
+    ids0     <- data  |> pull(id) |> unique()
+    dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
+    # data     <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
+    dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
+    data     <- sum0  |>
+      map(function(col0){
+        data |> get_nonNAValues(col0=col0, fun0=fun0)}
+      ) |>
+      set_names(sum0) |>
+      reduce(left_join, by=join0)
+    ### Join data and keys
+    data     <- dfKeys |>
+      left_join(data, by=idCol0) |>
+      # mutate(impactType = NA)
+      mutate(impactType = NA)
+  } ### End if(hasData)
   ### Bind data
-  data     <- data  |> select(all_of(names0)) |> bind_rows(dfNA)
-  rm(dfNA)
-  ### Add impact type and arrange data
+  # names0 |> print()
   data     <- data  |>
-    arrange_at(c(idCol0, col0)) |>
-    mutate_at(c(col0), function(x, y=lbl0){y}) |>
-    select(-any_of(idCol0))
+    ungroup() |>
+    select(-any_of(idCol0)) |>
+    select(all_of(names0)) |>
+    bind_rows(dataNA) |>
+    mutate_at(c(cols0), function(x, y=lbl0){y})
+  rm(dataNA)
+  # ### Add impact type and arrange data
+  # data     <- data  |>
+  #   # arrange_at(c(idCol0, yrCol0)) |>
+  #   mutate_at(c(col0), function(x, y=lbl0){y})
   ### Return
   return(data)
 }
