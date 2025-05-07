@@ -1,13 +1,13 @@
-###### get_msg_prefix ######
-### Function to get message prefix
-get_msg_prefix <- function(
-    level  = 0,
-    prefix = ""
-){
-  msgP    <- "\t"   |> rep(level) |> paste(collapse="")
-  msgP    <- prefix |> paste0(msgP)
-  return(msgP)
-}
+## get_msg_prefix ----------------
+# ### Function to get message prefix
+# get_msg_prefix <- function(
+#     level  = 0,
+#     prefix = ""
+# ){
+#   msgP    <- "\t"   |> rep(level) |> paste(collapse="")
+#   msgP    <- prefix |> paste0(msgP)
+#   return(msgP)
+# }
 
 
 ## Initial Functions ----------------
@@ -102,6 +102,8 @@ get_defaultScenario <- function(
   doTemp   <- name0 |> str_detect(tempStr0)
   doSlr    <- name0 |> str_detect(slrStr0)
   index0   <- doSlr |> ifelse(tempStr0, name0)
+  isSvMod0 <- "sv" %in% module0
+  doSv0    <- isSvMod0 & (doTemp | doSlr)
 
   ### Info
   info0    <- dfInfo |> filter(inputName %in% name0)
@@ -131,9 +133,10 @@ get_defaultScenario <- function(
 
   ### Select columns
   idCols0  <- yrCol0
+  if(doSv0 ) idCols0 <- "scenario" |> c(idCols0)
   if(doTemp) yCol0   <- yCol0 |> paste0("_", c("conus", "global")) |> c("slr_cm")
   if(doReg0) idCols0 <- c("postal") |> c(idCols0)
-  cols0   <- idCols0 |> c(yrCol0, yCol0)
+  cols0   <- idCols0 |> c(yrCol0, yCol0) |> unique()
   df0     <- df0 |> select(all_of(cols0))
   # df0 |> glimpse()
 
@@ -168,7 +171,7 @@ get_defaultScenarios <- function(
     minYr0  = minYr0,
     maxYr0  = maxYr0,
     yrCol0  = "year",
-    module0 = "fredi"
+    module0 = module0
   ) |> set_names(inputNames0)
 
   ### Return
@@ -455,12 +458,12 @@ fun_tryInput <- function(
   ### Check if the file exists and try to load the file
   ### Set input to null if it doesn't exist
   if(nullName) {
-    msg0 |> get_msg_prefix() |> paste0("No filename provided. Exiting...") |> message()
+    msg0 |> get_msgPrefix() |> paste0("No filename provided. Exiting...") |> message()
     return()
   } ### End if(nullName)
 
   ### If file name exists, check file
-  msg0 |> get_msg_prefix() |> paste0("User specified ", inputName |> paste0("file"), "...")
+  msg0 |> get_msgPrefix() |> paste0("User specified ", inputName |> paste0("file"), "...")
   exists0  <- filename |> file.exists()
   ### If the file exists, try loading the file and then check the class of the result
   if(exists0) {
@@ -488,7 +491,7 @@ fun_tryInput <- function(
   # message("\t", list0[["fileMsg"]])
   # msgLast <- list0[["fileMsg"]]
   # if(msgUser)
-  msg1 |> get_msg_prefix() |> paste0(list0[["fileMsg"]]) |> message()
+  msg1 |> get_msgPrefix() |> paste0(list0[["fileMsg"]]) |> message()
   df0      <- list0[["fileInput" ]]
 
   ### Return
