@@ -50,9 +50,9 @@
 aggregate_impacts <- function(
     data,             ### Data frame of outputs from temperature binning
     aggLevels  = c("national", "modelaverage", "impacttype", "impactyear"),  ### Levels of aggregation
-    sumCols    = c("physical_impacts", "annual_impacts"), ### Columns to aggregate
     groupCols  = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model_type", "model") |>
       c("includeaggregate", "sectorprimary"),
+    sumCols    = c("annual_impacts"), ### Columns to aggregate
     silent     = TRUE
 ){
   ### Set Up Environment ----------------
@@ -165,6 +165,7 @@ aggregate_impacts <- function(
   ### Grouping and Summary Columns ----------------
   msg1 |> get_msgPrefix() |> paste0("Formatting groupCols...") |> message()
   #### Grouping columns
+  # doIType |> print()
   groupCols    <- groupCols |> aggImpacts_adjustColumns(
     names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
@@ -173,7 +174,7 @@ aggregate_impacts <- function(
     msg0    = msg2
   ) ### End aggImpacts_adjustColumns
   ### Message user
-  msg2 |> get_msgPrefix() |> paste0("Grouping by groupCols = c(", groupCols |> paste(collapse=", "), ")...") |> message()
+  # msg2 |> get_msgPrefix() |> paste0("Grouping by groupCols = c(", groupCols |> paste(collapse=", "), ")...") |> message()
 
   #### Summary Columns
   msg1 |> get_msgPrefix() |> paste0("Formatting sumCols...") |> message()
@@ -187,7 +188,7 @@ aggregate_impacts <- function(
   ### Message user
   hasSumCols   <- sumCols |> length()
   if(!hasSumCols){msg1 |> get_msgPrefix() |> paste0("Exiting...") |> message()}
-  else           {msg2 |> get_msgPrefix() |> paste0("Summarizing over sumCols = c(", sumCols |> paste(collapse=", "), ")...") |> message()}
+  # else           {msg2 |> get_msgPrefix() |> paste0("Summarizing over sumCols = c(", sumCols |> paste(collapse=", "), ")...") |> message()}
   rm(hasSumCols)
 
   #### Select Columns from Data

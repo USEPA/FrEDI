@@ -34,12 +34,60 @@ get_uniqueDf0 <- function(
 }
 
 ## Select Columns ----------------
+### Function to get matches
+# map_get_matches <- function(
+#     list0,
+#     y,
+#     type = "matches",
+#     sep0 = ", "
+# ){
+#   x0  <- list0[["x"]]
+#   m0  <- list0[["matches"]]
+#   do0 <- x0 |> length()
+#   if(do0) z0 <- x0 |> get_matches(matches=m0, y=y, type=type)
+#   else    z0 <- NULL
+#   ### Add y and matches to list
+#   list0[["y"]] <- y
+#   list0[["z"]] <- z0
+#   ### Columns and strings
+#   dropX <- x0[z0]
+#   strX  <- dropX |> paste(collapse=sep0)
+#   list0[["cols"]] <- dropX
+#   list0[["str" ]] <- strX
+#   ### Return list
+#   return(list0)
+# }
+map_get_matches <- function(
+    list0,
+    x0,
+    type = "matches",
+    sep0 = ", "
+){
+  y0  <- list0[["y"]]
+  m0  <- list0[["matches"]]
+  z0 <- x0 |> get_matches(matches=m0, y=y0, type=type)
+  # do0 <- x0 |> length()
+  # if(do0) z0 <- x0 |> get_matches(matches=m0, y=y0, type=type)
+  # else    z0 <- NULL
+  ### Add y and matches to list
+  list0[["y"]] <- y0
+  list0[["z"]] <- z0
+  ### Columns and strings
+  dropX <- x0[z0]
+  strX  <- dropX |> paste(collapse=sep0)
+  list0[["cols"]] <- dropX
+  list0[["str" ]] <- strX
+  ### Return list
+  return(list0)
+}
+
+
 ### Function to adjust columns and message user
 aggImpacts_adjustColumns <- function(
     cols0,
     names0  = c()  , ### Names of data
     groups0 = c()  , ### Grouping columns (provide if typ0=="sum)
-    doNat   = FALSE, ### Aggregate over national
+    doNat   = TRUE , ### Aggregate over national
     doIType = TRUE , ### Aggregate over impact types
     type0   = "group", ### Or sum
     # msg0    = ""
@@ -48,10 +96,12 @@ aggImpacts_adjustColumns <- function(
   #### Messaging ----------------
   ### Not used currently; preserving it in messaging logicals for the future
   msgN        <- "\n"
-  msg0        <- 0
+  # msg0        <- 0
   msg1        <- msg0 + 1
   msg2        <- msg0 + 2
   msg3        <- msg0 + 3
+  typeCol0    <- type0    |> paste0("Cols")
+  msg0 |> get_msgPrefix() |> paste0("Checking ", typeCol0, " columns...") |> message()
 
   ### Columns & Values ----------------
   ### Cols
@@ -69,108 +119,127 @@ aggImpacts_adjustColumns <- function(
   doGroup      <- groupStr0 %in% type0
   doSum        <- sumStr0   %in% type0
   #### Scalar columns
-  annSumCol0   <- cols0[cols0 |> tolower() |> str_detect(c("annual_impacts"))]
-  physSumCol0  <- cols0[cols0 |> tolower() |> str_detect(c("physical_impacts"))]
-  scaledSumCol <- cols0[cols0 |> tolower() |> str_detect(c("scaled_impacts"))]
-  physMeasCol0 <- cols0[cols0 |> tolower() |> str_detect(c("physicalmeasure"))]
-  scalarTypes0 <- c("phys", "damage", "econ")
-  scalarStrs0  <- c("Scalar", "Adj", "Multiplier")
-  scalarCols0  <- scalarTypes0 |> map(paste0, scalarStrs0) |> unlist()
-  scalarNames0 <- scalarCols0  |> paste0("Name")
-  scalarVals0  <- cols0[cols0 |> tolower() |> str_detect(scalarNames0 |> paste0("Value") |> c(scalarCols0) |> tolower() |> paste(collapse="|"))]
-  # c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier") |> paste("Name")
+  sumCols0     <- c("scaled_impacts", "physical_impacts", "annual_impacts")
+  scaledSumCol <- "scaled_impacts"   |> get_matches(cols0)
+  physSumCol0  <- "physical_impacts" |> get_matches(cols0)
+  physMeasCol0 <- "physicalmeasure"  |> get_matches(cols0)
+  annSumCol0   <- "annual_impacts"   |> get_matches(cols0)
+  physCols0    <- c(physSumCol0, physMeasCol0)
+  #### Scalar columns
+  scalarTypes0 <- c("phys", "damage", "econ") |> paste(collapse="|")
+  scTypeMatch0 <- cols0 |> tolower() |> str_detect(scalarTypes0)
+  scNameMatch0 <- cols0 |> tolower() |> str_detect("Name")
+  scalarNames0 <- cols0[scTypeMatch0 & scNameMatch0]
+  scalarVals0  <- cols0[scTypeMatch0 & !scNameMatch0]
+  scalarCols0  <- c(scalarNames0, scalarVals0)
 
   ### Columns List ----------------
   ### List of columns to check
   # colGroups    <- c("scalarVal", "scalarName", "scaledVal", "physVal")
   ### Add values to list
   listCols     <- list()
-  listCols[["na"]] <- list(colsX=names0, matchX=T)
+  listCols[["na"]] <- list(y=names0, matches=F)
   if(doSum) {
     baseCols <- c(scaledSumCol, scalarVals0)
-    listCols[["grp"]] <- list(colsX=groups0, matchX=F)
+    listCols[["grp"]] <- list(y=groups0, matches=T)
     ### If do national, drop scaled impacts
     ### If do impact types, drop scaled impacts, physical impacts
-    if(doNat|doIType) {
-      listCols[["nat"]] <- list(colsX=baseCols, matchX=F)
+    if(doNat) {
+      listCols[["nat"]] <- list(y=baseCols, matches=T)
     } else if(doIType) {
-      listCols[["imp"]] <- list(colsX=baseCols |> c(physSumCol0), matchX=F)
+      listCols[["imp"]] <- list(y=physSumCol0, matches=T)
     } ### End if(doIType)
   } else if(doGroup) {
     sumCols <- c(annSumCol0, physSumCol0, scaledSumCol)
-    listCols[["sum"]] <- list(colsX=sumCols, matchX=F)
-    if(doNat|doIType) {
-      listCols[["nat"]] <- list(colsX=c(scalarVals0), matchX=F)
+    listCols[["sum"]] <- list(y=sumCols, matches=T)
+    if(doNat) {
+      listCols[["nat"]] <- list(y=c(scalarVals0), matches=T)
     } else if(doIType) {
-      listCols[["imp"]] <- list(colsX=c(physMeasCol0, scalarNames0, scalarVals0), matchX=F)
+      listCols[["imp"]] <- list(y=c(physMeasCol0, scalarNames0), matches=T)
     } ### End if(doIType)
   } ### End if(doNat)
-  ### List names
-  listNames    <- listCols |> names()
+  # return(listCols)
 
   ### Check Columns ----------------
   ### Values
   # listNames |> print()
+  ### List names
+  listNames    <- listCols |> names()
   checkCols    <- listCols |>
-    map(function(x0, colsX=cols0){
-      colsX |> get_matches(y=x0[["colsX"]], matches=x0[["matchX"]], type="matches")
-    }) |> set_names(listNames)
-  dropCols     <- checkCols |> map(function(x, y=cols0){y[!x]}) |> set_names(listNames)
-  dropStrs     <- checkCols |> map(function(x, z=commaStr){x |> paste(collapse=z)}) |> set_names(listNames)
-  dropVals     <- checkCols |> (function(x0, y0=`&`){Reduce(y0, x0)})()
-  # dropVals |> print()
-  cols0        <- cols0[dropVals]
-  # cols0 |> print()
+    map(map_get_matches, x0=cols0, type="matches") |>
+    set_names(listNames)
+  # return(checkCols)
+  dropCols     <- checkCols |>
+    map(function(list0, x0="cols"){list0[[x0]]}) |>
+    unlist() |> unique()
+  # dropCols |> print()
+  cols0        <- cols0 |> get_matches(dropCols, matches=F)
+  ### Column strings
+  dropStr      <- dropCols |> paste(collapse=commaStr)
+  colsStr0     <- cols0 |> paste(collapse=commaStr)
   ### Message user if some columns aren't present
   nCols0       <- cols0    |> length()
-  nDrop0       <- dropCols |> map(function(x){x |> length()}) |> set_names(listNames)
-  # nDrops0      <- dropVals |> sum()
-  nDrops0      <- (!dropVals) |> sum()
-  # nDrops0 |> print()
+  nDrops0      <- dropCols |> length()
+  # c(nDrops0, nCols0) |> print()
   warning0     <- nDrops0  |  !nCols0
 
   ### Message Info ----------------
   ### Message strings
-  colStr0      <- type0    |> paste0("Cols")
-  actionStr0   <- doSum    |> ifelse("aggregate over ", "group by ")
-  otherStr0    <- doSum    |> ifelse("summary columns ", "grouping columns ")
-  str3         <- doSum    |> ifelse("At least one column required for aggregating", "This could results in non-sensical or double-counted results")
-  remainStr0   <- nDrops0  |> ifelse("remaining ", "")
+  cantStr0     <- "Cannot"
+  actionStr0   <- doSum    |> ifelse(" aggregate over ", " group by ")
+  actionStr1   <- doSum    |> ifelse("Summarizing over ", "Grouping by ") |> paste0("remaining columns = c(")
+  str3         <- doSum    |> ifelse("At least one column required for summarizing results", "This could result in non-sensical or double-counted results")
+  remainStr0   <- nDrops0  |> ifelse("Remaining ", "")
   msgW         <- warning0 |> ifelse(msg2, msg1)
   ### Add values to list
   listMsg     <- list()
-  listMsg[["na"]] <- list(str0=colStr0, str2="not present in data")
-
+  listMsg[["na"]] <- list(str0=typeCol0, str1="", str2=" not present in data!")
+  ### Conditional messages
   if(doSum) {
-    listMsg[["grp"]] <- list(str0=otherStr0, str1=actionStr0)
+    listMsg[["grp"]] <- list(str0=cantStr0, str1=actionStr0, str2="!")
   } else if(doGroup) {
-    listMsg[["sum"]] <- list(str0=otherStr0, str1=actionStr0)
+    listMsg[["sum"]] <- list(str0=cantStr0, str1=actionStr0, str2="!")
   } ### End if(doNat)
 
   if(doNat|doIType) {
-    listMsg[["nat"]] <- list(str0=colStr0, str1=actionStr0, str2="when 'national' or 'impacttype' present in aggLevels")
+    listMsg[["nat"]] <- list(str0=cantStr0, str1=actionStr0, str2=" when 'national' or 'impacttype' present in aggLevels!")
   } else if(doIType) {
-    listMsg[["imp"]] <- list(str0=colStr0, str1=actionStr0, str2="when 'impacttype' present in aggLevels")
+    listMsg[["imp"]] <- list(str0=cantStr0, str1=actionStr0, str2=" when 'impacttype' present in aggLevels!")
   } ### End if(doIType)
 
 
   ### Message User ----------------
   if(warning0) {
-    msg1 |> get_msgPrefix() |> paste0("Warning for ", colStr0, ":") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Warning!") |> message()
     ### Specific columns
-    msgsW  <- list(name0=listNames, x0=nDrop0, y0=dropStrs, list0=listMsg) |>
-      pmap(function(name0, x0, y0, list0){
-        if(x0) {
-          msg2 |> get_msgPrefix() |> paste0(list0$str1, list0$str0, " = c(", y0, ")", list0$str2, "!") |> message()
-          msg2 |> get_msgPrefix() |> paste0("Dropping these columns from ", colStr0, "...") |> message()
-        } ### End if(x0)
+    # x0=nDrops0, y0=dropStr
+    if(nDrops0) {
+      msgList <- list(
+        nameX = listNames[listNames],
+        listX = checkCols[listNames],
+        msgX  = listMsg
+      ) |> pmap(function(nameX, listX, msgX, x0, y0){
+        colsX <- listX[["cols"]]
+        numX  <- colsX |> length()
+        strX  <- listX[["str"]]
+        msg0X <- msgX [["str0"]]
+        msg1X <- msgX [["str1"]]
+        msg2X <- msgX [["str2"]]
+        if(numX) {
+          msg2 |> get_msgPrefix() |> paste0(msg0X, msg1X, "columns = c(", strX, ")", msg2X, "!") |> message()
+          # msg2 |> get_msgPrefix() |> paste0("Dropping these columns from ", typeCol0, "...") |> message()
+        } ### End if(numX)
         return()
       }) ### End pmap
+      ### Message
+      msg2 |> get_msgPrefix() |> paste0("Dropping these columns from ", typeCol0, "...") |> message()
+      msg2 |> get_msgPrefix() |> paste0(actionStr1, colsStr0, ")...") |> message()
+    } ### End if(nDrops0)
     ### Empty column warning
     if(!nCols0) {
-      msg2 |> get_msgPrefix() |> paste0(remainStr0 |> str_to_title(), colStr0, " = c() has length=0!") |> message()
+      msg2 |> get_msgPrefix() |> paste0(remainStr0, typeCol0, " = c() has length=0!") |> message()
       msg3 |> get_msgPrefix() |> paste0(str3, "...")
-      # return()
+      return()
     } ### End if(!nGroups)
   } ### End if(msgG & msgUser)
 
@@ -340,7 +409,7 @@ map_nonNAValues <- function(
   df0 |> get_nonNAValues(col0=col0, fun0=fun0, na.rm=na.rm)
 }
 
-
+### Summarize over non-missing values
 get_nonNAValues <- function(
     df0,
     col0   = "annual_impacts",
@@ -348,6 +417,10 @@ get_nonNAValues <- function(
     # naStr0 = "_na",
     na.rm  = TRUE
 ){
+  ### Sum vs average
+  doSum0 <- "sum"  %in% fun0
+  doAve0 <- "mean" %in% fun0
+  fun0   <- "sum"
   ### colX |> paste0(naStrX)
   naCol  <- "check"
   yCol   <- "yVal"
@@ -355,13 +428,12 @@ get_nonNAValues <- function(
   # df0 |> glimpse(); vals0 |> length() |> print()
   ### Rename value
   # df0    <- df0 |> mutate(yVal  = vals0)
+  sum0   <- c(yCol, naCol)
   df0    <- df0 |>
     rename_at(c(col0), ~yCol) |>
     mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1)) |>
-    summarize_at(c(yCol, naCol), .funs=c(fun0), na.rm=na.rm)
-  ### Sum vs average
-  doSum0 <- "sum"  %in% fun0
-  doAve0 <- "mean" %in% fun0
+    summarize_at(c(sum0), .funs=c(fun0), na.rm=na.rm)
+
   ### Mutate vals
   if(doSum0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal))
   if(doAve0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal / check))
@@ -394,7 +466,6 @@ calc_modelAves <- function(
   data     <- data |>
     group_by_at(c(group0)) |>
     mutate(id = cur_group_id())
-
   ### Add column label to NA strings
   ### Separate data into values that require interpolation and those that don't
   naStr0   <- naStr0 |> c(lbl0) |> unique()

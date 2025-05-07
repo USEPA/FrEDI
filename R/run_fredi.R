@@ -609,12 +609,12 @@ run_fredi <- function(
   ### Aggregate Results ----------------
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(doAgg) {
-    msg0 |> get_msgPrefix() |> paste0("Aggregating impacts", "...") |> message()
+    # msg0 |> get_msgPrefix() |> paste0("Aggregating impacts", "...") |> message()
     df_results <- df_results |> aggregate_impacts(
-      aggLevels   = aggLevels,
-      groupByCols = groupCols0,
-      columns     = impactCols0
-    ) |> ungroup() ### End aggregate_impacts
+      aggLevels = aggLevels,
+      groupCols = groupCols0,
+      sumCols   = impactCols0
+    ) ### End aggregate_impacts
   } ### End if(doAgg)
 
 
