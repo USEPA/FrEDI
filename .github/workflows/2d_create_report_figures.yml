@@ -131,7 +131,9 @@ jobs:
             sPath0   <- pPath0 |> file.path("scripts")
             tPath0   <- pPath0 |> file.path("testing")
             sFiles0  <- sPath0 |> list.files(full.names=TRUE)
-            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
+            tFiles0     <- tPath0 |> list.files(full.names=TRUE)
+            rmd_file    <- tFiles0[grepl(".*md",tFiles0)]
+            tFiles0     <- tFiles0[!grepl(".*md",tFiles0)]
             sFiles0 |> loadCode()
             tFiles0 |> loadCode()
             # for(file_i in sFiles0){file_i |> source(); rm(file_i)}
@@ -160,7 +162,7 @@ jobs:
             ### Create a list
             doTotals   <- NULL
             figNames   <- c()
-            if(doAppx){doTotals <- doTotals |> c(FALSE); figNames <- figNames |> c("appx")}
+            if(doAppx){doTotals <- doTotals |> c(TRUE); figNames <- figNames |> c("appx")}
             if(doComp){doTotals <- doTotals |> c(TRUE ); figNames <- figNames |> c("comp")}
 
             ### Whether to make figures
