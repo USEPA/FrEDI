@@ -54,43 +54,37 @@ get_sv_sectorInfo <- function(
     gcmOnly     = F,
     slrOnly     = F
 ){
-  ### Get objects
-  cData        <- c("sectorInfo", "svSectorInfo")
-  for(item_i in cData){item_i |> assign(svDataList[[item_i]])}
+  ### Get data object
+  sectorInfo <- svDataList[["svSectorInfo"]]
 
-  ### Select appropriate columns
-  ### Format modelType as uppercase
-  select0      <- c("sector", "impactUnit")
-  sectorInfo   <- sectorInfo |> select(all_of(select0))
-  rm(select0)
-
-  ### Select and arrange
-  group0       <- c("sector", "modelType", "driverUnit")
-  rename0      <- c("driverUnit_label", "variant_label")
-  renameTo     <- c("driverUnit", "variants")
-  svSectorInfo <- svSectorInfo |> rename_at(c(rename0), ~renameTo)
-  svSectorInfo <- svSectorInfo |> mutate(modelType = modelType |> toupper())
-  svSectorInfo <- svSectorInfo |>
-    group_by_at(c(group0)) |>
-    summarize(variants = variants |> paste(collapse=", "), .groups="drop")
-
-  ### Join with sector info
-  join0      <- "sector"
-  move0      <- c("modelType", "driverUnit")
-  sectorInfo <- sectorInfo |> left_join(svSectorInfo, by=c(join0))
-  sectorInfo <- sectorInfo |> relocate(all_of(move0), .after=all_of(join0))
-  sectorInfo <- sectorInfo |> arrange_at(c(join0))
-
-  ### GCM or SLR
-  doFilter   <- (gcmOnly | slrOnly)
-  string0    <- gcmOnly |> ifelse("GCM", "SLR")
-  if(doFilter) {sectorInfo <- sectorInfo |> filter(modelType==string0)}
+  ### Filter to model types
+  gcmStr0    <- "gcm"
+  slrStr0    <- "slr"
+  modTypes0  <- c(gcmStr0, slrStr0)
+  if(gcmOnly) modTypes0 <- modTypes0 |> get_matches(slrStr0, matches=F)
+  if(slrOnly) modTypes0 <- modTypes0 |> get_matches(slrStr0, matches=F)
 
   ### If not description, return sectors
   if(!description) {
-    sectorInfo <- sectorInfo |> pull(sector)
+    sectorInfo <- sectorInfo |> pull(sector) |> unique() |> sort()
     return(sectorInfo)
   } ### End if(!description)
+
+  ### Otherwise, select columns, rename, and collapse variants
+  ### Select and arrange
+  select0    <- c("sector", "modelType", "impactUnit", "driverUnit_label", "variant_label")
+  group0     <- c("sector", "modelType", "driverUnit_label")
+  # from0      <- c("driverUnit_label", "variant_label", "modelType")
+  # to0        <- c("driverUnit", "variants", "model_type")
+  from0      <- c("driverUnit_label", "variant_label")
+  to0        <- c("driverUnit", "variants")
+  sectorInfo <- sectorInfo |>
+    mutate(modelType = modelType |> toupper()) |>
+    group_by_at(c(group0)) |>
+    summarize_at(c("variant_label"), paste0, collapse=", ") |>
+    ungroup() |>
+    arrange_at(c(group0)) |>
+    rename_at(c(from0), ~to0)
 
   ### Return
   return(sectorInfo)
@@ -183,6 +177,7 @@ calc_tractScaledImpacts <- function(
   hasFun0   <- (fun0 |> length()) & isFun0
   if(hasFun0) df0 <- df0 |> mutate(y = x |> fun0())
   else        df0 <- df0 |> mutate(y = NA)
+  # rm(funList, envir=newEnv); rm(newEnv)
   ### Return
   return(df0)
 }
@@ -226,6 +221,7 @@ map_svScenario_scaledTract <- function(
     map(calc_tractScaledImpacts, df0=df_j, newEnv=newEnv) |>
     bind_rows() |>
     rename_at(c("x", "y"), ~c(xCol, "sv_impact"))
+  # rm(funList, envir=newEnv); rm(newEnv)
   msg1 |> get_msgPrefix() |> paste0("Finished calculating tract-level impacts.") |> message()
   #### Return ----------------
   gc()
@@ -308,8 +304,7 @@ map_svVariant <- function(
     .msg0   = msg0
     # .msg0  = ""
   ) |> set_names(scenarios_i)
-  rm(funList, envir=newEnv)
-  rm(newEnv)
+  rm(funList, envir=newEnv); rm(newEnv)
 
   #### Calculate Tract Impacts ----------------
   ### Iterate over scenarios, calculate tract impacts
