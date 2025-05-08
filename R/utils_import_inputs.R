@@ -189,16 +189,19 @@ check_regions <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
   ###### Messages ######
   msgN       <- "\n"
@@ -522,9 +525,15 @@ check_input_data <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
@@ -793,9 +802,15 @@ calc_import_pop <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space

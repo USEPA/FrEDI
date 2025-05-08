@@ -145,7 +145,7 @@ run_fredi_ghg <- function(
     inputsList = list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL), ### List of inputs
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period
-    thru2300   = FALSE, ### Whether to run FrEDI methane through 2300
+    # thru2300   = FALSE, ### Whether to run FrEDI methane through 2300
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE  ### Whether to include additional columns in output
 ){
@@ -163,13 +163,13 @@ run_fredi_ghg <- function(
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Coefficients
-  minYear0  <- listMethane[["package"]][["coefficients"]][["minYear0"]]
-  maxYear0  <- listMethane[["package"]][["coefficients"]][["maxYear0"]]
+  minYear0  <- ghgData[["ghgData"]][["coefficients"]][["minYear0"]]
+  maxYear0  <- ghgData[["ghgData"]][["coefficients"]][["maxYear0"]]
 
   ### Model years and NPD (FrEDI past 2100)
   minYear   <- minYear0
-  maxYear   <- thru2300 |> ifelse(npdYear0, maxYear)
-  do_npd    <- maxYear > maxYear0
+  # maxYear   <- thru2300 |> ifelse(npdYear0, maxYear)
+  # do_npd    <- maxYear > maxYear0
 
 
 
@@ -253,7 +253,7 @@ run_fredi_ghg <- function(
   ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj(listSub="package", listName="listMethane")
+  co_inputInfo <- "co_inputInfo" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
   # co_inputInfo <- co_inputInfo |> filter(!inputName %in% "o3")
   co_inputInfo <- co_inputInfo |> mutate(ref_year = 2020)
   co_inputInfo <- co_inputInfo |> mutate(min_year = 2020)
@@ -282,7 +282,7 @@ run_fredi_ghg <- function(
   inputDefs    <- inNames0 |> map(function(name0){
     ### Get defaults
     defName0 <- name0    |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+    df0      <- defName0 |> get_frediDataObj(listSub="scenarioData", listName="ghgData")
     ### Format defaults
     do_o3_0  <- "o3"  %in% name0
     if(do_o3_0 ) {
@@ -552,7 +552,7 @@ run_fredi_ghg <- function(
   renameAt0  <- c("region_label")
   renameTo0  <- c(join0)
   select0    <- c(join0) |> c(renameAt0)
-  me_regions <- listMethane$package$co_regions |> select(all_of(select0))
+  me_regions <- ghgData$package$co_regions |> select(all_of(select0))
   # me_models |> glimpse()
   df_results <- df_results |> left_join(me_regions, by=join0)
   df_results <- df_results |> select(-any_of(join0))
@@ -563,7 +563,7 @@ run_fredi_ghg <- function(
   join0      <- c("model")
   renameAt0  <- join0 |> paste0("_label")
   select0    <- c(join0) |> c(renameAt0)
-  me_models  <- listMethane$package$co_models |> select(all_of(select0))
+  me_models  <- ghgData$package$co_models |> select(all_of(select0))
   # me_models |> glimpse()
   df_results <- df_results |> left_join(me_models, by=join0)
   df_results <- df_results |> select(-any_of(join0))
