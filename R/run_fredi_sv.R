@@ -242,7 +242,7 @@ run_fredi_sv <- function(
   ### If there are, iterate over list and format values
   inNames      <- inputsList |> names()
   hasInputs    <- inNames    |> length()
-  # hasInputs |> print()
+  # inputsList |> glimpse(); hasInputs |> print()
   if(hasInputs) {
     inputsList   <- list(
       df0     = inputsList,
