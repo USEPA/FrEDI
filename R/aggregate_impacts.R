@@ -63,7 +63,7 @@ aggregate_impacts <- function(
   msg0        <- 0
   msg1        <- msg0 + 1
   msg2        <- msg0 + 2
-  msg0 |> get_msgPrefix() |> paste0("Aggregating impacts...") |> message()
+  msg0 |> get_msgPrefix(newline=T) |> paste0("Aggregating impacts...") |> message()
   # get_msgPrefix        <- function(lvl0=1){c("\t") |> rep(lvl0) |> paste(collapse = c(""))}
 
   #### Module Info ----------------
@@ -162,32 +162,38 @@ aggregate_impacts <- function(
   if(doNat  ){data <- data |> filter(!(region %in% natLbl0))}
   if(doMAves){data <- data |> filter(!(model  %in% modAveLbl0))}
 
-  ### Grouping and Summary Columns ----------------
-  msg1 |> get_msgPrefix() |> paste0("Formatting groupCols...") |> message()
-  #### Grouping columns
+  ### Check groupCols and sumCols ----------------
+  #### Grouping columns ----------------
+  # msg1 |> get_msgPrefix() |> paste0("Formatting groupCols...") |> message()
   # doIType |> print()
   groupCols    <- groupCols |> aggImpacts_adjustColumns(
-    names0  = names0 , ### Names of data
+    df0     = data,
+    # names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
     doIType = doIType, ### Aggregate over impact types
     type0   = "group", ### Or sum
-    msg0    = msg2
+    msg0    = msg1
   ) ### End aggImpacts_adjustColumns
   ### Message user
   # msg2 |> get_msgPrefix() |> paste0("Grouping by groupCols = c(", groupCols |> paste(collapse=", "), ")...") |> message()
 
-  #### Summary Columns
-  msg1 |> get_msgPrefix() |> paste0("Formatting sumCols...") |> message()
+  #### Summary Columns ----------------
+  # msg1 |> get_msgPrefix() |> paste0("Formatting sumCols...") |> message()
   sumCols      <- sumCols |> aggImpacts_adjustColumns(
-    names0  = names0 , ### Names of data
+    df0     = data,
+    groups0 = groupCols, ### Grouping columns from above
+    # names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
     doIType = doIType, ### Aggregate over impact types
     type0   = "sum", ### Or sum
-    msg0    = msg2
+    msg0    = msg1
   ) ### End aggImpacts_adjustColumns
   ### Message user
   hasSumCols   <- sumCols |> length()
-  if(!hasSumCols){msg1 |> get_msgPrefix() |> paste0("Exiting...") |> message()}
+  if(!hasSumCols) {
+    msg1 |> get_msgPrefix() |> paste0("Exiting and returning data without aggregation...") |> message()
+    return(data)
+  } ### if(!hasSumCols)
   # else           {msg2 |> get_msgPrefix() |> paste0("Summarizing over sumCols = c(", sumCols |> paste(collapse=", "), ")...") |> message()}
   rm(hasSumCols)
 
@@ -272,7 +278,7 @@ aggregate_impacts <- function(
   #### Select Data
   # if(msgUser & doAgg){message("Aggregating impacts...")}
   ### Select appropriate columns
-  # groupCols |> c(yrCol0, sumCols) |> print()
+  # groupCols |> print(); sumCols |> print()
   select0     <- groupCols |> c(yrCol0, sumCols)
   data        <- data  |> select(all_of(select0))
   rm(select0)
@@ -297,8 +303,6 @@ aggregate_impacts <- function(
   ### Average values across models
   if(doMAves){
     msg1 |> get_msgPrefix() |> paste0("Calculating model averages...") |> message()
-    # if(doGcm) {
-    ### Ungroup first
     data <- data |> calc_modelAves(
       col0   = modCol0,
       group0 = groupCols,
@@ -308,14 +312,12 @@ aggregate_impacts <- function(
       yrCol0 = yrCol0,
       fun0   = "mean"
     ) ### End calc_modelAves
-    # } ### End if(doGcm)
   } ### End if "model" %in% aggLevels
 
 
   #### National Totals ----------------
   if(doNat){
     msg1 |> get_msgPrefix() |> paste0("Calculating national totals...") |> message()
-    ### Ungroup first
     data <- data |> sum_national(
       cols0    = regCols0,
       group0   = groupCols,
@@ -331,7 +333,6 @@ aggregate_impacts <- function(
   ### Summarize by Impact Type
   if(doIType){
     msg1 |> get_msgPrefix() |> paste0("Summing across impact types...") |> message()
-    ### Ungroup first
     # data |> glimpse()
     data  <- data |> sum_impType(
       data,  ### Grouped data

@@ -393,8 +393,10 @@ check_inputSectors <- function(
 
   ### If there are any matches, message the user and update the list
   if(hasAny0) {
-    msg0 |> get_msgPrefix(newline=T) |> paste0("Getting impacts for sectors: ") |> message()
-    msg1 |> get_msgPrefix()|> paste0("'", sectorList |> paste(collapse="', '"), "'") |> message()
+    # msg0 |> get_msgPrefix(newline=T) |> paste0("Getting impacts for sectors: ") |> message()
+    # msg1 |> get_msgPrefix()|> paste0("'", sectorList |> paste(collapse="', '"), "'") |> message()
+    msg0 |> get_msgPrefix() |> paste0("Getting impacts for sectors: ", "'", sectorList |> paste(collapse="', '"), "'") |> message()
+    # msg1 |> get_msgPrefix()|> paste0("'", sectorList |> paste(collapse="', '"), "'") |> message()
   } else{
     msg1 |> get_msgPrefix(newline=T) |> paste0("Exiting...") |> message()
     return()

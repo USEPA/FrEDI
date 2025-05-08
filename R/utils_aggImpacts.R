@@ -85,7 +85,8 @@ map_get_matches <- function(
 ### Function to adjust columns and message user
 aggImpacts_adjustColumns <- function(
     cols0,
-    names0  = c()  , ### Names of data
+    df0, ### Data
+    # names0  = c()  , ### Names of data
     groups0 = c()  , ### Grouping columns (provide if typ0=="sum)
     doNat   = TRUE , ### Aggregate over national
     doIType = TRUE , ### Aggregate over impact types
@@ -102,6 +103,11 @@ aggImpacts_adjustColumns <- function(
   msg3        <- msg0 + 3
   typeCol0    <- type0    |> paste0("Cols")
   msg0 |> get_msgPrefix() |> paste0("Checking ", typeCol0, " columns...") |> message()
+
+  ### Data Info ----------------
+  ### Cols
+  names0       <- df0 |> names()
+  numCols0     <- df0 |> select_if(is.numeric) |> names()
 
   ### Columns & Values ----------------
   ### Cols
@@ -142,6 +148,7 @@ aggImpacts_adjustColumns <- function(
   if(doSum) {
     baseCols <- c(scaledSumCol, scalarVals0)
     listCols[["grp"]] <- list(y=groups0, matches=T)
+    listCols[["num"]] <- list(y=numCols0, matches=F)
     ### If do national, drop scaled impacts
     ### If do impact types, drop scaled impacts, physical impacts
     if(doNat) {
@@ -168,6 +175,8 @@ aggImpacts_adjustColumns <- function(
   checkCols    <- listCols |>
     map(map_get_matches, x0=cols0, type="matches") |>
     set_names(listNames)
+  ### Add check for numeric
+
   # return(checkCols)
   dropCols     <- checkCols |>
     map(function(list0, x0="cols"){list0[[x0]]}) |>
@@ -197,6 +206,7 @@ aggImpacts_adjustColumns <- function(
   ### Conditional messages
   if(doSum) {
     listMsg[["grp"]] <- list(str0=cantStr0, str1=actionStr0, str2="!")
+    listMsg[["num"]] <- list(str0=cantStr0, str1=actionStr0, str3="non-numeric ", str2="!")
   } else if(doGroup) {
     listMsg[["sum"]] <- list(str0=cantStr0, str1=actionStr0, str2="!")
   } ### End if(doNat)
@@ -225,8 +235,9 @@ aggImpacts_adjustColumns <- function(
         msg0X <- msgX [["str0"]]
         msg1X <- msgX [["str1"]]
         msg2X <- msgX [["str2"]]
+        msg3X <- msgX [["str3"]]
         if(numX) {
-          msg2 |> get_msgPrefix() |> paste0(msg0X, msg1X, "columns = c(", strX, ")", msg2X, "!") |> message()
+          msg2 |> get_msgPrefix() |> paste0(msg0X, msg1X, msg3X, "columns = c(", strX, ")", msg2X, "!") |> message()
           # msg2 |> get_msgPrefix() |> paste0("Dropping these columns from ", typeCol0, "...") |> message()
         } ### End if(numX)
         return()
@@ -250,18 +261,6 @@ aggImpacts_adjustColumns <- function(
 ## Aggregation Functions ----------------
 ### Function to interpolate between impact years
 ### Separate into years after 2090 and before 2090
-# dfYrs0  = "frediData" |>
-#   get_frediDataObj("stateData", "co_impactYears") |>
-#   (function(df0, col0="impactYear_label", col1="impYr", naStr="N/A"){
-#     df0 <- df0 |> mutate_at(c(col0), na_if, naStr)
-#     df0 <- df0 |> filter_at(c(col0), function(x){!(x |> is.na())})
-#     df0 <- df0 |> select(all_of(col0)) |> distinct() |> arrange_at(c(col0))
-#     df0 <- df0 |> rename_at(c(col0), ~col1)
-#     df0 <- df0 |> mutate(impYrNum = impYr |> as.numeric())
-#     df0 <- df0 |> mutate(row0 = row_number())
-#     df0 <- df0 |> arrange_at(c(col1), desc)
-#     return(df0)
-#   })()
 interpolate_impYear <- function(
     data,
     col0    = c("impactYear"),
@@ -326,14 +325,12 @@ interpolate_impYear <- function(
   ### Interpolate Data ----------------
   ### Separate and Join Interpolation Data ----------------
   ## Group data and separate into group data and necessary data
-  hasData  <- data  |> nrow()
+  hasData  <- data  |> nrow();
   if(hasData) {
     join0    <- c(idCol0, yrCol0)
     select0  <- join0 |> c(xCol0) |> c(sum0)
-    # select0   <- c(join0, cols0)
     ids0     <- data |> pull(id) |> unique()
     dataKeys <- data |> group_keys() |> mutate(id = ids0)
-    # data      <- data |> ungroup()    |> select(all_of(select0))
     data     <- data |> group_by_at(c(join0)) |> select(all_of(select0))
     ### Filter data
     data     <- dfYrs0 |>
@@ -486,6 +483,7 @@ calc_modelAves <- function(
     left_join(dfKeys, by=idCol0) |>
     mutate(colVal = lbl0) |>
     rename_at(c("colVal"), ~col0)
+  rm(select0, join0, ids0, dfKeys)
   ### Bind data
   dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
   dfSum    <- dfSum  |> ungroup() |> select(all_of(names0))
@@ -499,6 +497,7 @@ calc_modelAves <- function(
   data     <- data  |>
     arrange_at(c(sort0)) |>
     select(-any_of(idCol0))
+  rm(sort0, idCol0, col0, yrCol0)
   ### Return
   return(data)
 }
@@ -525,8 +524,6 @@ sum_national <- function(
   group0   <- group0 |> get_matches(y=cols0, matches=F)
   # names0   <- data   |> names() |> c(idCol0) |> unique()
   names0   <- data   |> names() |> get_matches(y=c(group0, cols0, yrCol0, sum0)) |> c(idCol0) |> unique()
-  # data |> glimpse()
-  # select0  <- names0 |> get_matches(y=c(group0, cols0, yrCol0, sum0))
   data     <- data |>
     # select(all_of(select0)) |>
     group_by_at(c(group0)) |>
@@ -553,6 +550,7 @@ sum_national <- function(
     reduce(left_join, by=join0) |>
     left_join(dfKeys, by=idCol0) |>
     cross_join(natLbls0)
+  rm(select0, join0, ids0, dfKeys)
   # return(dfSum)
   ### Bind data
   data     <- data  |> ungroup() |> select(all_of(names0))
@@ -616,6 +614,7 @@ sum_impType <- function(
       left_join(dfKeys, by=idCol0) |>
       mutate(colVal = lbl0) |>
       rename_at(c("colVal"), ~col0)
+    rm(select0, join0, ids0, dfKeys)
   } ### End if(hasData)
   ### Bind data
   dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
@@ -629,6 +628,7 @@ sum_impType <- function(
     mutate_at (c(col0), function(x, y=lbl0){y}) |>
     arrange_at(c(sort0)) |>
     select(-any_of(idCol0))
+  rm(col0, lbl0, sort0, idCol0)
   ### Return
   return(data)
 }

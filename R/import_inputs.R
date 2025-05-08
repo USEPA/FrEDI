@@ -163,22 +163,27 @@ import_inputs <- function(
   list0      <- list()
 
   #### Module Options ----------------
-  module     <- module |> tolower()
-  inputInfo0 <- module |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
+  ### Get input info
+  module0    <- module |> tolower()
+  inputInfo0 <- module0    |> get_dfInputInfo(modTypes0)
+  inNames0   <- inputInfo0 |> pull(inputName)
+  # inputInfo0 <- module |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
   # inNames0   <- inputInfo0 |> pull(inputName)
 
   ### Check Data ----------------
   #### Check for Named List ----------------
-  #### Check that values are a named list
-  inNames    <- inputsList |> names() |> tolower()
-  inputsList <- inputsList |> set_names(inNames)
-  hasNames   <- inNames    |> length()
-  if(!hasNames) {
-    msg1 |> get_msgPrefix() |> paste0("Argument `inputsList` requires a named list!") |> message()
-    msg2 |> get_msgPrefix() |> paste0("Exiting...") |> message()
-    return(list0)
-  } ### End if(!hasNames)
-  rm(hasNames)
+  ### Format inputs list
+  inputsList   <- format_inputsList(
+    dfInfo     = inputInfo0,
+    inputsList = inputsList,
+    tempType   = "conus",
+    popArea    = "state",
+    module0    = module0,
+    msg0       = 1
+  ) ### End format_inputsList
+  ### Exit if inputs aren't valid
+  validInputs  <- inputsList |> is.list()
+  if(!validInputs) {return()}
 
   #### Check for Names ----------------
   #### Join info and tibble with input names

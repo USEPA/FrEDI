@@ -331,8 +331,8 @@ run_fredi <- function(
   #### Agg Levels ----------------
   ### Types of summarization to do: default
   ### Aggregation levels
-  aggLevels0 <- modData0  |> get_frediDataObj(configLStr0, "aggList0")  |> tolower()
-  aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=msg1)
+  aggLevels0 <- modData0  |> get_frediDataObj(configLStr0, "aggList0") |> tolower()
+  aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=msg1) |> tolower()
   aggLevelsN <- aggLevels |> get_matches(y="none", matches=F) |> length()
   aggAll0    <- "all" %in% aggLevels
   doAgg      <- aggAll0 | aggLevelsN
@@ -378,7 +378,7 @@ run_fredi <- function(
   #### Initialize Lists ----------------
   msg0 |> get_msgPrefix() |> paste0("Checking input scenarios...") |> message()
   ### Get input info
-  inputInfo0   <- module0 |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
+  inputInfo0   <- module0    |> get_dfInputInfo(modTypes0) |> mutate(maxYear = maxYear)
   inNames0     <- inputInfo0 |> pull(inputName)
   ### Get defaults
   inputDefs    <- inputInfo0 |> get_defaultScenarios(
@@ -563,6 +563,8 @@ run_fredi <- function(
   ### Grouping columns
   groupCols0  <- mainIdCols0 |> c(regCols0, modelCols0, logicCols0, physMeas0)
   groupCols0  <- groupCols0  |> unique() |> get_matches(y=resultCols0)
+  ### Drop grouping columns
+
   # groupCols0 |> print()
 
   ### Driver columns
@@ -570,7 +572,9 @@ run_fredi <- function(
   ### Impact columns
   seCols0     <- c("gdp_usd", "national_pop", "gdp_percap", "pop")
   driverCols0 <- c("driverType", "driverUnit", "driverValue")
-  impactCols0 <- c("physical_impacts", "annual_impacts")
+  physImpCol0 <- c("physical_impacts")
+  annImpCol0  <- c("annual_impacts")
+  impactCols0 <- c(physImpCol0, annImpCol0)
 
   #### Scalar columns
   scalarCols0 <- c("physScalar", "physAdj", "damageAdj", "econScalar", "econAdj", "econMultiplier")
@@ -609,7 +613,12 @@ run_fredi <- function(
   ### Aggregate Results ----------------
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
   if(doAgg) {
-    # msg0 |> get_msgPrefix() |> paste0("Aggregating impacts", "...") |> message()
+    ### Drop some columns
+    dropPhysM0 <- aggLevels |> str_detect("all|type") |> any()
+    dropPhysI0 <- aggLevels |> str_detect("all|type|national") |> any()
+    if(dropPhysM0) groupCols0  <- groupCols0  |> get_matches(physMeas0, matches=F)
+    if(dropPhysI0) impactCols0 <- impactCols0 |> get_matches(physImpCol0, matches=F)
+    ### Aggregate impacts
     df_results <- df_results |> aggregate_impacts(
       aggLevels = aggLevels,
       groupCols = groupCols0,

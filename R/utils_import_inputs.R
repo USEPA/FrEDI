@@ -370,6 +370,8 @@ update_inputDefault <- function(
   infoS      <- dfInfo |> filter(inputName %in% slrStr0 )
   ### Column
   yrCol0     <- "year"
+  yColT      <- infoT |> pull(valueCol)
+  drop0      <- yColT |> paste0("_", c("conus", "global"))
 
   ### If isSlr0: Check if there is a temperature input
   ### If there is a temperature input, calculate global temps, slr height
@@ -380,8 +382,6 @@ update_inputDefault <- function(
       ### Calculate global temperatures and SLR
       names0     <- dfTemp |> names()
       idCol0     <- "scenario"
-      yColT      <- infoT |> pull(valueCol)
-      drop0      <- yColT |> paste0("_", c("conus", "global"))
       ### If !doSv0:
       ### - Add scenario column for grouping
       ### - Drop scenario column after interpolation
