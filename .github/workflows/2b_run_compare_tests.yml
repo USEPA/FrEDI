@@ -143,6 +143,7 @@ jobs:
             ###### ** Run FrEDI from Reference Branch ######
             ### Load library, run FrEDI
             if(doTests) {
+            package:FrEDI |> detach(unload=TRUE)
             library(FrEDI)
             ### Prepare Inputs
             defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")

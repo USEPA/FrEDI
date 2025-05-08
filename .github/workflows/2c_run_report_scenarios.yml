@@ -98,8 +98,6 @@ jobs:
             any::devtools
             any::openxlsx
             any::ggpubr
-
-
       ### Install FrEDI from new branch and get results
       - name: Test results
         # if: |
@@ -111,7 +109,6 @@ jobs:
             require(devtools)
             require(openxlsx)
             require(ggpubr)
-
             ###### Workflow Inputs ######
             # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
             newBranch   <- "${{ github.ref_name }}"
@@ -138,8 +135,8 @@ jobs:
             tPath0      <- pPath0 |> file.path("testing")
             sFiles0     <- sPath0 |> list.files(full.names=TRUE)
             tFiles0     <- tPath0 |> list.files(full.names=TRUE)
-            rmd_file    <- tFiles0[grepl(".rmd",tFiles0)]
-            tFiles0     <- tFiles0[!grepl(".rmd",tFiles0)]
+            rmd_file    <- tFiles0[grepl(".*md",tFiles0)]
+            tFiles0     <- tFiles0[!grepl(".*md",tFiles0)]
             # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
             sFiles0 |> loadCode()
             tFiles0 |> loadCode()
@@ -154,7 +151,6 @@ jobs:
             ###### Repo Info ######
             urlRepo     <- "https://github.com/USEPA/FrEDI"
             c(newBranch) |> print()
-
             ###### ** Install FrEDI from New Branch ######
             pPath0 |> devtools::load_all()
 
@@ -168,6 +164,7 @@ jobs:
             doConstant  <- figTypeLC |> str_detect("constant")
             doDefaults  <- figTypeLC |> str_detect("default")
             do2300      <- figTypeLC |> str_detect("2300")
+
 
             ### Max Year
             max_year0   <- case_when(do2300 ~ 2300, .default = 2100)
@@ -206,7 +203,6 @@ jobs:
                  oPath0 |> list.files() |> print()
             } ### End if(!doDefaults)
 
-
             ### Constant temps
             if(doConstant) {
               ### CONUS temps, Global temps
@@ -240,8 +236,6 @@ jobs:
             "Finished running report scenarios." |> print()
             oPath0 |> list.files() |> print()
           '
-
-
       - name: Upload Scenario Results
         # if: |
         #   inputs.doScenarios == 'true'
@@ -250,6 +244,3 @@ jobs:
           name: scenario_results
           path: |
             ./data_tests/*
-
-
-
