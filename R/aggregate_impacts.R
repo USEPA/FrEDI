@@ -1,5 +1,4 @@
-###### aggregate_impacts ######
-### Created 2021.02.08.
+## aggregate_impacts ----------------
 #' Summarize and aggregate impacts from [FrEDI::run_fredi()] (calculate national totals, average across models, sum impact types, and interpolate between impact year estimates)
 #'
 #' @description
@@ -51,40 +50,51 @@
 aggregate_impacts <- function(
     data,             ### Data frame of outputs from temperature binning
     aggLevels  = c("national", "modelaverage", "impacttype", "impactyear"),  ### Levels of aggregation
-    sumCols    = c("physical_impacts", "annual_impacts"), ### Columns to aggregate
     groupCols  = c("sector", "variant", "impactType", "impactYear", "region", "state", "postal", "model_type", "model") |>
       c("includeaggregate", "sectorprimary"),
+    sumCols    = c("annual_impacts"), ### Columns to aggregate
     silent     = TRUE
 ){
-  ### Messaging ----------------
+  ### Set Up Environment ----------------
+  #### Messaging ----------------
   ### Not used currently; preserving it in messaging logicals for the future
-  msgUser      <- !silent
-  msg0         <- function(lvl0=1){c("\t") |> rep(lvl0) |> paste(collapse = c(""))}
+  msgUser     <- !silent
+  msgN        <- "\n"
+  msg0        <- 0
+  msg1        <- msg0 + 1
+  msg2        <- msg0 + 2
+  msg0 |> get_msgPrefix() |> paste0("Aggregating impacts...") |> message()
+  # get_msgPrefix        <- function(lvl0=1){c("\t") |> rep(lvl0) |> paste(collapse = c(""))}
 
+  #### Module Info ----------------
+  ### Assign data objects to objects in this namespace
+  ### Assign FrEDI config
+  module0       <- "fredi"
+  modData0      <- module0 |> fun_moduleDataStr()
+  ctrlDataStr0  <- "controlData"
+  fConfigStr0   <- "fredi_config"
+  configLStr0   <- "configData"
+  stateLStr0    <- "stateData"
 
   #### Aggregation Levels ----------------
   ### Types of summarization to do: default
   ### Aggregation levels
-  aggList0   <- aggList0  |> tolower()
-  aggLevels  <- aggLevels |> tolower()
-  aggNone0   <- "none" %in% aggLevels
-  aggAll0    <- "all"  %in% aggLevels
-  aggLvlsN   <- 0
+  aggLevels0 <- modData0  |> get_frediDataObj(configLStr0, "aggList0")  |> tolower()
+  aggLevels  <- aggLevels |> check_aggLevels(module0=module0, msg0=msg1)
+  aggLevelsN <- aggLevels |> get_matches(y="none", matches=F) |> length()
+  aggAll0    <- "all" %in% aggLevels
+  doAgg      <- aggAll0 | aggLevelsN
+  rm(aggLevels0)
+  # aggLevels |> print()
+
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
-  if      (aggNone0 ) {
-    aggLevels <- "none"
-    msg0 (1) |> paste0("No aggregation levels specified...")
-    msg0 (1) |> paste0("Returning data...", "\n")
-    paste0("Finished.", "\n") |> message()
-  } else if (aggAll0) {
-    aggLevels <- aggList0
-  } else{
-    aggLevels <- aggLevels |> get_matches(y=aggList0)
-    aggLvlsN  <- aggLevels |> length()
-  } ### End if (aggAll0 )
-  doAgg      <- aggAll0 | aggLvlsN
-  rm(aggList0, aggNone0, aggAll0, aggLvlsN)
+  if (!doAgg) {
+    msg1 |> get_msgPrefix() |> paste0("No aggregation levels specified...") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Returning data...", msgN) |> message()
+    msg0 |> get_msgPrefix() |> paste0("Finished.", msgN) |> message()
+    return(data)
+  } ### End if (!doAgg)
 
   ### Aggregate to impact years or national...reduces the columns in output
   doNat    <- "national"     %in% aggLevels
@@ -100,7 +110,7 @@ aggregate_impacts <- function(
   condCols0    <- c("includeaggregate", "sectorprimary")
   sectVarCols0 <- c("sector", "variant")
   iTypeCol0    <- c("impactType")
-  iYearCol0    <- c("impactYear")
+  impYrCol0    <- c("impactYear")
   mTypeCol0    <- c("model_type")
   modCol0      <- c("model")
   regCols0     <- c("region", "state", "postal")
@@ -116,17 +126,30 @@ aggregate_impacts <- function(
   physSumCol0  <- c("physical_impacts")
   scaledSumCol <- c("scaled_impacts")
   physMeasCol0 <- c("physicalmeasure")
-  mainGroups   <- c(sectVarCols0, iTypeCol0, iYearCol0, regCols0, mTypeCol0, modCol0, condCols0)
+  mainGroups   <- c(sectVarCols0, iTypeCol0, impYrCol0, regCols0, mTypeCol0, modCol0, condCols0)
 
   #### Values ----------------
   ### Years in data
   ### "Average", "Model Average"
   years0       <- data |> pull(all_of(yrCol0)) |> unique()
   mTypes0      <- data |> pull(all_of(mTypeCol0)) |> unique()
-  natLbls0     <- list(region="National Total", state="All", postal="US")
-  natLbl0      <- c("National Total")
-  modAveLbl0   <- c("Average")
   doGcm        <- "gcm" %in% (mTypes0 |> tolower())
+
+  ### Labels and Strings
+  natLbls0     <- controlData$co_states |>
+    filter(postal %in% "US") |>
+    select(c("region_label", "state", "postal")) |>
+    rename_at(c("region_label"), ~"region")
+  # natLbls0     <- list(region="National Total", state="All", postal="US")
+  # natLbl0      <- c("National Total")
+  natLbl0      <- natLbls0 |> pull(region)
+  impYrLbl0    <- "Interpolation"
+  slrModLbl0   <- "Interpolation"
+  modAveLbl0   <- "Average"
+  impTypeLbl0  <- "all"
+  naStrs0      <- c("NA", "N/A")
+
+
 
   ### Format Data ----------------
   ### Ungroup
@@ -136,40 +159,44 @@ aggregate_impacts <- function(
   data         <- data |> ungroup()
   oNames0      <- data |> names()
   names0       <- oNames0
-  if(doNat  ){data <- data |> filter(!(region %in% natLbls0$region))}
+  if(doNat  ){data <- data |> filter(!(region %in% natLbl0))}
   if(doMAves){data <- data |> filter(!(model  %in% modAveLbl0))}
 
   ### Grouping and Summary Columns ----------------
+  msg1 |> get_msgPrefix() |> paste0("Formatting groupCols...") |> message()
   #### Grouping columns
+  # doIType |> print()
   groupCols    <- groupCols |> aggImpacts_adjustColumns(
     names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
     doIType = doIType, ### Aggregate over impact types
     type0   = "group", ### Or sum
-    msg0    = msg0()
+    msg0    = msg2
   ) ### End aggImpacts_adjustColumns
   ### Message user
-  msg0(1) |> paste0("Grouping by groupCols = c(", groupCols |> paste(collapse=", "), ")...") |> message()
+  # msg2 |> get_msgPrefix() |> paste0("Grouping by groupCols = c(", groupCols |> paste(collapse=", "), ")...") |> message()
 
   #### Summary Columns
+  msg1 |> get_msgPrefix() |> paste0("Formatting sumCols...") |> message()
   sumCols      <- sumCols |> aggImpacts_adjustColumns(
     names0  = names0 , ### Names of data
     doNat   = doNat  , ### Aggregate over national
     doIType = doIType, ### Aggregate over impact types
-    type0   = "group", ### Or sum
-    msg0    = msg0()
+    type0   = "sum", ### Or sum
+    msg0    = msg2
   ) ### End aggImpacts_adjustColumns
   ### Message user
   hasSumCols   <- sumCols |> length()
-  if(!hasSumCols){msg0() |> paste0("Exiting...") |> message()}
-  else           {msg0(1) |> paste0("Summarizing over sumCols = c(", sumCols |> paste(collapse=", "), ")...") |> message()}
+  if(!hasSumCols){msg1 |> get_msgPrefix() |> paste0("Exiting...") |> message()}
+  # else           {msg2 |> get_msgPrefix() |> paste0("Summarizing over sumCols = c(", sumCols |> paste(collapse=", "), ")...") |> message()}
   rm(hasSumCols)
 
   #### Select Columns from Data
   ### Add scenario columns
+  # select0 |> print();
   select0      <- c(groupCols, yrCol0, sumCols)
   dropCols0    <- names0 |> get_matches(y=select0, matches=F)
-  data         <- data |> select(-all_of(dropCols0))
+  data         <- data |> select(-any_of(dropCols0))
   names0       <- data |> names()
   rm(select0, dropCols0)
 
@@ -181,6 +208,7 @@ aggregate_impacts <- function(
   # data |> glimpse()
   baseGroups     <- mainGroups |> get_matches(y=groupCols)
   baseCols       <- c(mTypeCol0, regCols0, yrCol0, natPopCol0, gdpCols0, popCol0, driverCols0)
+  # "got here1" |> print()
   baseInfo   <- mTypes0 |> map(function(
     typeX,
     colX    = mTypeCol0,
@@ -191,40 +219,41 @@ aggregate_impacts <- function(
       filter_at(c(colX), function(x){x %in% typeX}) |>
       get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first")
   }) |> bind_rows()
+  # "got here2" |> print()
 
   #### National Scenario ----------------
-  ### If doNat, add national scenario
+  ### If doNat, add national scenario to base
+  # baseInfo |> glimpse()
   if(doNat) {
     baseInfo <- mTypes0 |> map(function(
       typeX,
       colX    = mTypeCol0,
-      groupsX = baseGroups,
+      groupsX = baseGroups |> get_matches(y=regCols0, matches=F),
       colsX   = baseCols
     ){
       baseInfo |>
-        mutate(region = natLbls0$region) |>
-        mutate(state  = natLbls0$state ) |>
-        mutate(postal = natLbls0$postal) |>
-        filter_at(c(colX), function(x){x %in% typeX}) |>
-        get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first")
+        get_uniqueDf0(group0=groupsX, cols0=colsX, type0="first") |>
+        cross_join(natLbls0)
     }) |> bind_rows() |>
       bind_rows(baseInfo)
   } ### End if(doNat)
+  # "got here3" |> print()
 
   #### Other Info ----------------
   otherCols      <- c(sectVarCols0, mTypeCol0, condCols0) |> (function(
     colsX,
     colsY   = baseCols,
-    groupsX = groupColumns
+    groupsX = groupCols
   ){
     ### Columns to exclude
     if(doIType) colsY <- colsY |> c(iTypeCol0)
-    if(doIYear) colsY <- colsY |> c(iYearCol0)
+    if(doIYear) colsY <- colsY |> c(impYrCol0)
     if(doNat  ) colsY <- colsY |> c(regCols0 )
     if(doMAves) colsY <- colsY |> c(modCol0  )
     ### Get unique values
     colsY    <- colsY |> unique()
     ### Get matches
+    # groupsX |> print(); colsY |> print()
     groupsX  <- groupsX |> get_matches(y=colsY, matches=F)
     ### Columns
     colsX    <- colsX |> c(groupsX) |> unique()
@@ -233,9 +262,11 @@ aggregate_impacts <- function(
   })()
   ### Group data
   ### Get group keys
+  # otherCols |> print()
   groupCols     <- groupCols |> c(baseIDCol0)
   data          <- data |> group_by_at(c(otherCols)) |> mutate(baseID=cur_group_id())
-  otherInfo <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
+  otherInfo     <- data |> group_keys() |> mutate(baseID = data |> pull(baseID) |> unique())
+  # otherInfo |> glimpse()
 
   ### Aggregation ----------------
   #### Select Data
@@ -249,48 +280,49 @@ aggregate_impacts <- function(
   #### Impact Years ----------------
   ### Separate into years after 2090 and before 2090
   if(doIYear){
-    if(msgUser){msg0 (1) |> paste0("Interpolating between impact year estimates...") |> message()}
-    data <- interpolate_impYear(
-      col0    = iYearCol0,
-      group0  = groupCols,
-      sum0    = sumCols,
-      naStr0  = c("N/A"),
-      newStr0 = c("Interpolation")
+    msg1 |> get_msgPrefix() |> paste0("Interpolating between impact year estimates...") |> message()
+    data <- data |> interpolate_impYear(
+      col0   = impYrCol0,
+      group0 = groupCols,
+      sum0   = sumCols,
+      lbl0   = impYrLbl0,
+      naStr0 = naStrs0 |> c(impYrLbl0),
+      yrCol0 = yrCol0
     ) ### End interpolate_impYear
+    # return(data)
   } ### if(doIYear)
 
 
   #### Model Averages ----------------
   ### Average values across models
   if(doMAves){
-    if(msgUser){msg0 (1) |> paste0("Calculating model averages...") |> message()}
-    if(doGcm) {
-      ### Ungroup first
-      data <- data |> calc_modelAves(
-        cols0  = modCol0,
-        group0 = groupCols,
-        sum0   = sumCols,
-        lbl0   = c("Average"),
-        fun0   = c("mean"),
-        slrStr = c("slr"),
-        yrCol0 = c("year"),
-        na.rm  = TRUE
-      ) ### End calc_modelAves
-    } ### End if(doGcm)
+    msg1 |> get_msgPrefix() |> paste0("Calculating model averages...") |> message()
+    # if(doGcm) {
+    ### Ungroup first
+    data <- data |> calc_modelAves(
+      col0   = modCol0,
+      group0 = groupCols,
+      sum0   = sumCols,
+      lbl0   = modAveLbl0,
+      naStr0 = c(slrModLbl0, modAveLbl0),
+      yrCol0 = yrCol0,
+      fun0   = "mean"
+    ) ### End calc_modelAves
+    # } ### End if(doGcm)
   } ### End if "model" %in% aggLevels
 
 
   #### National Totals ----------------
   if(doNat){
-    if(msgUser){msg0 (1) |> paste0("Calculating national totals...") |> message()}
+    msg1 |> get_msgPrefix() |> paste0("Calculating national totals...") |> message()
     ### Ungroup first
     data <- data |> sum_national(
-      cols0  = regCols0,
-      group0 = groupCols,
-      sum0   = sumCols,
-      lbls0  = natLbls0,
-      fun0   = c("sum"),
-      na.rm  = TRUE
+      cols0    = regCols0,
+      group0   = groupCols,
+      sum0     = sumCols,
+      natLbls0 = natLbls0,
+      yrCol0   = yrCol0,
+      fun0     = "sum"
     ) ### End sum_national
   } ### End if national
 
@@ -298,17 +330,18 @@ aggregate_impacts <- function(
   #### Impact Types ----------------
   ### Summarize by Impact Type
   if(doIType){
-    if(msgUser){msg0 (1) |> paste0("Summing across impact types...") |> message()}
+    msg1 |> get_msgPrefix() |> paste0("Summing across impact types...") |> message()
     ### Ungroup first
+    # data |> glimpse()
     data  <- data |> sum_impType(
       data,  ### Grouped data
-      cols0  = iTypeCol0,
+      col0   = iTypeCol0,
       group0 = groupCols,
       sum0   = sumCols,
-      lbl0   = c("all"),
-      fun0   = c("sum"),
-      naStr0 = c("N/A", "NA"),
-      na.rm  = TRUE
+      lbl0   = impTypeLbl0,
+      naStr0 = naStrs0 |> c(impTypeLbl0),
+      yrCol0 = yrCol0,
+      fun0   = "sum"
     ) ### End sum_impType
   } ### End if impactType in aggLevels
 
@@ -317,7 +350,7 @@ aggregate_impacts <- function(
   join0    <- c(baseIDCol0)
   namesD   <- data      |> names()
   colsOth  <- otherInfo |> names() |> get_matches(namesD, matches=F) |> c(join0)
-  data     <- data      |> left_join(otherInfo |> select(all_of(colsOth)), by=join)
+  data     <- data      |> left_join(otherInfo |> select(all_of(colsOth)), by=join0)
   rm(join0, otherInfo)
 
   #### Base Scenario

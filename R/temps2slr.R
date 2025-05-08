@@ -1,5 +1,4 @@
-###### temps2slr ######
-### Created 2021.02.11. Updated with new GMSL calculation method 2021.06.02. Updated parameters in August 2021.
+## temps2slr ----------------
 #' Convert global temperature change in degrees Celsius to global mean sea level rise (GMSL) in centimeters
 #'
 #' @description
@@ -81,30 +80,36 @@
 temps2slr <- function(
     temps,
     years,
-    .kopp0  = "temps2slr" |> get_frediDataObj("fredi_config", "frediData"),
-    .refYr0 = get_frediDataObj("co_modelTypes", "controlData") |> filter(model_type %in% "slr") |> pull(driverRefYear),
+    # .kopp0  = "frediData"   |> get_frediDataObj("fredi_config", "temps2slr"),
+    # .kopp0  = "frediData"   |> get_frediDataObj("fredi_config"),
+    .refYr0 = "controlData" |> get_frediDataObj("co_modelTypes") |> filter(model_type %in% "slr") |> pull(driverRefYear),
     .msg0   = 0,
     silent  = TRUE
 ){
   ### Set up Environment ----------------
   #### Messaging ----------------
   # msg1    <- "\t"
-  msgUser       <- !silent
-  msgN          <- "\n"
-  msg0          <- .msg0
-  msg1          <- msg0 + 1
-  msg2          <- msg0 + 2
-  # if(msgUser)
+  msgUser <- !silent
+  msgN    <- "\n"
+  msg0    <- .msg0
+  msg1    <- msg0 + 1
+  msg2    <- msg0 + 2
+  msg3    <- msg0 + 3
 
-    #### Kopp Constants ----------------
-  # .kopp0     <- get_frediDataObj("fredi_config", "frediData")
-  phi0       <- .kopp0[["phi0"]]
-  alpha      <- .kopp0[["alpha"]]
-  tau1       <- .kopp0[["tau1"]]
-  tau2       <- .kopp0[["tau2"]]
+  #### Values from Data ----------------
+  .kopp0  <- "frediData" |> get_frediDataObj("fredi_config", "temps2slr")
+  .refYr0 <- "controlData" |> get_frediDataObj("co_modelTypes") |> filter(model_type %in% "slr") |> pull(driverRefYear)
+
+  #### Kopp Constants ----------------
+  phi0    <- .kopp0[["phi0"]]
+  alpha   <- .kopp0[["alpha"]]
+  tau1    <- .kopp0[["tau1"]]
+  tau2    <- .kopp0[["tau2"]]
   ### Other constants
-  mm2cm      <- .kopp0[["mm2cm"]]
-  eqTemp0    <- .kopp0[["eqTempOffset"]]
+  mm2cm   <- .kopp0[["mm2cm"]]
+  eqTemp0 <- .kopp0[["eqTempOffset"]]
+  # mm2cm   <- 0.1
+  # eqTemp0 <- 0.62
 
 
   ### Initialize Data ----------------
@@ -128,8 +133,10 @@ temps2slr <- function(
     filter(n > 1)
 
   ### Check that there are no duplicate rows
-  hasDups <- dups0 |> nrow()
+  # df0 |> glimpse()
+  hasDups <- dups0 |> nrow() |> as.logical()
   if(hasDups){
+    # dups0 |> glimpse(); hasDups |> print()
     msg1 |> get_msgPrefix(newline=F) |> paste0("Warning: There are duplicate years in the inputs!") |> message()
     msg1 |> get_msgPrefix(newline=T) |> paste0("Exiting...") |> message()
     return()
@@ -147,6 +154,8 @@ temps2slr <- function(
   ### If 2020 not found, check for values above and below 2000
   ### If 2020 is still not found, message the user and exit
   ### Else, if there is a valid temperature series: Calculate temperatures
+  #checkRefYear <- (.refYr0 %in% years0)
+  #checkRefYear <- (!checkRefYear) |> ifelse(min0 < .refYr0 & max0 > .refYr0, checkRefYear)
   hasRef0 <- min0 <= .refYr0 & max0 >= .refYr0
   if(!hasRef0) {
     msg1 |> get_msgPrefix(newline=F) |> paste0("Warning:") |> message()
@@ -157,6 +166,9 @@ temps2slr <- function(
     return()
   } ### End if(!hasRef0)
 
+  ### Initial temperature
+  temp0   <- df0 |> filter(year == .refYr0) |> pull(temp_C)
+
   ### Interpolate Values ----------------
   # xOut0     <- min0:max0
   df0     <- years0 |> approx(
@@ -164,9 +176,9 @@ temps2slr <- function(
     xout   = min0:max0,
     method = "linear",
     rule   = 2
-    ) |>
+  ) |>
     as.data.frame() |>
-    as.tibble() |>
+    as_tibble() |>
     rename_at(c("x", "y"), ~c("year", "temp_C")) |>
     filter(year >= .refYr0)
 
@@ -178,18 +190,17 @@ temps2slr <- function(
     mutate(phi = phi0 * exp(-yearFrom0 / tau2))
   # df0 |> glimpse();
 
-  temp0   <- df0 |> filter(year == .refYr0) |> pull(temp_C)
-
   ### Iterate over series
   ### Calculate base values
   ### Equilibrium temps
   for(i in df0 |> pull(yearFrom0)){
-    if(i == 0){
+    if(i == 1){
       ### Initialize temperature
       temp_C0        <- df0[["temp_C"]][i]
       df0[["equilTemp"]][i] <- temp_C0 - eqTemp0
       df0[["slr_mm"   ]][i] <- 0
     } else{
+      # df0[["equilTemp"]][i] |> print()
       df0[["equilTemp"]][i] <- df0[["equilTemp"]][i - 1] + ( df0[["temp_C"]][i] - df0[["equilTemp"]][i - 1] ) / tau1
       df0[["slr_mm"   ]][i] <- df0[["slr_mm"   ]][i - 1] + ( df0[["temp_C"]][i] - df0[["equilTemp"]][i] ) * alpha + df0[["phi"]][i]
     } ### End else
@@ -204,6 +215,4 @@ temps2slr <- function(
 
   ### Return ----------------
   return(df0)
-
 }
-
