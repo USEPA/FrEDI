@@ -484,11 +484,11 @@ drop_nullListElements <- function(
 ## Format Input Scenarios ----------------
 ### This function helps format input scenarios
 format_inputScenarios <- function(
-    df0,       ### Scenario input data frame to format
-    name0,     ### Name of input c("temp, "slr", "gdp", "pop")
-    minYear,   ### Minimum year
-    maxYear,   ### Maximum year
-    info0,     ### Other info
+    df0,     ### Scenario input data frame to format
+    name0,   ### Name of input c("temp, "slr", "gdp", "pop")
+    info0,   ### Other info
+    minYear  = NULL,   ### Minimum year
+    maxYear  = NULL,   ### Maximum year
     tempType = "conus",
     silent   = FALSE,
     msg0     = 0
@@ -498,9 +498,14 @@ format_inputScenarios <- function(
   msgN       <- "\n"
   msg1       <- msg0 + 1
 
+  ### Check data
   ### If no input provided, return empty value
+  df0       <- df0 |> filter_all(all_vars(!(. |> is.na())))
   hasInput0 <- df0 |> length()
   if(!hasInput0) { return() }
+  dataYrs0  <- df0 |> pull(all_of(yrCol0))
+  minData0  <- dataYrs0 |> min()
+  maxData0  <- dataYrs0 |> max()
 
   ### Columns
   yrCol0    <- "year"
@@ -511,8 +516,16 @@ format_inputScenarios <- function(
   valCol0   <- info0 |> pull(valueCol)
   refYr0    <- info0 |> pull(refYear)
   doTemp0   <- info0 |> pull(doTemp0)
+
+  ### Data years
+  ### Update min/max year if NULL
+  hasMinYr0 <- minYr0 |> get_matches(NA, matches=F) |> length()
+  hasMaxYr0 <- maxYr0 |> get_matches(NA, matches=F) |> length()
+  minYr0    <- hasMinYr0 |> ifelse(minYr0, minData0)
+  maxYr0    <- hasMaxYr0 |> ifelse(maxYr0, maxData0)
+  ### Update min year if ref year present
   doRef0    <- !(refYr0 |> is.na())
-  minYr0    <- doRef0 |> ifelse(refYr0, minYear)
+  minYr0    <- doRef0  |> ifelse(refYr0, minYr0)
 
   ### Filter data and arrange at ID columns
   msg0 |> get_msgPrefix(newline=F) |> paste0(label0, " scenario from user inputs...")
@@ -525,7 +538,7 @@ format_inputScenarios <- function(
 
   ### Zero values at ref year if doRef0
   df0       <- df0 |> zero_out_scenario(
-    refYr0  = refYr0,
+    refYr0  = minYr0,
     xCol0   = yrCol0,
     yCol0   = valCol0,
     idCols0 = idCols0

@@ -422,9 +422,9 @@ run_fredi <- function(
       name0   = inNames
     ) |> pmap(
       format_inputScenarios,
+      info0   = inputInfo0,
       minYear = minYear,
       maxYear = maxYear,
-      info0   = inputInfo0,
       msg0    = msg1
     ) |> set_names(inNames)
   } ### End if(hasInputs)

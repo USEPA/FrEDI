@@ -200,25 +200,7 @@ get_defaultScenarios <- function(
 }
 
 
-### Check and format inputs list
-# notNull    <- inNames    |> map(function(name0){!(inputsList[[name0]] |> is.null())}) |> unlist() |> which()
-# ### Filter values and update inNames
-# inputsList <- inputsList[inNames][notNull]
-# inNames    <- inputsList |> names()
-# dfInfo     <- dfInfo     |> filter(inputName %in% inNames)
-# inNames    <- dfInfo     |> pull(inputName)
-# inputsList <- inputsList[inNames]
-# ### Check if there are values
-# nInputs    <- inputsList |> length()
-# nNames     <- inNames    |> length()
-# if (!nNames) {
-#   paste0(msg0) |> paste0("Error! `inputsList` argument requires a list with named elements.") |> message()
-#   msgN |> paste0(msg0) |> paste0("Exiting...") |> message()
-#   return()
-# } else if(!nInputs){
-#   return(inputsList)
-# } ### End if(!hasInputs)
-
+### Check and format inputs list when list contains tables
 format_inputsList <- function(
     dfInfo,   ### Outputs of get_dfInputInfo
     inputsList = list(temp=NULL, slr=NULL, pop=NULL, gdp=NULL),
@@ -231,6 +213,7 @@ format_inputsList <- function(
 ){
   ### Messaging
   msgN       <- "\n"
+  msg1       <- msg0 + 1
 
   ### Input strings
   tempStr0   <- "temp"
@@ -273,6 +256,10 @@ format_inputsList <- function(
     return()
   } ### End if(!nInputs)
 
+  ### Check input data if list elements are dataframes
+  hasData0   <- inputsList |> map(is.data.frame) |> unlist() |> any()
+  if(!hasData0) return(inputsList)
+
   ### If there are inputs, filter dfInfo to values in inNames
   ### Rename and select columns
   ### Add values
@@ -296,13 +283,13 @@ format_inputsList <- function(
     set_names(inNames)
   rm(select0)
 
-  ### Check input data
+  ### Then, check data
   # dfInfo |> glimpse()
   inputsList <- dfInfo |>
     as.list() |>
     c(list(idCols  = idCols0   )) |>
     c(list(inputDf = inputsList)) |>
-    pmap(check_inputData, module=module0) |>
+    pmap(check_inputData, module=module0, msg0=msg1) |>
     set_names(inNames)
 
   ### Drop NULL list elements from inputsList
@@ -429,37 +416,6 @@ update_inputDefault <- function(
   return(dfDef)
 }
 
-# update_inputDefaults <- function(
-    #
-#     defaultsList,
-#     inputsList
-# ){
-#   ### Names
-#   names0 <- defaultsList |> names()
-#   ### Iterate over names and replace data
-#   list0  <- names0 |> map(function(name0){
-#     doSlr0  <- name0 |> str_detect("slr")
-#     nullIn0 <- inputsList[[name0]] |> is.null()
-#     if(!nullIn0) {
-#       df0 <- inputsList[[name0]]
-#     } else{
-#       if(doSlr0) {
-#         nullIn0 <- inputsList[["temp"]] |> is.null()
-#         if(!nullIn0) {
-#           df0 <- inputsList[["temp"]]
-#         } else{
-#           df0 <- defaultsList[[name0]]
-#         } ### End if(!nullIn0)
-#       } else {
-#         df0 <- defaultsList[[name0]]
-#       } ### End if(doSlr0)
-#     } ### End  ### End if(!nullIn0)
-#     return(df0)
-#   }) |> set_names(names0)
-#   ### Return
-#   return(list0)
-# }
-
 ## Functions to Load Inputs ----------------
 ### This function attempts to load a user-specified input file
 fun_tryInput <- function(
@@ -475,6 +431,7 @@ fun_tryInput <- function(
   msg1     <- msg0 + 1
   msg2     <- msg0 + 2
   msg3     <- msg0 + 3
+  msg0 |> get_msgPrefix() |> paste0("Loading ", inputName, " inputs...") |> message()
 
   #### Columns and values
   nullName <- filename |> is.null()
@@ -488,19 +445,20 @@ fun_tryInput <- function(
   ### Check if the file exists and try to load the file
   ### Set input to null if it doesn't exist
   if(nullName) {
-    msg0 |> get_msgPrefix() |> paste0("No filename provided. Exiting...") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Warning: No filename provided!") |> message()
+    msg1 |> get_msgPrefix() |> paste0("Returning empty value...") |> message()
     return()
   } ### End if(nullName)
 
   ### If file name exists, check file
-  msg0 |> get_msgPrefix() |> paste0("User specified ", inputName |> paste0("file"), "...")
+  # msg1 |> get_msgPrefix() |> paste0("User specified ", inputName, "...")
   exists0  <- filename |> file.exists()
   ### If the file exists, try loading the file and then check the class of the result
   if(exists0) {
+    msg1 |> get_msgPrefix() |> paste0("Reading ", inputName, " data from file...") |> message()
     df0    <- filename |> read.csv(check.names=F) |> try(silent=T)
     class0 <- df0 |> class()
     isDf0  <- "data.frame" %in% class0
-
     ### If loading the inputs was successful
     if(isDf0){
       list0[["fileInput" ]] <- df0
@@ -918,8 +876,8 @@ check_valCols <- function(
 ### check_input_data
 check_inputData <- function(
     type0     = "temp",   ### Type of input; one of: c("temp", "slr", "gdp", "pop")
-    minYr0   , ### Min year
-    maxYr0   , ### Max year
+    minYr0 = NULL, ### Min year
+    maxYr0 = NULL, ### Max year
     inputMin0, ### Min value
     inputMax0, ### Max value
     valCol0  , ### E.g., c("temp_C", "slr_cm", "gdp_usd", "state_pop") ### Or "reg_pop", "area_pop", or "national_pop", depending on popArea
@@ -944,11 +902,18 @@ check_inputData <- function(
   msg1       <- msg0 + 1
   msg2       <- msg0 + 2
   msg3       <- msg0 + 3
-  msg0 |> get_msgPrefix(newline=T) |> paste0("Checking '", type0, " data...") |> message()
+  msg0 |> get_msgPrefix(newline=T) |> paste0("Checking '", type0, ", data...") |> message()
 
   #### Columns & Values ----------------
   #### Columns
   yrCol0      <- "year"
+  dataYrs0    <- inputDf  |> pull(all_of(yrCol0)) |> unique()
+  minData0    <- dataYrs0 |> min()
+  maxData0    <- dataYrs0 |> min()
+  hasMinYr0   <- minYr0 |> get_matches(NA, matches=F) |> length()
+  hasMaxYr0   <- maxYr0 |> get_matches(NA, matches=F) |> length()
+  minYr0      <- hasMinYr0 |> ifelse(minYr0, minData0)
+  maxYr0      <- hasMaxYr0 |> ifelse(maxYr0, maxData0)
   #### Conditionals
   # doTemp    <- "temp" %in% type0
   # doPop     <- "pop"  %in% type0
@@ -1108,6 +1073,7 @@ check_inputData <- function(
 
   ### Return ----------------
   msg1 |> get_msgPrefix(newline=F) |> paste0("Values passed.") |> message()
+  inputDf   <- inputDf |> as_tibble()
   return(inputDf)
 }
 
