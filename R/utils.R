@@ -515,6 +515,7 @@ format_inputScenarios <- function(
   ### Filter data and arrange at ID columns
   msg0 |> get_msgPrefix(newline=F) |> paste0(label0, " scenario from user inputs...")
   idCols0   <- df0 |> names() |> get_matches(y=c(yrCol0, valCol0), matches=F)
+  # idCols0 |> print()
   df0       <- df0 |>
     filter_all(all_vars(!(. |> is.na()))) |>
     arrange_at (c(idCols0, yrCol0)) |>
@@ -527,11 +528,11 @@ format_inputScenarios <- function(
     yCol0   = valCol0,
     idCols0 = idCols0
   ) ### End zero_out_scenario
-
+  # df0 |> glimpse()
 
   ### Check if interpolation is required
   ### If so, interpolate values
-  df0 <- df0 |> group_map(
+  df0 <- df0 |> group_map(function(.x, .y){
     .x |> interpolate_byGroup(
       .y      = .y,
       xCol0   = yrCol0,
@@ -540,7 +541,7 @@ format_inputScenarios <- function(
       method0 = "linear",
       rule0   = 1
     ) ### End interpolate_byGroup()
-  ) |> bind_rows()
+  }) |> bind_rows()
 
   ### Return
   return(df0)

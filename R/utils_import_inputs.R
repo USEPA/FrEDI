@@ -332,7 +332,6 @@ update_inputDefault <- function(
   tempStr0   <- "temp"
   slrStr0    <- "slr"
 
-
   ### Data
   dfDef      <- defaultsList[[type0]] |> filter(year >= minYear, year <= maxYear) |> ungroup()
   dfIn       <- inputsList  [[type0]]
@@ -367,14 +366,10 @@ update_inputDefault <- function(
   if(isTemp0 & !doTemp0) return()
 
   ### Get ref years
-  infoT  <- dfInfo |> filter(inputName %in% tempStr0)
-  infoS  <- dfInfo |> filter(inputName %in% slrStr0 )
+  infoT      <- dfInfo |> filter(inputName %in% tempStr0)
+  infoS      <- dfInfo |> filter(inputName %in% slrStr0 )
   ### Column
-  yrCol0 <- "year"
-  idCol0 <- "scenario"
-  yColT  <- infoT |> pull(valueCol)
-  drop0  <- yColT |> paste0("_", c("conus", "global"))
-  if(!doSv0) drop0 <- drop0 |> c(idCol0)
+  yrCol0     <- "year"
 
   ### If isSlr0: Check if there is a temperature input
   ### If there is a temperature input, calculate global temps, slr height
@@ -383,10 +378,21 @@ update_inputDefault <- function(
     hasTemp <- dfTemp |> is.data.frame()
     if(hasTemp) {
       ### Calculate global temperatures and SLR
+      names0     <- dfTemp |> names()
+      idCol0     <- "scenario"
+      yColT      <- infoT |> pull(valueCol)
+      drop0      <- yColT |> paste0("_", c("conus", "global"))
+      ### If !doSv0:
+      ### - Add scenario column for grouping
+      ### - Drop scenario column after interpolation
+      if(!doSv0) {
+        drop0  <- drop0 |> c(idCol0)
+        dfTemp <- dfTemp |> mutate(scenario = type0)
+      } ### End if(!doSv0)
+      ### Interpolate values
       dfTemp <- dfTemp |>
-        mutate(scenario = type0) |>
         group_by_at(c(idCol0)) |>
-        group_map(
+        group_map(function(.x, .y){
           .x |> format_tempData_byGroup(
             .y        = .y,
             xCol0     = yrCol0,
@@ -396,7 +402,7 @@ update_inputDefault <- function(
             method0   = "linear",
             rule0     = 1
           ) ### End format_tempData_byGroup
-        ) |> bind_rows() |>
+        }) |> bind_rows() |>
         ungroup() |>
         select(-any_of(drop0))
       ### Zero out values
@@ -404,7 +410,7 @@ update_inputDefault <- function(
         refYr0  = infoS |> pull(refYear) ,
         xCol0   = yrCol0,
         yCol0   = infoS |> pull(valueCol),
-        idCols0 = idCols0
+        idCols0 = idCol0
       ) ### End zero_out_scenario
       ### Filter to years
       dfTemp <- dfTemp |> filter(year >= minYear, year <= maxYear)
@@ -748,14 +754,18 @@ check_regions <- function(
   allRegs0   <- !(naRegions0 |> length())
   # allStates0 <- !(naStates0  |> length())
   if(!allRegs0) {
-    msgRegs0   <- paste0("Missing data for the following regions ", naRegions0 |> paste(collapse=sep0), "...")
-    msgStates0 <- paste0("Missing data for the following states ", naStates0 |> paste(collapse=sep0), "...")
-    msg1 |> get_msgPrefix(newline=T) |> paste0(msgRegs0  ) |> message()
-    msg1 |> get_msgPrefix(newline=T) |> paste0(msgStates0) |> message()
+    msgNA0     <- "Missing data for the following "
+    # msgRegs0   <- paste0(msgNA0, "regions:", msgN, naRegions0 |> paste(collapse=sep0), "...", msgN)
+    # msgStates0 <- paste0(msgNA0, "states: ", msgN, naStates0 |> paste(collapse=sep0), "...")
+    msg1 |> get_msgPrefix() |> paste0(msgNA0, "regions:") |> message()
+    msg2 |> get_msgPrefix() |> paste0(naRegions0 |> paste(collapse=sep0), "...") |> message()
+    msg1 |> get_msgPrefix() |> paste0(msgNA0, "states:") |> message()
+    msg2 |> get_msgPrefix() |> paste0(naStates0 |> paste(collapse=sep0), "...") |> message()
     msg2 |> get_msgPrefix(newline=T) |> paste0("Returning an empty dataset...") |> message()
     return()
   } else{
-    msg1 |> get_msgPrefix(newline=T) |> paste0("All states and regions present and have some non-missing values...") |> message()
+    msgPass0 <- "All states and regions present and have some non-missing values..."
+    msg1 |> get_msgPrefix(newline=F) |> paste0(msgPass0) |> message()
   } ### End if(!allRegs0)
 
   ### Filter to non-NA values
