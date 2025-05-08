@@ -420,10 +420,9 @@ run_fredi <- function(
       idCol     = idCols0   [inNames],
       valCol    = valCols0  [inNames],
       yearMin   = minYrs0,
-      yearMax   = maxYrs0,
       module    = "fredi" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data) |>
+      pmap(check_input_data, yearMax=maxYear) |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 

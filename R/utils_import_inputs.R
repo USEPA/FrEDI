@@ -578,7 +578,6 @@ check_input_data <- function(
   if(hasData) {msgN |> paste0(msg0_i, msg_i1) |> message()} else {return(NULL)}
 
 
-
   ###### Data Columns ######
   ### Get value column and id column
   if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
@@ -665,7 +664,7 @@ check_input_data <- function(
       rm(nMinYrs)
     } ### End if(hasMinYr)
     if(hasMaxYr) {
-      nMaxYrs  <- inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      nMaxYrs  <- inputDf |> filter(year >= yearMax) |> pull(year) |> unique() |> length()
       whichYrs <- whichYrs |> c(yearMax)
       rm(nMaxYrs)
     } ### End if(hasMaxYr)
@@ -675,9 +674,9 @@ check_input_data <- function(
     if(!checkYrs) {
       msg_yrs <- "Data must have at least one non-missing value "
       msg_min <- "in or before the year " |> paste0(yearMin)
-      msg_and <- (hasMinYr & hasMaxYr) |> ifelse("and at least one non-missing value ", "")
-      msg_min <- "in or after the year " |> paste0(yearMax)
-      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_min, "!") |> message()
+      msg_and <- (hasMinYr & hasMaxYr) |> ifelse(" and at least one non-missing value ", "")
+      msg_max <- "in or after the year " |> paste0(yearMax)
+      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_max, "!") |> message()
       return(NULL)
     } ### End if(!checkYrs)
   } ### End if(hasYears)
