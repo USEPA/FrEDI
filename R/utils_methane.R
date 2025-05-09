@@ -1,9 +1,9 @@
 ### Utility functions for the FrEDI methane module
 ### Function for mortality
-# calc_mortality  <- listMethane$package$coefficients[["Mortality"]][["fun0"]]
-calc_methane_mortality <- function(
+# calc_mortality  <- ghgData$ghgData$coefficients[["Mortality"]][["fun0"]]
+calc_ghg_mortality <- function(
     df0, ### Tibble with population and years
-    df1      = listMethane$package$rff_nat_pop, ### Tibble with columns for mortality rate slope and mortality rate intercept
+    df1      = ghgData$ghgData$rff_nat_pop, ### Tibble with columns for mortality rate slope and mortality rate intercept
     pCol0    = "national_pop"      , ### Column with national population
     sCol0    = "rffMrate_slope"    , ### Column with mortality rate slope,
     iCol0    = "rffMrate_intercept", ### Column with mortality rate intercept,
@@ -27,15 +27,15 @@ calc_methane_mortality <- function(
 }
 
 ### Function to calculate NOx factor
-# calc_NOx_factor <- listMethane$package$coefficients[["NOx"      ]][["fun0"]]
+# calc_NOx_factor <- ghgData$ghgData$coefficients[["NOx"      ]][["fun0"]]
 # slope0     = -0.49
 # intercept0 = -1.12
 # adj0       = 1e3/556
 calc_NOx_factor <- function(
     nox0,
-    slope0     = listMethane$package$coefficients$NOx$slope0,
-    intercept0 = listMethane$package$coefficients$NOx$intercept0,
-    adj0       = listMethane$package$coefficients$NOx$adj0
+    slope0     = ghgData$ghgData$coefficients$NOx$slope0,
+    intercept0 = ghgData$ghgData$coefficients$NOx$intercept0,
+    adj0       = ghgData$ghgData$coefficients$NOx$adj0
 ){
   nox0 <- nox0 |> log()
   nox0 <- nox0 * slope0 + intercept0
@@ -46,7 +46,7 @@ calc_NOx_factor <- function(
 ### Function to calculate NOx ratio
 calc_NOx_ratio <- function(
     df0, ### Tibble with NOx values
-    factor0 = listMethane$package$coefficients[["NOx"]][["NOxFactor0"]]
+    factor0 = ghgData$ghgData$coefficients[["NOx"]][["NOxFactor0"]]
 ){
   ### Calculate new NOx factor
   df0   <- df0 |> mutate(NOxFactor  = NOx_Mt |> calc_NOx_factor())
@@ -70,9 +70,9 @@ calc_o3_conc <- function(
 
 
 ### Format methane drivers
-format_methane_drivers <- function(
+format_ghg_drivers <- function(
     df0, ### Tibble with scenarios
-    df1=listMethane$package$state_rrScalar
+    df1=ghgData$stateData$state_rrScalar
 ){
   ### Format data
   idCols0  <- c("region", "state", "postal", "model")
@@ -122,11 +122,11 @@ calc_conus_scenario <- function(
 
 
 ### Function to calculate economic scalars
-calc_methane_scalars <- function(
-    df0, ### Tibble with information on CONUS scenario
+calc_ghg_scalars <- function(
+    df0,       ### Tibble with information on CONUS scenario
     scalar0    = "vsl_usd",
     mult0      = "gdp_percap_conus",
-    adj0       = listMethane$package$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
+    adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
     df1        = rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0),
     df2        = rDataList$stateData$df_scalars |> filter(scalarName %in% scalar0),
     elasticity = rDataList$fredi_config$elasticity0
@@ -178,9 +178,9 @@ calc_methane_scalars <- function(
 
 
 ### Function to calculate impacts
-calc_methane_impacts <- function(
+calc_ghg_mortImpacts <- function(
     df0, ### Tibble with population scenario and mortality
-    df1  ### Tibble with ozone concentrations
+    df1 ### Tibble with ozone concentrations
 ){
   ### Join data with drivers
   # df0 |> glimpse(); df1 |> glimpse()
@@ -197,3 +197,22 @@ calc_methane_impacts <- function(
   df0   <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
 }
 
+
+calc_ghg_morbImpacts <- function(
+    df0, ### Tibble with population scenario and mortality
+    df1 ### Tibble with ozone concentrations
+){
+  ### Join data with drivers
+  # df0 |> glimpse(); df1 |> glimpse()
+  join0 <- df0 |> names() |> get_matches(y=df1 |> names())
+  df0   <- df0 |> left_join(df1, by=join0)
+  rm(df1)
+  ### Reorganize values
+  move0   <- c("region", "state", "postal", "model") |> c("year")
+  df0     <- df0 |> relocate(all_of(move0))
+  df0     <- df0 |> arrange_at(c(move0))
+  ### Calculate excess mortality
+  df0   <- df0 |> mutate(physical_impacts = pop * respMrate * state_mortScalar * O3_pptv)
+  ### Calculate annual impacts
+  df0   <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
+}

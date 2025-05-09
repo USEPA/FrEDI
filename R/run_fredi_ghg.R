@@ -426,6 +426,7 @@ run_fredi_ghg <- function(
       ) ### End format_inputScenarios
     }) |> set_names(inNames)
   } ### End if(hasInputs)
+  rm(valCols0)
   # return(inputsList)
 
   ## Add an object to track names of User Inputs
@@ -483,7 +484,8 @@ run_fredi_ghg <- function(
   } ### End if(has_o3)
 
   ### Get RR scalar and ozone response data
-  df_drivers <- df_drivers |> format_methane_drivers()
+  # df_drivers |> glimpse()
+  df_drivers <- df_drivers |> format_ghg_drivers()
   # df_drivers$model |> unique() |> print()
   # return(df_drivers)
   # df_drivers |> glimpse()
@@ -515,23 +517,30 @@ run_fredi_ghg <- function(
   ### Initialized results: Join sector info and default scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> calc_methane_scalars(elasticity = elasticity)
-  # return(df_results)
-  # df_results |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
-  # df_results |> glimpse()
-  # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  df_scalars   <- seScenario |> calc_ghg_scalars(elasticity = elasticity)
+  df_scalars |> glimpse()
+  # return(df_scalars)
+  # df_scalars |> select(c("year", "gdp_usd", "national_pop", "gdp_percap")) |> unique() |> nrow() |> print()
+  # df_scalars |> glimpse()
+  # df_scalars |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
 
-  ###### ** Calculate Mortality Rate ######
-  df_results <- df_results |> calc_methane_mortality()
+  ###### ** Mortality ######
+  ### ** -- Calculate Mortality Rate
+  ### ** -- Calculate Excess Mortality
+  dfMort0      <- df_scalars |> calc_ghg_mortality()
+  dfMort0      <- dfMort0    |> calc_ghg_mortImpacts(df1=df_drivers)
+  # dfMort0 |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
+  dfMort0 |> glimpse()
+
+  ###### ** Morbidity ######
+  ###### ** -- Calculate Mortality Rate
+  # dfMorb0 <- dfMorb0 |> calc_methane_morbidity()
   # df_results |> group_by(state, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
   # df_results |> glimpse()
 
-  ###### ** Calculate Excess Mortality ######
+  ###### ** -- Calculate Excess Mortality
   # df_drivers |> glimpse()
-  df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
-  # df_results |> group_by(state, model, year) |> summarize(n=n(),.groups="drop") |> filter(n>1) |> glimpse()
-  # df_results$model |> unique() |> print()
-  # df_results |> glimpse()
+  # df_results <- df_results |> calc_methane_impacts(df1=df_drivers)
 
 
 
@@ -540,19 +549,21 @@ run_fredi_ghg <- function(
   paste0("Formatting results", "...") |> message()
 
   ### Add values
-  move0      <- c("physicalmeasure")
-  after0     <- c("econScalarName")
+  # move0      <- c("physicalmeasure")
+  # after0     <- c("econScalarName")
+  df_results <- dfMort0
   df_results <- df_results |> mutate(module = "Methane")
-  df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
-  df_results <- df_results |> relocate(all_of(move0), .after=all_of(after0))
-  rm(move0, after0)
+  # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
+  # df_results <- df_results |> relocate(all_of(move0), .after=all_of(after0))
+  # rm(move0, after0)
 
   ### Adjust region
   join0      <- c("region")
   renameAt0  <- c("region_label")
   renameTo0  <- c(join0)
   select0    <- c(join0) |> c(renameAt0)
-  me_regions <- ghgData$package$co_regions |> select(all_of(select0))
+  # me_regions <- ghgData$package$co_regions |> select(all_of(select0))
+  me_regions <- ghgData$ghgData$co_regions |> select(all_of(select0))
   # me_models |> glimpse()
   df_results <- df_results |> left_join(me_regions, by=join0)
   df_results <- df_results |> select(-any_of(join0))
@@ -562,8 +573,9 @@ run_fredi_ghg <- function(
   # ### Adjust model
   join0      <- c("model")
   renameAt0  <- join0 |> paste0("_label")
-  select0    <- c(join0) |> c(renameAt0)
-  me_models  <- ghgData$package$co_models |> select(all_of(select0))
+  select0    <- join0 |> c(renameAt0)
+  me_models  <- ghgData$ghgData$co_models |> select(all_of(select0))
+  # me_models  <- ghgData$package$co_models |> select(all_of(select0))
   # me_models |> glimpse()
   df_results <- df_results |> left_join(me_models, by=join0)
   df_results <- df_results |> select(-any_of(join0))
@@ -576,42 +588,27 @@ run_fredi_ghg <- function(
   df_results <- df_results |> mutate(driverValue = O3_pptv)
 
   ### Columns
-  idCols0    <- c("module", "region", "state", "postal", "model") |> c("year")
+  idCols0    <- c("module", "region", "state", "postal", "model", "year")
   modCols0   <- c("driver") |> paste0(c("Type", "Unit", "Value"))
   natCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap")
-  valCols0   <- c("physicalmeasure")
+  # valCols0   <- c("physicalmeasure")
+  valCols0   <- c()
   sumCols0   <- c("physical_impacts", "annual_impacts")
-  select0    <- idCols0    |> c(modCols0) |> c(natCols0) |> c(valCols0) |> c(sumCols0) |> unique()
-  arrange0   <- idCols0    |> unique()
-  groupCols0 <- c(idCols0) |> c(valCols0) |> unique()
+  # idCols0 |> print()
+  # modCols0 |> print()
+  # natCols0 |> print()
+  # valCols0 |> print()
+  # sumCols0 |> print()
+  select0    <- idCols0 |> c(modCols0, natCols0, valCols0, sumCols0) |> unique()
+  arrange0   <- idCols0 |> unique()
+  groupCols0 <- c(idCols0, valCols0) |> unique()
 
   ### Select columns
-  if(!allCols) df_results <- df_results |> select(all_of(select0))
+  select0 |> glimpse()
+  if(!allCols) df_results <- df_results |> select(any_of(select0))
 
   ### Arrange data
   df_results <- df_results |> arrange_at(c(arrange0))
-
-
-
-  # ###### ** Aggregation ######
-  # if(doAgg) {
-  #   # doAgg |> print()
-  #   df_results <- df_results |> aggregate_impacts(
-  #     aggLevels   = aggLevels,
-  #     groupByCols = groupCols0,
-  #     columns     = sumCols0
-  #   ) ### End aggregate_impacts
-  # } ### End if(doAgg)
-  #
-  # ###### ** Arrange Columns ######
-  # ### Convert levels to character
-  # ### Order the rows, then order the columns
-  # arrange0   <- arrange0 |> get_matches(y = df_results |> names())
-  # # arrange0 |> print()
-  # ### Select columns
-  # df_results <- df_results |> arrange_at(c(arrange0))
-  # df_results <- df_results |> relocate(any_of(idCols0))
-  # rm(arrange0)
 
 
 
