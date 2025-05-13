@@ -141,7 +141,7 @@ temps2slr <- function(
   ### If 2020 is still not found, message the user and exit
   ###To-do exit gracefully within tempbin()
   ### Else, if there is a valid temperature series: Calculate temperatures
-  if(!checkRefYear) {
+  if(any(!checkRefYear)) {
     message("\t", "Warning:")
     message("\t\t", "In 'temps2slr()': Missing values for the reference year ", ref_year0 , ".")
     message("\t\t\t", "The reference year ", ref_year0 , " must be present in the input (or the input must have values above and below the reference year).")
