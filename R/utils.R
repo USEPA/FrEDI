@@ -1490,6 +1490,7 @@ initialize_resultsDf <- function(
   mTypeCol0  <- c("model_type")
   modCol0    <- c("model")
   kScalars0  <- c("c0", "c1", "exp0", "year0")
+  scenId0    <- c("scenario_id")
   scalarCols <- types0 |> paste0("Name") |> c(kScalars0)
   yrCol0     <- c("year")
 
@@ -1552,8 +1553,6 @@ initialize_resultsDf <- function(
     match_scalarValues,
     df0     = dfGroups0,
     scalars = df_scalars |> filter(scalarName %in% mainScalars),
-    # minYr0  = minYr0,
-    # maxYr0  = maxYr0,
     doAdj0  = F,
     module0 = module0
   ) |> set_names(types0)
@@ -1630,7 +1629,7 @@ initialize_resultsDf <- function(
 
   ### Arrange data
   sort0      <- mainCols0 |> c(orderCol0, modCol0, yrCol0) |> unique()
-  move0      <- mainCols0 |> c(dropReg0, postCol0, mTypeCol0, modCol0, "scenario_id", yrCol0) |> unique()
+  move0      <- mainCols0 |> c(dropReg0, postCol0, mTypeCol0, modCol0, scenId0, yrCol0) |> unique()
   df0        <- df0 |>
     arrange_at(c(sort0)) |>
     relocate(any_of(move0))
