@@ -312,6 +312,7 @@ aggregate_impacts <- function(
       yrCol0 = yrCol0,
       fun0   = "mean"
     ) ### End calc_modelAves
+    # return(data)
   } ### End if "model" %in% aggLevels
 
 
@@ -344,9 +345,11 @@ aggregate_impacts <- function(
       yrCol0 = yrCol0,
       fun0   = "sum"
     ) ### End sum_impType
+    # return(data)
   } ### End if impactType in aggLevels
 
-  ### Join data ----------------
+  ### Format Data ----------------
+  #### Join Scenarios ----------------
   #### Other Info
   join0    <- c(baseIDCol0)
   namesD   <- data      |> names()
@@ -361,7 +364,7 @@ aggregate_impacts <- function(
   data     <- data     |> left_join(baseInfo, by=join0)
   rm(join0)
 
-  ### Format Data ----------------
+  #### Format Data ----------------
   ### Column indices of columns used in ordering
   data     <- data |> select(any_of(names0))
 

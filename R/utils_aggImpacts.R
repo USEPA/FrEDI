@@ -323,10 +323,10 @@ interpolate_impYear <- function(
   # dataNA |> glimpse(); data |> glimpse();
 
   ### Interpolate Data ----------------
-  ### Separate and Join Interpolation Data ----------------
   ## Group data and separate into group data and necessary data
   hasData  <- data  |> nrow();
   if(hasData) {
+    #### Separate and Join Interpolation Data ----------------
     join0    <- c(idCol0, yrCol0)
     select0  <- join0 |> c(xCol0) |> c(sum0)
     ids0     <- data |> pull(id) |> unique()
@@ -357,6 +357,7 @@ interpolate_impYear <- function(
     rm(dataKeys)
   } ### End if(hasData)
 
+  ### Format Data ----------------
   ### Rename xCol0 to col0
   data     <- data   |> rename_at(c(xCol0), ~col0)
   ### Bind data
@@ -373,6 +374,7 @@ interpolate_impYear <- function(
     select(-any_of(idCol0))
 
   ### Return ----------------
+  gc()
   return(data)
 } ### if(doIYear)
 
@@ -392,6 +394,7 @@ filter_impYrs <- function(
     filter_at(c(col0), function(x, y=yr0){x %in% y}) |>
     rename_at(c(from0), ~to0)
   ### Return
+  # gc()
   return(df0)
 }
 
@@ -404,6 +407,59 @@ map_nonNAValues <- function(
     na.rm  = TRUE
 ){
   df0 |> get_nonNAValues(col0=col0, fun0=fun0, na.rm=na.rm)
+}
+
+
+### Summarize over non-missing values
+get_nonNAValues <- function(
+    df0,
+    col0   = "annual_impacts",
+    fun0   = "sum",
+    na.rm  = TRUE
+){
+  ### Sum vs average
+  doSum0 <- "sum"  %in% fun0
+  doAve0 <- "mean" %in% fun0
+  fun0   <- "sum"
+  naCol  <- "check"
+  yCol0  <- col0[1]
+  yCol   <- "yVal"
+  vals0  <- df0 |> pull(all_of(col0))
+  # df0 |> glimpse(); vals0 |> length() |> print()
+  ### Add check Summarize
+  # sum0   <- c(yCol, naCol)
+  # df0    <- df0 |>
+  #   rename_at(c(col0), ~yCol) |>
+  #   mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1)) |>
+  #   summarize_at(c(sum0), .funs=c(fun0), na.rm=na.rm)
+  sum0   <- col0 |> c(naCol) |> unique()
+  df0    <- df0 |>
+    mutate(yVal = df0 |> pull(all_of(yCol0))) |>
+    mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1))
+
+  ### Summarize
+  sum0 |> print()
+  df0    <- df0 |>
+    summarize_at(c(sum0), .funs=c(fun0), na.rm=na.rm)
+  return(df0)
+
+  ### Calculate Adjustment
+  df0 <- df0 |> mutate(check = case_when(
+    check == 0 ~ NA,
+    doAve0 ~ 1 / check,
+    .default = 1
+  ))
+  ### Adjust values
+  df0[,col0] <- df0[,col0] * df0[["check"]]
+  # ### Mutate vals
+  # if(doSum0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal))
+  # if(doAve0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal / check))
+  ### Rename and drop check column
+  df0   <- df0 |>
+    # rename_at(c(yCol), ~col0) |>
+    select(-any_of(naCol))
+  ### Return
+  return(df0)
 }
 
 ### Summarize over non-missing values
@@ -424,22 +480,35 @@ get_nonNAValues <- function(
   vals0  <- df0 |> pull(all_of(col0))
   # df0 |> glimpse(); vals0 |> length() |> print()
   ### Rename value
-  # df0    <- df0 |> mutate(yVal  = vals0)
-  sum0   <- c(yCol, naCol)
+  # sum0   <- c(yCol, naCol)
+  # df0    <- df0 |>
+  #   rename_at(c(col0), ~yCol) |>
+  ### Add check and summarize
+  # df0    <- df0 |>
+  #   mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1)) |>
+  #   summarize_at(c(sum0), .funs=c(fun0), na.rm=na.rm)
+  sum0   <- col0 |> c(naCol) |> unique()
   df0    <- df0 |>
-    rename_at(c(col0), ~yCol) |>
-    mutate(check = case_when(yVal |> is.na() ~ 0, .default = 1)) |>
+    mutate(check = case_when(col0[1] |> is.na() ~ 0, .default = 1)) |>
     summarize_at(c(sum0), .funs=c(fun0), na.rm=na.rm)
 
-  ### Mutate vals
-  if(doSum0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal))
-  if(doAve0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal / check))
+  ### Calculate Adjustment
+  df0 <- df0 |> mutate(check = case_when(
+    check == 0 ~ NA,
+    doAve0 ~ 1 / check,
+    .default = 1
+  ))
+  ### Adjust values
+  df0[,col0] <- df0[,col0] * df0[["check"]]
+  # ### Mutate vals
+  # if(doSum0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal))
+  # if(doAve0) df0 <- df0 |> mutate(yVal = case_when(check == 0 ~ NA, .default = yVal / check))
   ### Rename and drop check column
   df0   <- df0 |>
-    # rename_at(c(naCol, yCol), ~col0 |> paste0(c("", naStrX)))
-    rename_at(c(yCol), ~col0) |>
+    # rename_at(c(yCol), ~col0) |>
     select(-any_of(naCol))
   ### Return
+  gc()
   return(df0)
 }
 
@@ -474,16 +543,19 @@ calc_modelAves <- function(
   ids0     <- data  |> pull(id) |> unique()
   dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
   dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
-  dfSum    <- sum0  |>
-    map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
-    set_names(sum0)
+  dfSum    <- dfSum |> get_nonNAValues(col0 = sum0, fun0=fun0, na.rm=na.rm)
+  # dfSum    <- sum0  |>
+  #   map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
+  #   set_names(sum0)
+  # dfSum    <- sum0  |> reduce(left_join, by=join0)
   ### Join data and add label
   dfSum    <- dfSum |>
-    reduce(left_join, by=join0) |>
+    # reduce(left_join, by=join0) |>
     left_join(dfKeys, by=idCol0) |>
     mutate(colVal = lbl0) |>
     rename_at(c("colVal"), ~col0)
   rm(select0, join0, ids0, dfKeys)
+  # return(dfSum)
   ### Bind data
   dataNA   <- dataNA |> ungroup() |> select(all_of(names0))
   dfSum    <- dfSum  |> ungroup() |> select(all_of(names0))
@@ -499,6 +571,7 @@ calc_modelAves <- function(
     select(-any_of(idCol0))
   rm(sort0, idCol0, col0, yrCol0)
   ### Return
+  gc()
   return(data)
 }
 
@@ -540,14 +613,16 @@ sum_national <- function(
   dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
   # dfSum    <- data  |> group_by_at(c(idCol0)) |> select(all_of(select0))
   dfSum    <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
-  dfSum    <- sum0  |>
-    map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
-    set_names(sum0)
+  dfSum    <- dfSum |> get_nonNAValues(col0 = sum0, fun0=fun0, na.rm=na.rm)
+  # dfSum    <- sum0  |>
+  #   map(map_nonNAValues, fun0=fun0, df0=dfSum, na.rm=na.rm) |>
+  #   set_names(sum0)
+  # dfSum    <- dfSum |> reduce(left_join, by=join0)
   ### Join data and keys, add labels
   # dfKeys |> glimpse()
   # return(dfSum)
   dfSum    <- dfSum |>
-    reduce(left_join, by=join0) |>
+    # reduce(left_join, by=join0) |>
     left_join(dfKeys, by=idCol0) |>
     cross_join(natLbls0)
   rm(select0, join0, ids0, dfKeys)
@@ -564,6 +639,7 @@ sum_national <- function(
     select(-any_of(idCol0))
   # data |> glimpse()
   ### Return
+  gc()
   return(data)
 }
 
@@ -605,12 +681,15 @@ sum_impType <- function(
     ids0     <- data  |> pull(id) |> unique()
     dfKeys   <- data  |> group_keys() |> mutate(id = ids0)
     data     <- data  |> group_by_at(c(join0)) |> select(all_of(select0))
-    data     <- sum0  |>
-      map(map_nonNAValues, fun0=fun0, df0=data , na.rm=na.rm) |>
-      set_names(sum0)
+    data     <- data  |> get_nonNAValues(col0 = sum0, fun0=fun0, na.rm=na.rm)
+    # return(data)
+    # data     <- sum0  |>
+    #   map(map_nonNAValues, fun0=fun0, df0=data , na.rm=na.rm) |>
+    #   set_names(sum0)
+    # data     <- data |> reduce(left_join, by=join0)
     ### Join data and add label
     data     <- data  |>
-      reduce(left_join, by=join0) |>
+      # reduce(left_join, by=join0) |>
       left_join(dfKeys, by=idCol0) |>
       mutate(colVal = lbl0) |>
       rename_at(c("colVal"), ~col0)
@@ -630,5 +709,6 @@ sum_impType <- function(
     select(-any_of(idCol0))
   rm(col0, lbl0, sort0, idCol0)
   ### Return
+  gc()
   return(data)
 }
