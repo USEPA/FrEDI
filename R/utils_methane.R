@@ -26,6 +26,7 @@ calc_ghg_mortality <- function(
   # df0 |> glimpse(); df2 |> glimpse()
   df2      <- df2 |> select(-any_of(drop0))
   df0      <- df0 |> left_join(df2, by=joinCols)
+  # df0 |> glimpse()
   rm(df2)
   ### Calculate intermediate populations
   # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
@@ -249,20 +250,25 @@ calc_ghg_mortImpacts <- function(
 ### Tibble with population and years
 ### Tibble with columns for mortality rate slope and mortality rate intercept
 calc_ghg_morbidity <- function(
-    df0
+    df0,
+    refYr0 = 2020
 ){
   ### Data
   drop1   <- c("region", "state")
-  df1     <- ghgData$stateData$df_asthmaImpacts |> select(-any_of(drop1))
+  df1     <- ghgData$stateData$df_asthmaImpacts |>
+    filter(year %in% refYr0) |>
+    select(-any_of(drop1))
   ### Join df0 and df1
-  join0   <- c("postal", "year")
+  # join0   <- c("postal", "year")
+  join0   <- c("postal")
   # join0   <- df0 |> names() |> get_matches(df1 |> names())
   df0     <- df0 |> left_join(df1, by=join0)
+  # df0 |> glimpse()
   rm(df1)
   ### Calculate intermediate populations
   # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
   # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
-  df0     <- df0 |> mutate(baseAsthmaFactor = baseAsthmaNumer, baseAsthmaDenom)
+  df0     <- df0 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
   df0     <- df0 |> mutate(agePopFactor     = ageRangePct * pop / affectedPopBase)
   df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
 

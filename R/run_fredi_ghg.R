@@ -540,24 +540,28 @@ run_fredi_ghg <- function(
   df_results <- df_results |> left_join(dfSects0, by=join0)
   rm(join0, select0, dfSects0)
   # "got here1" |> print()
+  # return(df_results)
   # df_results |> glimpse();
 
   ### Add region label
   join0      <- c("region")
   select0    <- join0 |> c("region_label")
   dfRegions0 <- ghgData$ghgData$co_regions |> select(all_of(select0))
+  # df0 |> glimpse()
   df_results <- df_results |> left_join(dfRegions0, by=join0)
   # df_results |> glimpse()
+  # return(df_results)
   rm(join0, select0, dfRegions0)
   # "got here2" |> print()
 
   ### Drop and rename
-  from0      <- c("sector", "region", "impactType", "model")
+  from0      <- c("sector", "impactType", "region", "model")
   to0        <- c(from0) |> paste0("_label")
   df_results <- df_results |>
     select(-any_of(from0)) |>
     rename_at(c(to0), ~from0)
   rm(from0, to0)
+  # return(df_results)
   # "got here3" |> print()
 
   ### Format driver values and add module
@@ -570,6 +574,7 @@ run_fredi_ghg <- function(
     mutate(driverUnit  = "pptv") |>
     relocate(any_of(move0), .before="year") |>
     mutate(module = "GHG")
+  # return(df_results)
   # df_results <- df_results |> mutate(module = "GHG") |> relocate(c("module"))
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
 
