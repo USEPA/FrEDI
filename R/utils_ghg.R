@@ -187,19 +187,26 @@ calc_ghg_mortality <- function(
     iCol0    = "rffMrate_intercept", ### Column with mortality rate intercept,
     joinCols = c("year") ### Column to join df0 and df1
 ){
-  ### Select columns
-  ### Join df0 and df1
+  ### Select columns and format data
   # join0   <- joinCols
   join0   <- c("year")
   select0 <- join0 |> c("ifRespScalar", "rffPop") |> c(sCol0, iCol0) |> unique()
+  yrs0    <- df0 |> pull(year) |> unique() |> sort()
+  # df0 |> glimpse(); df1 |> glimpse()
+  # df1     <- df1 |> select(all_of(select0))
+  df1     <- ghgData$ghgData$rff_nat_pop |>
+    filter(year %in% yrs0) |>
+    select(all_of(select0))
+
+  ### Join data with population data
   names0  <- df0 |> names()
-  df1     <- ghgData$ghgData$rff_nat_pop
-  df1     <- df1 |> select(all_of(select0))
   df0     <- df1 |>
     left_join(df0, by=join0, relationship="many-to-many") |>
     relocate(any_of(names0))
-  # df0     <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
+  # df0 |> glimpse();
   rm(df1)
+
+  ### Join df0 and df1
 
   ### Join with Rff info
   drop0    <- c("region", "state")
@@ -265,9 +272,9 @@ calc_ghg_mortality <- function(
 
 ### Function to calculate impacts
 calc_ghg_impacts <- function(
+    sector0 = "mort",
     df0, ### Tibble with population scenario and mortality
-    df1, ### Tibble with ozone concentrations
-    sector0 = "mort"
+    df1  ### Tibble with ozone concentrations
 ){
   ### Which sector
   doMort0 <- sector0 |> str_detect("mort")
@@ -307,7 +314,7 @@ calc_ghg_impacts <- function(
   # } ### End if(doMort0)
 
   ### Calculate annual impacts
-  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * econScalar)
+  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_pptv)
   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
 
   ### Return

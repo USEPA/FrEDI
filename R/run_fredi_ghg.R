@@ -222,13 +222,6 @@ run_fredi_ghg <- function(
 
 
 
-  #### Columns & Values ----------------
-  byState        <- TRUE
-  popCol0        <- c("pop")
-  stateCols0     <- c("state", "postal")
-
-
-
   ### Input Scenarios ----------------
   #### Input Info ----------------
   paste0("Checking scenarios...") |> message()
@@ -337,9 +330,15 @@ run_fredi_ghg <- function(
 
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
-    ### Min ad max years
-    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
-    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
+    ### Min and max years
+    ### - Min years
+    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){
+      df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()
+    }) |> set_names(inNames)
+    ### - Max years
+    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){
+      df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()
+    }) |> set_names(inNames)
 
     ### Check inputs
     inputsList <- list(
@@ -357,7 +356,9 @@ run_fredi_ghg <- function(
 
     ### Check again for inputs
     ### Filter to values that are not NULL
-    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){
+      !(list0[[name0]] |> is.null())
+    }) |> unlist() |> which()
     inputsList   <- inputsList[inWhich]
     inNames      <- inputsList |> names()
     rm(inWhich)
@@ -511,16 +512,16 @@ run_fredi_ghg <- function(
   #### - Calculate Mortality Rate
   #### - Calculate Excess Mortality
   dfMort0      <- df_scalars |> calc_ghg_mortality()
-  # dfMort0      <- dfMort0    |> calc_ghg_mortImpacts(df1=df_drivers)
-  dfMort0      <- dfMort0    |> calc_ghg_impacts(df1=df_drivers, sector0="mort")
+  dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers)
+  # dfMort0 |> filter(sector |> is.na()) |> glimpse()
   # dfMort0 |> glimpse()
   # return(dfMort0)
 
   #### Morbidity ----------------
   #### Calculate Mortality Rate
   dfMorb0      <- df_scalars |> calc_ghg_morbidity()
-  # dfMorb0      <- dfMorb0    |> calc_ghg_morbImpacts(df1=df_drivers)
-  dfMorb0      <- dfMorb0    |> calc_ghg_impacts(df1=df_drivers, sector0="morb")
+  dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers)
+  # dfMorb0 |> filter(sector |> is.na()) |> glimpse()
   # dfMorb0 |> glimpse()
   # return(dfMorb0)
 
@@ -590,7 +591,8 @@ run_fredi_ghg <- function(
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
 
   ### Columns
-  idCols0    <- c("module", "sector", "impactType", "region", "state", "postal", "model", "year")
+  idCols0    <- c("module", "sector", "impactType", "endpoint", "ageType", "ageRange") |>
+    c("region", "state", "postal", "model", "year")
   modCols0   <- c("driver") |> paste0(c("Type", "Unit", "Value"))
   natCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap")
   # valCols0   <- c("physicalmeasure")
