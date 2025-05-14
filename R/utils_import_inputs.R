@@ -190,9 +190,12 @@ check_regions <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
@@ -202,6 +205,7 @@ check_regions <- function(
   #co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_states <- DBI::dbReadTable(conn,"co_states")
   co_region <- DBI::dbReadTable(conn,"co_regions")
+
 
   ###### Messages ######
   msgN       <- "\n"
@@ -525,10 +529,17 @@ check_input_data <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  #dListSub0  <- doFredi |> ifelse("frediData", "package")
-  #dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
-  con <- load_frediDB()
+
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
@@ -582,7 +593,6 @@ check_input_data <- function(
   # hasData   <- !nullData & nullData |> ifelse(0, nrowData)
   hasData   <- nullData |> ifelse(0, nrowData)
   if(hasData) {msgN |> paste0(msg0_i, msg_i1) |> message()} else {return(NULL)}
-
 
 
   ###### Data Columns ######
@@ -671,7 +681,7 @@ check_input_data <- function(
       rm(nMinYrs)
     } ### End if(hasMinYr)
     if(hasMaxYr) {
-      nMaxYrs  <- inputDf |> filter(year <= yearMin) |> pull(year) |> unique() |> length()
+      nMaxYrs  <- inputDf |> filter(year >= yearMax) |> pull(year) |> unique() |> length()
       whichYrs <- whichYrs |> c(yearMax)
       rm(nMaxYrs)
     } ### End if(hasMaxYr)
@@ -681,9 +691,9 @@ check_input_data <- function(
     if(!checkYrs) {
       msg_yrs <- "Data must have at least one non-missing value "
       msg_min <- "in or before the year " |> paste0(yearMin)
-      msg_and <- (hasMinYr & hasMaxYr) |> ifelse("and at least one non-missing value ", "")
-      msg_min <- "in or after the year " |> paste0(yearMax)
-      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_min, "!") |> message()
+      msg_and <- (hasMinYr & hasMaxYr) |> ifelse(" and at least one non-missing value ", "")
+      msg_max <- "in or after the year " |> paste0(yearMax)
+      msg2_i |> paste0(msg_yrs, msg_min, msg_and, msg_max, "!") |> message()
       return(NULL)
     } ### End if(!checkYrs)
   } ### End if(hasYears)
@@ -804,9 +814,15 @@ calc_import_pop <- function(
   doMain     <- "fredi"   %in% module0
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
-  doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  doMethane  <- "ghg" %in% module0
+  dListSub0  <- doFredi |> ifelse("frediData", "ghgData")
+  dListName0 <- doFredi |> ifelse("rDataList", "ghgData")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  # doMethane  <- "methane" %in% module0
+  # dListSub0  <- doFredi |> ifelse("frediData", "package")
+  # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
