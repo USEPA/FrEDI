@@ -446,17 +446,20 @@ run_fredi_ghg <- function(
   ### Need scenario for CH4 & NOX or O3
   #has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
   #has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
-  has_o3     <-  "o3" %in% inNames1
+  has_o3     <-  "o3"  %in% inNames1
   has_ch4    <-  "ch4" %in% inNames1
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
-    ##Check Region
-    do_reg <- "region" %in% (df_drivers |> names())
-    if(do_reg){df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))}
-    ##Check State
-    df_drivers <- df_drivers |> mutate(state  = state  |> str_replace_all("\\.|_|-| ", ""))
-    df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
+    driveNames <- driveNames
+    ### Check Region
+    doReg0 <- "region" %in% driveNames
+    if(doReg0) {
+      df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+    } ### End if(doReg0)
+    ### Format model
+    # df_drivers <- df_drivers |> mutate(state  = state |> str_replace_all("\\.|_|-| ", ""))
+    df_drivers <- df_drivers |> mutate(model  = model |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
     df_drivers <- inputsList[["ch4"]] |> left_join(inputsList[["nox"]], by=join0)
@@ -467,28 +470,31 @@ run_fredi_ghg <- function(
   # df_drivers |> glimpse()
   df_drivers <- df_drivers |> format_ghg_drivers()
   # df_drivers$model |> unique() |> print()
-  # return(df_drivers)
   # df_drivers |> glimpse()
+  # return(df_drivers)
 
-  #### Socioeconomic Driver Scenario ----------------
+  #### Socioeconomic Drivers & Scalars ----------------
+  ##### Socioeconomic Driver Scenario
   ### Update values
   gdp_df       <- inputsList[["gdp"]]
   pop_df       <- inputsList[["pop"]]
   pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+  # pop_df$region |> unique() |> sort() |> print()
 
   ### Calculate national population and update national scenario
   natScenario  <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   rm(gdp_df, pop_df)
+  # natScenario$region |> unique() |> print()
   # natScenario |> glimpse()
+  # return(natScenario)
 
   ### Calculate for CONUS values
   seScenario   <- natScenario |> calc_conus_scenario()
   rm(natScenario)
-  # seScenario |> glimpse(); df_drivers |> glimpse()
-  # df_drivers$model |> unique() |> print()
-  # return()
-  # return(seScenario)
+  # seScenario$region |> unique() |> print()
+  # seScenario$state |> unique() |> print()
   # seScenario |> glimpse()
+  # return(seScenario)
 
   ### Calculate Scalars ----------------
   ### Initialized results: Join sector info and default scenario
@@ -505,16 +511,18 @@ run_fredi_ghg <- function(
   #### - Calculate Mortality Rate
   #### - Calculate Excess Mortality
   dfMort0      <- df_scalars |> calc_ghg_mortality()
-  dfMort0      <- dfMort0    |> calc_ghg_mortImpacts(df1=df_drivers)
+  # dfMort0      <- dfMort0    |> calc_ghg_mortImpacts(df1=df_drivers)
+  dfMort0      <- dfMort0    |> calc_ghg_impacts(df1=df_drivers, sector0="mort")
   # dfMort0 |> glimpse()
-  # return()
+  # return(dfMort0)
 
   #### Morbidity ----------------
   #### Calculate Mortality Rate
   dfMorb0      <- df_scalars |> calc_ghg_morbidity()
-  dfMorb0      <- dfMorb0    |> calc_ghg_morbImpacts(df1=df_drivers)
+  # dfMorb0      <- dfMorb0    |> calc_ghg_morbImpacts(df1=df_drivers)
+  dfMorb0      <- dfMorb0    |> calc_ghg_impacts(df1=df_drivers, sector0="morb")
   # dfMorb0 |> glimpse()
-  # return()
+  # return(dfMorb0)
 
   ### Format Results ----------------
   ### Add in model info
@@ -527,13 +535,17 @@ run_fredi_ghg <- function(
   # namesBoth0 |> print()
   dfMort0      <- dfMort0 |> select(all_of(namesBoth0))
   dfMorb0      <- dfMorb0 |> select(all_of(namesBoth0))
-  df_results   <- dfMort0 |> bind_rows(dfMorb0)
+  df_results   <- dfMort0 |>
+    bind_rows(dfMorb0)
   # df_results |> glimpse();
   # return()
   # return(df_results)
   rm(dfMort0, dfMorb0)
 
-  ### Add sector label
+  ### Add module
+  df_results   <- df_results |> mutate(module = "GHG", .before="sector")
+
+  ### Add module sector label
   join0      <- c("sector")
   select0    <- join0 |> c("sector_label")
   dfSects0   <- ghgData$ghgData$co_sectors |> select(all_of(select0))
@@ -572,8 +584,7 @@ run_fredi_ghg <- function(
     rename_at(c(from0), ~to0) |>
     mutate(driverType  = "Ozone Concentration") |>
     mutate(driverUnit  = "pptv") |>
-    relocate(any_of(move0), .before="year") |>
-    mutate(module = "GHG")
+    relocate(any_of(move0), .before="year")
   # return(df_results)
   # df_results <- df_results |> mutate(module = "GHG") |> relocate(c("module"))
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
@@ -594,7 +605,7 @@ run_fredi_ghg <- function(
   if(!allCols) {df_results <- df_results |> select(any_of(select0))}
 
   ### Arrange data
-  df_results <- df_results |> arrange_at(c(arrange0))
+  # df_results <- df_results |> arrange_at(c(arrange0))
 
 
   ### Return Object ----------------
