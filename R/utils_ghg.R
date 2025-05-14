@@ -1,43 +1,5 @@
-### Utility functions for the FrEDI methane module
-### Function for mortality
-# calc_mortality  <- ghgData$ghgData$coefficients[["Mortality"]][["fun0"]]
-calc_ghg_mortality <- function(
-    df0,     ### Tibble with population and years
-    # df1      = ghgData$ghgData$rff_nat_pop, ### Tibble with columns for mortality rate slope and mortality rate intercept
-    # df2      = ghgData$stateData$state_rrScalar,
-    pCol0    = "national_pop"      , ### Column with national population
-    sCol0    = "rffMrate_slope"    , ### Column with mortality rate slope,
-    iCol0    = "rffMrate_intercept", ### Column with mortality rate intercept,
-    joinCols = c("year") ### Column to join df0 and df1
-){
-  ### Select columns
-  ### Join df0 and df1
-  select0 <- c("year", "ifRespScalar", "rffPop") |> c(sCol0, iCol0)
-  # join0   <- joinCols
-  join0   <- c("year")
-  df1     <- ghgData$ghgData$rff_nat_pop
-  df1     <- df1 |> select(all_of(select0))
-  df0     <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
-  rm(df1)
-  ### Join with Rff info
-  drop0    <- c("region", "state")
-  joinCols <- c("postal")
-  df2      <- ghgData$stateData$state_rrScalar
-  # df0 |> glimpse(); df2 |> glimpse()
-  df2      <- df2 |> select(-any_of(drop0))
-  df0      <- df0 |> left_join(df2, by=joinCols)
-  # df0 |> glimpse()
-  rm(df2)
-  ### Calculate intermediate populations
-  # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
-  # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
-  df0      <- df0 |> mutate(logPop       = (!!sym(pCol0)) |> log())
-  df0      <- df0 |> mutate(rffFactor    = logPop       * !!sym(sCol0) + !!sym(iCol0))
-  df0      <- df0 |> mutate(respMrate    = rffFactor    * ifRespScalar)
-  ### Return data
-  return(df0)
-}
-
+## Driver Functions ----------------
+### Physical Driver Functions ----------------
 ### Function to calculate NOx factor
 # calc_NOx_factor <- ghgData$ghgData$coefficients[["NOx"      ]][["fun0"]]
 # slope0     = -0.49
@@ -139,7 +101,7 @@ format_ghg_drivers <- function(
 }
 
 
-
+## Socioeconomic Drivers ----------------
 
 ### Function to calculate CONUS scenario
 calc_conus_scenario <- function(
@@ -222,6 +184,47 @@ calc_ghg_scalars <- function(
   return(df0)
 }
 
+## Impact Functions ----------------
+### Mortality ----------------
+### Utility functions for the FrEDI methane module
+### Function for mortality
+# calc_mortality  <- ghgData$ghgData$coefficients[["Mortality"]][["fun0"]]
+calc_ghg_mortality <- function(
+    df0,     ### Tibble with population and years
+    # df1      = ghgData$ghgData$rff_nat_pop, ### Tibble with columns for mortality rate slope and mortality rate intercept
+    # df2      = ghgData$stateData$state_rrScalar,
+    pCol0    = "national_pop"      , ### Column with national population
+    sCol0    = "rffMrate_slope"    , ### Column with mortality rate slope,
+    iCol0    = "rffMrate_intercept", ### Column with mortality rate intercept,
+    joinCols = c("year") ### Column to join df0 and df1
+){
+  ### Select columns
+  ### Join df0 and df1
+  select0 <- c("year", "ifRespScalar", "rffPop") |> c(sCol0, iCol0)
+  # join0   <- joinCols
+  join0   <- c("year")
+  df1     <- ghgData$ghgData$rff_nat_pop
+  df1     <- df1 |> select(all_of(select0))
+  df0     <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
+  rm(df1)
+  ### Join with Rff info
+  drop0    <- c("region", "state")
+  joinCols <- c("postal")
+  df2      <- ghgData$stateData$state_rrScalar
+  # df0 |> glimpse(); df2 |> glimpse()
+  df2      <- df2 |> select(-any_of(drop0))
+  df0      <- df0 |> left_join(df2, by=joinCols)
+  # df0 |> glimpse()
+  rm(df2)
+  ### Calculate intermediate populations
+  # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
+  # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
+  df0      <- df0 |> mutate(logPop       = (!!sym(pCol0)) |> log())
+  df0      <- df0 |> mutate(rffFactor    = logPop       * !!sym(sCol0) + !!sym(iCol0))
+  df0      <- df0 |> mutate(respMrate    = rffFactor    * ifRespScalar)
+  ### Return data
+  return(df0)
+}
 
 ### Function to calculate impacts
 calc_ghg_mortImpacts <- function(
@@ -246,7 +249,7 @@ calc_ghg_mortImpacts <- function(
 
 
 
-
+### Morbidity ----------------
 ### Tibble with population and years
 ### Tibble with columns for mortality rate slope and mortality rate intercept
 calc_ghg_morbidity <- function(
