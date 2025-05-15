@@ -536,18 +536,26 @@ run_fredi_ghg <- function(
   namesMort0   <- dfMort0 |> names()
   namesMorb0   <- dfMorb0 |> names()
   namesBoth0   <- namesMort0 |> get_matches(namesMorb0)
+  ### Add NAs to missing columns
+  naMort0      <- namesMort0 |> get_matches(namesBoth0, matches=F)
+  naMorb0      <- namesMorb0 |> get_matches(namesBoth0, matches=F)
+  # naMort0 |> print(); naMorb0 |> print()
+  dfMort0[,naMorb0] <- NA
+  dfMorb0[,naMort0] <- NA
   # namesBoth0 |> print()
+  namesMort0   <- dfMort0 |> names()
+  namesMorb0   <- dfMorb0 |> names()
+  namesBoth0   <- namesMort0 |> get_matches(namesMorb0)
   dfMort0      <- dfMort0 |> select(all_of(namesBoth0))
   dfMorb0      <- dfMorb0 |> select(all_of(namesBoth0))
-  df_results   <- dfMort0 |>
-    bind_rows(dfMorb0)
+  df_results   <- dfMort0 |> bind_rows(dfMorb0)
   # df_results |> glimpse();
   # return()
   # return(df_results)
   rm(dfMort0, dfMorb0)
 
   ### Add module
-  df_results   <- df_results |> mutate(module = "GHG", .before="sector")
+  df_results   <- df_results |> mutate(module="GHG", .before="sector")
 
   ### Add module sector label
   join0      <- c("sector")

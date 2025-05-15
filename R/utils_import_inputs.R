@@ -362,7 +362,8 @@ check_regions <- function(
     msgCols <- namesCheck |> str_replace("_label", "") |> paste0("s") |> paste(collapse=", ")
     # msgCols |> print()
     msgPop  <- paste0(msg_i1, msgCols, "...")
-    msgN |> paste0(msg0_i, msgPop) |> message()
+    # msgN |> paste0(msg0_i, msgPop) |> message()
+    paste0(msg0_i, msgPop) |> message()
 
     ### Get unique values for data, then join with state info
     ### Drop missing values
@@ -896,7 +897,7 @@ check_input_data <- function(
 
 
   ###### Return ######
-  paste0(msg0_i, "Values passed.") |> message()
+  paste0(msg1_i, "Values passed.") |> message()
   return(inputDf)
 }
 
@@ -1127,8 +1128,11 @@ calc_import_pop <- function(
   if(doFredi) df0 <- df0 |> filter(us_area %in% "conus")
 
   ### Select columns
+  drop0    <- c("region")
   select0  <- c("region", "state", "postal", "year", "pop")
   df0      <- df0 |>
+    select(-any_of(drop0)) |>
+    rename_at(c(drop0 |> paste0("_label")), ~drop0) |>
     select(all_of(select0)) |>
     arrange_at(c(select0))
   # if(popPass) {
