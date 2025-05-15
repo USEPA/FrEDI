@@ -49,20 +49,15 @@ calc_o3_conc <- function(
 
 
 ### Format methane drivers
+ghgData$stateData$state_o3 |> glimpse()
 format_ghg_drivers <- function(
     df0 ### Tibble with scenarios
 ){
-
   ### Load and format O3 data
-  # sumCols0 <- c("state_o3response_pptv_per_ppbv", "state_mortScalar")
-  # select0  <- c("region", "state") |> c(sumCols0) |> unique()
-  # df1      <- ghgData$stateData$state_rrScalar
-  # df1      <- df1 |> select(all_of(select0))
   idCols0  <- c("region", "state", "postal", "model")
   sumCols0 <- c("state_o3response_pptv_per_ppbv")
   select0  <- idCols0 |> c(sumCols0) |> unique()
-  df1      <- ghgData$stateData$state_o3
-  df1      <- df1 |> select(all_of(select0))
+  df1      <- ghgData$stateData$state_o3 |> select(all_of(select0))
   # df1 |> glimpse(); df0 |> glimpse()
 
   ### Join data
@@ -78,7 +73,6 @@ format_ghg_drivers <- function(
   ### Calculate O3 if methane and nox present
   ch4Str0  <- "CH4_ppbv" |> tolower()
   do_o3    <- names0 |> tolower() |> str_detect(ch4Str0) |> any()
-  # do_o3    <- names0 |> tolower() |> get_matches(y=ch4Str0) |> length()
   if(do_o3) df0 <- df0 |> calc_o3_conc()
   # df0 |> glimpse()
 
@@ -104,7 +98,9 @@ calc_conus_scenario <- function(
   filter0 <- c("AK", "HI")
   group0  <- c("year")
   df1     <- df0 |> filter(!postal %in% filter0)
-  df1     <- df1 |> group_by_at(c(group0)) |> summarize(conus_pop = pop |> sum(na.rm=T), .groups="drop")
+  df1     <- df1 |>
+    group_by_at(c(group0)) |>
+    summarize(conus_pop = pop |> sum(na.rm=T), .groups="drop")
   ### Join data
   join0   <- df0 |> names() |> get_matches(y=df1 |> names())
   df0     <- df0 |> left_join(df1, by=join0)
@@ -112,7 +108,7 @@ calc_conus_scenario <- function(
   ### Calculate new gdp_percap
   df0     <- df0 |> mutate(gdp_percap_conus = gdp_usd / conus_pop)
   ### Reorganize values
-  move0   <- c("region", "state", "postal") |> c("year")
+  move0   <- c("region", "state", "postal", "year")
   df0     <- df0 |> relocate(all_of(move0))
   df0     <- df0 |> arrange_at(c(move0))
   ### Return
@@ -134,14 +130,13 @@ calc_ghg_scalars <- function(
   ### - Get distinct values
   ### - Adjust econMultiplierName from "gdp_percap" to "gdp_percap_conus"
   select0   <- c("econScalarName", "econMultiplierName", "c0", "c1", "exp0", "year0")
-  # df1       <- df1 |> filter(econScalarName %in% scalar0)
   df1       <- df1 |> select(all_of(select0)) |> distinct()
   df1       <- df1 |> mutate(econMultiplierName = mult0)
 
   ### Add econScalarName
   ### Join with df0
-  join0     <- c("econScalarName")
   # df0 |> glimpse(); df1 |> glimpse()
+  join0     <- c("econScalarName")
   df0       <- df0 |> mutate(econScalarName=scalar0)
   df0       <- df0 |> left_join(df1, by=join0)
 
@@ -162,9 +157,9 @@ calc_ghg_scalars <- function(
 
   ### Economic adjustments (following FrEDI)
   df0     <- df0 |> mutate(econMultiplierValue = !!sym(mult0))
-  df0     <- df0 |> mutate(econAdjValue        = adj0)
-  df0     <- df0 |> mutate(econMultiplier      = (econMultiplierValue / econAdjValue)**exp0 )
-  df0     <- df0 |> mutate(econScalar          = c0 + c1 * econScalarValue * econMultiplier)
+  df0     <- df0 |> mutate(econAdjValue   = adj0)
+  df0     <- df0 |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
+  df0     <- df0 |> mutate(econScalar     = c0 + c1 * econScalarValue * econMultiplier)
 
   ### Reorganize values
   move0   <- c("region", "state", "postal", "year")
@@ -176,100 +171,110 @@ calc_ghg_scalars <- function(
 }
 
 ## Impact Functions ----------------
-### Mortality ----------------
+### Scaled Impacts ----------------
 ### Utility functions for the FrEDI methane module
 ### Function for mortality
 # calc_mortality  <- ghgData$ghgData$coefficients[["Mortality"]][["fun0"]]
+
+# # ghgData$ghgData$mortBasePopState |> glimpse()
+# ghgData$ghgData$natMRateInfo |> glimpse()
+# ghgData$stateData$state_rrScalar |> glimpse()
+# ghgData$stateData$baseMortState |> glimpse()
+
+
 calc_ghg_mortality <- function(
-    df0,     ### Tibble with population and years
-    pCol0    = "national_pop"      , ### Column with national population
-    sCol0    = "rffMrate_slope"    , ### Column with mortality rate slope,
-    iCol0    = "rffMrate_intercept", ### Column with mortality rate intercept,
-    joinCols = c("year") ### Column to join df0 and df1
+    df0,  ### Tibble with population and years
+    pCol0 = "national_pop"      , ### Column with national population
+    sCol0 = "rffMrate_slope"    , ### Column with mortality rate slope,
+    iCol0 = "rffMrate_intercept"  ### Column with mortality rate intercept,
 ){
-  ### Select columns and format data
-  # join0   <- joinCols
-  join0   <- c("year")
-  select0 <- join0 |> c("ifRespScalar", "rffPop") |> c(sCol0, iCol0) |> unique()
+  ### Get years info
   yrs0    <- df0 |> pull(year) |> unique() |> sort()
-  # df0 |> glimpse(); df1 |> glimpse()
-  # df1     <- df1 |> select(all_of(select0))
-  df1     <- ghgData$ghgData$rff_nat_pop |>
-    filter(year %in% yrs0) |>
-    select(all_of(select0))
+  dfYrs0  <- tibble(year = yrs0)
+
+  ### Select columns and format annual national RFF info
+  ### Join with dfYrs
+  # ghgData$ghgData$rff_nat_pop |> glimpse()
+  yrCol0  <- "year"
+  join0   <- yrCol0
+  select0 <- join0 |> c("ifRespScalar", "rffPop") |> c(sCol0, iCol0) |> unique()
+  df1     <- ghgData$ghgData$natMRateInfo |> select(all_of(select0))
+  dfJoin0 <- dfYrs0 |> left_join(df1, by=join0)
+  rm(join0, select0, df1)
+  # dfJoin0 |> glimpse()
+
+  ### Cross join constant state RFF scalar info with national RFF info
+  drop0   <- c("StateMortRatio", "baseMrateState")
+  df2     <- ghgData$stateData$state_rrScalar |> select(-any_of(drop0))
+  dfJoin0 <- df2 |> cross_join(dfJoin0)
+  rm(drop0, df2)
+  # dfJoin0 |> glimpse()
+
+  ### Join with baseline_state_mortality info by year
+  join0   <- c("fips") |> c(yrCol0)
+  select0 <- join0 |> c("StateMortRatio", "baseMrateState")
+  df3     <- ghgData$stateData$baseMortState |> select(all_of(select0))
+  dfJoin0 <- dfJoin0 |> left_join(df3, by=join0)
+  rm(join0, select0, df3)
+  # dfJoin0 |> glimpse()
 
   ### Join data with population data
-  names0  <- df0 |> names()
-  df0     <- df1 |>
-    left_join(df0, by=join0, relationship="many-to-many") |>
-    relocate(any_of(names0))
-  # df0 |> glimpse();
-  rm(df1)
-
-  ### Join df0 and df1
-
-  ### Join with Rff info
-  drop0    <- c("region", "state")
-  joinCols <- c("postal")
-  df2      <- ghgData$stateData$state_rrScalar
-  # df0 |> glimpse(); df2 |> glimpse()
-  df2      <- df2 |> select(-any_of(drop0))
-  df0      <- df0 |> left_join(df2, by=joinCols)
-  # df0 |> glimpse()
-  rm(df2)
+  # relationship="many-to-many"
+  drop0   <- c("region", "state", "fips")
+  join0   <- c("postal") |> c(yrCol0)
+  df0     <- df0     |> select(-any_of(drop0))
+  df0     <- dfJoin0 |> left_join(df0, by=join0)
+  df0 |> glimpse();
+  rm(drop0, join0)
 
   ### Calculate intermediate populations
-  # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
-  # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
-  df0      <- df0 |> mutate(logPop         = (!!sym(pCol0)) |> log())
-  df0      <- df0 |> mutate(rffFactor      = logPop       * !!sym(sCol0) + !!sym(iCol0))
-  df0      <- df0 |> mutate(respMrate      = rffFactor    * ifRespScalar)
-  df0      <- df0 |> mutate(scaled_impacts = pop * respMrate * state_mortScalar)
+  df0     <- df0 |>
+    mutate(logPop         = (!!sym(pCol0)) |> log()) |>
+    mutate(rffFactor      = logPop       * !!sym(sCol0) + !!sym(iCol0)) |>
+    mutate(respMrateNat   = rffFactor    * ifRespScalar) |>
+    mutate(respMrateState = respMrateNat * StateMortRatio * state_mortScalar) |>
+    mutate(scaled_impacts = pop * respMrateState)
 
   ### Return data
   return(df0)
 }
 
-# ### Function to calculate impacts
-# calc_ghg_mortImpacts <- function(
-#     df0, ### Tibble with population scenario and mortality
-#     df1  ### Tibble with ozone concentrations
-# ){
-#   ### Drop columns
-#   df1 |> glimpse()
-#   drop1   <- c("region", "state", "model_str")
-#   df1     <- df1 |> select(-any_of(drop1))
-#
-#   ### Join data with drivers
-#   df0 |> glimpse(); df1 |> glimpse()
-#   names0  <- df0 |> names()
-#   names1  <- df1 |> names()
-#   join0   <- names0 |> get_matches(y=names1)
-#   df0     <- df0 |> left_join(df1, by=join0)
-#   rm(df1)
-#
-#   ### Reorganize values
-#   names0  <- df0 |> names()
-#   move0   <- c(
-#     "sector", "impactType_label", "impactType", "endpoint", "ageRange", "ageType",
-#     "us_area", "region", "state", "postal", "fips", "model", "model_label", "year"
-#   ) ### End c()
-#   sort0   <- c(
-#     "sector", "impactType_label", "impactType", "endpoint", "ageType",
-#     "fips", "region", "state", "model_label", "model", "year"
-#   ) |> get_matches(names0) ### End c()
-#   df0     <- df0 |> relocate(any_of(move0))
-#   df0     <- df0 |> arrange_at(c(move0))
-#
-#   ### Calculate excess mortality
-#   ### Calculate annual impacts
-#   df0     <- df0 |> mutate(physical_impacts = pop * respMrate * state_mortScalar * O3_pptv)
-#   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
-#
-#   ### Return
-#   return(df0)
-# }
 
+### Tibble with population and years
+### Tibble with columns for mortality rate slope and mortality rate intercept
+calc_ghg_morbidity <- function(
+    df0,
+    refYr0 = 2020
+){
+  ### Data
+  # drop1   <- c("region", "state")
+  drop1   <- c("region", "state", "model_str", "year")
+  df1     <- ghgData$stateData$df_asthmaImpacts
+  df1     <- df1 |>
+    filter(year %in% refYr0) |>
+    select(-any_of(drop1))
+
+  ### Join df0 and df1
+  # df0 |> glimpse(); df1 |> glimpse()
+  # join0   <- c("postal", "year")
+  join0   <- c("postal")
+  # join0   <- df0 |> names() |> get_matches(df1 |> names())
+  df0     <- df0 |> left_join(df1, by=join0)
+  # df0 |> glimpse()
+  rm(df1)
+
+  ### Calculate intermediate populations
+  df0     <- df0 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
+  df0     <- df0 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
+  df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
+  df0     <- df0 |> mutate(scaled_impacts   = pop * asthmaMrate)
+
+  ### Return data
+  return(df0)
+}
+
+
+### Physical and Total ----------------
 ### Function to calculate impacts
 calc_ghg_impacts <- function(
     sector0 = "mort",
@@ -306,13 +311,6 @@ calc_ghg_impacts <- function(
   df0     <- df0 |> relocate(any_of(move0))
   df0     <- df0 |> arrange_at(c(move0))
 
-  # ### Calculate physical impacts: excess mortality or morbidity
-  # if(doMort0) {
-  #   df0 <- df0 |> mutate(physical_impacts = pop * respMrate * state_mortScalar * O3_pptv)
-  # } else if(doMorb0) {
-  #   df0 <- df0 |> mutate(physical_impacts = asthmaMrate * O3_pptv)
-  # } ### End if(doMort0)
-
   ### Calculate annual impacts
   df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_pptv)
   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
@@ -320,72 +318,3 @@ calc_ghg_impacts <- function(
   ### Return
   return(df0)
 }
-
-
-
-
-
-### Morbidity ----------------
-### Tibble with population and years
-### Tibble with columns for mortality rate slope and mortality rate intercept
-calc_ghg_morbidity <- function(
-    df0,
-    refYr0 = 2020
-){
-  ### Data
-  # drop1   <- c("region", "state")
-  drop1   <- c("region", "state", "model_str", "year")
-  df1     <- ghgData$stateData$df_asthmaImpacts
-  df1     <- df1 |>
-    filter(year %in% refYr0) |>
-    select(-any_of(drop1))
-
-  ### Join df0 and df1
-  # df0 |> glimpse(); df1 |> glimpse()
-  # join0   <- c("postal", "year")
-  join0   <- c("postal")
-  # join0   <- df0 |> names() |> get_matches(df1 |> names())
-  df0     <- df0 |> left_join(df1, by=join0)
-  # df0 |> glimpse()
-  rm(df1)
-
-  ### Calculate intermediate populations
-  # df0     <- df0 |> mutate(delta_rffPop = !!sym(pCol0) - rffPop)
-  # df0     <- df0 |> mutate(rffFactor    = delta_rffPop * !!sym(sCol0) + !!sym(iCol0))
-  df0     <- df0 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
-  df0     <- df0 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
-  df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
-  df0     <- df0 |> mutate(scaled_impacts   = pop * asthmaMrate)
-
-  ### Return data
-  return(df0)
-}
-
-# calc_ghg_morbImpacts <- function(
-#     df0, ### Tibble with population scenario and mortality
-#     df1 ### Tibble with ozone concentrations
-# ){
-#   ### Data
-#   drop1   <- c("region", "state", "model_label", "model_str")
-#   df1     <- df1 |> select(-any_of(drop1))
-#   ### Join data with drivers
-#   # df0 |> glimpse(); df1 |> glimpse()
-#   # join0   <- c("postal", "model", "year")
-#   join0   <- df0 |> names() |> get_matches(y=df1 |> names())
-#   df0     <- df0 |> left_join(df1, by=join0)
-#   rm(df1)
-#   move0   <- c(
-#     "sector", "impactType", "impactType_label", "endpoint", "ageType", "ageRange",
-#     "us_area", "region", "state", "postal", "fips", "model", "model_label", "year"
-#   ) ### End c()
-#   ### Reorganize values
-#   # move0   <- c("region", "state", "postal", "fips", "model", "year")
-#   df0     <- df0 |> relocate(any_of(move0))
-#   df0     <- df0 |> arrange_at(c(move0))
-#   ### Calculate excess mortality
-#   df0     <- df0 |> mutate(physical_impacts = asthmaMrate * O3_pptv)
-#   ### Calculate annual impacts
-#   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
-#   ### Return
-#   return(df0)
-# }
