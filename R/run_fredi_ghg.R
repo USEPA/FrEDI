@@ -155,12 +155,21 @@ run_fredi_ghg <- function(
   # silent     = TRUE   ### Whether to message the user
   # msgUser   <- !silent
 
+  ### Load Database
+  conn <-  load_frediDB()
 
   #### Load Data ----------------
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
-  fredi_config <- rDataList[["fredi_config"]]
+  #fredi_config <- rDataList[["fredi_config"]]
+
+  fredi_config    <- DBI::dbReadTable(conn,"fredi_config")
+  fredi_config    <- unserialize(fredi_config$value |> unlist())
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
+
+  ### Get GHG Data from database
+  ghgData    <- DBI::dbReadTable(conn,"ghgData")
+  ghgData    <- unserialize(ghgData$value |> unlist())
 
   ### Coefficients
   minYear0  <- ghgData[["ghgData"]][["coefficients"]][["minYear0"]]

@@ -173,7 +173,10 @@ calc_ghg_scalars <- function(
     scalar0    = "vsl_usd",
     mult0      = "gdp_percap_conus",
     adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
-    df1        = rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0),
+    #df1        = rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0),
+    #df2        = rDataList$stateData$df_scalars |> filter(scalarName %in% scalar0),
+    #elasticity = rDataList$fredi_config$elasticity0
+    df1        = dbReadTable() |> filter(econScalarName %in% scalar0),
     df2        = rDataList$stateData$df_scalars |> filter(scalarName %in% scalar0),
     elasticity = rDataList$fredi_config$elasticity0
 ){
