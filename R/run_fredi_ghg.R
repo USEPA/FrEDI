@@ -345,12 +345,15 @@ run_fredi_ghg <- function(
       inputName = inNames,
       inputDf   = inputsList[inNames],
       idCol     = idCols0   [inNames],
+      # valCol    = valCols0  [inNames]
       valCol    = valCols0  [inNames],
       yearMin   = minYrs0,
-      yearMax   = maxYrs0,
-      module    = "methane" |> rep(inNames |> length())
+      yearMax   = maxYrs0
+      # yearMax   = maxYrs0,
+      # module    = "methane" |> rep(inNames |> length())
+      # module    = "ghg" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data) |>
+      pmap(check_input_data, popArea="state", module="ghg") |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 
@@ -607,6 +610,7 @@ run_fredi_ghg <- function(
   if(!allCols) {df_results <- df_results |> select(any_of(select0))}
 
   ### Arrange data
+  df_results <- df_results |> relocate(any_of(select0))
   # df_results <- df_results |> arrange_at(c(arrange0))
 
 

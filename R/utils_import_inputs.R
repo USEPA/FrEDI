@@ -12,25 +12,75 @@ get_msg_prefix <- function(
 
 ###### get_import_inputs_idCols ######
 ### Info about which column contains info on region
+# get_import_inputs_idCols <- function(
+#     type0   = "gdp", ### gdp, pop, temp, slr, ch4, nox, o3
+#     # type0   = c("gdp", "pop", "temp", "slr"),
+#     popArea = "state" ### One of: c("state", "regional", "area", "national")
+# ){
+#   ### Values
+#   type0     <- type0 |> tolower()
+#   popArea   <- popArea |> tolower()
+#   ### Initialize vectors
+#   cols0     <- c("year")
+#   cols1     <- c()
+#   ### Check if population or ozone
+#   doPop0    <- "pop" %in% type0
+#   doO3      <- "o3"  %in% type0
+#   doState0  <- "state" %in% popArea
+#   doReg0    <- "regional" %in% popArea
+#   ### Which columns to add
+#   addReg0   <- doPop0 & doReg0
+#   addState0 <- (doPop0 & doState0) | doO3
+#   addModel0 <- doO3
+#   ### Add columns
+#   if(addReg0  ) cols1 <- cols1 |> c("region") |> unique()
+#   if(addState0) cols1 <- cols1 |> c("state" ) |> unique()
+#   if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
+#   # if(doPop0 & (doState0 | doReg0)) {
+#   #   cols1 <- doState0 |> ifelse("state", "region")
+#   # } else if(doO3) {
+#   #   cols1 <- c("state", "model")
+#   # } ### End if(doPop0)
+#   ### Update list
+#   cols0   <- cols1 |> c(cols0) |> unique()
+#   ### Return
+#   return(cols0)
+# }
+
+
+
+### Info about which column contains info on region
 get_import_inputs_idCols <- function(
-    type0  = c("gdp", "pop", "temp", "slr"),
+    type0   = "gdp", ### gdp, pop, temp, slr, ch4, nox, o3
+    # type0   = c("gdp", "pop", "temp", "slr"),
     popArea = "state" ### One of: c("state", "regional", "area", "national")
 ){
+  ### Values
+  type0     <- type0 |> tolower()
+  popArea   <- popArea |> tolower()
   ### Initialize vectors
-  cols0  <- c("year")
-  cols1  <- c()
+  cols0     <- c("year")
+  cols1     <- c()
   ### Check if population or ozone
-  doPop0   <- "pop" %in% type0
-  doO3     <- "o3"  %in% type0
-  doState0 <- c("state") %in% c(popArea)
-  doReg0   <- c("regional") %in% c(popArea)
-  if(doPop0 & (doState0 | doReg0)) {
-    cols1 <- doState0 |> ifelse("state", "region")
-  } else if(doO3) {
-    cols1 <- c("state", "model")
-  } ### End if(doPop0)
+  doPop0    <- "pop" %in% type0
+  doO3      <- "o3"  %in% type0
+  doState0  <- "state" %in% popArea
+  doReg0    <- "regional" %in% popArea
+  ### Which columns to add
+  addReg0   <- doPop0 & doReg0
+  addState0 <- (doPop0 & doState0) | doO3
+  addModel0 <- doO3
+  ### Add columns
+  if(addReg0  ) cols1 <- cols1 |> c("region") |> unique()
+  if(addState0) cols1 <- cols1 |> c("state" ) |> unique()
+  if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
+  # if(doPop0 & (doState0 | doReg0)) {
+  #   cols1 <- doState0 |> ifelse("state", "region")
+  # } else if(doO3) {
+  #   cols1 <- c("state", "model")
+  # } ### End if(doPop0)
   ### Update list
-  cols0   <- cols1 |> c(cols0)
+  cols0   <- cols1 |> c(cols0) |> unique()
   ### Return
   return(cols0)
 }
@@ -176,10 +226,11 @@ check_inputs <- function(
 }
 
 
-###### check_pop_regions ######
+###### check_regions ######
 ### Check that all regions, states, present in data
 check_regions <- function(
     df0,                ### Tibble with population info
+    popArea  = "state", ### Pop area
     module   = "fredi", #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
 ){
@@ -196,12 +247,45 @@ check_regions <- function(
   # dListSub0  <- doFredi |> ifelse("frediData", "package")
   # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
+  ### Other values
+  popArea    <- popArea |> tolower()
+  doNat0     <- "national" %in% popArea
+  doConus0   <- "conus"    %in% popArea
+  doReg0     <- "region"   %in% popArea
+  doState0   <- "state"    %in% popArea
+
+  ### Names
+  names0     <- df0 |> names()
+  hasState0  <- "state"  %in% names0
+  hasReg0    <- "region" %in% names0
+  ### Drop region if state, otherwise format region
+  if(hasState0) {
+    drop0 <- c("us_area", "area", "region")
+    df0   <- df0 |> select(-any_of(drop0))
+    rm(drop0)
+  } else if(hasReg0) {
+    df0 <- df0 |>
+      filter(!(region |> tolower() |> str_detect("nation"))) |>
+      rename_at(c("region"), ~c("region_label")) |>
+      mutate(region = region_label |> str_replace_all("\\.|\\_| ", ""))
+  } ### End if(hasReg0)
+
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
-  co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+  co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+
+  ### Join regions and states and filter to appropriate values
+  join0     <- c("us_area", "region")
+  select0   <- c("region", "region_label")
+  co_states <- co_states |> left_join(co_region, by=join0)
+  if(doConus0) co_states <- co_states |> filter(us_area |> tolower() |> str_detect("conus"))
+  co_region <- co_states |> select(all_of(select0)) |> distinct()
+  rm(join0, select0)
 
   ###### Messages ######
   msgN       <- "\n"
@@ -218,53 +302,54 @@ check_regions <- function(
 
   ### Join states, regions
   ### Drop region from states, rename region_label
-  join0     <- c("region")
-  drop0     <- c("area", "us_area", "fips")
-  if(doFredi) {
-    renameAt0 <- c("region_id")
-    renameTo0 <- c("region"   )
-  } else {
-    renameAt0 <- c()
-    renameTo0 <- c()
-  } ### End if(doFredi)
-  co_region <- co_region |> rename_at(c(renameAt0), ~renameTo0)
-  co_region <- co_region |> select(-any_of(drop0))
-  co_states <- co_states |> select(-any_of(drop0))
-  co_states <- co_states |> left_join(co_region, by=join0)
-  rm(join0, renameAt0, renameTo0)
-  ### Drop region, rename region label
-  renameTo0 <- c("region")
-  renameAt0 <- c(renameTo0)  |> paste0("_label")
-  drop0     <- c(renameTo0)
-  co_states <- co_states |> select(-any_of(drop0))
-  co_states <- co_states |> rename_at(c(renameAt0), ~renameTo0)
-  # co_states$region |> unique() |> print()
-  rm(drop0, renameAt0, renameTo0)
-
-  ### Check if region is in data and, if so, standardize region
-  doRegion <- "region" %in% (df0 |> names())
-  if(doRegion) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
+  # join0     <- c("region")
+  # drop0     <- c("area", "us_area", "fips")
+  # if(doFredi) {
+  #   renameAt0 <- c("region_id")
+  #   renameTo0 <- c("region"   )
+  # } else {
+  #   renameAt0 <- c()
+  #   renameTo0 <- c()
+  # } ### End if(doFredi)
+  # co_region <- co_region |> rename_at(c(renameAt0), ~renameTo0)
+  # co_region <- co_region |> select(-any_of(drop0))
+  # co_states <- co_states |> select(-any_of(drop0))
+  # co_states <- co_states |> left_join(co_region, by=join0)
+  # rm(join0, renameAt0, renameTo0)
+  # ### Drop region, rename region label
+  # renameTo0 <- c("region")
+  # renameAt0 <- c(renameTo0)  |> paste0("_label")
+  # drop0     <- c(renameTo0)
+  # co_states <- co_states |> select(-any_of(drop0))
+  # co_states <- co_states |> rename_at(c(renameAt0), ~renameTo0)
+  # # co_states$region |> unique() |> print()
+  # rm(drop0, renameAt0, renameTo0)
+  #
+  # ### Check if region is in data and, if so, standardize region
+  # doRegion <- "region" %in% (df0 |> names())
+  # if(doRegion) df0 <- df0 |> mutate(region = region |> str_replace_all("_|\\.", " "))
 
   ### Join data with region info, then check for columns, regions
   move0    <- c("region", "state", "postal")
-  join0    <- df0       |> names() |> get_matches(y=co_states |> names())
+  join0    <- df0 |> names() |> get_matches(y=co_states |> names())
   # df0 |> glimpse(); co_states |> glimpse()
-  df0      <- co_states |> left_join(df0, by=c(join0))
-  df0      <- df0       |> relocate(all_of(move0))
-  df0      <- df0       |> filter_all(all_vars(!(. |> is.na())))
+  df0      <- co_states |>
+    left_join(df0, by=join0) |>
+    relocate(any_of(move0)) |>
+    filter_all(all_vars(!(. |> is.na())))
   rm(move0, join0)
 
   ###### Check Data ######
   ### Check that there is data
   nullData   <- df0 |> is.null()
   nrowData   <- df0 |> nrow()
-  hasData    <- !nullData & nullData |> ifelse(0, nrowData)
-
+  hasData    <- !nullData & (nullData |> ifelse(0, nrowData))
 
   ### Check whether data has regions, states to check
   namesState <- co_states |> names()
   namesPop   <- df0       |> names()
-  namesCheck <- c("region", "state") |> get_matches(y=namesPop)
+  namesCheck <- c("region_label", "state") |> get_matches(y=namesPop)
+  # namesCheck <- c("region", "state") |> get_matches(y=namesPop)
   hasCols    <- namesCheck |> length()
 
   ### Check whether population data present and regions, states present
@@ -274,39 +359,66 @@ check_regions <- function(
   ### Check columns if region or state is present
   if(doCheck) {
     ### Message user
-    msgPop  <- paste0(msg_i1, namesCheck |> paste0("s") |> paste(collapse=", "), "...")
+    msgCols <- namesCheck |> str_replace("_label", "") |> paste0("s") |> paste(collapse=", ")
+    # msgCols |> print()
+    msgPop  <- paste0(msg_i1, msgCols, "...")
     msgN |> paste0(msg0_i, msgPop) |> message()
 
     ### Get unique values for data, then join with state info
     ### Drop missing values
     join0   <- namesState |> get_matches(y=namesPop)
     dfCheck <- df0     |> select(all_of(join0)) |> unique()
-    dfCheck <- dfCheck |> left_join(co_states, by=c(join0), relationship="many-to-many")
+    dfCheck <- dfCheck |> left_join(co_states, by=join0, relationship="many-to-many")
+    # dfCheck <- dfCheck |> filter_all(all_vars((. |> is.na())))
     dfCheck <- dfCheck |> filter_all(all_vars(!(. |> is.na())))
 
     ### Iterate over columns
-    for(col_i in namesCheck) {
+    dfCheck <- namesCheck |> map(function(col_i) {
       ### Unique ref values
       ### Unique data values
       ### Missing reference values
       refVals  <- co_states |> pull(all_of(col_i)) |> unique()
       newVals  <- dfCheck   |> pull(all_of(col_i)) |> unique()
       naVals   <- refVals   |> get_matches(y=newVals, matches=F)
+      numNa    <- naVals    |> length()
       passVals <- (naVals |> length()) == 0
       # naVals |> print()
 
       ### Message
-      if(passVals) {
-        msgVals <- paste0("All ", col_i, "s present...")
-        msg1_i |> paste0(msgVals) |> message()
-      } else{
-        msgVals <- paste0(msg_i2, col_i, "(s): ") |> paste0(naVals |> paste(collapse=", "))
+      msgCol   <- col_i |> str_replace("_label", "")
+      if(numNa) {
+        msgVals <- paste0(msg_i2, msgCol, "(s): ") |> paste0(naVals |> paste(collapse=", "))
         msg1_i |> paste0(msgVals) |> message()
         msg1_i |> paste0(msg_i3) |> message()
         return(NULL)
-      } ### End if(passVals)
-    } ### End for(col_i in namesCheck)
-  } ### End if(hasPop)
+      } else {
+        msgVals <- paste0("All ", msgCol, "(s) present...")
+        msg1_i |> paste0(msgVals) |> message()
+      } ### End if(numNa)
+    }) ### End for(col_i in namesCheck)
+    # ### Iterate over columns
+    # for(col_i in namesCheck) {
+    #   ### Unique ref values
+    #   ### Unique data values
+    #   ### Missing reference values
+    #   refVals  <- co_states |> pull(all_of(col_i)) |> unique()
+    #   newVals  <- dfCheck   |> pull(all_of(col_i)) |> unique()
+    #   naVals   <- refVals   |> get_matches(y=newVals, matches=F)
+    #   passVals <- (naVals |> length()) == 0
+    #   # naVals |> print()
+    #
+    #   ### Message
+    #   if(passVals) {
+    #     msgVals <- paste0("All ", col_i, "s present...")
+    #     msg1_i |> paste0(msgVals) |> message()
+    #   } else{
+    #     msgVals <- paste0(msg_i2, col_i, "(s): ") |> paste0(naVals |> paste(collapse=", "))
+    #     msg1_i |> paste0(msgVals) |> message()
+    #     msg1_i |> paste0(msg_i3) |> message()
+    #     return(NULL)
+    #   } ### End if(passVals)
+    # } ### End for(col_i in namesCheck)
+  } ### End if(doCheck)
 
   ###### Return ######
   return(df0)
@@ -517,6 +629,7 @@ check_input_data <- function(
     module    = "fredi",  #### "fredi", "sv", or "methane"
     msgLevel  = 2         ### Level of messaging
 ){
+  # "got here" |> print()
   # inputDf |> glimpse()
 
   ###### Module Options ######
@@ -534,6 +647,10 @@ check_input_data <- function(
   # doMethane  <- "methane" %in% module0
   # dListSub0  <- doFredi |> ifelse("frediData", "package")
   # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+
+  ### Other values
+  tempType  <- tempType |> tolower()
+  popArea   <- popArea  |> tolower()
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
@@ -589,7 +706,7 @@ check_input_data <- function(
 
   ###### Data Columns ######
   ### Get value column and id column
-  if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
+  # if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
   if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols (popArea=popArea)[[inputName]]
 
 
@@ -737,13 +854,21 @@ check_input_data <- function(
 
   ###### Check Regions ######
   if(doPop | doO3) {
-    msg_reg <- paste0("Checking that all states, etc. are present...")
-    paste0(msg1_i, msg_reg) |> message()
-    inputDf  <- inputDf   |> check_regions(module=module, msgLevel=msgLevel + 1)
-    regPass  <- !(inputDf |> is.null())
-    ### Message if error
-    msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
-    if(!regPass) paste0(msg1_i, msg_reg) |> message()
+    doReg0   <- "region" %in% idCol
+    doState0 <- "state"  %in% idCol
+    doCheck0 <- doReg0 | doState0
+    if(doCheck0) {
+      regStr0  <- case_when(doReg0 ~ "region", .default = "state") |> paste0("s")
+      msg_reg  <- paste0("Checking that all ", regStr0, " are present...")
+      paste0(msg1_i, msg_reg) |> message()
+      inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1)
+      regPass  <- !(inputDf |> is.null())
+      ### Message if error
+      msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
+      if(!regPass) paste0(msg1_i, msg_reg) |> message()
+      rm(regStr0, msg_reg, regPass)
+    } ### End if(doCheck0)
+    rm(doReg0, doState0, doCheck0)
   } ### End if(doPop | doO3)
 
 
@@ -752,17 +877,21 @@ check_input_data <- function(
   # if(doPop) inputDf <- inputDf |> calc_import_pop(popArea=popArea, msgLevel=msgLevel + 1)
   if(doPop) {
     ### Calculate population
-    doCalc  <- !("state" %in% popArea )
-    if(doCalc) {
+    hasState <- "state" %in% popArea
+    # doCalc   <- !("state" %in% popArea )
+    if(!hasState) {
       msg_pop <- paste0("Calculating state population from ", popArea, " values...")
       paste0(msg1_i, msg_pop) |> message()
-      if("region" %in% (inputDf |> names())) {
-        inputDf <- inputDf |> filter(!(region |> str_detect("National")))
-        inputDf <- inputDf |> filter(!(region |> is.na()))
-      } ### End if("region" %in% (inputDf |> names()))
-      inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module)
-      inputDf <- inputDf |> filter(!(region |> is.na()))
-    } ### End if(doCalc)
+      ### Calculate population
+      inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module, msgLevel=msgLevel + 1)
+      # if("region" %in% (inputDf |> names())) {
+      #   inputDf <- inputDf |> filter(!(region |> str_detect("National")))
+      #   inputDf <- inputDf |> filter(!(region |> is.na()))
+    } ### End if("region" %in% (inputDf |> names()))
+    # ### Calculate population
+    # inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module)
+    # inputDf <- inputDf |> filter(!(region |> is.na()))
+    # } ### End if(doCalc)
   } ### End if(doPop)
 
 
@@ -776,25 +905,66 @@ check_input_data <- function(
 
 ###### calc_import_pop ######
 ### Function to calculate state population from inputs
+# "popRatiosData" |> get_frediDataObj("scenarioData") |> glimpse()
+# "popRatiosData" |>
+#   get_frediDataObj("scenarioData") |> (function(df0){
+#     cols0  <- c("area", "area2nat", "year")
+#     group0 <- c("year")
+#     sum0   <- c("area2nat")
+#     df1    <- df0 |> select(all_of(cols0)) |> distinct()
+#     ### Check values
+#     df2    <- df1 |>
+#       group_by_at(c(group0)) |>
+#       summarize_at(c(sum0), sum, na.rm=T)
+#     df2 |> glimpse()
+#     ### Join values
+#     df1    <- df1 |>
+#       filter(area |> tolower() |> str_detect("conus")) |>
+#       select(-c("area")) |>
+#       rename_at(c("area2nat"), ~"area2nat_conus")
+#     df1 |> glimpse()
+#     df0    <- df0 |>
+#       left_join(df1, by="year") |>
+#       # mutate(area2conus = area2nat / area2nat_conus, .after="area2nat") |>
+#       mutate(area2conus = case_when(area |> tolower() |> str_detect("conus") ~ 1), .after="area2nat") |>
+#       select(-c("area2nat_conus"))
+#     return(df0)
+#   })() |> glimpse()
 calc_import_pop <- function(
     df0       = NULL,    ### Population data
     popArea   = "state", ### One of: c("state", "regional", "conus", "national")
     module    = "fredi", #### "fredi", "sv", or "methane"
     df_ratios = "popRatiosData" |>
-      get_frediDataObj("scenarioData") |>
+      get_frediDataObj("scenarioData") |> (function(df0){
+        cols0  <- c("area", "area2nat", "year")
+        group0 <- c("year")
+        sum0   <- c("area2nat")
+        df1    <- df0 |>
+          select(all_of(cols0)) |>
+          distinct() |>
+          filter(area |> tolower() |> str_detect("conus")) |>
+          select(-c("area")) |>
+          rename_at(c("area2nat"), ~"area2nat_conus")
+        # df1 |> glimpse()
+        df0    <- df0 |>
+          left_join(df1, by="year") |>
+          mutate(area2conus = area2nat / area2nat_conus, .after="area2nat") |>
+          select(-c("area2nat_conus"))
+        return(df0)
+      })() |>
       fun_extendVals(
         from0 = 2100,
         to0   = 2300,
         sort0 = c("area", "region", "state", "year")
       ), ### End fun_extendVals
-    msgLevel  = 1        ### Level of messaging
+    msgLevel  = 1 ### Level of messaging
 ){
   ###### Messages ######
   msgN     <- "\n"
   msg0_i   <- get_msg_prefix(level=msgLevel)
   msg1_i   <- get_msg_prefix(level=msgLevel + 1)
   msg2_i   <- get_msg_prefix(level=msgLevel + 2)
-  msg_i1   <- paste0("Calculating state population from ") |> paste0(popArea, " level...")
+  # msg_i1   <- paste0("Calculating state population from ") |> paste0(popArea, " level...")
 
   ###### Module Options ######
   module0    <- module |> tolower()
@@ -812,13 +982,47 @@ calc_import_pop <- function(
   # dListSub0  <- doFredi |> ifelse("frediData", "package")
   # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
 
+  ### Other values
+  popArea    <- popArea |> tolower()
+  doNat0     <- "national" %in% popArea
+  doConus0   <- "conus"    %in% popArea
+  doReg0     <- "region"   %in% popArea
+  doState0   <- "state"    %in% popArea
+
+  ### Names
+  names0     <- df0 |> names()
+  hasState0  <- "state"  %in% names0
+  hasReg0    <- "region" %in% names0
+  ### Drop region if state, otherwise format region
+  # if(hasState0) {
+  #   drop0 <- c("us_area", "area", "region")
+  #   df0   <- df0 |> select(-any_of(drop0))
+  #   rm(drop0)
+  # } else if(hasReg0) {
+  #   df0 <- df0 |>
+  #     filter(!(region |> tolower() |> str_detect("nation"))) |>
+  #     rename_at(c("region"), ~c("region_label")) |>
+  #     mutate(region = region_label |> str_replace_all("\\.|\\_| ", ""))
+  # } ### End if(hasReg0)
+
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
   ### Get input scenario info: co_info
   ### Get state info: co_states
   co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+  co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+
+  ### Join regions and states and filter to appropriate values
+  join0     <- c("us_area", "region")
+  select0   <- c("region", "region_label")
+  co_states <- co_states |> left_join(co_region, by=join0)
+  # if(doConus0) co_states <- co_states |> filter(us_area |> tolower() |> str_detect("conus"))
+  co_region <- co_states |> select(all_of(select0)) |> distinct()
+  rm(join0, select0)
 
   ###### Data Info ######
   hasPop   <- df0 |> length()
@@ -826,30 +1030,86 @@ calc_import_pop <- function(
   namesSta <- co_states |> names()
   namesRat <- df_ratios |> names()
 
-  ### Join data with pop ratios
-  join0    <- namesPop |> get_matches(y=namesRat)
-  df0      <- df0 |> left_join(df_ratios, by=c(join0))
-  rm(join0)
+  if(hasPop) {
+    ### Summarize values
+    groupCols0 <- c("year")
+    sumCols0   <- c("pop")
+    if(doState0) groupCols0 <- "state"  |> c(groupCols0)
+    if(doReg0  ) groupCols0 <- "region" |> c(groupCols0)
+    # if(!doState0) {
+    df0        <- df0 |>
+      group_by_at(c(groupCols0)) |>
+      summarize_at(c(sumCols0), sum, na.rm=T) |>
+      ungroup()
+    # } ### End if(!doState0)
+
+    ### Calculate years
+    sort0      <- c("region_label", "state", "year")
+    yrs0       <- df0 |> pull(year) |> unique() |> sort()
+    dfYrs0     <- tibble(year = yrs0)
+    dfJoin0    <- co_states |> cross_join(dfYrs0) |> arrange_at(c(sort0))
+    rm(sort0, dfYrs0)
+
+    ### Filter data
+    drop0      <- c("area", "region")
+    df_ratios  <- df_ratios |>
+      select(-any_of(drop0)) |>
+      filter(year %in% yrs0)
+    rm(yrs0, drop0)
+
+    ### Join ratios to states
+    join0      <- c("state", "year")
+    dfJoin0    <- dfJoin0 |> left_join (df_ratios, by=join0)
+    rm(join0, df_ratios)
+
+    ### Join values
+    join0      <- df0 |> names() |> get_matches(dfJoin0 |> names())
+    doJoin0    <- join0 |> length()
+    if(doJoin0) df0 <- df0 |> left_join (dfJoin0, by=join0)
+    else        df0 <- df0 |> cross_join(dfJoin0)
+    rm(join0, doJoin0)
+  } ### End if(hasPop)
+
+  ### Filter data
+  df0        <- df0 |> filter_all(all_vars(!(. |> is.na())))
+  hasPop     <- df0 |> length()
+
+  # # doReg0   <- "region" %in% popArea
+  # # doState0 <- "state"  %in% popArea
+  # if("region" %in% namesPop) {
+  #   inputDf <- inputDf |> filter(!(region |> str_detect("National")))
+  #   inputDf <- inputDf |> filter(!(region |> is.na()))
+  #
+  # ### Join data with pop ratios
+  # join0    <- namesPop |> get_matches(y=namesRat)
+  # df0      <- df0 |> left_join(df_ratios, by=c(join0))
+  # rm(join0)
 
   ###### Calculate Population ######
   hasState <- "state" %in% popArea
   calcPop  <- hasPop & !hasState
   # hasPop |> c(popArea, hasState, calcPop) |> print()
   if(calcPop) {
-    msgN |> paste0(msg0_i, msg_i1) |> message()
+    # msgN |> paste0(msg0_i, msg_i1) |> message()
+    # ### Check pop area info
+    # hasNat   <- "national" %in% popArea
+    # hasArea  <- "conus"    %in% popArea
+    # hasReg   <- "regional" %in% popArea
     ### Check pop area info
+    hasCol   <- "pop"      %in% namesPop
     hasNat   <- "national" %in% popArea
     hasArea  <- "conus"    %in% popArea
     hasReg   <- "regional" %in% popArea
 
     ### Check other columns present
-    hasNat   <- (hasNat   & "pop" %in% namesPop)
-    hasArea  <- (hasArea  & "pop" %in% namesPop) | hasNat
-    hasReg   <- (hasReg   & "pop" %in% namesPop) | hasNat | hasArea
+    hasNat   <- (hasNat   & hasCol)
+    hasArea  <- (hasArea  & hasCol) | hasNat
+    hasReg   <- (hasReg   & hasCol) | hasNat | hasArea
     # hasNat |> c(hasArea, hasReg) |> print()
 
     ### Info on popArea
     doArea   <- hasNat
+    doConus  <- doConus0
     doReg    <- hasArea
     doState  <- hasReg
     # doArea |> c(doReg, doState) |> print()
@@ -858,15 +1118,19 @@ calc_import_pop <- function(
     ### If do reg:   Calculate region pop from national
     ### If do state: Calculate region pop from national
     if(doArea ) {df0 <- df0 |> mutate(pop = pop * area2nat)}
+    if(doConus) {df0 <- df0 |> mutate(pop = pop * area2conus)}
     if(doReg  ) {df0 <- df0 |> mutate(pop = pop * reg2area)}
     if(doState) {df0 <- df0 |> mutate(pop = pop * state2reg)}
   } ### End if(calcPop)
 
+  ### Filter values
+  if(doFredi) df0 <- df0 |> filter(us_area %in% "conus")
 
   ### Select columns
   select0  <- c("region", "state", "postal", "year", "pop")
-  df0      <- df0 |> select(all_of(select0))
-  df0      <- df0 |> arrange_at(c(select0))
+  df0      <- df0 |>
+    select(all_of(select0)) |>
+    arrange_at(c(select0))
   # if(popPass) {
   #   df0      <- df0 |> select(all_of(select0))
   #   df0      <- df0 |> arrange_at(c(select0))
