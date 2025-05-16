@@ -1135,18 +1135,33 @@ theme_state <- function(
 }
 
 ### Color stuff -------------------------
-
 #### Function to create list of sectors
+# fun_sectorTypes <- function(x0=1){
+#   list0 <- list()
+#   list0[["labor"    ]] <- c("Labor")
+#   list0[["ag"       ]] <- c("CIL Agriculture")
+#   list0[["eco"      ]] <- c("Marine Fisheries", "Winter Recreation", "Water Quality")
+#   list0[["elec"     ]] <- c("Electricity Demand and Supply", "Electricity Transmission and Distribution")
+#   list0[["infra"    ]] <- c("Rail", "Roads", "Urban Drainage", "Transportation Impacts from High Tide Flooding",
+#                             "Coastal Properties", "Inland Flooding", "Wind Damage")
+#   list0[["health"   ]] <- c("Climate-Driven Changes in Air Quality", "Valley Fever", "Wildfire", "Southwest Dust",
+#                             "CIL Crime", "Suicide", "Vibriosis")
+#   list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality")
+#   list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality")
+#   # list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality") |> c(list0[["health"]])
+#   # list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality") |> c(list0[["health"]])
+#   return(list0)
+# }
 fun_sectorTypes <- function(x0=1){
   list0 <- list()
-  list0[["labor"    ]] <- c("Labor")
-  list0[["ag"       ]] <- c("CIL Agriculture")
-  list0[["eco"      ]] <- c("Marine Fisheries", "Winter Recreation", "Water Quality")
+  list0[["labor"    ]] <- c("Labor", "Learning Loss")
+  list0[["ag"       ]] <- c("CIL Agriculture", "Forestry Surplus Loss")
+  list0[["eco"      ]] <- c("Marine Fisheries", "Marsh Migration (Primary)", "Outdoor Recreation", "Water Quality", "Winter Recreation")
   list0[["elec"     ]] <- c("Electricity Demand and Supply", "Electricity Transmission and Distribution")
-  list0[["infra"    ]] <- c("Rail", "Roads", "Urban Drainage", "Transportation Impacts from High Tide Flooding",
-                            "Coastal Properties", "Inland Flooding", "Wind Damage")
-  list0[["health"   ]] <- c("Climate-Driven Changes in Air Quality", "Valley Fever", "Wildfire", "Southwest Dust",
-                            "CIL Crime", "Suicide", "Vibriosis")
+  list0[["infra"    ]] <- c("Coastal Properties", "Inland Flooding",  "Rail", "Roads", "Transportation Impacts from High Tide Flooding",
+                            "Urban Drainage", "Wind Damage")
+  list0[["health"   ]] <- c("CIL Crime", "Climate-Driven Changes in Air Quality", "Valley Fever", "Wildfire", "Southwest Dust",
+                            "Suicide", "Vibriosis", "Lyme Disease")
   list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality")
   list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality")
   # list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality") |> c(list0[["health"]])
@@ -1172,7 +1187,7 @@ fun_sectorLabels <- function(
                   "Southwest Dust", "Suicide", "Valley Fever", "Vibriosis", "Wildfire"),
     variants0 = c("Climate-Driven Changes in Air Quality", "ATS Temperature-Related Mortality*",  "CIL Agriculture",
                   "CIL Temperature-Related Mortality", "Coastal Properties", "Electricity Transmission and Distribution",
-                  "Extreme Temperature*", "Forestry Loss", "Transportation Impacts from High Tide Flooding",
+                  "Extreme Temperature", "Forestry Surplus Loss", "Transportation Impacts from High Tide Flooding",
                   "Marsh Migration (Primary)", "Marsh Migration (Secondary)", "Outdoor Recreation", "Rail", "Roads"),
     df0       = "co_sectors" |> get_frediDataObj(listSub="frediData") |> select(c("sector_id", "sector_label")) |> rename_at(c("sector_label"), ~c("sector"))
 ){
@@ -1216,7 +1231,7 @@ fun_sectorLabels <- function(
 #               "Southwest Dust", "Suicide", "Valley Fever", "Vibriosis", "Wildfire")
 # variants0 = c("Climate-Driven Changes in Air Quality", "ATS Temperature-Related Mortality*",  "CIL Agriculture",
 #               "CIL Temperature-Related Mortality", "Coastal Properties", "Electricity Transmission and Distribution",
-#               "Extreme Temperature*", "Forestry Loss", "Transportation Impacts from High Tide Flooding",
+#               "Extreme Temperature*", "Forestry Surplus Loss", "Transportation Impacts from High Tide Flooding",
 #               "Marsh Migration (Primary)", "Marsh Migration (Secondary)", "Outdoor Recreation", "Rail", "Roads")
 addSectorAttribute <- function(
     df0       = fun_sectorLabels(),
