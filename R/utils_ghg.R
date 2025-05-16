@@ -23,7 +23,7 @@ calc_NOx_factor <- function(
 
 ### Function to calculate NOx ratio
 calc_NOx_ratio <- function(
-    df0, ### Tibble with NOx values
+    df0,    ### Tibble with NOx values
     factor0 = ghgData$ghgData$coefficients$NOx$NOxFactor0
 ){
   ### Calculate NOx factor from NOx concentration
@@ -49,7 +49,7 @@ calc_o3_conc <- function(
 
 
 ### Format methane drivers
-ghgData$stateData$state_o3 |> glimpse()
+# ghgData$stateData$state_o3 |> glimpse()
 format_ghg_drivers <- function(
     df0 ### Tibble with scenarios
 ){
@@ -115,60 +115,135 @@ calc_conus_scenario <- function(
   return(df0)
 }
 
-### Scalars ----------------
+## Scalars ----------------
+# ghgData$ghgData$co_impactTypes$econScalarName
+# ghgData$ghgData$co_impactTypes |> glimpse()
+# ghgData$ghgData$df_scalars |> glimpse()
+
 ### Function to calculate economic scalars
 calc_ghg_scalars <- function(
     df0,       ### Tibble with information on CONUS scenario
-    scalar0    = "vsl_usd",
-    mult0      = "gdp_percap_conus",
-    adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
-    df1        = rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0),
-    df2        = rDataList$stateData$df_scalars |> filter(scalarName %in% scalar0),
     elasticity = rDataList$fredi_config$elasticity0
+    # scalars0   = ghgData$ghgData$co_impactTypes$econScalarName |> unique(),
+    # mult0      = "gdp_percap_conus",
+    # adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
+    # vsl_adj0   = ghgData$ghgData$coefficients$vsl_adj0 |> pull(gdp_percap),
+    # elasticity = rDataList$fredi_config$elasticity0
 ){
   ### Format impact types:
   ### - Get distinct values
   ### - Adjust econMultiplierName from "gdp_percap" to "gdp_percap_conus"
-  select0   <- c("econScalarName", "econMultiplierName", "c0", "c1", "exp0", "year0")
-  df1       <- df1 |> select(all_of(select0)) |> distinct()
-  df1       <- df1 |> mutate(econMultiplierName = mult0)
+  # selectT   <- c("econScalarName", "econMultiplierName", "c0", "c1", "exp0", "econAdjValue0")
+  selectT   <- c("econScalarName", "econMultiplierName", "c0", "c1", "exp0", "econAdjValue0")
+  dropS     <- c("scalarType")
+  fromS     <- c("scalarName", "value")
+  toS       <- c("econScalarName", "econScalarValue")
+  join0     <- c("econScalarName")
+  # df1       <- rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0)
+  dfS       <- ghgData$ghgData$df_scalars |> select(-any_of(dropS)) |> rename_at(c(fromS), ~toS)
+  dfT       <- ghgData$ghgData$co_impactTypes |>
+    select(all_of(selectT)) |>
+    distinct() |>
+    left_join(dfS, by=join0)
+  rm(dropS, fromS, toS, join0)
 
+  # ### Get unique years
+  # sort0     <- c("econScalarName", "econMultiplierName", "year")
+  # yrs0      <- df0 |> pull(year) |> unique() |> sort()
+  # dfYrs0    <- tibble(year = yrs0)
+  # dfJoin0   <- dfT |>
+  #   cross_join(dfYrs) |>
+  #   arrange_at(c(sort0))
+  # rm(sort0, yrs0, dfYrs0, dfS, dfT)
+
+  ### Cross Join with sca;ar info
   ### Add econScalarName
   ### Join with df0
-  # df0 |> glimpse(); df1 |> glimpse()
-  join0     <- c("econScalarName")
-  df0       <- df0 |> mutate(econScalarName=scalar0)
-  df0       <- df0 |> left_join(df1, by=join0)
+  # df0 |> glimpse(); dfT |> glimpse()
+  df0       <- df0 |>
+    cross_join(dfT) |>
+    mutate(econMultiplierValue = case_when(
+      econMultiplierName %in% "gdp_percap" ~ gdp_percap_conus,
+      econMultiplierName %in% "none"       ~ 1,
+      .default = NA
+    ))
 
+  ### Adjust exponent for elasticity
   ### Adjust elasticity
-  df0       <- df0 |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
-
-  ### Filter scalars
-  drop0     <- c("region", "state", "postal", "scalarType", "national_or_regional")
-  renameAt0 <- c("scalarName", "value")
-  renameTo0 <- c("econScalarName", "econScalarValue")
-  join0     <- c("econScalarName", "year")
-  years0    <- df0 |> pull(year) |> unique()
-  df2       <- df2 |> filter(year %in% years0)
-  df2       <- df2 |> select(-any_of(drop0))
-  df2       <- df2 |> rename_at(c(renameAt0), ~renameTo0)
-  df0       <- df0 |> left_join(df2, by=join0)
-  rm(drop0, renameAt0, renameTo0, join0, years0)
+  df0       <- df0 |> mutate(exp0 = case_when(
+    econScalarName %in% "vsl_usd" ~ elasticity,
+    .default = exp0
+  ))
 
   ### Economic adjustments (following FrEDI)
-  df0     <- df0 |> mutate(econMultiplierValue = !!sym(mult0))
-  df0     <- df0 |> mutate(econAdjValue   = adj0)
-  df0     <- df0 |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
-  df0     <- df0 |> mutate(econScalar     = c0 + c1 * econScalarValue * econMultiplier)
-
   ### Reorganize values
-  move0   <- c("region", "state", "postal", "year")
-  df0     <- df0 |> relocate(all_of(move0))
-  df0     <- df0 |> arrange_at(c(move0))
+  move0   <- c("us_area", "area", "region", "state", "postal", "fips", "year")
+  sort0   <- move0 |> get_matches(df0 |> names())
+  df0     <- df0 |>
+    mutate(econMultiplier = (econMultiplierValue / econAdjValue0)**exp0) |>
+    mutate(econScalar     = c0 + c1 * econScalarValue * econMultiplier) |>
+    relocate(any_of(move0)) |>
+    arrange_at(c(sort0))
+  # df0 |> glimpse()
 
   ### Return
   return(df0)
 }
+
+
+# ### Function to calculate economic scalars
+# calc_ghg_scalars <- function(
+#     df0,       ### Tibble with information on CONUS scenario
+#     scalar0    = "vsl_usd",
+#     mult0      = "gdp_percap_conus",
+#     adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
+#     df1        = rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0),
+#     df2        = rDataList$stateData$df_scalars |> filter(scalarName %in% scalar0),
+#     elasticity = rDataList$fredi_config$elasticity0
+# ){
+#   ### Format impact types:
+#   ### - Get distinct values
+#   ### - Adjust econMultiplierName from "gdp_percap" to "gdp_percap_conus"
+#   select0   <- c("econScalarName", "econMultiplierName", "c0", "c1", "exp0", "year0")
+#   df1       <- df1 |> select(all_of(select0)) |> distinct()
+#   df1       <- df1 |> mutate(econMultiplierName = mult0)
+#
+#   ### Add econScalarName
+#   ### Join with df0
+#   # df0 |> glimpse(); df1 |> glimpse()
+#   join0     <- c("econScalarName")
+#   df0       <- df0 |> mutate(econScalarName=scalar0)
+#   df0       <- df0 |> left_join(df1, by=join0)
+#
+#   ### Adjust elasticity
+#   df0       <- df0 |> mutate(exp0 = (econScalarName=="vsl_usd") |> ifelse(elasticity, exp0))
+#
+#   ### Filter scalars
+#   drop0     <- c("region", "state", "postal", "scalarType", "national_or_regional")
+#   renameAt0 <- c("scalarName", "value")
+#   renameTo0 <- c("econScalarName", "econScalarValue")
+#   join0     <- c("econScalarName", "year")
+#   years0    <- df0 |> pull(year) |> unique()
+#   df2       <- df2 |> filter(year %in% years0)
+#   df2       <- df2 |> select(-any_of(drop0))
+#   df2       <- df2 |> rename_at(c(renameAt0), ~renameTo0)
+#   df0       <- df0 |> left_join(df2, by=join0)
+#   rm(drop0, renameAt0, renameTo0, join0, years0)
+#
+#   ### Economic adjustments (following FrEDI)
+#   df0     <- df0 |> mutate(econMultiplierValue = !!sym(mult0))
+#   df0     <- df0 |> mutate(econAdjValue   = adj0)
+#   df0     <- df0 |> mutate(econMultiplier = (econMultiplierValue / econAdjValue)**exp0 )
+#   df0     <- df0 |> mutate(econScalar     = c0 + c1 * econScalarValue * econMultiplier)
+#
+#   ### Reorganize values
+#   move0   <- c("region", "state", "postal", "year")
+#   df0     <- df0 |> relocate(all_of(move0))
+#   df0     <- df0 |> arrange_at(c(move0))
+#
+#   ### Return
+#   return(df0)
+# }
 
 ## Impact Functions ----------------
 ### Scaled Impacts ----------------
@@ -183,7 +258,7 @@ calc_ghg_scalars <- function(
 
 
 calc_ghg_mortality <- function(
-    df0,  ### Tibble with population and years
+    df0,  ### Tibble with population, years, and scalars
     pCol0 = "national_pop"      , ### Column with national population
     sCol0 = "rffMrate_slope"    , ### Column with mortality rate slope,
     iCol0 = "rffMrate_intercept"  ### Column with mortality rate intercept,
@@ -204,10 +279,11 @@ calc_ghg_mortality <- function(
   # dfJoin0 |> glimpse()
 
   ### Cross join constant state RFF scalar info with national RFF info
-  drop0   <- c("StateMortRatio", "baseMrateState")
+  drop0   <- c("StateMortRatio", "baseMrateState", "exp0")
+  join0   <- c("econScalarName", "econMultiplierName", "c0", "c1")
   df2     <- ghgData$stateData$state_rrScalar |> select(-any_of(drop0))
   dfJoin0 <- df2 |> cross_join(dfJoin0)
-  rm(drop0, df2)
+  # rm(drop0, df2)
   # dfJoin0 |> glimpse()
 
   ### Join with baseline_state_mortality info by year
@@ -216,15 +292,16 @@ calc_ghg_mortality <- function(
   df3     <- ghgData$stateData$baseMortState |> select(all_of(select0))
   dfJoin0 <- dfJoin0 |> left_join(df3, by=join0)
   rm(join0, select0, df3)
-  # dfJoin0 |> glimpse()
+  # dfJoin0 |> glimpse(); df0 |> glimpse();
 
   ### Join data with population data
   # relationship="many-to-many"
-  drop0   <- c("region", "state", "fips")
-  join0   <- c("postal") |> c(yrCol0)
+  drop0   <- c("region", "state", "fips") |> c("c0", "c1")
+  join0   <- c("econScalarName", "econMultiplierName", "postal") |> c(yrCol0)
+  # join0   <- c("postal") |> c(yrCol0)
   df0     <- df0     |> select(-any_of(drop0))
   df0     <- dfJoin0 |> left_join(df0, by=join0)
-  df0 |> glimpse();
+  # df0 |> glimpse();
   rm(drop0, join0)
 
   ### Calculate intermediate populations
@@ -242,13 +319,14 @@ calc_ghg_mortality <- function(
 
 ### Tibble with population and years
 ### Tibble with columns for mortality rate slope and mortality rate intercept
+# ghgData$stateData$df_asthmaImpacts |> glimpse()
 calc_ghg_morbidity <- function(
     df0,
     refYr0 = 2020
 ){
   ### Data
   # drop1   <- c("region", "state")
-  drop1   <- c("region", "state", "model_str", "year")
+  drop1   <- c("region", "state", "model_str", "exp0", "year")
   df1     <- ghgData$stateData$df_asthmaImpacts
   df1     <- df1 |>
     filter(year %in% refYr0) |>
@@ -257,9 +335,11 @@ calc_ghg_morbidity <- function(
   ### Join df0 and df1
   # df0 |> glimpse(); df1 |> glimpse()
   # join0   <- c("postal", "year")
-  join0   <- c("postal")
+  # join0   <- c("postal")
+  join0   <- c("econScalarName", "econMultiplierName", "c0", "c1", "postal")
   # join0   <- df0 |> names() |> get_matches(df1 |> names())
-  df0     <- df0 |> left_join(df1, by=join0)
+  df0     <- df1 |> left_join(df0, by=join0)
+  # df0     <- df0 |> left_join(df1, by=join0)
   # df0 |> glimpse()
   rm(df1)
 
