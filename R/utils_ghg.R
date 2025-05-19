@@ -124,11 +124,6 @@ calc_conus_scenario <- function(
 calc_ghg_scalars <- function(
     df0,       ### Tibble with information on CONUS scenario
     elasticity = rDataList$fredi_config$elasticity0
-    # scalars0   = ghgData$ghgData$co_impactTypes$econScalarName |> unique(),
-    # mult0      = "gdp_percap_conus",
-    # adj0       = ghgData$ghgData$coefficients[["vsl_adj0"]] |> pull(gdp_percap),
-    # vsl_adj0   = ghgData$ghgData$coefficients$vsl_adj0 |> pull(gdp_percap),
-    # elasticity = rDataList$fredi_config$elasticity0
 ){
   ### Format impact types:
   ### - Get distinct values
@@ -279,7 +274,7 @@ calc_ghg_mortality <- function(
   # dfJoin0 |> glimpse()
 
   ### Cross join constant state RFF scalar info with national RFF info
-  drop0   <- c("StateMortRatio", "baseMrateState", "exp0")
+  drop0   <- c("StateMortRatio", "baseMrateState", "exp0", "econAdjValue0")
   join0   <- c("econScalarName", "econMultiplierName", "c0", "c1")
   df2     <- ghgData$stateData$state_rrScalar |> select(-any_of(drop0))
   dfJoin0 <- df2 |> cross_join(dfJoin0)
@@ -326,7 +321,7 @@ calc_ghg_morbidity <- function(
 ){
   ### Data
   # drop1   <- c("region", "state")
-  drop1   <- c("region", "state", "model_str", "exp0", "year")
+  drop1   <- c("region", "state", "model_str", "exp0", "econAdjValue0", "year")
   df1     <- ghgData$stateData$df_asthmaImpacts
   df1     <- df1 |>
     filter(year %in% refYr0) |>
