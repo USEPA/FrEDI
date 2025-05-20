@@ -193,7 +193,8 @@ run_fredi_sv <- function(
   c_popWtCol      <- sectorInfo |> filter(sector == c_sector) |> pull(popWeightCol) |> tolower()
   c_modelType     <- sectorInfo |> filter(sector == c_sector) |> pull(modelType) |> tolower()
   # df_validGroups  <- svDemoInfo |> get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
-  df_validGroups  <- c_popWtCol |> get_validGroups()
+  df_validGroups  <- c_popWtCol |> get_validGroups(df0  = svDataList[["svDemoInfo"  ]], ### svDemoInfo
+                                                   df1  = svDataList[["svValidTypes"]])
 
 
   ###### ** Model Types List ######
@@ -225,7 +226,7 @@ run_fredi_sv <- function(
   # inNames0 |> print()
 
   ###### ** Input Defaults ######
-  inputDefs    <- inNames0 |> map(function(name0, con = conn){
+  inputDefs    <- inNames0 |> map(function(name0){
     ### Objects
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
@@ -236,6 +237,8 @@ run_fredi_sv <- function(
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
+    ### Add scenario column
+    df0      <- df0 |> mutate(scenario = "FrEDI Default")
     ### Return
     return(df0)
   }) |> set_names(inNames0)
@@ -483,7 +486,8 @@ run_fredi_sv <- function(
   df_popProj <- pop_df |> get_countyPop(
     years   = yearsBy5,
     xCol0   = "year",     ### X column in df0
-    yCol0   = "state_pop" ### Y column in df0
+    yCol0   = "state_pop", ### Y column in df0
+    funList = svPopList[["popProjList"]]
   ) ### End get_countyPop
 
 
