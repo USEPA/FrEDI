@@ -649,6 +649,7 @@ run_fredi_ghg <- function(
   ### Return ----------------
   ### Message, clear unused memory, return
   paste0("\n", "Finished", ".") |> message()
+  dbDisconnect(conn)
   gc()
   return(returnObj)
 
