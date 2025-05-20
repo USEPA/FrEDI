@@ -231,13 +231,6 @@ run_fredi_ghg <- function(
 
 
 
-  #### Columns & Values ----------------
-  byState        <- TRUE
-  popCol0        <- c("pop")
-  stateCols0     <- c("state", "postal")
-
-
-
   ### Input Scenarios ----------------
   #### Input Info ----------------
   paste0("Checking scenarios...") |> message()
@@ -346,27 +339,38 @@ run_fredi_ghg <- function(
 
   ### Create logicals and initialize inputs list
   if(hasAnyInputs) {
-    ### Min ad max years
-    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()}) |> set_names(inNames)
-    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()}) |> set_names(inNames)
+    ### Min and max years
+    ### - Min years
+    minYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){
+      df0 |> filter(inputName %in% name0) |> pull(min_year) |> unique()
+    }) |> set_names(inNames)
+    ### - Max years
+    maxYrs0    <- inNames |> map(function(name0, df0=df_inputInfo){
+      df0 |> filter(inputName %in% name0) |> pull(max_year) |> unique()
+    }) |> set_names(inNames)
 
     ### Check inputs
     inputsList <- list(
       inputName = inNames,
       inputDf   = inputsList[inNames],
       idCol     = idCols0   [inNames],
+      # valCol    = valCols0  [inNames]
       valCol    = valCols0  [inNames],
       yearMin   = minYrs0,
-      yearMax   = maxYrs0,
-      module    = "methane" |> rep(inNames |> length())
+      yearMax   = maxYrs0
+      # yearMax   = maxYrs0,
+      # module    = "methane" |> rep(inNames |> length())
+      # module    = "ghg" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data) |>
+      pmap(check_input_data, popArea="state", module="ghg") |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 
     ### Check again for inputs
     ### Filter to values that are not NULL
-    inWhich      <- inNames    |> map(function(name0, list0=inputsList){!(list0[[name0]] |> is.null())}) |> unlist() |> which()
+    inWhich      <- inNames    |> map(function(name0, list0=inputsList){
+      !(list0[[name0]] |> is.null())
+    }) |> unlist() |> which()
     inputsList   <- inputsList[inWhich]
     inNames      <- inputsList |> names()
     rm(inWhich)
@@ -455,17 +459,20 @@ run_fredi_ghg <- function(
   ### Need scenario for CH4 & NOX or O3
   #has_o3     <- inputsList[["o3" ]] |> nrow() |> length()
   #has_ch4    <- inputsList[["ch4"]] |> nrow() |> length()
-  has_o3     <-  "o3" %in% inNames1
+  has_o3     <-  "o3"  %in% inNames1
   has_ch4    <-  "ch4" %in% inNames1
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
-    ##Check Region
-    do_reg <- "region" %in% (df_drivers |> names())
-    if(do_reg){df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))}
-    ##Check State
-    df_drivers <- df_drivers |> mutate(state  = state  |> str_replace_all("\\.|_|-| ", ""))
-    df_drivers <- df_drivers |> mutate(model  = model  |> str_replace_all("\\.|_|-| ", ""))
+    driveNames <- driveNames
+    ### Check Region
+    doReg0 <- "region" %in% driveNames
+    if(doReg0) {
+      df_drivers <- df_drivers |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+    } ### End if(doReg0)
+    ### Format model
+    # df_drivers <- df_drivers |> mutate(state  = state |> str_replace_all("\\.|_|-| ", ""))
+    df_drivers <- df_drivers |> mutate(model  = model |> str_replace_all("\\.|_|-| ", ""))
   } else{
     join0      <- c("year")
     df_drivers <- inputsList[["ch4"]] |> left_join(inputsList[["nox"]], by=join0)
@@ -476,28 +483,31 @@ run_fredi_ghg <- function(
   # df_drivers |> glimpse()
   df_drivers <- df_drivers |> format_ghg_drivers()
   # df_drivers$model |> unique() |> print()
-  # return(df_drivers)
   # df_drivers |> glimpse()
+  # return(df_drivers)
 
-  #### Socioeconomic Driver Scenario ----------------
+  #### Socioeconomic Drivers & Scalars ----------------
+  ##### Socioeconomic Driver Scenario
   ### Update values
   gdp_df       <- inputsList[["gdp"]]
   pop_df       <- inputsList[["pop"]]
   pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
+  # pop_df$region |> unique() |> sort() |> print()
 
   ### Calculate national population and update national scenario
   natScenario  <- gdp_df |> create_nationalScenario(pop0 = pop_df)
   rm(gdp_df, pop_df)
+  # natScenario$region |> unique() |> print()
   # natScenario |> glimpse()
+  # return(natScenario)
 
   ### Calculate for CONUS values
   seScenario   <- natScenario |> calc_conus_scenario()
   rm(natScenario)
-  # seScenario |> glimpse(); df_drivers |> glimpse()
-  # df_drivers$model |> unique() |> print()
-  # return()
-  # return(seScenario)
+  # seScenario$region |> unique() |> print()
+  # seScenario$state |> unique() |> print()
   # seScenario |> glimpse()
+  # return(seScenario)
 
   ### Calculate Scalars ----------------
   ### Initialized results: Join sector info and default scenario
@@ -514,16 +524,18 @@ run_fredi_ghg <- function(
   #### - Calculate Mortality Rate
   #### - Calculate Excess Mortality
   dfMort0      <- df_scalars |> calc_ghg_mortality()
-  dfMort0      <- dfMort0    |> calc_ghg_mortImpacts(df1=df_drivers)
+  dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers)
+  # dfMort0 |> filter(sector |> is.na()) |> glimpse()
   # dfMort0 |> glimpse()
-  # return()
+  # return(dfMort0)
 
   #### Morbidity ----------------
   #### Calculate Mortality Rate
   dfMorb0      <- df_scalars |> calc_ghg_morbidity()
-  dfMorb0      <- dfMorb0    |> calc_ghg_morbImpacts(df1=df_drivers)
+  dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers)
+  # dfMorb0 |> filter(sector |> is.na()) |> glimpse()
   # dfMorb0 |> glimpse()
-  # return()
+  # return(dfMorb0)
 
   ### Format Results ----------------
   ### Add in model info
@@ -533,7 +545,16 @@ run_fredi_ghg <- function(
   namesMort0   <- dfMort0 |> names()
   namesMorb0   <- dfMorb0 |> names()
   namesBoth0   <- namesMort0 |> get_matches(namesMorb0)
+  ### Add NAs to missing columns
+  naMort0      <- namesMort0 |> get_matches(namesBoth0, matches=F)
+  naMorb0      <- namesMorb0 |> get_matches(namesBoth0, matches=F)
+  # naMort0 |> print(); naMorb0 |> print()
+  dfMort0[,naMorb0] <- NA
+  dfMorb0[,naMort0] <- NA
   # namesBoth0 |> print()
+  namesMort0   <- dfMort0 |> names()
+  namesMorb0   <- dfMorb0 |> names()
+  namesBoth0   <- namesMort0 |> get_matches(namesMorb0)
   dfMort0      <- dfMort0 |> select(all_of(namesBoth0))
   dfMorb0      <- dfMorb0 |> select(all_of(namesBoth0))
   df_results   <- dfMort0 |> bind_rows(dfMorb0)
@@ -542,7 +563,10 @@ run_fredi_ghg <- function(
   # return(df_results)
   rm(dfMort0, dfMorb0)
 
-  ### Add sector label
+  ### Add module
+  df_results   <- df_results |> mutate(module="GHG", .before="sector")
+
+  ### Add module sector label
   join0      <- c("sector")
   select0    <- join0 |> c("sector_label")
   dfSects0   <- ghgData$ghgData$co_sectors |> select(all_of(select0))
@@ -581,14 +605,14 @@ run_fredi_ghg <- function(
     rename_at(c(from0), ~to0) |>
     mutate(driverType  = "Ozone Concentration") |>
     mutate(driverUnit  = "pptv") |>
-    relocate(any_of(move0), .before="year") |>
-    mutate(module = "GHG")
+    relocate(any_of(move0), .before="year")
   # return(df_results)
   # df_results <- df_results |> mutate(module = "GHG") |> relocate(c("module"))
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
 
   ### Columns
-  idCols0    <- c("module", "sector", "impactType", "region", "state", "postal", "model", "year")
+  idCols0    <- c("module", "sector", "impactType", "endpoint", "ageType", "ageRange") |>
+    c("region", "state", "postal", "model", "year")
   modCols0   <- c("driver") |> paste0(c("Type", "Unit", "Value"))
   natCols0   <- c("pop", "gdp_usd", "national_pop", "gdp_percap")
   # valCols0   <- c("physicalmeasure")
@@ -603,7 +627,8 @@ run_fredi_ghg <- function(
   if(!allCols) {df_results <- df_results |> select(any_of(select0))}
 
   ### Arrange data
-  df_results <- df_results |> arrange_at(c(arrange0))
+  df_results <- df_results |> relocate(any_of(select0))
+  # df_results <- df_results |> arrange_at(c(arrange0))
 
 
   ### Return Object ----------------

@@ -62,24 +62,8 @@ summarizeRegPop <- function(df0){
   return(df0)
 }
 
-### Summarize values by region
-sumByRegion <- function(
-    df0,
-    group0 = c("sector", "variant", "impactType", "impactYear", "model", "model_type", "region", , "sectorprimary", "includeaggregate", "year", "gdp_usd"),
-    cols0  = c("annual_impacts")
-){
-  ### Get columns
-  names0 <- df0    |> names()
-  group0 <- group0 |> get_matches(y=names0)
-  cols0  <- cols0  |> get_matches(y=names0)
-  ### Summarize over regions
-  df0    <- df0    |> group_by_at(c(group0)) |> summarize_at(c(cols0), sum, na.rm=T) |> ungroup()
-  ### Return
-  return(df0)
-}
-
 ### Function to scale impacts by gdp
-calcScaledImpacts <- function(
+scaleImpacts <- function(
     df0,
     cols0 = "annual_impacts"
 ){
@@ -89,7 +73,7 @@ calcScaledImpacts <- function(
   ### Calculate multiplier and then apply multiplier
   ### (1 + annual_impacts / gdp_usd)**(-1)
   df0[,colsM] <- df0[,cols0]
-  df0[,colsM] <- df0[["gdp_usd"]] / (1 + df0[,colsM])
+  df0      <- df0 |> mutate_at(c(colsM), function(x, y=df0[["gdp_usd"]]){((1 + x) / y)**(-1)})
   df0[,colsS] <- df0[,cols0] * df0[,colsM]
   rm(colsM, colsS)
   ### Return
@@ -120,111 +104,26 @@ calcPerCap <- function(
 replaceATSdata <- function(
     df1, ### listAgg2[[name]]
     df2, ### listATS[[name]][["all"]]
-    sector1 = "ATS Temperature-Related Mortality"
+    col0 = "sector"
 ){
-  df1 <- df1 |> filter(!(sector %in% sector1))
-  df1 <- df1 |> bind_rows(df2); rm(df2)
+  ### Unique values
+  vals0 <- df2 |> pull(all_of(col0)) |> unique()
+  ### Drop rows with values in vals0 from df1, then bind rows
+  df1   <- df1 |>
+    filter_at(c(col0), negate(function(x, y=vals0){x %in% y})) |>
+    bind_rows(df2)
+  rm(df2)
+  ### Return
   return(df1)
 }
-
-### Create list containing ATS data, adjusted by suicides
-getAdjustedATSlist <- function(
-    ### List of data frames to adjust (must contain at least ATS and Suicides)
-    list0   = list(none=tibble(), agg=tibble(), all=tibble()),
-    sector1 = "ATS Temperature-Related Mortality",
-    sector2 = "Suicide",
-    join0   = c("state", "model", "year"),
-    ### Single vector or list of columns with same number of named elements as list0
-    cols0   = c("physical_impacts", "annual_impacts")
-){
-  ### Names
-  names0   <- list0 |> names()
-
-  ### Filter to specific sectors
-  sectors0 <- sector1 |> c(sector2)
-  list0    <- list0   |> map(function(data0){data0 |> filter(sector %in% sectors0)}) |> set_names(names0)
-  rm(sectors0)
-
-  ### Get list of cols
-  doCols0  <- !(cols0 |> is.list())
-  if(doCols) cols0 <- names0 |> map(function(name_i, cols_i=cols0){cols_i}) |> set_names(names0)
-
-  ### Adjust columns for agg
-  hasAgg0  <- "agg" %in% (names0 |> tolower())
-  if(hasAgg0) {
-    which1 <- (names0 |> tolower()) %in% "agg"
-    cols1  <- cols0[[which1]]
-    phys1  <- cols1 |> str_detect("physical")
-    cols1  <- drop1[!phys1]
-    cols0[[which1]] <- cols1
-    rm(which1, cols1, phys1)
-  } ### End if(hasAgg0)
-
-  ### Adjust data for sector2
-  list0    <- list(data0=list0, cols0=cols0) |> pmap(function(data0, cols0){
-    data0 |> adjustSector1_bySector2(sector1=sector1, sector2=sector2, cols0=cols0)
-    }) |> set_names(names0)
-
-  ### Drop sector2 and just keep sector 1
-  list0    <- list0   |> map(function(data0){data0 |> filter(sector %in% sector1)}) |> set_names(names0)
-
-  ### Return
-  gc()
-  return(list0)
-}
-# ### Create list containing ATS data, adjusted by suicides: old version
-# getAdjustedATSlist2 <- function(
-#     df1     = listResults0[[name0]],
-#     df2     = listAgg1[[name0]],
-#     df3     = listAgg2[[name0]],
-#     names0  = c("none", "agg", "all"),
-#     sector1 = "ATS Temperature-Related Mortality",
-#     sector2 = "Suicide",
-#     join0   = c("state", "model", "year"),
-#     cols0   = c("physical_impacts", "annual_impacts")
-# ){
-#   ### Names
-#   names0   <- list0 |> names()
-#
-#   ### Filter to specific sectors
-#   sectors0 <- sector1 |> c(sector2)
-#   df1      <- df1 |> filter(sector %in% sectors0)
-#   df2      <- df2 |> filter(sector %in% sectors0)
-#   df3      <- df3 |> filter(sector %in% sectors0)
-#   rm(sectors0)
-#
-#   ### Adjust data for sector2
-#   cols1    <- cols0 |> get_matches(y="physical_impacts", matches=F)
-#   df1      <- df1 |> adjustSector1_bySector2(sector1=sector1, sector2=sector2, cols0=cols0)
-#   df2      <- df2 |> adjustSector1_bySector2(sector1=sector1, sector2=sector2, cols0=cols0)
-#   df3      <- df3 |> adjustSector1_bySector2(sector1=sector1, sector2=sector2, cols0=cols1)
-#   rm(cols1)
-#
-#   ### Drop sector2 and just keep sector 1
-#   df1    <- df1 |> filter(sector %in% sector1)
-#   df2    <- df2 |> filter(sector %in% sector1)
-#   df3    <- df3 |> filter(sector %in% sector1)
-#
-#   ### Add to list
-#   list0   <- list()
-#   list0[[names0[1]]] <- df1; rm(df1)
-#   list0[[names0[2]]] <- df2; rm(df2)
-#   list0[[names0[3]]] <- df3; rm(df3)
-#   rm(names0)
-#
-#   ### Return
-#   gc()
-#   return(list0)
-# }
-
 
 ### Select plot data, calculate scaled values
 formatPlotData <- function(
     df0, ### listAgg2[[name]]
-    cols0    = c("annual_impacts")
+    cols0 = c("annual_impacts")
 ){
   cols1 <- cols0 |> map(paste0, c("", "_scaled")) |> unlist()
-  df0   <- df0   |> calcScaledImpacts(cols0=cols0)
+  df0   <- df0   |> scaleImpacts(cols0=cols0)
   df0   <- df0   |> calcPerCap  (cols0=cols1)
   rm(cols1, cols0)
   return(df0)
@@ -236,58 +135,61 @@ mutate_multiplyConstant <- function(df0, cols0, k0){
   df0 |> mutate_at(c(cols0), function(x, y=k0){x * y})
 }
 
-### Add category count
-addCategoryCount <- function(
-    df0,
-    health0 = c("health", "atsHealth"),
-    group0  = c("lab1")
-){
-  ### Summarize number in groups and join summary with df1
-  move0   <- c("nSectors")
-  sort0   <- move0 |> c(group0)
-  df1     <- df0 |> group_by_at(c(group0)) |> summarize(nSectors=n(), .groups="drop")
-  df0     <- df0 |> select(-any_of(move0)) |> left_join(df1, by=group0)
-  # df0 |> glimpse()
-  df0     <- df0 |> relocate(all_of(move0), .before="lab0")
-  df0     <- df0 |> arrange_at(c(sort0), desc)
-  rm(move0, sort0, df1)
-  ### Mutate lab1 and lab2
-  df0     <- df0 |> mutate(lab2 = df0[[group0]] |> paste0(" (", nSectors, ")"), .after=all_of(group0))
-  ### Return
-  return(df0)
-}
-
 ### Function to join with sector labels
 join_sectorLabels <- function(
     df0,
+    df1     = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
+    # df1     = fun_colorSectors()
+    # df1     = fun_sectorLabels() |> addSectorTypes(types0=fun_sectorTypes()) |> fun_colorSectors()
     join0   = c("sector"),
     health0 = c("health", "atsHealth"), ### Which health categories to include (also: cilHealth, or health)
-    other0  = FALSE, ### Whether to keep other
-    df1     = fun_colorSectors()
+    other0  = FALSE ### Whether to keep other
 ){
   ### Filter out some categories
   filter0 <- c("lab0")
+  # vals0   <- c("na", "health") |> c(health0)
   vals0   <- c("na", "health", "cilHealth", "atsHealth") |> get_matches(y=health0, matches=F)
+  # vals0   <- c("na", "health", "cilHealth", "atsHealth") |> get_matches(y=health0, matches=F)
   if(!other0) vals0 <- vals0 |> c("other")
-  df1     <- df1 |> filter_at(c(filter0), function(x, y=vals0){x |> get_matches(y=vals0, matches=F, type="matches")})
-  df1     <- df1 |> addCategoryCount(health0=health0)
-  # df1 |> glimpse()
+  drop0   <- c("variant", "sectorprimary", "includeaggregate")
+  df1     <- df1 |>
+    filter_at(c(filter0), function(x, y=vals0){
+      x |> get_matches(y=vals0, matches=F, type="matches")
+    }) |>
+    select(-any_of(drop0))
 
   ### Join with sector info
   join0   <- c("sector")
   to0     <- c("year")
   move0   <- df1 |> names() |> get_matches(y=join0, matches=FALSE)
-  df0     <- df0 |> left_join(df1, by=join0)
-  # df0     <- df0 |> addCategoryCount(health0=health0)
-  df0     <- df0 |> relocate(all_of(move0), .before=all_of(to0))
-  df0     <- df0 |> rename_at(c("lab2"), ~c("category"))
+  df0     <- df0 |>
+    left_join(df1, by=join0) |>
+    relocate(all_of(move0), .before=all_of(to0)) |>
+    # rename_at(c("lab2"), ~c("category")) |>
+    mutate_at(c("lab0"), str_replace, "atsH|cilH", "h")
+  # df0     <- df0 |>
+  #   left_join(df1, by=join0) |>
+  #   relocate(all_of(move0), .before=all_of(to0)) |>
+  #   rename_at(c("lab2"), ~c("category")) |>
+  #   mutate_at(c("lab0"), str_replace, "atsH|cilH", "h")
   rm(join0, move0, df1, to0)
+
+  ### Calculate number of sectors in category
+  select0 <- c("sector", "lab0")
+  dfSum   <- df0 |>
+    select(c("sector", "lab0")) |>
+    distinct() |>
+    group_by_at(c("lab0")) |>
+    summarize(n = n(), .groups="drop")
+
+  ### Add numbers to data and rename
+  df0     <- df0 |>
+    left_join(dfSum, by="lab0") |>
+    mutate(category = lab1 |> paste0("(", n, ")"))
 
   ### Return
   return(df0)
 }
-
-
 
 ### Stacked Bar------------------------------
 ### Function to format data for stacked bar plot by sector
@@ -299,13 +201,13 @@ join_sectorLabels <- function(
 ####       - Filter to to national
 format_stackedBar_bySector <- function(
     df0,
+    df1     = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
     cols0   = c("annual_impacts"),
     join0   = c("sector"),
     group0  = c("category"),
     health0 = c("health", "atsHealth"),
-    other0  = FALSE, ### Whether to keep other
+    other0  = FALSE ### Whether to keep other
     # yrs0    = c(2050, 2070, 2090),
-    df1     = fun_colorSectors()
     # df1     = fun_sectorLabels()
 ){
   ### Filter data
@@ -315,24 +217,35 @@ format_stackedBar_bySector <- function(
   df0     <- df0 |> mutate(year = year |> as.factor())
 
   ### Join with sector info and drop missing values
-  df0     <- df0 |> join_sectorLabels(join0=join0, health0=health0, other0=other0, df1=df1)
-  df0     <- df0 |> filter(!lab0 |> is.na())
-  # hTot0   <- df0 |> filter(lab0 %in% health0)
-  rm(health0, other0, df1, join0)
+  df0     <- df0 |> join_sectorLabels(
+    df1     = df1,
+    join0   = join0,
+    health0 = health0,
+    other0  = other0
+  ) ### End join_sectorLabels
+  rm(health0, df1, join0)
+
+  ### Drop other
+  # if(!other0)
+  df0 <- df0 |> filter(!lab0 |> is.na())
+  rm(other0)
 
   ### Order from largest to smallest
   # sort0   <- c("year") |> c(cols0, group0)
   sort0   <- c(cols0, group0)
   df1     <- df0
-  df1     <- df1 |> group_by_at(c(group0)) |> summarize_at(c(cols0), sum, na.rm=T) |> ungroup()
-  df1     <- df1 |> arrange_at(c(sort0))
+  df1     <- df1 |>
+    group_by_at(c(group0)) |>
+    summarize_at(c(cols0), sum, na.rm=T) |> ungroup() |>
+    arrange_at(c(sort0))
   lvls0   <- df1 |> pull(category)
   rm(sort0)
 
   ### Factor category
   sort0   <- c(group0)
-  df0     <- df0 |> mutate(category = category |> factor(levels=lvls0))
-  df0     <- df0 |> arrange_at(c(sort0))
+  df0     <- df0 |>
+    mutate(category = category |> factor(levels=lvls0)) |>
+    arrange_at(c(sort0))
   rm(group0, lvls0, sort0)
 
   ### Return
@@ -372,13 +285,14 @@ plot_stackedBar_bySector <- function(
   str0    <- "\\("
   str1    <- str0  |> paste0(unit0, ", ")
   yLab0   <- yLab0 |> str_replace(str0, str1)
+
   ### Add scales
   p0      <- p0 + scale_y_continuous(yLab0)
   p0      <- p0 + scale_x_discrete  (xLab0)
   p0      <- p0 + scale_fill_manual (
     lgdTitle0,
-    breaks = dfFill0 |> pull(category) |> rev(),
-    values = dfFill0 |> pull(color0) |> rev()
+    breaks = dfFill0 |> pull(category),
+    values = dfFill0 |> pull(color0)
   ) ### End scale_fill_manual
 
   ### Add themes
@@ -394,13 +308,14 @@ plot_stackedBar_bySector <- function(
 ### Format data for box and whisker plot
 format_boxWhisker <- function(
     df0,
+    df1     = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
+    # df1     = fun_colorSectors(),
     # yrs0 = 2090,
     cols0   = c("annual_impacts"),
     join0   = c("sector"),
     # k0      = 1e-9,
     health0 = c("health", "atsHealth"),
-    other0  = FALSE, ### Whether to keep other
-    df1     = fun_colorSectors()
+    other0  = FALSE  ### Whether to keep other
 ){
   ### Filter data
   # ### Mutate year as factor
@@ -408,10 +323,20 @@ format_boxWhisker <- function(
   # df0     <- df0 |> filter(year %in% yrs0)
 
   ### Join with sector info and drop missing values
-  df0     <- df0 |> join_sectorLabels(join0=join0, health0=health0, other0=other0, df1=df1)
-  df0     <- df0 |> filter(!lab0 |> is.na())
-  df0$category |> unique() |> print()
-  rm(health0, other0, df1, join0)
+  df0     <- df0 |> join_sectorLabels(
+    df1     = df1,
+    join0   = join0,
+    health0 = health0,
+    other0  = other0
+  ) ### End join_sectorLabels
+  rm(health0, df1, join0)
+
+  ### Drop other
+  # if(!other0)
+  # df0 |> filter(lab0 |> is.na()) |> glimpse()
+  df0 <- df0 |> filter(!lab0 |> is.na())
+  rm(other0)
+
 
   # ### Adjust values top trillions
   # df0     <- df0 |> mutate(value = annual_impacts * k0)
@@ -419,45 +344,123 @@ format_boxWhisker <- function(
   ### Find order of sectors and categories, largest to smallest, then sort
   group1  <- c("sector")
   sum1    <- c(cols0)
-  sort1   <- c(sum1, group1)
-  df1     <- df0
-  df1     <- df1 |> group_by_at(c(group1)) |> summarize_at(c(sum1), mean, na.rm=T) |> ungroup()
-  df1     <- df1 |> arrange_at(c(sort1))
-  df1     <- df1 |> arrange(row_number() |> desc())
-  lvls1   <- df1 |> pull(all_of(group1))
+  df1     <- df0 |>
+    group_by_at(c(group1)) |>
+    summarize_at(c(sum1), sum, na.rm=T) |> ungroup() |>
+    arrange_at(c(sum1, group1), desc)
+  # df1 |> glimpse()
 
   ### Factor category and arrange
-  df0     <- df0 |> mutate_at(c(group1), factor, levels=lvls1)
-  df0     <- df0 |> arrange_at(c(group1))
-  rm(group1, sum1, sort1, lvls1, df1)
+  lvls1   <- df1 |> pull(all_of(group1))
+  df0     <- df0 |>
+    mutate_at (c(group1), factor, levels=lvls1) |>
+    arrange_at(c(group1))
+  # rm(group1, sum1, sort1, lvls1, df1)
 
   ### Find order of sectors and categories, largest to smallest, then sort
   group2  <- c("category")
   sum2    <- c(cols0)
-  sort2   <- c(sum2, group2)
-  df2     <- df0
-  df2     <- df2 |> group_by_at(c(group2)) |> summarize_at(c(sum2), sum, na.rm=T) |> ungroup()
-  df2     <- df2 |> arrange_at(c(sort2))
-  df2     <- df2 |> arrange(row_number() |> desc())
-  lvls2   <- df2 |> pull(all_of(group2))
-  ### Factor category and sector and arrange
-  df0     <- df0 |> mutate_at(c(group2), factor, levels=lvls2)
-  df0     <- df0 |> arrange_at(c(group2))
-  rm(group2, sum2, sort2,lvls2, df2)
+  df2     <- df0 |>
+    group_by_at(c(group2)) |>
+    summarize_at(c(sum2), sum, na.rm=T) |> ungroup() |>
+    arrange_at(c(sum2, group2), desc)
 
-  ### Arrange
-  # # sort0   <- c("sector", "category")
-  # sort0   <- c("category", "sector")
-  # df0     <- df0 |> arrange_at(c(sort0))
+  ### Factor category and sector and arrange
+  lvls2   <- df2 |> pull(all_of(group2))
+  df0     <- df0 |>
+    mutate_at (c(group2), factor, levels=lvls2) |>
+    arrange_at(c(group1, group2))
+  # rm(group2, sum2, sort2,lvls2, df2)
 
   ### Return
   return(df0)
 }
 
 
+# format_boxWhisker <- function(
+#     df0,
+#     # yrs0 = 2090,
+#     cols0   = c("annual_impacts"),
+#     join0   = c("sector"),
+#     # k0      = 1e-9,
+#     health0 = c("health", "atsHealth"),
+#     other0  = FALSE, ### Whether to keep other
+#     df1     = fun_colorSectors()
+# ){
+#   ### Filter data
+#   # ### Mutate year as factor
+#   # filter0 <- yrs0
+#   # df0     <- df0 |> filter(year %in% yrs0)
+#
+#   ### Join with sector info and drop missing values
+#   df0     <- df0 |> join_sectorLabels(
+#     df1     = df1,
+#     join0   = join0,
+#     health0 = health0,
+#     other0  = other0
+#   ) ### End join_sectorLabels
+#   rm(health0, df1, join0)
+#
+#   ### Drop other
+#   # if(!other0)
+#   # df0 |> filter(lab0 |> is.na()) |> glimpse()
+#   df0 <- df0 |> filter(!lab0 |> is.na())
+#   rm(other0)
+#
+#
+#   # ### Adjust values top trillions
+#   # df0     <- df0 |> mutate(value = annual_impacts * k0)
+#
+#   ### Find order of sectors and categories, largest to smallest, then sort
+#   group1  <- c("sector")
+#   sum1    <- c(cols0)
+#   df1     <- df0 |>
+#     group_by_at(c(group1)) |>
+#     summarize_at(c(sum1), sum, na.rm=T) |> ungroup() |>
+#     arrange_at(c(sum1, group1), desc)
+#   # df1 |> glimpse()
+#
+#   # ### Order by row number and factor groups
+#   # df1     <- df1 |>
+#   #   arrange(row_number() |> desc()) |>
+#   #   mutate(row1 = row_number() |> desc())
+#
+#   # ### Factor category and arrange
+#   # lvls1   <- df1 |> pull(all_of(group1))
+#   # df0     <- df0 |>
+#   #   mutate_at(c(group1), factor, levels=lvls1) |>
+#   #   arrange_at(c(group1), desc)
+#   # # rm(group1, sum1, sort1, lvls1, df1)
+#
+#   ### Find order of sectors and categories, largest to smallest, then sort
+#   group2  <- c("category")
+#   sum2    <- c(cols0)
+#   df2     <- df0 |>
+#     group_by_at(c(group2)) |>
+#     summarize_at(c(sum2), sum, na.rm=T) |> ungroup() |>
+#     arrange_at(c(sum2, group2)) |> arrange(row_number() |> desc())
+#
+#   ### Factor category and sector and arrange
+#   lvls2   <- df2 |> pull(all_of(group2))
+#   df0     <- df0 |>
+#     mutate_at(c(group2), factor, levels=lvls2) |>
+#     arrange_at(c(group2, group1))
+#   # rm(group2, sum2, sort2,lvls2, df2)
+#
+#   ### Arrange
+#   # # sort0   <- c("sector", "category")
+#   # sort0   <- c("category", "sector")
+#   # df0     <- df0 |> arrange_at(c(sort0))
+#
+#   ### Return
+#   return(df0)
+# }
+
+
 ### Function to create a box and whisker plot
 plot_basicBoxWhisker <- function(
     df0,
+    df1       = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
     sectors0  = c("ATS Temperature-Related Mortality"),
     yCol0     = c("annual_impacts"),
     title0    = "U.S. Annual Climate-Driven Damages in 2090",
@@ -470,10 +473,9 @@ plot_basicBoxWhisker <- function(
     yLims0 = NULL,
     xLabs0 = function(x) str_wrap(x, width=25),
     yLabs0 = scales::dollar_format(),
-    # fill0  = rainbow_6() |> rev(),
+    # fill0  = colors_6 |> rev(),
     unit0  = "",
-    theme0 = theme_basicBoxWhisker(),
-    df1    = fun_colorSectors()
+    theme0 = theme_basicBoxWhisker()
 ){
   ### Fill breaks
   dfFill0 <- df0 |> select(category, color0) |> unique()
@@ -497,9 +499,7 @@ plot_basicBoxWhisker <- function(
 
   ### Group values
   group0  <- c("sector", "category")
-  # group0  <- c("category")
   sum0    <- c("value")
-  sort0   <- c(sum0, "category")
   df0     <- df0 |> mutate(value = df0 |> pull(all_of(yCol0)))
   df0     <- df0 |> group_by_at(c(group0)) |> summarize_at(c(sum0), mean, na.rm=T) |> ungroup()
   rm(group0, sum0)
@@ -510,7 +510,10 @@ plot_basicBoxWhisker <- function(
   # yLab0   <- yLab0 |> str_replace(str0, str1)
 
   ### Initial plot
-  p0      <- df0 |> ggplot(aes(x=reorder(sector, value, mean, na.rm=TRUE), y=value))
+  p0      <- df0 |> ggplot(aes(
+    x    = reorder(sector, value, mean, na.rm=TRUE),
+    y    = value
+  ))
 
   ### Add geoms and flip coordinates
   p0      <- p0 + geom_bar(aes(fill = category), stat="identity", alpha=0.6, width=0.7)
@@ -536,10 +539,11 @@ plot_basicBoxWhisker <- function(
 ### Function to divide basicBoxWhisker plots into sector categories
 plot_basicBoxWhisker2 <- function(
     df0,
+    df1        = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
     yCol0      = "annual_impacts",
     sectorList = list(
-      a=c("ATS Temperature-Related Mortality"),
-      b=c("Climate-Driven Changes in Air Quality", "Labor", "Rail", "Roads", "Suicide",
+      sector1=c("ATS Temperature-Related Mortality"),
+      sector2=c("Climate-Driven Changes in Air Quality", "Labor", "Rail", "Roads", "Suicide",
                 "Transportation Impacts from High Tide Flooding", "Wildfire", "Wind Damage")
     ), ### End list
     # lims0     = NULL,
@@ -547,7 +551,6 @@ plot_basicBoxWhisker2 <- function(
     title0    = "U.S. Annual Climate-Driven Damages in 2090",
     subTitle0 = "By sector, colored by sector category (subset of all climate-related impacts)",
     # subTitle0 = "By sector, colored by sector category",
-    # fill0     = list(a=rainbow_6() |> rev(), b=rainbow_6() |> rev(), c=rainbow_6()[-4] |> rev()),
     lgdTitle0 = "Sector Category",
     xLab0     = "",
     yLab0  = "Damages ($2015)",
@@ -568,10 +571,9 @@ plot_basicBoxWhisker2 <- function(
   pList0    <- sectNames |> map(function(
     name_i,
     sectors_i = sectorList[[name_i]]
-    # sectors_i = sectorList[[name_i]],
-    # fill_i    = fill0[[name_i]]
   ){
     df0 |> plot_basicBoxWhisker(
+      yCol0     = yCol0,
       sectors0  = sectors_i,
       title0    = title0,
       subTitle0 = subTitle0,
@@ -580,7 +582,7 @@ plot_basicBoxWhisker2 <- function(
       xLabs0    = xLabs0,
       yLabs0    = yLabs0,
       yLims0    = yLims0,
-      # fill0     = fill_i,
+      # fill0     = fill0,
       theme0    = theme0
     ) ### End plot_basicBoxWhisker
   }) |> set_names(sectLbls)
@@ -592,84 +594,22 @@ plot_basicBoxWhisker2 <- function(
 
 
 ### Regions ----------------------------
-### Function to get remaining
-arrangeTibbleVals <- function(
-    df0,    ### Sorted data frame
-    sort0   = "annual_impacts_percap", ### Column to sort on
-    # desc0   = TRUE  ### Sort descending or not
-    desc0   = TRUE , ### Sort descending or not
-    rownum  = FALSE  ### Get row number
-){
-  ### Sort
-  if(desc0)  {df0 <- df0 |> arrange_at(c(sort0), desc)}
-  else       {df0 <- df0 |> arrange_at(c(sort0))}
-  ### Add row number
-  if(rownum) {df0 <- df0 |> mutate(RowNum = row_number())}
-  ### Return
-  return(df0)
-}
-
-### Function to get remaining
-get_piePlotRemaining <- function(
-    df0, ### Sorted data frame
-    maxVal  = 4, ### Threshold
-    valCol  = "RowNum", ### Column to check for threshold
-    nameCol = "sector",
-    newName = "Remaining"
-){
-  ### Add row number
-  df0     <- df0 |> mutate(RowNum = row_number())
-  ### Add row number and adjust value in name column
-  df0     <- df0 |> mutate(checkVal = RowNum <= maxVal)
-  df0     <- df0 |> mutate(nameVal  = df0[[nameCol]] )
-  df0     <- df0 |> mutate(nameVal  = case_when(checkVal ~ nameVal, .default=newName))
-  df0[[nameCol]] <- df0 |> pull(nameVal)
-  rm(maxVal, valCol, nameCol, newName)
-
-  ### Drop columns
-  drop0   <- c("checkVal", "nameVal")
-  df0     <- df0 |> select(-all_of(drop0))
-  rm(drop0)
-
-  ### Return
-  return(df0)
-}
-
-### Add column with total value
-add_colTotal <- function(
+### Summarize values by region
+sumByRegion <- function(
     df0,
-    col0   = c("annual_impacts_percap"),
-    col1   = c("total")
+    group0 = c("sector", "variant", "impactType", "impactYear", "model", "model_type", "region", , "sectorprimary", "includeaggregate", "year", "gdp_usd"),
+    cols0  = c("annual_impacts")
 ){
-  ### Calculate total and add to a column
-  total0  <- df0 |> pull  (all_of(col0)) |> sum(na.rm=T)
-  df0[[col1]] <- total0
-  ### Return
-  return(df0)
-}
-
-### Calculate pie plot locations
-calc_piePlotPositions <- function(
-    df0,
-    col0   = c("annual_impacts_percap"),
-    col1   = "regTot" ### Column to store total value
-){
-  ### Mutate values:
-  ### - Compute ratio to total
-  ### - Compute the cumulative percentages (top of each rectangle)
-  ### - Compute the bottom of each rectangle
-  ### - Compute label position
-  ### - Compute (a )good label(s)
-  # df0 |> pull  (all_of(col0)) |> sum(na.rm=T) |> print()
-  df0     <- df0 |> add_colTotal(col0=col0, col1=col1)
-  df0     <- df0 |> mutate(fraction = df0[[col0]] / df0[[col1]])
-  ### - Calculate ymax
-  df0     <- df0 |> mutate(ymax     = fraction |> cumsum())
-  ### Get head of ymax and calculate ymin
-  yMins0  <- df0 |> pull  (ymax) |> head(n=-1)
-  df0     <- df0 |> mutate(ymin     = 0 |> c(yMins0))
-  ### Get label position
-  df0     <- df0 |> mutate(labelPosition = (ymax + ymin) / 2)
+  ### Summarize over regions
+  df0   <- df0  |>
+    group_by_at (c(group0)) |>
+    summarize_at(c(cols0), sum, na.rm=T) |> ungroup()
+  # ### Columns
+  # cols1 <- cols0 |> map(paste0, c("", "_scaled")) |> unlist()
+  # ### Summarize data, scale impacts, get per capita impacts
+  # # df0  <- df0 |> getFilterDf(filters0="national", reverse0=T)
+  # df0   <- df0  |> scaleImpacts(cols0=cols0)
+  # df0   <- df0  |> calcPerCap(cols0 = cols1)
   ### Return
   return(df0)
 }
@@ -678,70 +618,67 @@ calc_piePlotPositions <- function(
 calc_regPieMargin <- function(
     region0,
     df0,
-    fun0     = "mean", ### Summary function
-    col0     = c("annual_impacts_percap"),
-    col1     = c("total"), ### Column with total in it
-    group0   = c("region", "sector", "color1", "darkop", "col1"),
-    nameCol  = c("sector"),
-    newName  = "Remaining",
-    colorCol = "color1",
-    newColor = "#D3D3D3",
-    doRemain = TRUE,
-    maxVal   = 4
+    col0   = c("annual_impacts_percap"),
+    # group0 = c("region", "sector", "color0", "darkop"),
+    group0   = c("region", "sector", "lab0", "color0", "darkop"),
+    colorR = "#D3D3D3"
 ){
-  ### Add groups
-  group0  <- group0 |> c(col1) |> unique()
-
   ### Filter to region
   df0     <- df0 |> filter(region %in% region0)
 
+  ### Make a copy to calculate total impacts
+  # dfCopy0 <- df0
+  totImp0 <- df0 |> pull(all_of(col0)) |> sum(na.rm=T)
+
+  ### First grouping:
+  ### - Group and summarize
+  df0     <- df0 |>
+    group_by_at (c(group0)) |>
+    summarize_at(c(col0), sum, na.rm=T) |> ungroup()
+  ### - Filter to impacts greater than zero and arrange descending
+  df0     <- df0 |>
+    filter_at (c(col0), function(x){x >= 0}) |>
+    arrange_at(c(col0), desc)
+  # df0$sector |> unique() |> print()
+  ### - Add row number and adjust sector
+  df0     <- df0 |>
+    mutate(RowNum = row_number()) |>
+    mutate(sector = case_when(RowNum <= 4 ~ sector, .default="Remaining")) |>
+    mutate(sector = sector |> as.factor())
+  # df0$sector |> unique() |> print()
+
+  ### Second grouping:
   ### Group and summarize
+  df0     <- df0 |>
+    group_by_at(c(group0)) |>
+    summarize_at(c(col0), sum, na.rm=T) |> ungroup()
   ### Filter to impacts greater than zero and arrange descending
-  df0     <- df0 |> group_by_at(c(group0)) |> summarize_at(c(col0), .funs=fun0, na.rm=T) |> ungroup()
-  df0     <- df0 |> filter_at(c(col0), function(x){x >= 0})
-  # df0     <- df0 |> arrange_at(c(col0), desc)
-  df0     <- df0 |> arrangeTibbleVals(sort0=col0, desc0=T, rownum=T)
+  ### Then add color
+  df0     <- df0 |>
+    filter_at(c(col0), function(x){x >= 0}) |>
+    arrange_at(c(col0), desc)
+
+  ### Factor sector and add color
+  # df0     <- df0 |> mutate(color0 = case_when(sector %in% "Remaining" ~ colorR, .default=color0))
   # df0$sector |> unique() |> print()
 
-  ### Adjust sector to remaining
-  if(doRemain) {
-    # df0     <- df0 |> mutate(RowNum = row_number())
-    df0     <- df0 |> get_piePlotRemaining(
-      maxVal  = maxVal,
-      valCol  = "RowNum",
-      nameCol = nameCol,
-      newName = newName
-    ) ### End get_piePlotRemaining
-  } ### End if(doRemain)
-
-  ### Adjust color and drop row number
-  # df0$sector |> unique() |> print()
-  df0 <- df0 |> mutate_at(c(colorCol), function(x, y=df0[[nameCol]]){
-    case_when(y %in% newName ~ newColor, .default=x)
-  })
-
-  ### Drop RowNum, group, summarize, filter, and arrange
-  drop0   <- c("RowNum")
-  df0     <- df0 |> select(-any_of(drop0))
-  df0     <- df0 |> group_by_at(c(group0)) |> summarize_at(c(col0), .funs=fun0, na.rm=T) |> ungroup()
-  df0     <- df0 |> filter_at (c(col0), function(x){x >= 0})
-  df0     <- df0 |> arrangeTibbleVals(sort0=col0, desc0=T, rownum=T)
-  # df0 |> names() |> get_matches(y="RowNum") |> print()
-  # df0     <- df0 |> arrange_at(c(col0), desc)
-  # df0     <- df0 |> mutate_at(c(nameCol), as.factor)
-
-  ### Add region total
-  ### Get label position and then add labels
-  col2    <- "regTot"
-  df0     <- df0 |> calc_piePlotPositions(col0=col0, col1=col2)
-
-  ### Add labels
-  total0  <- df0 |> pull(all_of(col1)) |> unique()
-  regTot0 <- df0 |> pull(all_of(col2)) |> unique()
-  regPct0 <- (regTot0 / total0 * 1e2)
-  # c(total0, regTot0, regPct0) |> print()
-  df0     <- df0 |> mutate(label    = (fraction*1e2) |> round(0) |> format(nsmall=0) |> paste0("%"))
-  df0     <- df0 |> mutate(label2   = regPct0 |> round(1) |> format(nsmall=1) |> paste0("%") )
+  ### Mutate values:
+  ### - Compute ratio to total and get ymin, etc.
+  ### - Compute the cumulative percentages (top of each rectangle)
+  ### - Compute the bottom of each rectangle
+  ### - Compute label position
+  ### - Compute (a )good label(s)
+  sumVal0 <- df0 |> pull(all_of(col0)) |> sum(na.rm=T)
+  df0     <- df0 |>
+    mutate(fraction = df0[[col0]] / sumVal0) |>
+    mutate(ymax     = fraction |> cumsum())
+  ### Minimums
+  yMins0  <- df0 |> pull(ymax) |> head(n=-1)
+  df0     <- df0 |>
+    mutate(ymin     = 0 |> c(yMins0)) |>
+    mutate(labelPosition = (ymax + ymin) / 2) |>
+    mutate(label    = (fraction*1e2) |> round(0) |> format(nsmall=0) |> paste0("%")) |>
+    mutate(label2   = (sumVal0 / totImp0 * 1e2) |> round(1) |> format(nsmall=1) |> paste0("%"))
 
   ### Return
   return(df0)
@@ -750,83 +687,58 @@ calc_regPieMargin <- function(
 
 
 ### Format region pie plots
-### Add in a legend
 format_regPieChart <- function(
     df0,
-    col0    = c("annual_impacts_percap"),
-    col1    = c("total"),
-    join0   = c("sector"),
-    group0  = c("region", "sector"),
-    health0 = c("health", "atsHealth"),
-    other0  = FALSE, ### Whether to keep other
-    naStr0  = c(NA, NaN, Inf, -Inf, "NA", "NaN"),
-    nameCol  = c("sector"),
-    newName  = "Remaining",
-    colorCol = "color1",
-    darkop0  = TRUE,
-    newColor = "#D3D3D3",
-    df1      = fun_colorSectors()
+    df1      = addSectorTypes() |> left_join(fun_dfColors(), by="lab0"),
+    # df1      = fun_colorSectors()
+    # df1      = fun_sectorLabels() |> addSectorTypes(types0=fun_sectorTypes()) |> fun_colorSectors()
+    col0     = c("annual_impacts_percap"),
+    join0    = c("sector"),
+    # group0   = c("region", "sector", "color0", "darkop"),
+    group0   = c("region", "sector", "lab0", "color0", "darkop"),
+    health0  = c("health", "atsHealth"),
+    other0   = FALSE, ### Whether to keep other
+    naStr0   = c(NA, NaN, Inf, -Inf, "NA", "NaN"),
+    # colorCol = "color0",
+    colorR   = "#D3D3D3"
 ){
-  ### Adjust groups
-  group0  <- group0 |> c(colorCol) |> unique()
-  if(darkop0) group0 <- group0 |> c("darkop")
-
-  ### Format data: Filter out NA values and filter to values >= 0
+  ### Format data
   filter0 <- c(col0)
   sort0   <- col0 |> c("sector")
   # df0     <- df0  |> filter_at(c(filter0), function(x, y=naStr0){!(x %in% y)})
-  df0     <- df0 |> filter_at(c(filter0), function(x, y=naStr0){x |> get_matches(y=naStr0, matches=F, type="matches")})
-  df0     <- df0 |> filter_at(c(col0), function(x){x >= 0})
+  df0     <- df0 |>
+    filter_at(c(filter0), function(x, y=naStr0){
+      x |> get_matches(y=naStr0, matches=F, type="matches")
+      }) |>
+    arrange_at(c(sort0))
 
   ### Join with sector info and drop missing values
-  df0     <- df0 |> join_sectorLabels(join0=join0, health0=health0, other0=other0, df1=df1)
-  df0     <- df0 |> filter(!lab0 |> is.na())
-  rm(health0, other0, df1, join0)
+  df0     <- df0 |> join_sectorLabels(
+    df1     = df1,
+    join0   = join0,
+    health0 = health0,
+    other0  = other0
+  ) ### End join_sectorLabels
+  rm(health0, df1, join0)
 
-  ### Get total value
-  ### Calculate value for all regions
-  # df0 |> pull(all_of(col0)) |> sum(na.rm=T) |> print()
-  df0     <- df0 |> add_colTotal(col0=col0, col1=col1)
-  # df0 |> pull(all_of(col1)) |> unique() |> print()
+  ### Drop other
+  # if(!other0)
+  df0 <- df0 |> filter(!lab0 |> is.na())
+  rm(other0)
 
   ### Iterate over regions
   region0 <- df0     |> pull(region) |> unique()
   df0     <- region0 |> map(
     calc_regPieMargin,
-    df0=df0, fun0="sum", col0=col0, group0=group0,
-    nameCol=nameCol, newName=newName, newColor=newColor, colorCol=colorCol, doRemain=T
-  ) |> bind_rows()
-  # df0 |> glimpse()
-
-  ### Calculate value for all regions
-  dfAll0  <- df0   |> mutate(region = "All")
-  dfAll0  <- "All" |> calc_regPieMargin(
-    df0=dfAll0, fun0="mean", col0=col0, group0=group0,
-    nameCol=nameCol, newName=newName, newColor=newColor, colorCol=colorCol, doRemain=F
-  ) ### End calc_regPieMargin
-  # df0 |> glimpse()
-
-  ### Adjust values
-  y0      <- "Sectors outside of the top 4 by region"
-  y1      <- 1
-  # dfAll0  <- dfAll0 |> mutate_at(c(nameCol), function(x){case_when(x %in% newName ~ y0, .default=x)})
-  # dfAll0  <- dfAll0 |> mutate_at(c(col0), function(x){case_when(x %in% newName ~ y1, .default=x)})
-  df0 <- df0 |> mutate_at(c(nameCol), function(x, y=df0[[nameCol]]){
-    case_when(x %in% newName ~ y0, .default=x)
-  }) |> mutate_at(c(col0), function(x, y=df0[[nameCol]]){
-    case_when(y %in% newName ~ y1, .default=x)
-  })
-  rm(y0, y1)
-
-  ### Bind values and adjust color for remaining
-  df0     <- df0 |> bind_rows(dfAll0)
-  rm(dfAll0)
+    df0    = df0,
+    col0   = col0,
+    group0 = group0,
+    colorR = colorR
+    ) |> bind_rows()
 
   ### Return
   return(df0)
 }
-
-
 
 ### Function to plot region pie margins
 # scale_fill_brewer(palette = 'Greys',
@@ -836,38 +748,30 @@ plot_regPieMargin <- function(
     region0,
     df0,
     col0      = c("annual_impacts_percap"),
+    colorCol0 = c("color1"),
     lgdTitle0 = "Top 4 Sectors",
     xLims0    = c(2, 4),
-    xMax0     = 4,
-    xMin0     = 3,
-    colorCol  = "color1",
-    darkop0   = TRUE,
     theme0    = theme_void()
 ){
   ### Filter data
-  df0     <- df0 |> filter(region %in% region0)
-  df0     <- df0 |> mutate(value = df0[[col0]])
-
-  ### Arrange and factor data
-  sort0   <- c("RowNum")
-  df0     <- df0 |> arrange_at(c(sort0), desc)
-  df0     <- df0 |> mutate_at(c("sector"), as.factor)
+  df0    <- df0 |> filter(region %in% region0)
+  df0    <- df0 |> mutate(value = df0[[col0]])
 
   ### Get title
-  label0 <- df0     |> pull(label2) |> unique()
+  label0 <- df0     |> pull (label2) |> unique()
   title0 <- region0 |> paste(label0)
 
   ### Fill breaks
-  select0 <- c("region", "sector") |> c(colorCol)
-  if(darkop0) df0 <- df0 |> mutate_at(c(colorCol), function(x, y=df0[["darkop"]]){paste0(x, y)})
-  dfFill0 <- df0 |> select(all_of(select0)) |> unique()
+  # dfFill0 <- df0    |> select(region, sector, color0) |> unique()
+  select0 <- c("region", "sector") |> c(colorCol0)
+  dfFill0 <- df0    |> select(all_of(select0)) |> unique()
   # dfFill0 |> glimpse()
 
   ### Initialize plot
-  p0      <- df0 |> ggplot(aes(ymax=ymax, ymin=ymin, xmax=xMax0, xmin=xMin0))
+  p0      <- df0 |> ggplot(aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=reorder(sector, value)))
 
   ### Add geoms
-  p0      <- p0 + geom_rect(aes(fill=reorder(sector, value)))
+  p0      <- p0 + geom_rect()
   p0      <- p0 + geom_text(x=4.25, aes(y=labelPosition, label=""), size=5)
 
   ### Format coords
@@ -876,10 +780,10 @@ plot_regPieMargin <- function(
   ### Add scales
   p0      <- p0 + scale_fill_manual (
     lgdTitle0,
+    # breaks = dfFill0 |> pull(sector),
+    # values = dfFill0 |> pull(color0)
     breaks = dfFill0 |> pull(sector) |> rev(),
-    values = dfFill0 |> pull(all_of(colorCol)) |> rev()
-    # breaks = dfFill0[["sector"]] |> rev(),
-    # values = dfFill0[[colorCol]] |> rev()
+    values = dfFill0 |> pull(all_of(colorCol0)) |> rev()
   ) ### End scale_fill_manual
   p0      <- p0 + xlim(xLims0)
 
@@ -903,27 +807,26 @@ joinDeltaResults <- function(
     drop0 = c("impactYear", "impactType", "region", "postal", "model_type", "sectorprimary", "includeaggregate") ### Columns that we want to drop from one of the data frames
 ){
   ### Names
-  lNames0 <- list0  |> names()
-  lDiff0  <- lNames0 |> map(function(name_i){diff0 |> paste0("_", name_i)}) |> set_names(lNames0)
-  # lDiff0 |> print()
+  lNames0 <- list0   |> names()
+  lDiff0  <- lNames0 |> map(paste0, "_", diff0) |> set_names(lNames0)
   ### Rename columns
-  df1     <- list0[[1]]
-  df2     <- list0[[2]]
-  # df1 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
-  # df2 |> filter(year %in% 2090) |> summarize_at(c("annual_impacts"), sum, na.rm=T) |> print()
-  ### Drop columns from one data frame and join
-  select2 <- c(join0, diff0)
-  df2     <- df2 |> select(all_of(select2))
+  list0[[1]] <- list0[[1]] |> rename_at(c(diff0), ~lDiff0[[1]])
+  list0[[2]] <- list0[[2]] |> rename_at(c(diff0), ~lDiff0[[2]])
+  # rm(list0)
+  # df1     <- list0[[1]] |> rename_at(c(diff0), ~lDiff0[[1]])
+  # df2     <- list0[[2]] |> rename_at(c(diff0), ~lDiff0[[2]])
+  # rm(list0)
+  # df1 |> glimpse(); df2 |> glimpse()
+  ### Drop columns
+  select2 <- join0 |> c(lNames0[2] |> paste0("_", diff0))
+  # df2     <- df2 |> select(all_of(select2))
+  list0[[2]] <- list0[[2]] |> select(all_of(select2))
   rm(select2)
-  ### Rename columns
-  df1     <- df1 |> rename_at(c(diff0), ~lDiff0[[1]])
-  df2     <- df2 |> rename_at(c(diff0), ~lDiff0[[2]])
   ### Join data
-  select2 <- c(join0, diff0)
+  df0     <- list0 |> reduce(left_join, by=join0)
+  rm(list0)
   # df0     <- df1 |> left_join(df2, by=join0)
-  df0     <- df1
-  df0[,lDiff0[[2]]] <- df2[,lDiff0[[2]]]
-  rm(df1, df2)
+  # rm(df1, df2)
   ### Mutate data
   delta0  <- diff0 |> paste0("_delta")
   pct0    <- diff0 |> paste0("_deltaPct")
@@ -1135,46 +1038,51 @@ theme_state <- function(
 }
 
 ### Color stuff -------------------------
-
-#### Function to create list of sectors
-fun_sectorTypes <- function(x0=1){
-  list0 <- list()
-  list0[["labor"    ]] <- c("Labor")
-  list0[["ag"       ]] <- c("CIL Agriculture")
-  list0[["eco"      ]] <- c("Marine Fisheries", "Winter Recreation", "Water Quality")
-  list0[["elec"     ]] <- c("Electricity Demand and Supply", "Electricity Transmission and Distribution")
-  list0[["infra"    ]] <- c("Rail", "Roads", "Urban Drainage", "Transportation Impacts from High Tide Flooding",
-                            "Coastal Properties", "Inland Flooding", "Wind Damage")
-  list0[["health"   ]] <- c("Climate-Driven Changes in Air Quality", "Valley Fever", "Wildfire", "Southwest Dust",
-                            "CIL Crime", "Suicide", "Vibriosis")
-  list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality")
-  list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality")
-  # list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality") |> c(list0[["health"]])
-  # list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality") |> c(list0[["health"]])
-  return(list0)
-}
-
-
 #### Function to match graph labels to sectors
 fun_sectorLabels <- function(
     col0      = c("graphLabel"),
-    join0     = c("sector"),
+    df0       = "co_sectors" |>
+      get_frediDataObj(listSub="frediData") |>
+      (function(dfX, dfY = "co_variants" |> get_frediDataObj(listSub="frediData")){
+        dfX <- dfX |>
+          select(c("sector_id", "sector_label")) |>
+          rename_at(c("sector_label"), ~c("sector"))
+        dfY <- dfY |>
+          select(c("sector_id", "variant_id", "variant_label", "includeaggregate", "sectorprimary")) |>
+          rename_at(c("variant_label"), ~c("variant")) |>
+          filter(sectorprimary |> as.logical())
+        # dfX |> glimpse(); dfY |> glimpse()
+        dfX <- dfX |>
+          left_join(dfY, by="sector_id") |>
+          arrange_at(c("sector"))
+        return(dfX)
+      })(),
+    # df0       = "frediData" |>
+    #   get_frediDataObj("configData", "co_sectors") |>
+    #   select(c("sector_id", "sector_label", "includeaggregate")) |>
+    #   rename_at(c("sector_label"), ~c("sector")),
+    # df0       = "co_sectors" |>
+    #   get_frediDataObj(listSub="frediData") |>
+    #   select(c("sector_id", "sector_label")) |>
+    #   rename_at(c("sector_label"), ~c("sector")),
+    # df0       = tibble() |> mutate(sector = get_sectorInfo()),
+    # col0      = c("graphLabel"),
     sectors0  = c("ATS Temperature-Related Mortality", "CIL Temperature-Related Mortality", "Climate-Driven Changes in Air Quality",
                   "Electricity Demand and Supply", "Electricity Transmission and Distribution", "Marsh Migration (Primary)",
                   "Marsh Migration (Secondary)", "Transportation Impacts from High Tide Flooding"),
     labels0   = c("ATS Temp Mortality", "CIL Temp Mortality", "Climate-Driven AQ",
                   "Elec. Demand & Supply", "Elec. Trans. & Distr.", "Marsh Migration (P)",
                   "Marsh Migration (S)", "Transport. Impacts HTF"),
-    physical0 = c("Climate-Driven Changes in Air Quality", "Asphalt Roads", "ATS Temperature-Related Mortality",
-                  "CIL Crime", "CIL Temperature-Related Mortality", "Extreme Temperature",
-                  "Labor", "Lyme Disease", "Marsh Migration (Secondary)", "Outdoor Recreation",
-                  # "Rail", "Roads",
-                  "Southwest Dust", "Suicide", "Valley Fever", "Vibriosis", "Wildfire"),
-    variants0 = c("Climate-Driven Changes in Air Quality", "ATS Temperature-Related Mortality*",  "CIL Agriculture",
-                  "CIL Temperature-Related Mortality", "Coastal Properties", "Electricity Transmission and Distribution",
-                  "Extreme Temperature*", "Forestry Loss", "Transportation Impacts from High Tide Flooding",
-                  "Marsh Migration (Primary)", "Marsh Migration (Secondary)", "Outdoor Recreation", "Rail", "Roads"),
-    df0       = "co_sectors" |> get_frediDataObj(listSub="frediData") |> select(c("sector_id", "sector_label")) |> rename_at(c("sector_label"), ~c("sector"))
+    # physical0 = c("Climate-Driven Changes in Air Quality", "Asphalt Roads", "ATS Temperature-Related Mortality",
+    #               "CIL Crime", "CIL Temperature-Related Mortality", "Extreme Temperature",
+    #               "Labor", "Lyme Disease", "Marsh Migration (Secondary)", "Outdoor Recreation",
+    #               # "Rail", "Roads",
+    #               "Southwest Dust", "Suicide", "Valley Fever", "Vibriosis", "Wildfire"),
+    # variants0 = c("Climate-Driven Changes in Air Quality", "ATS Temperature-Related Mortality*",  "CIL Agriculture",
+    #               "CIL Temperature-Related Mortality", "Coastal Properties", "Electricity Transmission and Distribution",
+    #               "Extreme Temperature*", "Forestry Loss", "Transportation Impacts from High Tide Flooding",
+    #               "Marsh Migration (Primary)", "Marsh Migration (Secondary)", "Outdoor Recreation", "Rail", "Roads")
+    join0     = c("sector")
 ){
   ### Check length
   nSectors0 <- sectors0 |> length()
@@ -1196,6 +1104,7 @@ fun_sectorLabels <- function(
   join0   <- c("sector")
   from0   <- c("newLabs")
   to0     <- c(col0)
+  # df0 |> glimpse()
   df0     <- df0 |> left_join(df1, by=join0)
   df0     <- df0 |> arrange_at(c(join0))
   df0     <- df0 |> mutate(newLabs = case_when(newLabs |> is.na() ~ sector, .default=newLabs))
@@ -1244,13 +1153,41 @@ addSectorAttribute <- function(
   return(df0)
 }
 
+#### Function to create list of sectors
+fun_sectorTypes <- function(x0=1){
+  list0 <- list()
+  list0[["ag"       ]] <- c("CIL Agriculture", "Forestry Surplus Loss")
+  # list0[["eco"      ]] <- c("Marine Fisheries", "Winter Recreation", "Water Quality")
+  list0[["eco"      ]] <- c("Marine Fisheries", "Marsh Migration (Primary)",
+                            "Outdoor Recreation", "Water Quality")
+  list0[["elec"     ]] <- c("Electricity Demand and Supply",
+                            "Electricity Transmission and Distribution")
+  list0[["labor"    ]] <- c("Labor", "Learning Loss")
+  list0[["infra"    ]] <- c("Coastal Properties", "Inland Flooding", "Rail", "Roads",
+                            "Transportation Impacts from High Tide Flooding",
+                            "Urban Drainage", "Wind Damage")
+  # list0[["health"   ]] <- c("Climate-Driven Changes in Air Quality", "Valley Fever", "Wildfire", "Southwest Dust",
+  #                           "CIL Crime", "Suicide", "Vibriosis")
+  list0[["health"   ]] <- c("Climate-Driven Changes in Air Quality", "CIL Crime",
+                            "Lyme Disease", "Southwest Dust", "Suicide",
+                            "Valley Fever", "Vibriosis", "Wildfire")
+  list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality")
+  list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality")
+  # list0[["atsHealth"]] <- c("ATS Temperature-Related Mortality") |> c(list0[["health"]])
+  # list0[["cilHealth"]] <- c("CIL Temperature-Related Mortality") |> c(list0[["health"]])
+  return(list0)
+}
 
 
 #### Create a tibble with info
 addSectorTypes <- function(
     # sectors0 = get_sectorInfo(),
   df0    = fun_sectorLabels(),
-  types0 = fun_sectorTypes()
+  types0 = fun_sectorTypes(),
+  catLvls0 = c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth"),
+  catLabs0 = c("Labor & Learning", "Agriculture", "Ecosystems + Recreation", "Electricity", "Infrastructure") |>  c("Health" |> rep(3)),
+  lvlCol0  = "lab0",
+  labCol0  = "lab1"
 ){
   ### Initialize df and make copies
   # df0      <- tibble(sector = sectors0)
@@ -1258,7 +1195,7 @@ addSectorTypes <- function(
   df2      <- df0
 
   ### Add columns to data checking if sector is in the column
-  idCols0  <- df0    |> names()
+  idCols0  <- df1    |> names()
   newCols0 <- types0 |> names() |> sort()
   # newCols0 |> print()
   df1      <- newCols0 |> map(function(
@@ -1289,9 +1226,14 @@ addSectorTypes <- function(
   ### Filter NA values
   filter0 <- c("value0")
   drop0   <- filter0
-  df1     <- df1 |> pivot_longer(cols=-all_of(idCols0), names_to ="lab0", values_to="value0")
-  df1     <- df1 |> filter_at(c(filter0), function(x){!(x |> is.na())})
-  df1     <- df1 |> select(-all_of(drop0))
+  df1     <- df1 |>
+    pivot_longer(
+      cols      = -all_of(idCols0),
+      names_to  = "lab0",
+      values_to = "value0"
+    ) |>
+    filter_at(c(filter0), function(x){!(x |> is.na())}) |>
+    select(-all_of(drop0))
   # df1     <- df1 |> distinct()
   # df1 |> glimpse()
   rm(filter0, drop0)
@@ -1300,10 +1242,14 @@ addSectorTypes <- function(
   filter0 <- c("sector")
   sort0   <- c("lab0", "sector")
   vals0   <- df1 |> pull(sector) |> unique()
-  df2     <- df2 |> filter_at(c(filter0), function(x, y=vals0){!(x %in% y)})
-  df2     <- df2 |> mutate(lab0 = "other")
-  df0     <- df1 |> rbind(df2)
-  df0     <- df0 |> arrange_at(c(sort0))
+  df2     <- df2 |>
+    filter_at(c(filter0), function(x, y=vals0){!(x %in% y)}) |>
+    mutate(lab0 = "other")
+
+  ### Bind rows
+  df0     <- df1 |>
+    bind_rows(df2) |>
+    arrange_at(c(sort0))
   rm(filter0, sort0, vals0, df1, df2)
 
   # ### Summarize number in groups and join summary with df1
@@ -1319,26 +1265,27 @@ addSectorTypes <- function(
   # rm(group0, join0, move0, before0, sort0, df1)
 
   ### Mutate lab1 and lab2
-  # lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth") |> c("na")
-  # lbls0   <- c("Labor", "Agriculture", "Ecosystems + Recreation", "Electricity", "Infrastructure") |>  c("Health" |> rep(3)) |> c("NA")
-  lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth")
-  lbls0   <- c("Labor", "Agriculture", "Ecosystems + Recreation", "Electricity", "Infrastructure") |>  c("Health" |> rep(3))
-  df0     <- df0 |> mutate(lab1 = lab0 |> factor(levels=lvls0, labels=lbls0) |> as.character())
+  # # lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth") |> c("na")
+  # # lbls0   <- c("Labor", "Agriculture", "Ecosystems + Recreation", "Electricity", "Infrastructure") |>  c("Health" |> rep(3)) |> c("NA")
+  # lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth")
+  # lbls0   <- c("Labor", "Agriculture", "Ecosystems + Recreation", "Electricity", "Infrastructure") |>  c("Health" |> rep(3))
+  df0     <- df0 |>
+    mutate(newCol = df0 |> pull(all_of(lvlCol0)) |> factor(catLvls0, catLabs0) |> as.character()) |>
+    rename_at(c("newCol"), ~labCol0)
   # df0     <- df0 |> mutate(lab2 = lab1 |> paste0(" (", nSectors, ")"))
-  rm(lvls0, lbls0)
+  # rm(lvls0, lbls0)
 
   ### Return
   return(df0)
 }
 
-
-
 #### Colors
-c("#f2938c", "#d54309", "#c05600", "#ffbc78", "#97d4ea", "#86b98e", "#4d8055", "#446443", "#1a4480", "#936f38")
 rainbow_6      <- function(x=1){c("#f2938c", "#d54309", "#ffbc78", "#4d8055", "#97d4ea", "#1a4480")}
 rainbow_7      <- function(x=1){c("#f2938c", "#d54309", "#ffbc78", "#86b98e", "#4d8055", "#97d4ea", "#1a4480")}
 rainbow_8      <- function(x=1){c("#EA7580FF", "#F6A1A5FF", "#F8CD9CFF", "#86b98e", "#4d8055", "#1BB6AFFF", "#088BBEFF", "#172869FF")}
-rainbow_10      <- function(x=1){}
+rainbow_10     <- function(x=1){c(
+  "#f2938c", "#d54309", "#c05600", "#ffbc78",  "#936f38", "#86b98e", "#4d8055", "#446443", "#97d4ea", "#1a4480"
+)}
 # colors_7      <-               c("#f2938c", "#d54309", "#ffbc78", "#86b98e", "#4d8055","#97d4ea", "#1a4480")
 blues_7        <- function(x=1){c("#d9e8f6", "#aacdec", "#73b3e7", "#005ea2", "#0050d8", "#1a4480", "#162e51")}
 
@@ -1347,6 +1294,19 @@ fun_darkop     <- function(x=1){"B3"}
 
 ### Remaining color
 # "#D3D3D3"
+fun_dfColors   <- function(
+    lvls0   = c("eco", "ag", "elec", "labor", "infra", "health", "cilHealth", "atsHealth"),
+    # order0  = c(1:5, 6 |> rep(3)),
+    vals0   = rainbow_6()[c(1:5, 6 |> rep(3))],
+    lvlCol0 = "lab0"  , ### Name of column to store levels in
+    valCol0 = "color0"  ### Name of column to store values in
+){
+  df0 <- tibble(lvl0 = lvls0) |>
+    # mutate(order0 = order0) |>
+    mutate(val0   = vals0 ) |>
+    rename_at(c("lvl0", "val0"), ~c(lvlCol0, valCol0))
+  return(df0)
+}
 
 #### Create a tibble with info
 fun_colorSectors <- function(
@@ -1357,25 +1317,32 @@ fun_colorSectors <- function(
     blues7  = blues_7(),
     dark0   = "B3"
 ){
-  ### Add dark option
-  df0     <- df0 |> mutate(darkop = dark0)
-
   ### Add color
   # lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth") |> c("na")
   # lbls0   <- c(colors6[4], colors6[2], colors6[1], colors6[3], colors6[5]) |>  c(colors6[6] |> rep(3)) |> c("NA")
-  lvls0   <- c("labor", "ag", "eco", "elec", "infra", "health", "cilHealth", "atsHealth")
-  lbls0   <- c(colors6[4], colors6[2], colors6[1], colors6[3], colors6[5]) |>  c(colors6[6] |> rep(3))
-  df0     <- df0 |> mutate(color0 = lab0   |> factor(levels=lvls0, labels=lbls0) |> as.character())
+  df1     <- tibble("eco", "ag", "elec", "labor", "infra", "health", "cilHealth", "atsHealth")
+  lvls0   <- c("eco", "ag", "elec", "labor", "infra", "health", "cilHealth", "atsHealth")
+  lbls0   <- c(colors6[1], colors6[2], colors6[3], colors6[4], colors6[5]) |>  c(colors6[6] |> rep(3))
+  df0     <- df0 |> mutate(color0 = lab0 |> factor(levels=lvls0, labels=lbls0) |> as.character())
   rm(lvls0, lbls0)
 
-  ### Add colors for region annual impact plots
-  lvls0   <- c("ATS Temperature-Related Mortality", "Climate-Driven Changes in Air Quality",
-               "Transportation Impacts from High Tide Flooding", "Wildfire", "Rail", "Wind Damage",
-               "Roads", "Labor", "Suicide", "Southwest Dust"
-               )
-  lbls0   <- c("#f2938c", "#d54309", "#c05600", "#ffbc78", "#97d4ea", "#86b98e", "#4d8055", "#446443", "#1a4480", "#936f38")
-  df0     <- df0 |> mutate(color1 = sector |> factor(levels=lvls0, labels=lbls0) |> as.character())
+  ### Add another color and dark option
+  lvls0   <- c(
+    "Roads", "Transportation Impacts from High Tide Flooding", "Rail",
+    "CIL Agriculture", "Labor",
+    "Climate-Driven Changes in Air Quality", "ATS Temperature-Related Mortality",
+    "Southwest Dust", "Wildfire", "Wind Damage"
+  )
+  lbls0   <- c(
+    colors7[1], colors7[2], colors7[3],
+    colors7[4], colors7[5],
+    colors7[6], colors7[7],
+    "#936f38", "#c05600", "#446443"
+  )
+  df0     <- df0 |> mutate(color1 = lab0 |> factor(levels=lvls0, labels=lbls0) |> as.character())
+  df0     <- df0 |> mutate(darkop = dark0)
   rm(lvls0, lbls0)
+
 
   ### Return
   return(df0)
