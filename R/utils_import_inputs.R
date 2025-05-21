@@ -906,7 +906,7 @@ check_input_data <- function(
     # } ### End if(doCalc)
   } ### End if(doPop)
 
-  DBI::dbDisconnect(con)
+  #DBI::dbDisconnect(con)
   ###### Return ######
   paste0(msg1_i, "Values passed.") |> message()
   return(inputDf)
