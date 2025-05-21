@@ -429,7 +429,7 @@ run_fredi <- function(
       yearMin   = minYrs0,
       module    = "fredi" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data, yearMax=maxYear) |>
+      pmap(check_input_data, yearMax=maxYear, con = conn) |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 
