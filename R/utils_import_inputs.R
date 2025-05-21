@@ -282,7 +282,7 @@ check_regions <- function(
 
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  ghgData    <- DBI::dbReadTable(con,"ghgData")
+  ghgData    <- DBI::dbReadTable(conn,"ghgData")
   ghgData    <- unserialize(ghgData$value |> unlist())
   co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
   co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
