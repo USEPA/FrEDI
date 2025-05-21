@@ -277,11 +277,13 @@ check_regions <- function(
   ### Get state info: co_states
   #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   #co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- DBI::dbReadTable(conn,"co_states")
-  co_region <- DBI::dbReadTable(conn,"co_regions")
+  #co_states <- DBI::dbReadTable(conn,"co_states")
+  #co_region <- DBI::dbReadTable(conn,"co_regions")
 
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  ghgData    <- DBI::dbReadTable(con,"ghgData")
+  ghgData    <- unserialize(ghgData$value |> unlist())
   co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
   co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
 
@@ -1029,11 +1031,14 @@ calc_import_pop <- function(
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   co_info   <- DBI::dbReadTable(con,"co_inputInfo")
-  co_states <- DBI::dbReadTable(con,"co_states")
+  #co_states <- DBI::dbReadTable(con,"co_states")
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+  ghgData    <- DBI::dbReadTable(con,"ghgData")
+  ghgData    <- unserialize(ghgData$value |> unlist())
+
   co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
   co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
 
