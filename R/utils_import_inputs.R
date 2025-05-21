@@ -873,7 +873,7 @@ check_input_data <- function(
       regStr0  <- case_when(doReg0 ~ "region", .default = "state") |> paste0("s")
       msg_reg  <- paste0("Checking that all ", regStr0, " are present...")
       paste0(msg1_i, msg_reg) |> message()
-      inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1)
+      inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1,conn = con)
       regPass  <- !(inputDf |> is.null())
       ### Message if error
       msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
@@ -946,7 +946,7 @@ calc_import_pop <- function(
     df0       = NULL,    ### Population data
     popArea   = "state", ### One of: c("state", "regional", "conus", "national")
     module    = "fredi", #### "fredi", "sv", or "methane"
-    df_ratios =  DBI::dbReadTable(conn,"scenarioData") |>
+    df_ratios =  DBI::dbReadTable(con,"scenarioData") |>
       (function(scenData){
         scenData    <- unserialize(scenData$value |> unlist())
         pop_ratios      <- scenData[["popRatiosData"]]
@@ -1028,8 +1028,8 @@ calc_import_pop <- function(
   ### Get state info: co_states
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_info   <- DBI::dbReadTable(conn,"co_inputInfo")
-  co_states <- DBI::dbReadTable(conn,"co_states")
+  co_info   <- DBI::dbReadTable(con,"co_inputInfo")
+  co_states <- DBI::dbReadTable(con,"co_states")
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
