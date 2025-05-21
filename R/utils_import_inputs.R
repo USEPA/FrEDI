@@ -230,7 +230,7 @@ check_inputs <- function(
 ### Check that all regions, states, present in data
 check_regions <- function(
     df0,                ### Tibble with population info
-    conn,               ### DB Connection Object
+    con,               ### DB Connection Object
     popArea  = "state", ### Pop area
     module   = "fredi", #### "fredi", "sv", or "methane"
     msgLevel = 1        ### Level of messaging
@@ -247,7 +247,7 @@ check_regions <- function(
   # doMethane  <- "methane" %in% module0
   # dListSub0  <- doFredi |> ifelse("frediData", "package")
   # dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
-
+  #browser()
   ### Other values
   popArea    <- popArea |> tolower()
   doNat0     <- "national" %in% popArea
@@ -282,10 +282,11 @@ check_regions <- function(
 
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  ghgData    <- DBI::dbReadTable(conn,"ghgData")
+  ghgData    <- DBI::dbReadTable(con,"ghgData")
   ghgData    <- unserialize(ghgData$value |> unlist())
-  co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
-  co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+
+  co_region <- ghgData$ghgData$co_regions
+  co_states <- ghgData$ghgData$co_states
 
   ### Join regions and states and filter to appropriate values
   join0     <- c("us_area", "region")
@@ -875,7 +876,7 @@ check_input_data <- function(
       regStr0  <- case_when(doReg0 ~ "region", .default = "state") |> paste0("s")
       msg_reg  <- paste0("Checking that all ", regStr0, " are present...")
       paste0(msg1_i, msg_reg) |> message()
-      inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1,conn = con)
+      inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1,con = con)
       regPass  <- !(inputDf |> is.null())
       ### Message if error
       msg_reg <- paste0("Warning: missing states in ", inputName, " inputs!", msgN, msg2_i, "Dropping ", inputName, " inputs...")
@@ -1040,8 +1041,8 @@ calc_import_pop <- function(
   ghgData    <- DBI::dbReadTable(con,"ghgData")
   ghgData    <- unserialize(ghgData$value |> unlist())
 
-  co_region <- "co_regions" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
-  co_states <- "co_states"  |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+  co_region <- ghgData$ghgData$co_regions
+  co_states <- ghgData$ghgData$co_states
 
   ### Join regions and states and filter to appropriate values
   join0     <- c("us_area", "region")
