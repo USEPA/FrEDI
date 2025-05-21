@@ -634,7 +634,8 @@ check_input_data <- function(
     yearMin   = NULL,     ### Check min year
     yearMax   = NULL,     ### Check max year
     module    = "fredi",  #### "fredi", "sv", or "methane"
-    msgLevel  = 2         ### Level of messaging
+    msgLevel  = 2,         ### Level of messaging
+    con ## Database connection object
 ){
   # "got here" |> print()
   # inputDf |> glimpse()

@@ -306,7 +306,7 @@ import_inputs <- function(
     tempType  = tempType |> rep(nInputs),
     popArea   = popArea  |> rep(nInputs)
   ) |>
-    pmap(.f = check_input_data) |>
+    pmap(.f = check_input_data,con = conn) |>
     set_names(inNames)
 
 
