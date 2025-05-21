@@ -897,7 +897,7 @@ check_input_data <- function(
       msg_pop <- paste0("Calculating state population from ", popArea, " values...")
       paste0(msg1_i, msg_pop) |> message()
       ### Calculate population
-      inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module, msgLevel=msgLevel + 1)
+      inputDf <- inputDf |> calc_import_pop(popArea=popArea, module=module, msgLevel=msgLevel + 1,con = con)
       # if("region" %in% (inputDf |> names())) {
       #   inputDf <- inputDf |> filter(!(region |> str_detect("National")))
       #   inputDf <- inputDf |> filter(!(region |> is.na()))
@@ -976,7 +976,8 @@ calc_import_pop <- function(
         to0   = 2300,
         sort0 = c("area", "region", "state", "year")
       ), ### End fun_extendVals
-    msgLevel  = 1 ### Level of messaging
+    msgLevel  = 1, ### Level of messaging
+    con
 ){
   ###### Messages ######
   msgN     <- "\n"
