@@ -172,8 +172,8 @@ run_fredi_ghg <- function(
   ghgData    <- unserialize(ghgData$value |> unlist())
 
   ### Coefficients
-  minYear0  <- ghgData[["ghgData"]][["coefficients"]][["minYear0"]]
-  maxYear0  <- ghgData[["ghgData"]][["coefficients"]][["maxYear0"]]
+  minYear0  <- ghgData$ghgData$coefficients$minYear0
+  maxYear0  <- ghgData$ghgData$coefficients$maxYear0
 
   ### Model years and NPD (FrEDI past 2100)
   minYear   <- minYear0
@@ -235,8 +235,6 @@ run_fredi_ghg <- function(
   #### Input Info ----------------
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  ghgData    <- DBI::dbReadTable(conn,"ghgData")
-  ghgData    <- unserialize(ghgData$value |> unlist())
 
   co_inputInfo <- ghgData$ghgData$co_inputInfo
 
@@ -268,7 +266,7 @@ run_fredi_ghg <- function(
   inputDefs    <- inNames0 |> map(function(name0){
     ### Get defaults
     defName0 <- name0    |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj(listSub="scenarioData", listName="ghgData")
+    df0      <- ghgData$ScenarioData[[defName0]]
     ### Format defaults
     do_o3_0  <- "o3"  %in% name0
     if(do_o3_0 ) {
