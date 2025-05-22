@@ -266,7 +266,7 @@ run_fredi_ghg <- function(
   inputDefs    <- inNames0 |> map(function(name0){
     ### Get defaults
     defName0 <- name0    |> paste0("_default")
-    df0      <- ghgData$ScenarioData[[defName0]]
+    df0      <- ghgData$scenarioData[[defName0]]
     ### Format defaults
     do_o3_0  <- "o3"  %in% name0
     if(do_o3_0 ) {
