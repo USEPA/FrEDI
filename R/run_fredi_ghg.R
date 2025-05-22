@@ -235,7 +235,11 @@ run_fredi_ghg <- function(
   #### Input Info ----------------
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj(listSub="ghgData", listName="ghgData")
+  ghgData    <- DBI::dbReadTable(con,"ghgData")
+  ghgData    <- unserialize(ghgData$value |> unlist())
+
+  co_inputInfo <- ghgData$ghgData$co_inputInfo
+
   # co_inputInfo <- co_inputInfo |> filter(!inputName %in% "o3")
   co_inputInfo <- co_inputInfo |> mutate(ref_year = 2020)
   co_inputInfo <- co_inputInfo |> mutate(min_year = 2020)
