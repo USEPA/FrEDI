@@ -483,7 +483,9 @@ run_fredi_ghg <- function(
 
   ### Get RR scalar and ozone response data
   # df_drivers |> glimpse()
-  df_drivers <- df_drivers |> format_ghg_drivers()
+  df_drivers <- df_drivers |> format_ghg_drivers(ghgStateDatao3 = ghgData$stateData$state_o3,
+                                                 ghgData = ghgData$ghgData
+                                                  )
   # df_drivers$model |> unique() |> print()
   # df_drivers |> glimpse()
   # return(df_drivers)
@@ -515,7 +517,8 @@ run_fredi_ghg <- function(
   ### Initialized results: Join sector info and default scenario
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating scalars...") |> message()
-  df_scalars   <- seScenario |> calc_ghg_scalars(elasticity = elasticity)
+  df_scalars   <- seScenario |> calc_ghg_scalars(elasticity = elasticity,
+                                                 ghgData = ghgData$ghgData)
   # df_scalars |> glimpse()
   # return(df_scalars)
   # df_scalars |> glimpse()
@@ -525,7 +528,7 @@ run_fredi_ghg <- function(
   #### Mortality ----------------
   #### - Calculate Mortality Rate
   #### - Calculate Excess Mortality
-  dfMort0      <- df_scalars |> calc_ghg_mortality()
+  dfMort0      <- df_scalars |> calc_ghg_mortality(ghgData = ghgData)
   dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers)
   # dfMort0 |> filter(sector |> is.na()) |> glimpse()
   # dfMort0 |> glimpse()
@@ -533,7 +536,7 @@ run_fredi_ghg <- function(
 
   #### Morbidity ----------------
   #### Calculate Mortality Rate
-  dfMorb0      <- df_scalars |> calc_ghg_morbidity()
+  dfMorb0      <- df_scalars |> calc_ghg_morbidity(ghgData = ghgData)
   dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers)
   # dfMorb0 |> filter(sector |> is.na()) |> glimpse()
   # dfMorb0 |> glimpse()

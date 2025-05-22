@@ -24,12 +24,17 @@ calc_NOx_factor <- function(
 ### Function to calculate NOx ratio
 calc_NOx_ratio <- function(
     df0,    ### Tibble with NOx values
-    factor0 = ghgData$ghgData$coefficients$NOx$NOxFactor0
+    factor0 = ghgData$ghgData$coefficients$NOx$NOxFactor0,
+    slope0     = ghgData$ghgData$coefficients$NOx$slope0,
+    intercept0 = ghgData$ghgData$coefficients$NOx$intercept0,
+    adj0       = ghgData$ghgData$coefficients$NOx$adj0
 ){
   ### Calculate NOx factor from NOx concentration
   ### Divide by base factor to get NOx ratio
   df0   <- df0 |> mutate(NOxFactor0 = factor0)
-  df0   <- df0 |> mutate(NOxFactor  = NOx_Mt |> calc_NOx_factor())
+  df0   <- df0 |> mutate(NOxFactor  = NOx_Mt |> calc_NOx_factor(slope0 = slope0,
+                                                                intercept0 =intercept0,
+                                                                adj0 = adj0))
   df0   <- df0 |> mutate(NOxRatio   = NOxFactor / NOxFactor0)
   ### Return
   return(df0)
@@ -37,11 +42,17 @@ calc_NOx_ratio <- function(
 
 ### Function to calculate O3 concentration from CH4 concentration and NOX
 calc_o3_conc <- function(
-    df0 ### Tibble with CH4, NOx, and O3 response values
+    df0, ### Tibble with CH4, NOx, and O3 response values
+    ghgData = ghgData$ghgData
 ){
   ### Calculate NOx ratio
   ### Calculate O3 concentration as a function of CH4 and NOx
-  df0   <- df0 |> calc_NOx_ratio()
+
+  df0   <- df0 |> calc_NOx_ratio(factor0 = ghgData$coefficients$NOx$NOxFactor0,
+                                 slope0     = ghgData$coefficients$NOx$slope0,
+                                 intercept0 = ghgData$coefficients$NOx$intercept0,
+                                 adj0       = ghgData$coefficients$NOx$adj0)
+
   df0   <- df0 |> mutate(O3_pptv = CH4_ppbv * NOxRatio * state_o3response_pptv_per_ppbv)
   ### Return
   return(df0)
@@ -51,13 +62,16 @@ calc_o3_conc <- function(
 ### Format methane drivers
 # ghgData$stateData$state_o3 |> glimpse()
 format_ghg_drivers <- function(
-    df0 ### Tibble with scenarios
+    df0, ### Tibble with scenarios
+    ghgStateDatao3 = ghgData$stateData$state_o3,
+    ghgData = ghgData$ghgData
 ){
   ### Load and format O3 data
   idCols0  <- c("region", "state", "postal", "model")
   sumCols0 <- c("state_o3response_pptv_per_ppbv")
   select0  <- idCols0 |> c(sumCols0) |> unique()
-  df1      <- ghgData$stateData$state_o3 |> select(all_of(select0))
+
+  df1      <- ghgStateDatao3 |> select(all_of(select0))
   # df1 |> glimpse(); df0 |> glimpse()
 
   ### Join data
@@ -73,7 +87,8 @@ format_ghg_drivers <- function(
   ### Calculate O3 if methane and nox present
   ch4Str0  <- "CH4_ppbv" |> tolower()
   do_o3    <- names0 |> tolower() |> str_detect(ch4Str0) |> any()
-  if(do_o3) df0 <- df0 |> calc_o3_conc()
+  #browser()
+  if(do_o3) df0 <- df0 |> calc_o3_conc(ghgData)
   # df0 |> glimpse()
 
   ### Reorganize values
@@ -123,7 +138,8 @@ calc_conus_scenario <- function(
 ### Function to calculate economic scalars
 calc_ghg_scalars <- function(
     df0,       ### Tibble with information on CONUS scenario
-    elasticity = rDataList$fredi_config$elasticity0
+    elasticity = rDataList$fredi_config$elasticity0,
+    ghgData = ghgData$ghgData
 ){
   ### Format impact types:
   ### - Get distinct values
@@ -135,8 +151,8 @@ calc_ghg_scalars <- function(
   toS       <- c("econScalarName", "econScalarValue")
   join0     <- c("econScalarName")
   # df1       <- rDataList$frediData$co_impactTypes |> filter(econScalarName %in% scalar0)
-  dfS       <- ghgData$ghgData$df_scalars |> select(-any_of(dropS)) |> rename_at(c(fromS), ~toS)
-  dfT       <- ghgData$ghgData$co_impactTypes |>
+  dfS       <- ghgData$df_scalars |> select(-any_of(dropS)) |> rename_at(c(fromS), ~toS)
+  dfT       <- ghgData$co_impactTypes |>
     select(all_of(selectT)) |>
     distinct() |>
     left_join(dfS, by=join0)
@@ -256,7 +272,8 @@ calc_ghg_mortality <- function(
     df0,  ### Tibble with population, years, and scalars
     pCol0 = "national_pop"      , ### Column with national population
     sCol0 = "rffMrate_slope"    , ### Column with mortality rate slope,
-    iCol0 = "rffMrate_intercept"  ### Column with mortality rate intercept,
+    iCol0 = "rffMrate_intercept",  ### Column with mortality rate intercept,
+    ghgData = ghgData
 ){
   ### Get years info
   yrs0    <- df0 |> pull(year) |> unique() |> sort()
@@ -317,7 +334,8 @@ calc_ghg_mortality <- function(
 # ghgData$stateData$df_asthmaImpacts |> glimpse()
 calc_ghg_morbidity <- function(
     df0,
-    refYr0 = 2020
+    refYr0 = 2020,
+    ghgData = ghgData
 ){
   ### Data
   # drop1   <- c("region", "state")
