@@ -235,7 +235,7 @@ run_fredi_ghg <- function(
   #### Input Info ----------------
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  ghgData    <- DBI::dbReadTable(con,"ghgData")
+  ghgData    <- DBI::dbReadTable(conn,"ghgData")
   ghgData    <- unserialize(ghgData$value |> unlist())
 
   co_inputInfo <- ghgData$ghgData$co_inputInfo
