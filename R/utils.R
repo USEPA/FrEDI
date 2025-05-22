@@ -1799,7 +1799,7 @@ calc_scaled_impacts_fredi <- function(
   ### Calculate scaled impacts, then bind impacts and info
   if(nrow_gcm) {
     select0    <- c("scenario_id", "year") |> c("scaled_impacts")
-    df_gcm0    <- gcmInfo0   |> get_gcmScaledImpacts(conn = conn, df1=drivers0)
+    df_gcm0    <- get_gcmScaledImpacts(df0 = gcmInfo0, conn = conn, df1=drivers0)
     df_gcm0    <- df_gcm0    |> select(all_of(select0))
     dfImpacts0 <- dfImpacts0 |> rbind(df_gcm0)
     dfGroups0  <- dfGroups0  |> rbind(gcmInfo0)
