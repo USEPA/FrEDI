@@ -52,6 +52,43 @@ adjustSector1_bySector2 <- function(
 getStateMap <- function(str0="state"){
   # str0 <- "state"
   map0 <- str0 |> maps::map(fill=T, plot=FALSE)
+  ### Separate values into state and subregion
+  vals0 <- map0$names
+  dfM   <- tibble(polyName = vals0)
+  dfM   <- dfM |> separate(
+    col    = polyName,
+    into   = c("state_lc", "subregion"),
+    sep    = ":",
+    fill   = "right",
+    remove = FALSE
+  ) ### End separate
+
+  ### Add row names
+  # rownames(dfM) <- vals0
+
+  ### Create spatial dataframe from map
+  map0  <- map0 |>
+    sf::st_as_sf(coords=c("long", "lat")) |>
+    sf::st_make_valid() |>
+    sf::st_transform(4326) |>
+    sf::st_transform(3857) |>
+    mutate(state_lc = ID) |>
+    mutate(group    = state_lc)
+
+  # map0 <- map0 |>
+  #   sf::st_as_sf(coords=c("long", "lat")) |>
+  #   sf::st_make_valid() |>
+  #   sf::st_transform(4326) |>
+  #   sf::st_transform(3857) |>
+  #   mutate(state_lc = ID) |>
+  #   mutate(group    = state_lc)
+  # return(map0)
+
+  ### Left join region values
+  map0  <- map0 |>
+    left_join(dfM, by="state_lc") |>
+    sf::st_make_valid()
+  rm(dfM)
   return(map0)
 }
 
@@ -122,23 +159,32 @@ plotStateMap <- function(
     lgdLab0   = "Total Impacts\nbillion USD",
     ggTitle0  = "Annual Climate-Driven Damages in 2090 by State",
     subTitle0 = "Subset of Climate-Related Impacts",
+    scaleLabs = NULL, # e.g., c("Minimum", "Maximum")
+    showLims0 = TRUE,
     # n.breaks0 = 6,
     round0    = 1,
     symb0     = "$",
     theme0    = getMapTheme()
 ){
+  ### Print values
+  # col0  |> print()
+  df0   |> pull(all_of(col0)) |> range(na.rm=T) |> print()
+  # lims0 |> print()
+
   ### Edit limits
+  vals0    <- NULL
   hasLims0 <- lims0 |> length()
   if(hasLims0) {
     lims0 |> print()
     lims0[1] <- lims0[1] |> floor()
     lims0[2] <- lims0[2] |> ceiling()
     lims0 |> print()
+    vals0    <- lims0
   } ### End if(hasLims0)
 
   ### Colors
   clrCols <- colors0 |> names()
-  clrCols |> print()
+  # clrCols |> print()
   colors0 <- colors0 |>
     as.list() |> set_names(clrCols) |> map(function(x0){
       x0 |> is.na() |> ifelse(NULL, x0)
@@ -146,50 +192,54 @@ plotStateMap <- function(
   # colors0 |> print()
 
   ### Gradient
+  names0   <- df0 |> names()
+  doGeom   <- "geom" %in% names0
   gradType <- colors0[["gradType"]]
   gradType |> print()
   doGrad   <- !(gradType |> is.null())
-  doGradN  <- doGrad |> ifelse(!(gradType %in% "2"), F)
-
-  ### Print values
-  # col0  |> print()
-  df0   |> pull(all_of(col0)) |> range(na.rm=T) |> print()
-  # lims0 |> print()
+  doGradN  <- doGrad |> ifelse(gradType %in% "n", F)
+  doGrad2  <- doGrad |> ifelse(gradType %in% "2", F)
+  doLims0  <- doGrad |> ifelse(gradType %in% "lims", F)
 
   ### Initialize plot
-  plot0 <- df0 |> ggplot(aes(long, lat, group=group))
+  plot0 <- df0 |> ggplot()
+  # plot0 <- df0 |> ggplot(aes(long, lat, group=group))
   ### Add geom
-  plot0 <- plot0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+  if(doGeom) {
+    plot0 <- plot0 + geom_sf(aes(fill=!!sym(col0), group=group))
+  } else {
+    plot0 <- plot0 + geom_polygon(aes(long, lat, group=group, fill=!!sym(col0)), color=outline)
+  } ### End if(doGeom)
+
+  # plot0 <- plot0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+  if(showLims0) guide0 <- guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=F)
+  else          guide0 <- NULL
   ### Add colors
   if(doGrad) {
     if(doGradN) {
-      rm(plot0)
+      # rm(plot0)
       clrs0 <- c(colors0[["low"]], colors0[["mid"]], colors0[["high"]])
-      # vals0 <- lims0 |> c(0) |> sort()
-      df0   <- df0 |>
-        mutate(colVal   = df0 |> pull(all_of(col0))) |>
-        mutate(colAbs   = colVal |> abs()) |>
-        mutate(colLog10 = colAbs |> log10() |> na_if(-Inf) |> replace_na(0)) |>
-        mutate(colAdj   = colLog10 * colAbs / colVal ) |>
-        mutate(colAdj   = colAdj |> na_if(-Inf) |> na_if(Inf) |> replace_na(0))
-
-      ### Initialize plot
-      plot0 <- df0 |> ggplot(aes(long, lat, group=group))
-      ### Add geom
-      plot0 <- plot0 + geom_polygon(aes(fill=.data[[col0]]), color=outline)
+      vals0 <- lims0 |> c(0) |> unique() |> sort()
+      # colors0[["n.breaks"]] |> print()
       ### Add gradient
       plot0 <- plot0 + scale_fill_gradientn(
-        # name     = lgdLab0[[1]],
         name     = lgdLab0[[1]],
-        limits   = lims0,
         colors   = clrs0,
-        # values   = vals0 |> scales::rescale(),
+        limits   = lims0,
+        # limits   = lims0 |> scales::rescale(),
+        values   = vals0 |> scales::rescale(),
+        # values   = vals0 |> log10() |> replace_na(NA) |> scales::rescale(),
+        # breaks   = colors0[["breaks"]],
         na.value = colors0[["na.value"]],
         n.breaks = colors0[["n.breaks"]],
-        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
-        oob      = scales::squish
+        # n.breaks = 8,
+        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
+        # guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=F),
+        # oob      = scales::squish
       ) ### End scale_fill_gradient2
-    } else{
+    } else if(doGrad2) {
+      # colors0[["breaks"]] |> print()
+      # scaleLabs |> print()
       plot0 <- plot0 + scale_fill_gradient2(
         # name     = lgdLab0[[1]],
         name     = lgdLab0[[1]],
@@ -199,9 +249,28 @@ plotStateMap <- function(
         high     = colors0[["high"]],
         na.value = colors0[["na.value"]],
         n.breaks = colors0[["n.breaks"]],
-        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE),
-        oob      = scales::squish
+        guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=TRUE)
+        # guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=showLims0)
+        # guide    = guide0
+        # guide    = guide_colorsteps(ticks=TRUE, ticks.linewidth=1, show.limits=F)
+        # oob      = scales::squish
       ) ### End scale_fill_gradient2
+    }  else if(doLims0) {
+      # colors0[["breaks"]] |> print()
+      # scaleLabs |> print()
+      plot0 <- plot0 + scale_fill_gradient2(
+        name     = lgdLab0[[1]],
+        # breaks   = colors0[["breaks"]],
+        limits   = lims0,
+        breaks   = lims0,
+        labels   = scaleLabs,
+        low      = colors0[["low"]],
+        mid      = colors0[["mid"]],
+        high     = colors0[["high"]],
+        na.value = colors0[["na.value"]]
+      ) ### End scale_fill_gradient2
+    } else {
+      plot0 <- plot0 + scale_fill_continuous() ### End scale_fill_gradient2
     } ### End if(doGradN)
   } ### End if(doGrad)
 
@@ -224,7 +293,7 @@ map2StateMap <- function(
     # lims0     = list(p1=c(5, 540), p2=c(0.75, 2.2)),
     colors0   = list(
       low      = "white",
-      mid      = "white",
+      mid      = "#f0b692",
       high     = "#DD8047",
       na.value = "grey",
       gradType = "2", ### Or "n"
@@ -239,12 +308,15 @@ map2StateMap <- function(
     lgdLabs0  = list(p1="Total Impacts\nbillion USD", p2="Total Impacts\nbillion USD\nper 100,000\nindividuals"),
     ggTitle0  = list(p1="Annual Climate-Driven Damages in 2090 by State", p2=""),
     subTitle0 = list(p1="Subset of Climate-Related Impacts", p2="Subset of Climate-Related Impacts, Per 100,000 people"),
+    scaleLabs = NULL, # e.g., c("Minimum", "Maximum")
+    showLims0 = TRUE,
     # n.breaks0 = 8,
     round0    = 1,
     symb0     = "$",
     theme0    = getMapTheme(),
     doGrid0   = TRUE
 ){
+  # scaleLabs |> print()
   ### Names & values
   names0  <- names0 |> unlist()
   nList0  <- names0 |> length()
@@ -276,7 +348,9 @@ map2StateMap <- function(
       lgdLab0   = lgdLabs0[[i]],
       ggTitle0  = ggTitle0[[i]],
       subTitle0 = subTitle0[[i]],
-      n.breaks0 = n.breaks0,
+      scaleLabs = scaleLabs,
+      showLims0 = showLims0,
+      # n.breaks0 = n.breaks0,
       round0    = round0,
       symb0     = symb0[[i]],
       theme0    = theme0
@@ -354,36 +428,39 @@ format_regionMapData <- function(
     df1, ### Region data
     map0 = getStateMap()
 ){
-  ### Separate values into state and subregion
-  vals0 <- map0$names
-  dfM   <- tibble(polyName = vals0)
-  dfM   <- dfM |> separate(
-    col    = polyName,
-    into   = c("state_lc", "subregion"),
-    sep    = ":",
-    fill   = "right",
-    remove = FALSE
-  ) ### End separate
+  # ### Separate values into state and subregion
+  # vals0 <- map0$names
+  # dfM   <- tibble(polyName = vals0)
+  # dfM   <- dfM |> separate(
+  #   col    = polyName,
+  #   into   = c("state_lc", "subregion"),
+  #   sep    = ":",
+  #   fill   = "right",
+  #   remove = FALSE
+  # ) ### End separate
+  # ### Join in region info
+  # dfM   <- dfM |> left_join(df0, by="state_lc")
+  # # return(dfM)
+  # ### Add row names
+  # # rownames(dfM) <- vals0
+  #
+  # # ### Create spatial dataframe from map
+  # # map0  <- map0 |>
+  # #   sf::st_as_sf(coords=c("long", "lat")) |>
+  # #   sf::st_make_valid() |>
+  # #   sf::st_transform(4326) |>
+  # #   sf::st_transform(3857) |>
+  # #   mutate(state_lc = ID)
+  #
+  # ### Left join region values
+  # map0  <- map0 |>
+  #   left_join(dfM, by="state_lc") |>
+  #   sf::st_make_valid()
+  # rm(dfM)
   ### Join in region info
-  dfM   <- dfM |> left_join(df0, by="state_lc")
+  # dfM   <- dfM |> left_join(df0, by="state_lc")
+  map0  <- map0 |> left_join(df0, by="state_lc")
   # return(dfM)
-  ### Add row names
-  # rownames(dfM) <- vals0
-
-  ### Create spatial dataframe from map
-  map0  <- map0 |>
-    sf::st_as_sf(coords=c("long", "lat")) |>
-    sf::st_make_valid() |>
-    sf::st_transform(4326) |>
-    sf::st_transform(3857) |>
-    mutate(state_lc = ID)
-
-  ### Left join region values
-  map0  <- map0 |>
-    left_join(dfM, by="state_lc") |>
-    sf::st_make_valid()
-  rm(dfM)
-
   ### Summarize over region |>
   map0  <- map0 |>
     group_by_at(c("region")) |>
@@ -403,6 +480,7 @@ format_regionMapData <- function(
 
 
 ### Function to plot region maps
+# , lwd=0.8, color="black"
 map_regionMapData <- function(
     df0,   ### Outputs of format_regionMapData
     col0   = "annual_impacts_percap",
@@ -414,6 +492,7 @@ map_regionMapData <- function(
     ylab0  = NULL,
     spf0   = "$%1.0f",
     pal0   = "Greys",
+    nBrks0 = NULL,
     theme0 = getMapTheme()
 ){
   ### Mutate data
@@ -422,8 +501,8 @@ map_regionMapData <- function(
     mutate_at(c(col0), function(x, y=k0){x * y})
   ### Initialize plot
   p0  <- df0 |>
-    ggplot(group=group)+
-    geom_sf(aes(fill=(!!sym(col0)) |> factor()), lwd=0.8, color="black")
+    ggplot(group=group) +
+    geom_sf(aes(fill=(!!sym(col0)) |> factor()))
   ### Add fill
   p0  <- p0 + scale_fill_brewer(
     lgd0,
@@ -436,6 +515,8 @@ map_regionMapData <- function(
   p0  <- p0 + labs(x=xlab0, y=ylab0)
   ### Add labels
   p0  <- p0 + ggtitle(title0, sub0)
+  ### Add theme
+  p0  <- p0 + theme0
   ### Return
   return(p0)
 }
