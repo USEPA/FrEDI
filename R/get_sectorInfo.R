@@ -45,10 +45,9 @@ get_sectorInfo <- function(
     gcmOnly     = F,
     slrOnly     = F
 ){
+  con <- load_frediDB()
   ### Get objects
-  co_sectorsRef <- "co_sectorsRef" |> get_frediDataObj("frediData")
-  ### Select and rename
-  co_sectorsRef <- co_sectorsRef |>
+  co_sectorsRef <- dbReadTable(con,"co_sectorsRef") |>
     select(-c("sector_id")) |>
     rename(sector     = sector_label) |>
     rename(model_type = modelType) |>
@@ -70,6 +69,7 @@ get_sectorInfo <- function(
     return_obj <- co_sectorsRef
   } ### End if(!description)
 
+  dbDisconnect(con)
   ### Return
   return(return_obj)
 }
