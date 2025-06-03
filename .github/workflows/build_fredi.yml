@@ -94,6 +94,8 @@ jobs:
             dPath0   <- rPath0 |> file.path("data" )
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
 
+            ### Load FrEDI from source
+            rPath0 |> devtools::load_all()
 
             ###### Load FrEDI DB Tables ######
             conn <- load_frediDB()

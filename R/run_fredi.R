@@ -338,11 +338,11 @@ run_fredi <- function(
   ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- DBI::dbReadTable(conn, "co_inputInfo")
-  co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
-  co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
+  co_inputInfo <- DBI::dbReadTable(conn, "co_inputInfo") |>
+    mutate(ref_year = c(1995, 2000, 2010, 2010)) |>
+    mutate(min_year = c(2000, 2000, 2010, 2010)) |>
+    mutate(max_year = maxYear) |>
+    filter(inputName %in% modInputs0)
 
   ### Initialize subset
   df_inputInfo <- co_inputInfo
