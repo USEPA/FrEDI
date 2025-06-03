@@ -615,13 +615,14 @@ sumByRegion <- function(
 }
 
 ### Function to format values for regional pie plot
-calc_regPieMargin <- function(
+ calc_regPieMargin <- function(
     region0,
     df0,
-    col0   = c("annual_impacts_percap"),
+    col0     = "annual_impacts_percap",
     # group0 = c("region", "sector", "color0", "darkop"),
     group0   = c("region", "sector", "lab0", "color0", "darkop"),
-    colorR = "#D3D3D3"
+    colorR   = "#D3D3D3",
+    othStr0  = "Remaining"
 ){
   ### Filter to region
   df0     <- df0 |> filter(region %in% region0)
@@ -634,31 +635,26 @@ calc_regPieMargin <- function(
   ### - Group and summarize
   df0     <- df0 |>
     group_by_at (c(group0)) |>
-    summarize_at(c(col0), sum, na.rm=T) |> ungroup()
-  ### - Filter to impacts greater than zero and arrange descending
-  df0     <- df0 |>
-    filter_at (c(col0), function(x){x >= 0}) |>
+    summarize_at(c(col0), sum, na.rm=T) |> ungroup() |>
     arrange_at(c(col0), desc)
+  ### - Filter to impacts greater than zero and arrange descending
   # df0$sector |> unique() |> print()
   ### - Add row number and adjust sector
   df0     <- df0 |>
     mutate(RowNum = row_number()) |>
-    mutate(sector = case_when(RowNum <= 4 ~ sector, .default="Remaining")) |>
-    mutate(sector = sector |> as.factor())
+    mutate(sector = case_when(RowNum <= 4 ~ sector, .default=othStr0))
   # df0$sector |> unique() |> print()
 
-  ### Second grouping:
-  ### Group and summarize
+  ### Sum, factor sector, and add color
+  lvls0    <- df0 |>
+    pull(sector) |> unique() |>
+    get_matches(othStr0, matches=F) |>
+    c(othStr0)
   df0     <- df0 |>
-    group_by_at(c(group0)) |>
-    summarize_at(c(col0), sum, na.rm=T) |> ungroup()
-  ### Filter to impacts greater than zero and arrange descending
-  ### Then add color
-  df0     <- df0 |>
-    filter_at(c(col0), function(x){x >= 0}) |>
-    arrange_at(c(col0), desc)
-
-  ### Factor sector and add color
+    group_by_at (c(group0)) |>
+    summarize_at(c(col0), sum, na.rm=T) |> ungroup() |>
+    arrange_at(c(col0), desc) |>
+    mutate(sector = sector |> factor(lvls0))
   # df0     <- df0 |> mutate(color0 = case_when(sector %in% "Remaining" ~ colorR, .default=color0))
   # df0$sector |> unique() |> print()
 
@@ -670,7 +666,9 @@ calc_regPieMargin <- function(
   ### - Compute (a )good label(s)
   sumVal0 <- df0 |> pull(all_of(col0)) |> sum(na.rm=T)
   df0     <- df0 |>
-    mutate(fraction = df0[[col0]] / sumVal0) |>
+    mutate(total    = sumVal0) |>
+    mutate(fraction = df0[[col0]] / total) |>
+    # mutate(fraction = !!sym(col0) / total) |>
     mutate(ymax     = fraction |> cumsum())
   ### Minimums
   yMins0  <- df0 |> pull(ymax) |> head(n=-1)
@@ -678,11 +676,85 @@ calc_regPieMargin <- function(
     mutate(ymin     = 0 |> c(yMins0)) |>
     mutate(labelPosition = (ymax + ymin) / 2) |>
     mutate(label    = (fraction*1e2) |> round(0) |> format(nsmall=0) |> paste0("%")) |>
-    mutate(label2   = (sumVal0 / totImp0 * 1e2) |> round(1) |> format(nsmall=1) |> paste0("%"))
+    mutate(label2   = (sumVal0 / totImp0 * 1e2) |> round(1) |> format(nsmall=1) |> paste0("%")) |>
+    mutate(label2   = label2 |> paste0(", Total=$", total |> round(0)))
+    # mutate(label2   = (sumVal0 / totImp0 * 1e2) |> round(1) |> format(nsmall=1) |> paste0("%"))
 
   ### Return
   return(df0)
 }
+
+#  calc_regPieMargin <- function(
+#     region0,
+#     df0,
+#     col0   = c("annual_impacts_percap"),
+#     # group0 = c("region", "sector", "color0", "darkop"),
+#     group0   = c("region", "sector", "lab0", "color0", "darkop"),
+#     colorR = "#D3D3D3"
+#  ){
+#    ### Filter to region
+#    df0     <- df0 |> filter(region %in% region0)
+#
+#    ### Make a copy to calculate total impacts
+#    # dfCopy0 <- df0
+#    totImp0 <- df0 |> pull(all_of(col0)) |> sum(na.rm=T)
+#
+#    ### First grouping:
+#    ### - Group and summarize
+#    df0     <- df0 |>
+#      group_by_at (c(group0)) |>
+#      summarize_at(c(col0), sum, na.rm=T) |> ungroup()
+#    ### - Filter to impacts greater than zero and arrange descending
+#    df0     <- df0 |>
+#      filter_at (c(col0), function(x){x >= 0}) |>
+#      # filter_at (c(col0), function(x){x >= 0}) |>
+#      arrange_at(c(col0), desc)
+#    # df0$sector |> unique() |> print()
+#    ### - Add row number and adjust sector
+#    df0     <- df0 |>
+#      mutate(RowNum = row_number()) |>
+#      mutate(sector = case_when(RowNum <= 4 ~ sector, .default="Remaining")) |>
+#      mutate(sector = sector |> as.factor())
+#    # df0$sector |> unique() |> print()
+#
+#    ### Second grouping:
+#    ### Group and summarize
+#    df0     <- df0 |>
+#      group_by_at (c(group0)) |>
+#      summarize_at(c(col0), sum, na.rm=T) |> ungroup()
+#    ### Filter to impacts greater than zero and arrange descending
+#    ### Then add color
+#    df0     <- df0 |>
+#      filter_at (c(col0), function(x){x >= 0}) |>
+#      arrange_at(c(col0), desc)
+#
+#    ### Factor sector and add color
+#    # df0     <- df0 |> mutate(color0 = case_when(sector %in% "Remaining" ~ colorR, .default=color0))
+#    # df0$sector |> unique() |> print()
+#
+#    ### Mutate values:
+#    ### - Compute ratio to total and get ymin, etc.
+#    ### - Compute the cumulative percentages (top of each rectangle)
+#    ### - Compute the bottom of each rectangle
+#    ### - Compute label position
+#    ### - Compute (a )good label(s)
+#    sumVal0 <- df0 |> pull(all_of(col0)) |> sum(na.rm=T)
+#    df0     <- df0 |>
+#      mutate(total    = sumVal0) |>
+#      mutate(fraction = df0[[col0]] / total) |>
+#      # mutate(fraction = !!sym(col0) / total) |>
+#      mutate(ymax     = fraction |> cumsum())
+#    ### Minimums
+#    yMins0  <- df0 |> pull(ymax) |> head(n=-1)
+#    df0     <- df0 |>
+#      mutate(ymin     = 0 |> c(yMins0)) |>
+#      mutate(labelPosition = (ymax + ymin) / 2) |>
+#      mutate(label    = (fraction*1e2) |> round(0) |> format(nsmall=0) |> paste0("%")) |>
+#      mutate(label2   = (sumVal0 / totImp0 * 1e2) |> round(1) |> format(nsmall=1) |> paste0("%"))
+#
+#    ### Return
+#    return(df0)
+#  }
 
 
 
@@ -745,51 +817,101 @@ format_regPieChart <- function(
 #                   guide = guide_legend(reverse=TRUE),
 #                   labels=function(x) sprintf("$%1.0f", as.double(x)))+
 plot_regPieMargin <- function(
-    region0,
+    name0,
     df0,
     col0      = c("annual_impacts_percap"),
-    colorCol0 = c("color1"),
+    nameCol0  = c("region"),
+    lblCol0   = c("sector"),
+    clrCol0   = c("color1"),
+    pType0    = "donut",
     lgdTitle0 = "Top 4 Sectors",
     xLims0    = c(2, 4),
+    alpha0    = 1,
+    othStr0   = "Remaining",
+    othLbl0   = "Sectors outside of the top 4 by region",
+    doTot0    = TRUE,
+    addLgd0   = TRUE,
+    lgdPos0   = "right",
     theme0    = theme_void()
 ){
+  ### Plot type
+  pType0  <- pType0 |> tolower()
+  doPie0  <- pType0 |> str_detect("pie")
   ### Filter data
-  df0    <- df0 |> filter(region %in% region0)
-  df0    <- df0 |> mutate(value = df0[[col0]])
+  df0     <- df0    |>
+    filter_at(c(nameCol0), function(x, y=name0){x %in% y}) |>
+    mutate_at(c(lblCol0), function(x, y=othStr0, z=othLbl0){
+      case_when(x %in% y ~ z, .default=x)
+    }) |> mutate(value = !!sym(col0)) |>
+    arrange_at(c(col0), desc)
 
   ### Get title
-  label0 <- df0     |> pull (label2) |> unique()
-  title0 <- region0 |> paste(label0)
+  # tot0    <- df0    |> pull(total) |> unique()
+  # totLbl0 <- "$%1.0f" |> sprintf(tot0 |> as.double())
+  label0  <- df0    |> pull (label2) |> unique()
+  title0  <- name0  |> paste(label0)
+
+
+  ### Color levels
+  lvls0   <- df0   |>
+    pull(all_of(lblCol0)) |> unique() |>
+    get_matches(othLbl0, matches=F) |>
+    c(othLbl0)
 
   ### Fill breaks
   # dfFill0 <- df0    |> select(region, sector, color0) |> unique()
-  select0 <- c("region", "sector") |> c(colorCol0)
-  dfFill0 <- df0    |> select(all_of(select0)) |> unique()
+  # select0 <- c("region", "sector") |> c(clrCol0)
+  select0 <- c(nameCol0, lblCol0, clrCol0)
+  dfFill0 <- df0 |>
+    select(all_of(select0)) |>
+    distinct() |>
+    mutate_at(c(lblCol0), function(x, lvlsX=lvls0){
+      x |> factor(lvlsX)
+    }) |>
+    arrange_at(c(lblCol0))
+  lbls0   <- dfFill0 |> pull(all_of(lblCol0))
+  clrs0   <- dfFill0 |> pull(all_of(clrCol0))
+  # lbls0   <- lbls0   |> rev()
+  # clrs0   <- clrs0   |> rev()
+  rm(select0)
   # dfFill0 |> glimpse()
 
   ### Initialize plot
-  p0      <- df0 |> ggplot(aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=reorder(sector, value)))
+  ### Add theme and labels
+  p0      <- df0 |>
+    ggplot() +
+    theme_void() +
+    labs(fill=lgdTitle0, title=title0)
 
   ### Add geoms
-  p0      <- p0 + geom_rect()
-  p0      <- p0 + geom_text(x=4.25, aes(y=labelPosition, label=""), size=5)
+  if(doPie0) {
+    p0      <- p0 +
+      geom_bar(aes(x="", y=!!sym(col0), fill=!!sym(lblCol0)), stat="identity", width=1) +
+      theme(plot.title = element_text(hjust = .50))
+  } else {
+    p0      <- p0 + geom_rect(aes(
+      ymax = ymax,
+      ymin = ymin,
+      xmax = 4,
+      xmin = 3,
+      fill = reorder(!!sym(lblCol0), value)
+    ))
+    p0      <- p0 + xlim(xLims0)
+  } ### End if(doPie0)
+
+  ### Add percentage label
+  if(doTot0) p0 <- p0 + geom_text(x=4.25, aes(y=labelPosition, label=""), size=5)
 
   ### Format coords
   p0      <- p0 + coord_polar(theta="y")
 
-  ### Add scales
-  p0      <- p0 + scale_fill_manual (
-    lgdTitle0,
-    # breaks = dfFill0 |> pull(sector),
-    # values = dfFill0 |> pull(color0)
-    breaks = dfFill0 |> pull(sector) |> rev(),
-    values = dfFill0 |> pull(all_of(colorCol0)) |> rev()
-  ) ### End scale_fill_manual
-  p0      <- p0 + xlim(xLims0)
+  ### Add scales!!sym(lblCol0)
+  p0      <- p0 + scale_fill_manual(lgdTitle0, breaks=lbls0, values=clrs0)
+  # p0      <- p0 + xlim(xLims0)
 
-  ### Add tgheme and labels
-  p0      <- p0 + theme_void()
-  p0      <- p0 + labs(fill=lgdTitle0, title=title0)
+  ### Add theme and labels
+  if(!addLgd0) p0 <- p0 + theme(legend.position = "none")
+  else         p0 <- p0 + theme(legend.position = lgdPos0)
 
   ### Return plot
   return(p0)
@@ -1284,7 +1406,7 @@ rainbow_6      <- function(x=1){c("#f2938c", "#d54309", "#ffbc78", "#4d8055", "#
 rainbow_7      <- function(x=1){c("#f2938c", "#d54309", "#ffbc78", "#86b98e", "#4d8055", "#97d4ea", "#1a4480")}
 rainbow_8      <- function(x=1){c("#EA7580FF", "#F6A1A5FF", "#F8CD9CFF", "#86b98e", "#4d8055", "#1BB6AFFF", "#088BBEFF", "#172869FF")}
 rainbow_10     <- function(x=1){c(
-  "#f2938c", "#d54309", "#c05600", "#ffbc78",  "#936f38", "#86b98e", "#4d8055", "#446443", "#97d4ea", "#1a4480"
+  "#f2938c", "#d54309", "#c05600", "#ffbc78",  "#936f38", "#86b98e", "#4d8055", "#446443", "#97d4ea", "#088BBEFF", "#1a4480"
 )}
 # colors_7      <-               c("#f2938c", "#d54309", "#ffbc78", "#86b98e", "#4d8055","#97d4ea", "#1a4480")
 blues_7        <- function(x=1){c("#d9e8f6", "#aacdec", "#73b3e7", "#005ea2", "#0050d8", "#1a4480", "#162e51")}
