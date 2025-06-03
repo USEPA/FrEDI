@@ -64,6 +64,7 @@ jobs:
             any::openxlsx
             any::devtools
             any::DBI
+            ang::RSQLite
 
       - name: Update Scenarios
         run: |
@@ -73,6 +74,7 @@ jobs:
             require(ggpubr)
             require(openxlsx)
             require(DBI)
+            require(RSQLite)
             ###### Conditionals ######
             ### Which scenarios/documentation to update
             do_docs  <- "true" %in% "${{ inputs.update_docs}}"
