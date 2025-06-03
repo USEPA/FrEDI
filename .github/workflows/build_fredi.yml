@@ -75,6 +75,7 @@ jobs:
             require(openxlsx)
             require(DBI)
             require(RSQLite)
+
             ###### Conditionals ######
             ### Which scenarios/documentation to update
             do_docs  <- "true" %in% "${{ inputs.update_docs}}"
@@ -95,6 +96,8 @@ jobs:
             rPath0   <- "."
             dPath0   <- rPath0 |> file.path("data" )
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
+            dir.create(dPath0, showWarnings = FALSE)
+            dir.create(cPath0, showWarnings = FALSE)
 
             ### Load FrEDI from source
             rPath0 |> devtools::load_all()
