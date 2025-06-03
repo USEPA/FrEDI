@@ -8,7 +8,6 @@ run_fredi_ghg(
   inputsList = list(gdp = NULL, pop = NULL, ch4 = NULL, nox = NULL, o3 = NULL),
   elasticity = 1,
   maxYear = 2100,
-  thru2300 = FALSE,
   outputList = FALSE,
   allCols = FALSE
 )
