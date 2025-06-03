@@ -64,7 +64,7 @@ jobs:
             any::openxlsx
             any::devtools
             any::DBI
-            ang::RSQLite
+            any::RSQLite
 
       - name: Update Scenarios
         run: |
