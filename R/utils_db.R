@@ -16,10 +16,11 @@ load_frediDB <- function(){
                           "sysdata"))
 
     sys_db <- system.file("extdata","sysdata", package="FrEDI")
+    unlink(file.path(system.file("extdata", package="FrEDI"),"data"), recursive = TRUE)
   }
 
   con <-  DBI::dbConnect(RSQLite::SQLite(), sys_db)
-
+  
   return(con)
 }
 
