@@ -16,6 +16,7 @@ This release corresponds to FrEDI v5.0
 * Minor updates:
   - Data: Now includes FrEDI input testing scenarios
   - Data: Function `load_frediDB` introduced to load FrEDI database
+  - FrEDI: Updates to figure utility functions and actions
 
 
 # FrEDI v4.1.1
