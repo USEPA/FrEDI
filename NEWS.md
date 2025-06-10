@@ -1,5 +1,23 @@
 # FrEDI 5.0.0
 
+This release corresponds to FrEDI v5.0
+
+* Bug Fixes: 
+  - Rounding errors due to manual editing in excel of base data was fixed
+  - Fixed GDP per capita scaling for sectors using GDP per capita as an economic multiplier/adjustment (including SLR sectors post-2100)
+  
+* Major updates: 
+  - Data: Now stored as a SQLite database file in inst/extdata
+  - FrEDI: New sectors Forestry, Learning Loss, Lyme Disease, Marsh Migration, and Outdoor Recreation were added (31 sectors total). 
+  - FrEDI: New Air Quality Impact types were added to Air Quality, Southwest Dust, and Wild Fire sectors. 
+  - FrEDI GHG: Now includes state level Mortality impacts
+  - FrEDI GHG: New Morbidity sector impacts added
+
+* Minor updates:
+  - Data: Now includes FrEDI input testing scenarios
+  - Data: Function `load_frediDB` introduced to load FrEDI database
+
+
 # FrEDI v4.1.1
 
 _See FrEDI v4.1 for full release notes_
