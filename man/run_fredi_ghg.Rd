@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_fredi_ghg.R
 \name{run_fredi_ghg}
 \alias{run_fredi_ghg}
-\title{Project annual average impacts from methane, NOx, and ozone.}
+\title{Project annual impacts from GHG changes}
 \usage{
 run_fredi_ghg(
   inputsList = list(gdp = NULL, pop = NULL, ch4 = NULL, nox = NULL, o3 = NULL),
@@ -37,7 +37,7 @@ If \code{outputList=TRUE}, \code{run_fredi_ghg()} returns a list object containi
 }
 }
 \description{
-This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere.
+This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. As of FrEDI v5.0, this function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
 }
 \details{
 This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere. This module (also referred to as the \strong{concentration-driven module} or \strong{FrEDI-GHG}. \strong{FrEDI-GHG} is an optional supplement to the main FrEDI function \code{\link[=run_fredi]{run_fredi()}}, and is driven by changes in GHG concentrations, rather than by changes in temperature or sea-level rise. The outputs of \strong{FrEDI-GHG} complement the damages output from main FrEDI and allow users to explore how these additional GHG-related impacts will be distributed across CONUS regions.
@@ -137,7 +137,7 @@ example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch
 
 }
 \references{
-Environmental Protection Agency (EPA). (Forthcoming). Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at \url{https://epa.gov/cira/FrEDI/}.
+Environmental Protection Agency (EPA). 2025. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC. Available at https://epa.gov/cira/FrEDI/.
 
 McDuffie, E. E., Sarofim, M. C., Raich, W., Jackson, M., Roman, H., Seltzer, K., Henderson, B. H., Shindell, D. T., Collins, M., Anderton, J., Barr, S., & Fann, N. (2023). The Social Cost of Ozone-Related Mortality Impacts From Methane Emissions. Earth’s Future, 11(9), e2023EF003853.
 }
