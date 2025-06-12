@@ -715,7 +715,9 @@ run_fredi <- function(
   } ### End if(outputList)
 
 
-
+  ###### Close Database Connection ####
+  dbDisconnect(conn)
+  
   ###### Return ######
   ### Message, clear unused memory, return
   message("\n", "Finished", ".")
