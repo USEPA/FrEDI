@@ -10,6 +10,8 @@
 #'
 #' @param inputsList=list(gdp=NULL,pop=NULL,ch4=NULL,nox=NULL,o3=NULL) A list with named elements (`gdp`, `pop`, `ch4`, `nox`, and/or `o3`), each containing data frames of custom scenarios for gross domestic product (GDP), state-level population, ozone concentration, methane concentration, and NOx emissions, respectively, over a continuous period. Values should start in 2020 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #'
+#' @param aggLevels="none" Levels of aggregation at which to summarize data: one or more of `c("national","conus", "modelaverage", "impacttype", "all", "none")`. Defaults to no levels (i.e., `aggLevels = "none"`). 
+#' 
 #' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL (defaults to `elasticity = 1`).
 #'
 #' @param maxYear=2100 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]`. Defaults to `maxYear = 2100`.
@@ -143,6 +145,7 @@
 ### This function creates a data frame of sector impacts for default values or scenario inputs.
 run_fredi_ghg <- function(
     inputsList = list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL), ### List of inputs
+    aggLevels  = c("none"), ### Aggregation levels c("national","conus", "modelaverage", "impacttype")
     elasticity = 1,     ### Override value for elasticity for economic values
     maxYear    = 2100,  ### Maximum year for the analysis period
     # thru2300   = FALSE, ### Whether to run FrEDI methane through 2300
@@ -229,7 +232,23 @@ run_fredi_ghg <- function(
   } ### End if
   rm(has_elasticity, elasticity0)
 
-
+  #### Agg Levels  ####
+  ### Types of summarization to do: default
+  ### Aggregation levels
+  aggList0   <- aggList0  |> tolower()
+  aggLevels  <- aggLevels |> tolower()
+  ### Update status list
+  statusList[["aggLevels" ]] <- aggLevels #("all" %in% aggLevels | (aggLevels %in% aggList0) |> all()) |> get_returnListStatus()
+  #aggList1   <- aggList0  |> c("all", "none")
+  #aggLevels  <- aggLevels |> get_matches(y=aggList1)
+  ### If none specified, no aggregation (only SLR interpolation)
+  ### Otherwise, aggregation depends on length of agg levels
+  #if     ("none" %in% aggLevels) {aggLevels <- c()} else if("all"  %in% aggLevels) {aggLevels <- aggList0}
+  if(any(aggLevels == "none")) doAgg <-  FALSE 
+  if(any(aggLevels != "none")) doAgg <- TRUE
+  ### Add to list
+  #if(outputList) {argsList[["aggLevels"]] <- aggLevels}
+  rm(aggList0)
 
   ### Input Scenarios ----------------
   #### Input Info ----------------
@@ -571,6 +590,10 @@ run_fredi_ghg <- function(
   ### Add module
   df_results   <- df_results |> mutate(module="GHG", .before="sector")
 
+  
+  
+  
+  
   ### Add module sector label
   join0      <- c("sector")
   select0    <- join0 |> c("sector_label")
@@ -611,6 +634,7 @@ run_fredi_ghg <- function(
     mutate(driverType  = "Ozone Concentration") |>
     mutate(driverUnit  = "pptv") |>
     relocate(any_of(move0), .before="year")
+  
   # return(df_results)
   # df_results <- df_results |> mutate(module = "GHG") |> relocate(c("module"))
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
@@ -636,6 +660,117 @@ run_fredi_ghg <- function(
   # df_results <- df_results |> arrange_at(c(arrange0))
 
 
+  
+  ### Aggregation ####
+  groupCols0  <- c("sector", "impactType", "model","model_type", "region","state", "postal")
+  impactCols0 <- c("physical_impacts", "annual_impacts")
+  ### For regular use (i.e., not impactYears), simplify the data: groupCols0
+  if (doAgg) {
+    paste0("Aggregating impacts", "...") |> message()
+    # aggLevels |> length(); doAgg |> print()
+    
+    # Model average
+    df_mod_ave <- df_results |>
+      group_by(module,sector,impactType,endpoint,ageType,ageRange,region,state,postal,year,driverType,driverUnit,pop,gdp_usd,national_pop,gdp_percap) |>
+      summarise(
+        driverValue = mean(driverValue, na.rm = T),
+        physical_impacts = mean(physical_impacts,na.rm = T),
+        annual_impacts = mean(annual_impacts, na.rm = T),
+        .groups = "drop"
+      ) |>
+      mutate(model = "Model Average") |> ungroup()
+    
+    # National average  including impact Types
+    ## Find CONUS
+    df_nat_impType_conus <-  df_mod_ave |>
+      filter(!(postal %in% c("AK", "HI"))) |>
+      group_by(module,sector,impactType,endpoint,ageType,ageRange,model,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      summarise(
+        driverValue = mean(driverValue),
+        physical_impacts = sum(physical_impacts),
+        annual_impacts = sum(annual_impacts),
+        .groups = "drop"
+      ) |>
+      mutate(region = "CONUS") |> ungroup() |>
+      mutate(state      = "--",
+             postal     = "--",
+             pop        = "--")
+    
+    ## Find National 
+    df_nat_impType_nat <- df_mod_ave |>
+      group_by(module,sector,impactType,endpoint,ageType,ageRange,model,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      summarise(
+        driverValue = mean(driverValue,na.rm = T),
+        physical_impacts = sum(physical_impacts,na.rm = T),
+        annual_impacts = sum(annual_impacts,na.rm = T),
+        .groups = "drop"
+      ) |>
+      mutate(region = "National") |> ungroup()|>
+      mutate(state      = "--",
+             postal     = "--",
+             pop        = "--")
+    
+    # National total across impacts by sector mortality and morbidity
+    ## Find CONUS
+    df_conus <- df_nat_impType_conus |>
+      group_by(module,sector,model,region,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      summarise(
+        driverValue = mean(driverValue),
+        physical_impacts = sum(physical_impacts),
+        annual_impacts = sum(annual_impacts),
+        .groups = "drop"
+      ) |>  ungroup() |>
+      mutate(
+        impactType = "--",
+        endpoint   = "--",
+        ageType    = "--",
+        ageRange   = "--",
+        state      = "--",
+        postal     = "--",
+        pop        = "--"
+      )
+    ## Find National 
+    df_nat <- df_nat_impType_nat |>
+      group_by(module,sector,model,region,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      summarise(
+        driverValue = mean(driverValue),
+        physical_impacts = sum(physical_impacts),
+        annual_impacts = sum(annual_impacts),
+        .groups = "drop"
+      ) |>
+      ungroup() |>
+      mutate(
+        impactType = "--",
+        endpoint   = "--",
+        ageType    = "--",
+        ageRange   = "--",
+        state      = "--",
+        postal     = "--",
+        pop        = "--"
+      )
+    
+      names_order <- df_results |> names()
+      # Return Correct aggregation Table
+      if(all(grepl("national", aggLevels)))                          df_results <- df_nat |> select(all_of(names_order))
+      if(all(grepl("conus", aggLevels)))                             df_results <- df_conus |> select(all_of(names_order))
+      if(all(grepl("modelaverage", aggLevels)))                      df_results <- df_mod_ave |> select(all_of(names_order))
+      if(all(grepl("conus|impacttype", aggLevels)))                  df_results <- df_nat_impType_conus |> select(all_of(names_order))
+      if(all(grepl("national|impacttype" , aggLevels)))              df_results <- df_nat_impType_nat |> select(all_of(names_order))
+      if(all(grepl("national|modelaverage" , aggLevels)))            df_results <- df_nat |> select(all_of(names_order))
+      if(all(grepl("conus|modelaverage" , aggLevels)))               df_results <- df_nat |> select(all_of(names_order))
+      if(all(grepl("modelaverage|impacttype", aggLevels)))           df_results <- df_mod_ave |> select(all_of(names_order))
+      if(all(grepl("national|modelaverage|impacttype", aggLevels)))  df_results <- df_nat |> select(all_of(names_order))
+      if(all(grepl("conus|modelaverage|impacttype", aggLevels)))     df_results <- df_conus |> select(all_of(names_order))
+      if(all(grepl("national|conus|modelaverage|impacttype", aggLevels)))     df_results <- df_nat |> select(all_of(names_order))
+      if(all(grepl("all", aggLevels)))                               df_results <- df_nat |> select(all_of(names_order))
+      
+      rm(df_nat,df_conus,df_nat_impType_conus,df_nat_impType_nat,df_mod_ave)
+      gc(verbose = FALSE)
+   
+  } ### End if(doAgg)
+  
+  
+  
   ### Return Object ----------------
   ### Which object to return
   if(outputList) {

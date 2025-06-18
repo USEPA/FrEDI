@@ -6,6 +6,7 @@
 \usage{
 run_fredi_ghg(
   inputsList = list(gdp = NULL, pop = NULL, ch4 = NULL, nox = NULL, o3 = NULL),
+  aggLevels = c("none"),
   elasticity = 1,
   maxYear = 2100,
   outputList = FALSE,
@@ -14,6 +15,8 @@ run_fredi_ghg(
 }
 \arguments{
 \item{inputsList=list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL)}{A list with named elements (\code{gdp}, \code{pop}, \code{ch4}, \code{nox}, and/or \code{o3}), each containing data frames of custom scenarios for gross domestic product (GDP), state-level population, ozone concentration, methane concentration, and NOx emissions, respectively, over a continuous period. Values should start in 2020 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see \code{\link[=import_inputs]{import_inputs()}}.}
+
+\item{aggLevels="none"}{Levels of aggregation at which to summarize data: one or more of \code{c("national","conus", "modelaverage", "impacttype", "all", "none")}. Defaults to no levels (i.e., \code{aggLevels = "none"}).}
 
 \item{elasticity=1}{A numeric value indicating an elasticity to use for adjusting VSL (defaults to \code{elasticity = 1}).}
 
