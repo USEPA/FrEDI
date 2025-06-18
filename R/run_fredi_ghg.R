@@ -364,7 +364,7 @@ run_fredi_ghg <- function(
       # module    = "methane" |> rep(inNames |> length())
       # module    = "ghg" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data, popArea="state", module="ghg") |>
+      pmap(check_input_data, popArea="state", module="ghg", con = conn) |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 
@@ -623,8 +623,10 @@ run_fredi_ghg <- function(
   # valCols0   <- c("physicalmeasure")
   valCols0   <- c()
   sumCols0   <- c("physical_impacts", "annual_impacts")
+  # add input ch4 if provided by user
+  if(has_ch4){ch4Cols0 <- c("CH4_ppbv")} else {ch4Cols0 <- c()}
   # idCols0 |> print(); modCols0 |> print(); natCols0 |> print(); valCols0 |> print(); sumCols0 |> print()
-  select0    <- idCols0 |> c(modCols0, natCols0, valCols0, sumCols0) |> unique()
+  select0    <- idCols0 |> c(modCols0,ch4Cols0, natCols0, valCols0, sumCols0) |> unique()
   arrange0   <- idCols0 |> unique()
 
   ### Select columns

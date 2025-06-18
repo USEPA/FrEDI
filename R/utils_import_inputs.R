@@ -670,9 +670,20 @@ check_input_data <- function(
   ### Get state info: co_states
   #co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   #co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  if(doMain | doSV){
   co_info   <- DBI::dbReadTable(con,"co_inputInfo")
   co_states <- DBI::dbReadTable(con,"co_states")
-
+  }
+  
+  if(doMethane){
+    ghgData    <- DBI::dbReadTable(con,"ghgData")
+    ghgData    <- unserialize(ghgData$value |> unlist())
+    
+    co_info   <- ghgData$ghgData$co_inputInfo
+    co_states <- ghgData$ghgData$co_states
+  }
+  
+  
   # co_region <- "co_regions"    |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
 
 
