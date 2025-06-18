@@ -671,9 +671,11 @@ run_fredi_ghg <- function(
     paste0("Aggregating impacts", "...") |> message()
     # aggLevels |> length(); doAgg |> print()
     
+    
     # Model average
+    groups <- c("module","sector","impactType","endpoint","ageType","ageRange","region","state","postal","year","driverType","driverUnit",ch4Cols0,"pop","gdp_usd","national_pop","gdp_percap")
     df_mod_ave <- df_results |>
-      group_by(module,sector,impactType,endpoint,ageType,ageRange,region,state,postal,year,driverType,driverUnit,pop,gdp_usd,national_pop,gdp_percap) |>
+      group_by_at(groups) |>
       summarise(
         driverValue = mean(driverValue, na.rm = T),
         physical_impacts = mean(physical_impacts,na.rm = T),
@@ -684,9 +686,10 @@ run_fredi_ghg <- function(
     
     # National average  including impact Types
     ## Find CONUS
+    groups <- c("module","sector","impactType","endpoint","ageType","ageRange","model","year","driverType","driverUnit",ch4Cols0,"gdp_usd","national_pop","gdp_percap")
     df_nat_impType_conus <-  df_mod_ave |>
       filter(!(postal %in% c("AK", "HI"))) |>
-      group_by(module,sector,impactType,endpoint,ageType,ageRange,model,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      group_by_at(groups) |>
       summarise(
         driverValue = mean(driverValue),
         physical_impacts = sum(physical_impacts),
@@ -700,7 +703,7 @@ run_fredi_ghg <- function(
     
     ## Find National 
     df_nat_impType_nat <- df_mod_ave |>
-      group_by(module,sector,impactType,endpoint,ageType,ageRange,model,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      group_by_at(groups) |>
       summarise(
         driverValue = mean(driverValue,na.rm = T),
         physical_impacts = sum(physical_impacts,na.rm = T),
@@ -714,8 +717,10 @@ run_fredi_ghg <- function(
     
     # National total across impacts by sector mortality and morbidity
     ## Find CONUS
+    groups <- c("module","sector","model","region","year","driverType","driverUnit",ch4Cols0,"gdp_usd","national_pop","gdp_percap")
+  
     df_conus <- df_nat_impType_conus |>
-      group_by(module,sector,model,region,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      group_by_at(groups) |>
       summarise(
         driverValue = mean(driverValue),
         physical_impacts = sum(physical_impacts),
@@ -733,7 +738,7 @@ run_fredi_ghg <- function(
       )
     ## Find National 
     df_nat <- df_nat_impType_nat |>
-      group_by(module,sector,model,region,year,driverType,driverUnit,gdp_usd,national_pop,gdp_percap) |>
+      group_by_at(groups) |>
       summarise(
         driverValue = mean(driverValue),
         physical_impacts = sum(physical_impacts),
