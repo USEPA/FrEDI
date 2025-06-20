@@ -323,6 +323,12 @@ calc_ghg_mortality <- function(
     mutate(respMrateNat   = rffFactor    * ifRespScalar) |>
     mutate(respMrateState = respMrateNat * StateMortRatio * state_mortScalar) |>
     mutate(scaled_impacts = pop * respMrateState)
+  
+  ##remove redundant national O3 concentration columns.
+  df0     <- df0 |>
+    select(-c(
+      nat_o3response_pptv_per_ppbv, 
+      base_nat_deltaO3_pptv))
 
   ### Return data
   return(df0)
@@ -361,6 +367,12 @@ calc_ghg_morbidity <- function(
   df0     <- df0 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
   df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
   df0     <- df0 |> mutate(scaled_impacts   = pop * asthmaMrate)
+  
+  ##remove redundant national O3 concentration columns.
+  df0     <- df0 |>
+    select(-c(
+      nat_o3response_pptv_per_ppbv, 
+      base_nat_deltaO3_pptv))
 
   ### Return data
   return(df0)
