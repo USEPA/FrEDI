@@ -372,7 +372,7 @@ run_fredi_ghg <- function(
     }) |> set_names(inNames)
 
     ### Check inputs
-    inputsList <- list(
+    inputsList <-  list(
       inputName = inNames,
       inputDf   = inputsList[inNames],
       idCol     = idCols0   [inNames],
@@ -386,6 +386,7 @@ run_fredi_ghg <- function(
     ) |>
       pmap(check_input_data, popArea="state", module="ghg", con = conn) |>
       set_names(inNames)
+    
     rm(minYrs0, maxYrs0)
 
     ### Check again for inputs

@@ -896,7 +896,29 @@ check_input_data <- function(
     } ### End if(doCheck0)
     rm(doReg0, doState0, doCheck0)
   } ### End if(doPop | doO3)
-
+  
+  ##### Check Models #####
+  if(doO3){
+    inputDf_names <- inputDf |> names()
+    modCheck <- "model" %in% inputDf_names
+    ### Models Must match GCM names
+    if(modCheck){
+      in_models <- inputDf |> select(model) |> unique()
+      fredi_models <- ghgData$ghgData$co_models$model |> unique()
+      
+      modNameCheck <- str_equal(in_models,fredi_models) |> all()
+      
+      if(!modNameCheck){
+        msg1 <- "Models specified do not match known GCMs. "
+        msg2 <- "Please specify model column in o3 input with known GCMs: "
+        model_string <- paste(fredi_models, collapse = ", ")
+        paste0(msg1, msg2, model_string) |> message()
+        stop()
+        
+      }
+    }
+    
+  }
 
   ###### Calculate State Population ######
   # ### Check regions, states, postal for correct values if pop input present
