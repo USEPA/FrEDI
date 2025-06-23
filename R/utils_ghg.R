@@ -53,7 +53,7 @@ calc_o3_conc <- function(
                                  intercept0 = ghgData$coefficients$NOx$intercept0,
                                  adj0       = ghgData$coefficients$NOx$adj0)
 
-  df0   <- df0 |> mutate(O3_pptv = CH4_ppbv * NOxRatio * state_o3response_pptv_per_ppbv)
+  df0   <- df0 |> mutate(O3_ppbv = CH4_ppbv * NOxRatio * state_o3response_ppbv_per_ppbv)
   ### Return
   return(df0)
 }
@@ -68,7 +68,7 @@ format_ghg_drivers <- function(
 ){
   ### Load and format O3 data
   idCols0  <- c("region", "state", "postal", "model")
-  sumCols0 <- c("state_o3response_pptv_per_ppbv")
+  sumCols0 <- c("state_o3response_ppbv_per_ppbv")
   select0  <- idCols0 |> c(sumCols0) |> unique()
 
   df1      <- ghgStateDatao3 |> select(all_of(select0))
@@ -368,11 +368,6 @@ calc_ghg_morbidity <- function(
   df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
   df0     <- df0 |> mutate(scaled_impacts   = pop * asthmaMrate)
   
-  ##remove redundant national O3 concentration columns.
-  df0     <- df0 |>
-    select(-c(
-      nat_o3response_pptv_per_ppbv, 
-      base_nat_deltaO3_pptv))
 
   ### Return data
   return(df0)
@@ -417,7 +412,7 @@ calc_ghg_impacts <- function(
   df0     <- df0 |> arrange_at(c(move0))
 
   ### Calculate annual impacts
-  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_pptv)
+  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_ppbv)
   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
 
   ### Return
