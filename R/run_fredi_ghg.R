@@ -152,6 +152,7 @@ run_fredi_ghg <- function(
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE  ### Whether to include additional columns in output
 ){
+  
   ### Set up the environment ----------------
   #### Messaging ----------------
   # ### Level of messaging (default is to message the user)
@@ -421,7 +422,7 @@ run_fredi_ghg <- function(
     doPop0       <- "pop" %in% inNames
     doO3_0       <- "o3"  %in% inNames
     if(doPop0) idCols0[["pop"]] <- c("region", "state", "postal") |> c(idCols0[["pop"]]) |> unique()
-    if(doO3_0) idCols0[["o3" ]] <- c("region", "state", "postal", "model") |> c(idCols0[["o3" ]]) |> unique()
+    if(doO3_0) idCols0[["o3" ]] <- c("region", "state", "postal") |> c(idCols0[["o3" ]]) |> unique()
     inputsList   <- list(
       name0     = inNames,
       df0       = inputsList,
@@ -485,7 +486,7 @@ run_fredi_ghg <- function(
   has_driver <- has_o3 | has_ch4
   if(has_o3) {
     df_drivers <- inputsList[["o3"]]
-    driveNames <- driveNames
+    driveNames <- df_drivers |> names()
     ### Check Region
     doReg0 <- "region" %in% driveNames
     if(doReg0) {
@@ -493,7 +494,11 @@ run_fredi_ghg <- function(
     } ### End if(doReg0)
     ### Format model
     # df_drivers <- df_drivers |> mutate(state  = state |> str_replace_all("\\.|_|-| ", ""))
-    df_drivers <- df_drivers |> mutate(model  = model |> str_replace_all("\\.|_|-| ", ""))
+    # Set a flag that O3 input does not have model column
+    mod_03 <- any(str_detect("model",driveNames))
+    if(mod_03) df_drivers <- df_drivers |> mutate(model  = model |> str_replace_all("\\.|_|-| ", ""))
+    if(!mod_03) df_drivers <- df_drivers |> mutate(model = "user_defined")
+
   } else{
     join0      <- c("year")
     df_drivers <- inputsList[["ch4"]] |> left_join(inputsList[["nox"]], by=join0)
@@ -502,8 +507,10 @@ run_fredi_ghg <- function(
 
   ### Get RR scalar and ozone response data
   # df_drivers |> glimpse()
-  df_drivers <- df_drivers |> format_ghg_drivers(ghgStateDatao3 = ghgData$stateData$state_o3,
-                                                 ghgData = ghgData$ghgData
+  df_drivers <-  format_ghg_drivers(df0 = df_drivers,
+                                    ghgStateDatao3 = ghgData$stateData$state_o3,
+                                    ghgData = ghgData$ghgData,
+                                    mod_03_status= mod_03
                                                   )
   # df_drivers$model |> unique() |> print()
   # df_drivers |> glimpse()
@@ -547,16 +554,23 @@ run_fredi_ghg <- function(
   #### Mortality ----------------
   #### - Calculate Mortality Rate
   #### - Calculate Excess Mortality
-  dfMort0      <- df_scalars |> calc_ghg_mortality(ghgData = ghgData)
-  dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers)
+  dfMort0      <-  calc_ghg_mortality(
+                                      df0 = df_scalars,
+                                      ghgData = ghgData, 
+                                      user_o3= mod_03)
+  
+  dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers) |> ungroup()
   # dfMort0 |> filter(sector |> is.na()) |> glimpse()
   # dfMort0 |> glimpse()
   # return(dfMort0)
 
   #### Morbidity ----------------
   #### Calculate Mortality Rate
-  dfMorb0      <- df_scalars |> calc_ghg_morbidity(ghgData = ghgData)
-  dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers)
+  dfMorb0      <- calc_ghg_morbidity(df0 = df_scalars,
+                                     ghgData = ghgData, 
+                                     user_o3= mod_03)
+  
+  dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers) |> ungroup()
   # dfMorb0 |> filter(sector |> is.na()) |> glimpse()
   # dfMorb0 |> glimpse()
   # return(dfMorb0)

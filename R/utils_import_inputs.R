@@ -69,11 +69,11 @@ get_import_inputs_idCols <- function(
   ### Which columns to add
   addReg0   <- doPop0 & doReg0
   addState0 <- (doPop0 & doState0) | doO3
-  addModel0 <- doO3
+  #addModel0 <- doO3
   ### Add columns
   if(addReg0  ) cols1 <- cols1 |> c("region") |> unique()
   if(addState0) cols1 <- cols1 |> c("state" ) |> unique()
-  if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
+  #if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
   # if(doPop0 & (doState0 | doReg0)) {
   #   cols1 <- doState0 |> ifelse("state", "region")
   # } else if(doO3) {
@@ -642,7 +642,7 @@ check_input_data <- function(
 ){
   # "got here" |> print()
   # inputDf |> glimpse()
-
+  #browser()
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
@@ -733,7 +733,7 @@ check_input_data <- function(
   ###### Data Columns ######
   ### Get value column and id column
   # if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
-  if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols (popArea=popArea)[[inputName]]
+  if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols( type0   = inputName,popArea=popArea)
 
 
   ###### Input Info ######
@@ -775,7 +775,7 @@ check_input_data <- function(
   ### If columns don't pass, message user and return NULL
   ### Otherwise, continue
   if(!checkCols) {
-    msg2_i |> paste0(msg_i3) |> paste0(namesDf[!whichCols] |> paste(collapse=", "), "!") |> message()
+    msg2_i |> paste0(msg_i3) |> paste0(cols_i[!whichCols] |> paste(collapse=", "), "!") |> message()
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkCols)
