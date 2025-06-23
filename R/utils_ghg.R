@@ -414,6 +414,7 @@ calc_ghg_morbidity <- function(
   # df0 |> glimpse()
   rm(df1,df0)
   gc(verbose = F)
+  
   ### Calculate intermediate populations
   df3     <- df3 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
   df3     <- df3 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
