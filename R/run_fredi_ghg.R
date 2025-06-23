@@ -642,13 +642,13 @@ run_fredi_ghg <- function(
   # "got here3" |> print()
 
   ### Format driver values and add module
-  from0      <- c("O3_pptv")
+  from0      <- c("O3_ppbv")
   to0        <- c("driverValue")
   move0      <- "driver" |> paste0(c("Type", "Unit", "Value"))
   df_results <- df_results |>
     rename_at(c(from0), ~to0) |>
     mutate(driverType  = "Ozone Concentration") |>
-    mutate(driverUnit  = "pptv") |>
+    mutate(driverUnit  = "ppbv") |>
     relocate(any_of(move0), .before="year")
   
   # return(df_results)

@@ -53,7 +53,7 @@ calc_o3_conc <- function(
                                  intercept0 = ghgData$coefficients$NOx$intercept0,
                                  adj0       = ghgData$coefficients$NOx$adj0)
 
-  df0   <- df0 |> mutate(O3_pptv = CH4_ppbv * NOxRatio * state_o3response_pptv_per_ppbv)
+  df0   <- df0 |> mutate(O3_ppbv = CH4_ppbv * NOxRatio * state_o3response_ppbv_per_ppbv)
   ### Return
   return(df0)
 }
@@ -69,7 +69,7 @@ format_ghg_drivers <- function(
 ){
   ### Load and format O3 data
   idCols0  <- c("region", "state", "postal", "model")
-  sumCols0 <- c("state_o3response_pptv_per_ppbv")
+  sumCols0 <- c("state_o3response_ppbv_per_ppbv")
   select0  <- idCols0 |> c(sumCols0) |> unique()
 
   if(mod_03_status) df1 <- ghgStateDatao3 |> select(all_of(select0))
@@ -77,7 +77,7 @@ format_ghg_drivers <- function(
                             select(all_of(select0)) |>
                             group_by(region,state,postal) |>
                             summarise(
-                            state_o3response_pptv_per_ppbv = mean(state_o3response_pptv_per_ppbv)
+                            state_o3response_ppbv_per_ppbv = mean(state_o3response_ppbv_per_ppbv)
                             ) |>
                             mutate(
                               model = "user_defined"
@@ -89,7 +89,7 @@ format_ghg_drivers <- function(
   names1   <- df1    |> names()
   join0    <- names0 |> get_matches(y=names1)
   doJoin0  <- join0  |> length()
-  if(doJoin0) df0 <- df0 |> left_join(df1, by=join0, relationship="many-to-many") else        df0 <- df0 |> cross_join(df1)
+  if(doJoin0) df0 <- df0 |> left_join(df1, by=join0, relationship="many-to-many") else  df0 <- df0 |> cross_join(df1)
   rm(df1)
   # df0 |> glimpse()
 
@@ -359,7 +359,7 @@ calc_ghg_mortality <- function(
     select(-c(
       nat_o3response_pptv_per_ppbv, 
       base_nat_deltaO3_pptv))
-  
+
   ### Return data
   return(df0)
 }
@@ -414,18 +414,15 @@ calc_ghg_morbidity <- function(
   # df0 |> glimpse()
   rm(df1,df0)
   gc(verbose = F)
+  
   ### Calculate intermediate populations
   df3     <- df3 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
   df3     <- df3 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
   df3     <- df3 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
   df3     <- df3 |> mutate(scaled_impacts   = pop * asthmaMrate)
 
-  ##remove redundant national O3 concentration columns.
-  df3     <- df3 |>
-    select(-c(
-      nat_o3response_pptv_per_ppbv, 
-      base_nat_deltaO3_pptv))
-  
+
+
   ### Return data
   return(df3)
 }
@@ -469,7 +466,7 @@ calc_ghg_impacts <- function(
   df0     <- df0 |> arrange_at(c(move0))
 
   ### Calculate annual impacts
-  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_pptv)
+  df0     <- df0 |> mutate(physical_impacts = scaled_impacts   * O3_ppbv)
   df0     <- df0 |> mutate(annual_impacts   = physical_impacts * econScalar)
 
   ### Return
