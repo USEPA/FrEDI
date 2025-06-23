@@ -503,6 +503,7 @@ run_fredi_ghg <- function(
   } else{
     join0      <- c("year")
     df_drivers <- inputsList[["ch4"]] |> left_join(inputsList[["nox"]], by=join0)
+    mod_03 = TRUE
     rm(join0)
   } ### End if(has_o3)
 
