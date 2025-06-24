@@ -44,8 +44,7 @@ FrEDI works by first taking user-defined projections of U.S. population, gross d
 <br>
 
 **Recommended Citation:**
-EPA. 2024. Technical Documentation for the Framework for Evaluating Damages and Impacts (FrEDI). U.S. Environmental Protection Agency, EPA 430-R-24-001. Available at: https://www.epa.gov/cira/fredi.
-<br>
+Environmental Protection Agency (EPA). 2025. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC. Available at https://epa.gov/cira/FrEDI/.<br>
 
 ---
 
