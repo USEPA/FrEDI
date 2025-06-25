@@ -35,7 +35,11 @@ Authors@R: c(person("Corinne", "Hartin",
              person("Jacqueline","Willwerth",
                      role    = "ctb",
                      comment = c(ORCID = "0000-0002-6107-0315",
-                                 github = "jwillwerth"))
+                                 github = "jwillwerth")),
+             person("Ben","Jeweler",
+                     role    = "ctb",
+                     comment = c(ORCID = "0009-0004-3364-2875",
+                                 github = "Bjeweler"))                
              )
 URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
 Description: This R package models damages and impacts from temperature changes in the contiguous United States (CONUS) 
