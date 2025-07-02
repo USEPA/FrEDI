@@ -10,8 +10,8 @@
 #'
 #' @param inputsList=list(gdp=NULL,pop=NULL,ch4=NULL,nox=NULL,o3=NULL) A list with named elements (`gdp`, `pop`, `ch4`, `nox`, and/or `o3`), each containing data frames of custom scenarios for gross domestic product (GDP), state-level population, ozone concentration, methane concentration, and NOx emissions, respectively, over a continuous period. Values should start in 2020 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see [FrEDI::import_inputs()].
 #'
-#' @param aggLevels="none" Levels of aggregation at which to summarize data: one or more of `c("national","conus", "modelaverage", "impacttype", "all", "none")`. Defaults to no levels (i.e., `aggLevels = "none"`). 
-#' 
+#' @param aggLevels="none" Levels of aggregation at which to summarize data: one or more of `c("national","conus", "modelaverage", "impacttype", "all", "none")`. Defaults to no levels (i.e., `aggLevels = "none"`).
+#'
 #' @param elasticity=1 A numeric value indicating an elasticity to use for adjusting VSL (defaults to `elasticity = 1`).
 #'
 #' @param maxYear=2100 A numeric value indicating the maximum year for the analysis. The range for `maxYear` is `[2011, 2300]`. Defaults to `maxYear = 2100`.
@@ -109,7 +109,7 @@
 #'
 #'
 #'
-#' @references Environmental Protection Agency (EPA). 2025. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC. Available at https://epa.gov/cira/FrEDI/.
+#' @references Environmental Protection Agency (EPA). Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC
 #'
 #' McDuffie, E. E., Sarofim, M. C., Raich, W., Jackson, M., Roman, H., Seltzer, K., Henderson, B. H., Shindell, D. T., Collins, M., Anderton, J., Barr, S., & Fann, N. (2023). The Social Cost of Ozone-Related Mortality Impacts From Methane Emissions. Earth’s Future, 11(9), e2023EF003853.
 #'
@@ -152,7 +152,7 @@ run_fredi_ghg <- function(
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE  ### Whether to include additional columns in output
 ){
-  
+
   ### Set up the environment ----------------
   #### Messaging ----------------
   # ### Level of messaging (default is to message the user)
@@ -245,7 +245,7 @@ run_fredi_ghg <- function(
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
   #if     ("none" %in% aggLevels) {aggLevels <- c()} else if("all"  %in% aggLevels) {aggLevels <- aggList0}
-  if(any(aggLevels == "none")) doAgg <-  FALSE 
+  if(any(aggLevels == "none")) doAgg <-  FALSE
   if(any(aggLevels != "none")) doAgg <- TRUE
   ### Add to list
   #if(outputList) {argsList[["aggLevels"]] <- aggLevels}
@@ -386,7 +386,7 @@ run_fredi_ghg <- function(
     ) |>
       pmap(check_input_data, popArea="state", module="ghg", con = conn) |>
       set_names(inNames)
-    
+
     rm(minYrs0, maxYrs0)
 
     ### Check again for inputs
@@ -558,9 +558,9 @@ run_fredi_ghg <- function(
   #### - Calculate Excess Mortality
   dfMort0      <-  calc_ghg_mortality(
                                       df0 = df_scalars,
-                                      ghgData = ghgData, 
+                                      ghgData = ghgData,
                                       user_o3= mod_03)
-  
+
   dfMort0      <- "mort" |> calc_ghg_impacts(df0=dfMort0, df1=df_drivers) |> ungroup()
   # dfMort0 |> filter(sector |> is.na()) |> glimpse()
   # dfMort0 |> glimpse()
@@ -569,9 +569,9 @@ run_fredi_ghg <- function(
   #### Morbidity ----------------
   #### Calculate Mortality Rate
   dfMorb0      <- calc_ghg_morbidity(df0 = df_scalars,
-                                     ghgData = ghgData, 
+                                     ghgData = ghgData,
                                      user_o3= mod_03)
-  
+
   dfMorb0      <- "morb" |> calc_ghg_impacts(df0=dfMorb0, df1=df_drivers) |> ungroup()
   # dfMorb0 |> filter(sector |> is.na()) |> glimpse()
   # dfMorb0 |> glimpse()
@@ -606,10 +606,10 @@ run_fredi_ghg <- function(
   ### Add module
   df_results   <- df_results |> mutate(module="GHG", .before="sector")
 
-  
-  
-  
-  
+
+
+
+
   ### Add module sector label
   join0      <- c("sector")
   select0    <- join0 |> c("sector_label")
@@ -650,7 +650,7 @@ run_fredi_ghg <- function(
     mutate(driverType  = "Ozone Concentration") |>
     mutate(driverUnit  = "ppbv") |>
     relocate(any_of(move0), .before="year")
-  
+
   # return(df_results)
   # df_results <- df_results |> mutate(module = "GHG") |> relocate(c("module"))
   # df_results <- df_results |> mutate(physicalmeasure = "Excess Mortality")
@@ -678,7 +678,7 @@ run_fredi_ghg <- function(
   # df_results <- df_results |> arrange_at(c(arrange0))
 
 
-  
+
   ### Aggregation ####
   groupCols0  <- c("sector", "impactType", "model","model_type", "region","state", "postal")
   impactCols0 <- c("physical_impacts", "annual_impacts")
@@ -686,8 +686,8 @@ run_fredi_ghg <- function(
   if (doAgg) {
     paste0("Aggregating impacts", "...") |> message()
     # aggLevels |> length(); doAgg |> print()
-    
-    
+
+
     # Model average
     groups <- c("module","sector","impactType","endpoint","ageType","ageRange","region","state","postal","year","driverType","driverUnit",ch4Cols0,"pop","gdp_usd","national_pop","gdp_percap")
     df_mod_ave <- df_results |>
@@ -699,7 +699,7 @@ run_fredi_ghg <- function(
         .groups = "drop"
       ) |>
       mutate(model = "Model Average") |> ungroup()
-    
+
     # National average  including impact Types
     ## Find CONUS
     groups <- c("module","sector","impactType","endpoint","ageType","ageRange","model","year","driverType","driverUnit",ch4Cols0,"gdp_usd","national_pop","gdp_percap")
@@ -716,8 +716,8 @@ run_fredi_ghg <- function(
       mutate(state      = "--",
              postal     = "--",
              pop        = "--")
-    
-    ## Find National 
+
+    ## Find National
     df_nat_impType_nat <- df_mod_ave |>
       group_by_at(groups) |>
       summarise(
@@ -730,11 +730,11 @@ run_fredi_ghg <- function(
       mutate(state      = "--",
              postal     = "--",
              pop        = "--")
-    
+
     # National total across impacts by sector mortality and morbidity
     ## Find CONUS
     groups <- c("module","sector","model","region","year","driverType","driverUnit",ch4Cols0,"gdp_usd","national_pop","gdp_percap")
-  
+
     df_conus <- df_nat_impType_conus |>
       group_by_at(groups) |>
       summarise(
@@ -752,7 +752,7 @@ run_fredi_ghg <- function(
         postal     = "--",
         pop        = "--"
       )
-    ## Find National 
+    ## Find National
     df_nat <- df_nat_impType_nat |>
       group_by_at(groups) |>
       summarise(
@@ -771,7 +771,7 @@ run_fredi_ghg <- function(
         postal     = "--",
         pop        = "--"
       )
-    
+
       names_order <- df_results |> names()
       # Return Correct aggregation Table
       if(all(str_detect(c("national"), aggLevels)))                          df_results <- df_nat |> select(all_of(names_order))
@@ -786,14 +786,14 @@ run_fredi_ghg <- function(
       if(all(str_detect(c("conus","modelaverage","impacttype"),aggLevels)))     df_results <- df_conus |> select(all_of(names_order))
       if(all(str_detect(c("national","conus","modelaverage","impacttype"), aggLevels)))     df_results <- df_nat |> select(all_of(names_order))
       if(all(str_detect(c("all"), aggLevels)))                               df_results <- df_nat |> select(all_of(names_order))
-      
+
       rm(df_nat,df_conus,df_nat_impType_conus,df_nat_impType_nat,df_mod_ave)
       gc(verbose = FALSE)
-   
+
   } ### End if(doAgg)
-  
-  
-  
+
+
+
   ### Return Object ----------------
   ### Which object to return
   if(outputList) {
