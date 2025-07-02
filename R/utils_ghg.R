@@ -64,14 +64,24 @@ calc_o3_conc <- function(
 format_ghg_drivers <- function(
     df0, ### Tibble with scenarios
     ghgStateDatao3 = ghgData$stateData$state_o3,
-    ghgData = ghgData$ghgData
+    ghgData = ghgData$ghgData,
+    mod_03_status
 ){
   ### Load and format O3 data
   idCols0  <- c("region", "state", "postal", "model")
   sumCols0 <- c("state_o3response_ppbv_per_ppbv")
   select0  <- idCols0 |> c(sumCols0) |> unique()
 
-  df1      <- ghgStateDatao3 |> select(all_of(select0))
+  if(mod_03_status) df1 <- ghgStateDatao3 |> select(all_of(select0))
+  if(!mod_03_status) df1 <- ghgStateDatao3 |> 
+                            select(all_of(select0)) |>
+                            group_by(region,state,postal) |>
+                            summarise(
+                            state_o3response_ppbv_per_ppbv = mean(state_o3response_ppbv_per_ppbv)
+                            ) |>
+                            mutate(
+                              model = "user_defined"
+                            )
   # df1 |> glimpse(); df0 |> glimpse()
 
   ### Join data
@@ -79,8 +89,7 @@ format_ghg_drivers <- function(
   names1   <- df1    |> names()
   join0    <- names0 |> get_matches(y=names1)
   doJoin0  <- join0  |> length()
-  if(doJoin0) df0 <- df0 |> left_join(df1, by=join0, relationship="many-to-many")
-  else        df0 <- df0 |> cross_join(df1)
+  if(doJoin0) df0 <- df0 |> left_join(df1, by=join0, relationship="many-to-many") else  df0 <- df0 |> cross_join(df1)
   rm(df1)
   # df0 |> glimpse()
 
@@ -270,11 +279,14 @@ calc_ghg_scalars <- function(
 
 calc_ghg_mortality <- function(
     df0,  ### Tibble with population, years, and scalars
+    user_o3,  ### Flag for user defined o3, triggers use of average excess mortality over GCMs
     pCol0 = "national_pop"      , ### Column with national population
     sCol0 = "rffMrate_slope"    , ### Column with mortality rate slope,
     iCol0 = "rffMrate_intercept",  ### Column with mortality rate intercept,
     ghgData = ghgData
 ){
+  
+
   ### Get years info
   yrs0    <- df0 |> pull(year) |> unique() |> sort()
   dfYrs0  <- tibble(year = yrs0)
@@ -293,7 +305,25 @@ calc_ghg_mortality <- function(
   ### Cross join constant state RFF scalar info with national RFF info
   drop0   <- c("StateMortRatio", "baseMrateState", "exp0", "econAdjValue0")
   join0   <- c("econScalarName", "econMultiplierName", "c0", "c1")
-  df2     <- ghgData$stateData$state_rrScalar |> select(-any_of(drop0))
+  
+  ### If User 03 provided doesn't have model, take average exMortStateBase0 average of models
+  if(!user_o3){
+    groups0 <- c("sector","impactType","impactType_label","endpoint","ageType","ageRange","econScalarName","econMultiplierName","c0","c1",
+                 "region","state","postal","fips","us_area")
+    meanCol1 <- c("nat_o3response_pptv_per_ppbv","base_nat_deltaO3_pptv","base_CH4_ppbv","base_NOx_Mt","state_o3response_pptv_per_ppbv","base_state_deltaO3_pptv","base_year",                     "exMortStateBase0","StateMortRatio0","baseMrateNat0","baseMrateState0","exMortState0","basePopState","state_rrScalar","state_mortScalar")
+    
+    df2 <- ghgData$stateData$state_rrScalar |> 
+      select(-any_of(drop0)) |>
+      group_by_at(c(groups0)) |>
+      summarise_at(c(meanCol1),mean) |> 
+      mutate(
+        model = "user_defined", 
+        model_label = "user_defined",
+        model_str = "user_defined"
+      )
+  }
+  if(user_o3) df2     <- ghgData$stateData$state_rrScalar |> select(-any_of(drop0))
+  
   dfJoin0 <- df2 |> cross_join(dfJoin0)
   # rm(drop0, df2)
   # dfJoin0 |> glimpse()
@@ -340,37 +370,61 @@ calc_ghg_mortality <- function(
 # ghgData$stateData$df_asthmaImpacts |> glimpse()
 calc_ghg_morbidity <- function(
     df0,
+    user_o3,
     refYr0 = 2020,
     ghgData = ghgData
 ){
   ### Data
   # drop1   <- c("region", "state")
   drop1   <- c("region", "state", "model_str", "exp0", "econAdjValue0", "year")
-  df1     <- ghgData$stateData$df_asthmaImpacts
-  df1     <- df1 |>
-    filter(year %in% refYr0) |>
-    select(-any_of(drop1))
-
+  
+  if(user_o3){
+  df1     <- ghgData$stateData$df_asthmaImpacts |> 
+             filter(year %in% refYr0) |>
+             select(-any_of(drop1))
+  }
+  
+  if(!user_o3){
+    groups0 <- c("sector","impactType","endpoint","ageRange","fips","ageType","postal","us_area","impactType_label",
+                 "econScalarName","econMultiplierName", "c0","c1")
+    meanCol1 <- c("ageRangePct","affectedPop","affectedPopBase","excessAsthma","baseAsthmaNumer","baseAsthmaDenom")
+    
+    df1 <- ghgData$stateData$df_asthmaImpacts |> 
+      filter(year %in% refYr0) |>
+      select(-any_of(drop1)) |>
+      group_by_at(c(groups0)) |>
+      summarise_at(c(meanCol1),mean) |> 
+      mutate(
+        model = "user_defined",
+        model_label = "user_defined",
+        model_match = "user_defined",
+        modelType  = "user_defined",
+        gcmMaxTemp = 6
+      )
+  }
+  
   ### Join df0 and df1
   # df0 |> glimpse(); df1 |> glimpse()
   # join0   <- c("postal", "year")
   # join0   <- c("postal")
   join0   <- c("econScalarName", "econMultiplierName", "c0", "c1", "postal")
   # join0   <- df0 |> names() |> get_matches(df1 |> names())
-  df0     <- df1 |> left_join(df0, by=join0)
+  df3     <- df1 |> left_join(df0, by=join0)
   # df0     <- df0 |> left_join(df1, by=join0)
   # df0 |> glimpse()
-  rm(df1)
-
-  ### Calculate intermediate populations
-  df0     <- df0 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
-  df0     <- df0 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
-  df0     <- df0 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
-  df0     <- df0 |> mutate(scaled_impacts   = pop * asthmaMrate)
+  rm(df1,df0)
+  gc(verbose = F)
   
+  ### Calculate intermediate populations
+  df3     <- df3 |> mutate(baseAsthmaFactor = baseAsthmaNumer / baseAsthmaDenom)
+  df3     <- df3 |> mutate(agePopFactor     = ageRangePct / affectedPopBase)
+  df3     <- df3 |> mutate(asthmaMrate      = excessAsthma * agePopFactor * baseAsthmaFactor)
+  df3     <- df3 |> mutate(scaled_impacts   = pop * asthmaMrate)
+
+
 
   ### Return data
-  return(df0)
+  return(df3)
 }
 
 

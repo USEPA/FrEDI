@@ -69,11 +69,11 @@ get_import_inputs_idCols <- function(
   ### Which columns to add
   addReg0   <- doPop0 & doReg0
   addState0 <- (doPop0 & doState0) | doO3
-  addModel0 <- doO3
+  #addModel0 <- doO3
   ### Add columns
   if(addReg0  ) cols1 <- cols1 |> c("region") |> unique()
   if(addState0) cols1 <- cols1 |> c("state" ) |> unique()
-  if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
+  #if(addModel0) cols1 <- cols1 |> c("model" ) |> unique()
   # if(doPop0 & (doState0 | doReg0)) {
   #   cols1 <- doState0 |> ifelse("state", "region")
   # } else if(doO3) {
@@ -642,7 +642,7 @@ check_input_data <- function(
 ){
   # "got here" |> print()
   # inputDf |> glimpse()
-
+  #browser()
   ###### Module Options ######
   module0    <- module |> tolower()
   inNames0   <- c("gdp", "pop")
@@ -733,7 +733,7 @@ check_input_data <- function(
   ###### Data Columns ######
   ### Get value column and id column
   # if(valCol |> is.null()) valCol <- get_import_inputs_valCols(popArea=popArea)[[inputName]]
-  if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols (popArea=popArea)[[inputName]]
+  if(idCol  |> is.null()) idCol  <- get_import_inputs_idCols( type0   = inputName,popArea=popArea)
 
 
   ###### Input Info ######
@@ -775,7 +775,7 @@ check_input_data <- function(
   ### If columns don't pass, message user and return NULL
   ### Otherwise, continue
   if(!checkCols) {
-    msg2_i |> paste0(msg_i3) |> paste0(namesDf[!whichCols] |> paste(collapse=", "), "!") |> message()
+    msg2_i |> paste0(msg_i3) |> paste0(cols_i[!whichCols] |> paste(collapse=", "), "!") |> message()
     msg2_i |> paste0(msg_i2) |> message()
     return(NULL)
   } ### End if(!checkCols)
@@ -896,7 +896,29 @@ check_input_data <- function(
     } ### End if(doCheck0)
     rm(doReg0, doState0, doCheck0)
   } ### End if(doPop | doO3)
-
+  
+  ##### Check Models #####
+  if(doO3){
+    inputDf_names <- inputDf |> names()
+    modCheck <- "model" %in% inputDf_names
+    ### Models Must match GCM names
+    if(modCheck){
+      in_models <- inputDf |> select(model) |> unique()
+      fredi_models <- ghgData$ghgData$co_models$model |> unique()
+      
+      modNameCheck <- str_equal(in_models,fredi_models) |> all()
+      
+      if(!modNameCheck){
+        msg1 <- "Models specified do not match known GCMs. "
+        msg2 <- "Please specify model column in o3 input with known GCMs: "
+        model_string <- paste(fredi_models, collapse = ", ")
+        paste0(msg1, msg2, model_string) |> message()
+        stop()
+        
+      }
+    }
+    
+  }
 
   ###### Calculate State Population ######
   # ### Check regions, states, postal for correct values if pop input present
