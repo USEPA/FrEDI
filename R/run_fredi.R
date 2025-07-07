@@ -187,15 +187,23 @@ run_fredi <- function(
     silent     = TRUE   ### Whether to message the user
 ){
   ###### Load Objects ######
+  ###### ** Create DB connection #####
+  conn <-  load_frediDB()
+
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
-  fredi_config <- rDataList[["fredi_config"]]
+  #fredi_config <- rDataList[["fredi_config"]]
+  fredi_config    <- DBI::dbReadTable(conn,"fredi_config")
+  fredi_config    <- unserialize(fredi_config$value |> unlist())
   # fredi_config |> names() |> print()
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   ### Other values
-  co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
-  co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
+  #co_sectors   <- "co_sectors"    |> get_frediDataObj("frediData")
+  co_sectors   <- DBI::dbReadTable(conn,"co_sectors")
+
+  #co_modTypes  <- "co_modelTypes" |> get_frediDataObj("frediData")
+  co_modTypes  <- DBI::dbReadTable(conn,"co_modelTypes")
 
 
   ###### Set up the environment ######
@@ -282,8 +290,7 @@ run_fredi <- function(
   aggLevels  <- aggLevels |> get_matches(y=aggList1)
   ### If none specified, no aggregation (only SLR interpolation)
   ### Otherwise, aggregation depends on length of agg levels
-  if     ("none" %in% aggLevels) {aggLevels <- c()}
-  else if("all"  %in% aggLevels) {aggLevels <- aggList0}
+  if     ("none" %in% aggLevels) {aggLevels <- c()} else if("all"  %in% aggLevels) {aggLevels <- aggList0}
   doAgg      <- (aggLevels |> length()) > 0
   ### Add to list
   if(outputList) {argsList[["aggLevels"]] <- aggLevels}
@@ -324,19 +331,18 @@ run_fredi <- function(
   modTypesIn0  <- co_modTypes |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
   doSlr        <- ("slr" %in% modTypes0)
   doGcm        <- ("gcm" %in% modTypes0)
-  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
-  else      modTypesIn <- modTypesIn0
+  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0) else      modTypesIn <- modTypesIn0
   modInputs0   <- c("gdp", "pop") |> c(modTypesIn)
 
   ###### Inputs List ######
   ###### ** Input Info ######
   paste0("Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
-  co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
-  co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
-  co_inputInfo <- co_inputInfo |> filter(inputName %in% modInputs0)
+  co_inputInfo <- DBI::dbReadTable(conn, "co_inputInfo") |>
+    mutate(ref_year = c(1995, 2000, 2010, 2010)) |>
+    mutate(min_year = c(2000, 2000, 2010, 2010)) |>
+    mutate(max_year = maxYear) |>
+    filter(inputName %in% modInputs0)
 
   ### Initialize subset
   df_inputInfo <- co_inputInfo
@@ -346,12 +352,14 @@ run_fredi <- function(
   # inNames0 |> print()
 
   ###### ** Input Defaults ######
-  inputDefs    <- inNames0 |> map(function(name0){
+  inputDefs    <- inNames0 |> map(function(name0, con = conn){
     ### Objects
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj("scenarioData")
+    scenarioData   <- DBI::dbReadTable(conn,"scenarioData")
+    scenarioData   <- unserialize(scenarioData$value |> unlist())
+    df0      <- scenarioData[[defName0]]
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
@@ -400,7 +408,6 @@ run_fredi <- function(
     hasAnyInputs <- FALSE
   } ### End if(!hasInputs)
 
-
   ###### ** Check Inputs ######
   ### Filter to valid inputs & get info
   ### Reorganize inputs list
@@ -420,10 +427,9 @@ run_fredi <- function(
       idCol     = idCols0   [inNames],
       valCol    = valCols0  [inNames],
       yearMin   = minYrs0,
-      yearMax   = maxYrs0,
       module    = "fredi" |> rep(inNames |> length())
     ) |>
-      pmap(check_input_data) |>
+      pmap(check_input_data, yearMax=maxYear, con = conn) |>
       set_names(inNames)
     rm(minYrs0, maxYrs0)
 
@@ -485,6 +491,7 @@ run_fredi <- function(
       valCols0  = valCols0[inNames]
     ) |> pmap(function(df0, name0, hasInput0, idCols0, valCols0){
       df0 |> format_inputScenarios(
+        conn = conn,
         name0     = name0,
         hasInput0 = hasInput0,
         idCols0   = idCols0,
@@ -523,13 +530,18 @@ run_fredi <- function(
     return(df0)
   }) |> set_names(inNames)
 
-
+  ### Update returnList with Scenario Input Data
+  if(outputList){
+    returnList[["scenarios"]] <- inputsList |> set_names(inNames)
+  } ### End if(outputList)
 
   ###### Scenarios ######
   ###### ** Physical Driver Scenario  ######
   ### Select columns
   filter0    <- c("temp", "slr") |> get_matches(y=inNames)
-  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo)
+  df_drivers <- inputsList[filter0] |> combine_driverScenarios(info0 = df_inputInfo,
+                                                               info1 = DBI::dbReadTable(conn,"co_modelTypes"))
+
   # df_drivers <- df_drivers |> filter(year >= minYear, year <= maxYear)
   rm(filter0)
   # return(df_drivers)
@@ -556,15 +568,15 @@ run_fredi <- function(
   ###### ** Get Scalar Info ######
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity) |> ungroup()
+  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> ungroup()
 
   ###### ** Calculate Scaled Impacts ######
   ### Get scaled impacts
-  df_impacts   <- sectorIds |> calc_scaled_impacts_fredi(drivers0 = df_drivers) |> ungroup()
+  df_impacts   <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> ungroup()
 
   ###### ** Calculate Total Impacts ######
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts) |> ungroup()
+  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
 
 
 
@@ -653,6 +665,7 @@ run_fredi <- function(
     # aggLevels |> length(); doAgg |> print()
     group0     <- groupCols0
     df_results <- df_results |> aggregate_impacts(
+      conn = conn,
       aggLevels   = aggLevels,
       groupByCols = group0,
       columns     = impactCols0
@@ -664,12 +677,13 @@ run_fredi <- function(
   ###### ** Arrange Columns ######
   ### Convert levels to character
   ### Order the rows, then order the columns
-  arrange0   <- groupCols0 |> c("year") |> get_matches(y = df_results |> names())
+  arrange0   <- groupCols0 |> get_matches(y = df_results |> names()) |> c("year") |> unique()
   # arrange0 |> print()
   ### Select columns
   df_results <- df_results |> arrange_at(c(arrange0))
   df_results <- df_results |> relocate(any_of(select0))
   rm(arrange0)
+
 
 
 
@@ -701,7 +715,9 @@ run_fredi <- function(
   } ### End if(outputList)
 
 
-
+  ###### Close Database Connection ####
+  dbDisconnect(conn)
+  
   ###### Return ######
   ### Message, clear unused memory, return
   message("\n", "Finished", ".")
@@ -709,11 +725,3 @@ run_fredi <- function(
   return(returnObj)
 
 } ### End function
-
-
-
-
-
-
-
-

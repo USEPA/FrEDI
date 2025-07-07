@@ -4,7 +4,7 @@ The Framework for Evaluating Damages and Impacts (FrEDI)
 FrEDI estimates the annual physical and economic impacts of temperature change to the US, through the 21st century (and optionally through 2300).
 
 ***
-<em>The 2024 FrEDI Technical Documentation and v4.1 of the FrEDI R package were subject to an independent external peer review and public comment period. All comments received were carefully reviewed, considered, and responded to. The final versions of the 2024 Technical Documentation and v4.1 R package were published in August 2024.</em> 
+<em>The 2024 FrEDI Technical Documentation and v4.1 of the FrEDI R package were subject to an independent external peer review and public comment period. All comments received were carefully reviewed, considered, and responded to. The latest version of the FrEDI R package includes the concentration-driven module. The documentation describing this additional module was subject to an independent external peer review.</em> 
 ***
 
 ## Installation

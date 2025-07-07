@@ -1,0 +1,192 @@
+### https://github.com/actions/upload-artifact
+### https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows/
+### https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+### https://github.com/r-lib/actions/tree/v2/setup-r-dependencies
+### https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+### Single line conditional can use ${{}} formulation. Multi-line conditional does not.
+### For uploading artifacts:
+###     "path:" is the output path where Pandoc will write the compiled PDF.
+###      Note, this should be the same directory as the input paper.md
+name: 2e. Generate sector maps
+
+on:
+  workflow_dispatch:
+    inputs:
+      sector:
+        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name(s) (if more than one, separate with a comma)
+        required: true
+        type: string
+        default: "all"
+      workflow_id:
+        type: string
+        description: Enter the workflow run ID from which to retrieve the scenario results
+        default: 1
+      dataFile:
+        type: string
+        description: Enter the file in which to find results
+        default: "defaultResults.rda"
+
+jobs:
+  run_scenarios:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    name: Load Package Code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send input status
+        run: |
+          echo "ref_name     = ${{ github.ref_name }}"
+          echo "sector       = ${{ inputs.sector }}"
+          echo "workflow_id  = ${{ inputs.workflow_id }}"
+          echo "dataFile     = ${{ inputs.dataFile }}"
+
+      ### Download tmp_sysdata.rda from 1. Compile Main FrEDI Data run
+      - name: Download all artifacts
+        # if: |
+        #   inputs.dow_totals == 'true' ||
+        #   inputs.dow_appendix == 'true'
+        id:   download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.workflow_id }}
+          path: .
+
+      - name: Check artifacts
+        # # if: ${{ inputs.dow_totals == 'true' || inputs.dow_appendix == 'true' }}
+        # if: |
+        #   inputs.dow_totals == 'true' ||
+        #   inputs.dow_appendix == 'true'
+        run: |
+          ls -R ./scenario_results
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Setup R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          cache-version: 1
+          packages: |
+            any::tidyverse
+            any::devtools
+            any::openxlsx
+            any::ggpubr
+            any::maps
+
+
+      ### Install FrEDI from new branch and get results
+      - name: Test results
+        # if: |
+        #   inputs.doScenarios == 'true'
+        run: |
+          Rscript -e '
+            ###### Libraries ###
+            require(tidyverse)
+            require(devtools)
+            require(openxlsx)
+            require(ggpubr)
+            require(maps)
+
+            ###### Workflow Inputs ######
+            # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
+            newBranch   <- "${{ github.ref_name }}"
+            sectors0    <- "${{ inputs.sector }}"
+            dataFile0   <- "${{ inputs.dataFile }}"
+
+            ###### Functions ######
+            loadCode    <- function(files0){for(file_i in files0){file_i |> source(); rm(file_i)}}
+
+            ###### Paths ######
+            ### Main repo path, FrEDI project path, scripts path
+            rPath0      <- ".";
+            # pPath0      <- rPath0 |> file.path("FrEDI")
+            pPath0      <- rPath0
+            # "got here1" |> print()
+
+            ### Load scripts and testing functions
+            sPath0      <- pPath0 |> file.path("scripts")
+            tPath0      <- pPath0 |> file.path("testing")
+            sFiles0     <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0     <- tPath0 |> list.files(full.names=TRUE)
+            rmd_file    <- tFiles0[grepl(".rmd",tFiles0)]
+            tFiles0     <- tFiles0[!grepl(".rmd",tFiles0)]
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            sFiles0 |> loadCode()
+            tFiles0 |> loadCode()
+
+            ### Check if path exists and, if not, create it
+            ### Where to save results
+            oPath0      <- pPath0 |> file.path("data_tests")
+            exists0     <- oPath0 |> dir.exists()
+            if(!exists0) {oPath0 |> dir.create(recursive=TRUE)}
+
+            ### Artifact path
+            artDir      <- pPath0  |> file.path("scenario_results")
+            oPath0  |> list.files() |> print();
+            artDir  |> list.files() |> print();
+
+            ###### ** Load FrEDI Code ######
+            pPath0 |> devtools::load_all()
+
+            ###### Sectors ######
+            ### Format sector names
+            sectors0 |> print()
+            sectors    <- sectors0 |> get_action_sectors()
+            sectors |> print()
+
+            ###### Load Data ######
+            ### Initialize data
+            ### Data path
+            ### Check if file exists and, if it does, load it
+            dfData      <- NULL
+            dataPath    <- artDir |> file.path(dataFile0)
+            dataExists  <- dataPath |> file.exists()
+            c(dataPath) |> print(); dataExists |> print()
+            if(dataExists) {
+              result0   <- dataPath |> load()
+              result0Type <- result0  |> get() |> is_tibble()
+              #### If data is a list, set dfData to "results"
+              if(result0Type){
+                dfData  <- result0  |> get()
+              } else {
+                dfData <- result0  |> get() |> _[["results"]]
+              }
+              hasData <- !(dfData |> is.null())
+            } ### End if(dataExists)
+
+            ###### Run Map Script ######
+            if(hasData) {
+              maps0       <-  create_sector_maps(
+                df0      = dfData ,   ### Results Data
+                sectors  = sectors,   ### Which sectors
+                year0    = 2090 ,     ### Year to plot
+                loadCode = "project", ### Whether to load code as source or devtools
+                fpath    = pPath0   , ### Path to main FrEDI directory to load code from if loadCode == "project" or loadCode == "package"
+                outPath  = "." |> file.path("maps"),  ### Path to save results if saveFile == TRUE
+                return   = TRUE       ### Whether to return list object
+              ) ### End create_sector_maps
+            } ### End if(hasData)
+
+            ###### Return ######
+            "Finished running report scenarios." |> print()
+            oPath0 |> list.files() |> print()
+          '
+
+
+      - name: Upload Scenario Results
+        # if: |
+        #   inputs.doScenarios == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario_results
+          path: |
+            ./data_tests/*
+
+
+

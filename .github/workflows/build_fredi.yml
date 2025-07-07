@@ -63,6 +63,8 @@ jobs:
             any::ggpubr
             any::openxlsx
             any::devtools
+            any::DBI
+            any::RSQLite
 
       - name: Update Scenarios
         run: |
@@ -71,6 +73,9 @@ jobs:
             require(devtools)
             require(ggpubr)
             require(openxlsx)
+            require(DBI)
+            require(RSQLite)
+
             ###### Conditionals ######
             ### Which scenarios/documentation to update
             do_docs  <- "true" %in% "${{ inputs.update_docs}}"
@@ -91,12 +96,25 @@ jobs:
             rPath0   <- "."
             dPath0   <- rPath0 |> file.path("data" )
             cPath0   <- rPath0 |> file.path("inst", "extdata", "scenarios")
+            dir.create(dPath0, showWarnings = FALSE)
+            dir.create(cPath0, showWarnings = FALSE)
 
+            ### Load FrEDI from source
+            rPath0 |> devtools::load_all()
+
+            ###### Load FrEDI DB Tables ######
+            conn <- load_frediDB()
+
+            scenarioData <- dbReadTable(conn,"scenarioData")
+            scenarioData <- unserialize(scenarioData$value |> unlist())
+
+            ghgData <- dbReadTable(conn,"ghgData")
+            ghgData <- unserialize(ghgData$value |> unlist())
 
             ###### Update Scenarios ######
             ### GDP
             if(do_gdp) {
-              gdpDefault    <- "gdp_default" |> get_frediDataObj("scenarioData")
+              gdpDefault    <- scenarioData[["gdp_default"]]
               fGdp          <- "gdpDefault"
               dGdp          <- dPath0 |> file.path(fGdp) |> paste0(".rda")
               cGdp          <- cPath0 |> file.path(fGdp) |> paste0(".csv")
@@ -107,7 +125,7 @@ jobs:
 
             ### Population
             if(do_pop) {
-              popDefault    <- "pop_default" |> get_frediDataObj("scenarioData")
+              popDefault    <- scenarioData[["pop_default"]]
               fPop          <- "popDefault"
               dPop          <- dPath0 |> file.path(fPop) |> paste0(".rda")
               cPop          <- cPath0 |> file.path(fPop) |> paste0(".csv")
@@ -118,7 +136,7 @@ jobs:
 
             ### Temperature & CSV
             if(do_temp) {
-              gcamScenarios <- "gcam_scenarios" |> get_frediDataObj("scenarioData")
+              gcamScenarios <- scenarioData[["gcam_scenarios"]]
               fTemps        <- "gcamScenarios"
               dTemps        <- dPath0 |> file.path(fTemps) |> paste0(".rda")
               cTemps        <- cPath0 |> file.path(fTemps) |> paste0(".csv")
@@ -131,12 +149,12 @@ jobs:
             if(do_o3) {
               ### Ozone
               select0       <- c("region", "state", "postal", "model", "year", "O3_pptv")
-              o3Default     <- "o3_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              o3Default     <- ghgData$scenarioData[["o3_default"]]
               o3Default     <- o3Default |> select(all_of(select0))
               rm(select0)
 
               # ### Adjust the default scenario
-              # co_mods       <- "co_models" |> get_frediDataObj(listSub="package", listName="listMethane")
+              # co_mods       <- ghgData$ghgData$[["co_models"]]
               # co_mods       <- co_mods   |> select(model, model_label)
               # o3Default     <- o3Default |> left_join(co_mods, by=c("model"))
               # o3Default     <- o3Default |> select(-model)
@@ -152,7 +170,7 @@ jobs:
               rm(fO3, dO3, cO3, o3Default)
 
               ### CH4
-              ch4Default    <- "ch4_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              ch4Default    <- ghgData$scenarioData[["ch4_default"]]
               fCH4          <- "ch4Default"
               dCH4          <- dPath0 |> file.path(fCH4) |> paste0(".rda")
               cCH4          <- cPath0 |> file.path(fCH4) |> paste0(".csv")
@@ -161,7 +179,7 @@ jobs:
               rm(fCH4, dCH4, cCH4, ch4Default)
 
               ### NOx
-              noxDefault    <- "nox_default" |> get_frediDataObj(listSub="scenarioData", listName="listMethane")
+              noxDefault    <- ghgData$scenarioData[["nox_default"]]
               fNOx          <- "noxDefault"
               dNOx          <- dPath0 |> file.path(fNOx) |> paste0(".rda")
               cNOx          <- cPath0 |> file.path(fNOx) |> paste0(".csv")
@@ -170,6 +188,8 @@ jobs:
               rm(fNOx, dNOx, cNOx, noxDefault)
             } ### End if(do_o3)
 
+            ###### DB Disconnect #####
+            dbDisconnect(conn)
 
             ###### Update Documentation ######
             ###### - Build Manual
@@ -226,6 +246,8 @@ jobs:
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name  "${{ github.actor }}"
           git add man/*.Rd
+          git add data/*.rda
+          git add inst/extdata/scenarios/*.csv
           git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
           git commit -am "Updated package documentation"
           git push

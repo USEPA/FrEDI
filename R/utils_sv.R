@@ -327,7 +327,8 @@ calc_tractImpacts <- function(
 
   ### Join with national quantiles
   if(msgUser) {msg2 |> paste0("Joining national terciles to tract-level data...") |> message()}
-  x_impacts <- x_impacts |> left_join(quants_national, by=cgroupsNat0)
+  #browser()
+  x_impacts <- x_impacts |> left_join(quants_national, by=groupsNat0)
   rm(quants_national)
 
   ### Figure out which tracts are high risk

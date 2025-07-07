@@ -1,6 +1,6 @@
 Package: FrEDI
 Title: The Framework for Evaluating Damages and Impacts (FrEDI)
-Version: 4.2.0
+Version: 5.0.0
 Authors@R: c(person("Corinne", "Hartin",
                     email   = "hartin.corinne@epa.gov",
                     role    = c("aut","cre"),
@@ -12,26 +12,34 @@ Authors@R: c(person("Corinne", "Hartin",
                      comment = c(ORCID = "0000-0002-6845-6077",
                                  github = "emcduffie")),
              person("Marcus","Sarofim",
-                     email   = "mcduffie.erin.e@epa.gov",
+                     email   = "sarofim.marcus@epa.gov",
                      role    = c("aut","ctb"),
-                     comment = c(ORCID = "0000-0001-7753-1676",
-                                 github = "emcduffie")),
+                     comment = c(ORCID = "0000-0001-7753-1676"
+                                 ),
              person("Karen","Noiva",
                      role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0002-4412-5302", 
                                  github = "knoiva-indecon")),
              person("Tony","Gardella",
-                     role    = "ctb",
+                     role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0003-4380-3412",
                                  github = "tonygard-indecon")),
              person("Will","Maddock",
                      role    = "ctb",
-                     comment = c(ORCID = "0000-0002-6107-0315",
+                     comment = c(ORCID = "0009-0009-4854-5759",
                                  github = "maddockw")),
              person("Hugh","Easton",
                      role    = "ctb",
                      comment = c(ORCID = "0009-0008-0104-6891",
-                                 github = "heaston-indecon"))
+                                 github = "heaston-indecon")),
+             person("Jacqueline","Willwerth",
+                     role    = "ctb",
+                     comment = c(ORCID = "0000-0002-6107-0315",
+                                 github = "jwillwerth")),
+             person("Ben","Jeweler",
+                     role    = "ctb",
+                     comment = c(ORCID = "0009-0004-3364-2875",
+                                 github = "Bjeweler"))                
              )
 URL: https://usepa.github.io/FrEDI, https://epa.gov/cira/FrEDI/, https://github.com/USEPA/FrEDI/
 Description: This R package models damages and impacts from temperature changes in the contiguous United States (CONUS) 
@@ -47,7 +55,9 @@ Encoding: UTF-8
 Depends: R (>= 4.2.0),
     tidyverse,
     ggpubr,
-    openxlsx
+    openxlsx,
+    DBI,
+    RSQLite
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 LazyData: TRUE

@@ -12,17 +12,56 @@ name: 2c. Run Report Scenarios
 on:
   workflow_dispatch:
     inputs:
-      doScenarios:
-        type: choice
-        description: Do you want to generate scenario results for report figures?
+      sector:
+        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name(s) (if more than one, separate with a comma)
         required: true
+        type: string
+        default: "all"
+      # doScenarios:
+      #   description: Do you want to generate scenario results for report figures?
+      #   required: true
+      #   type: choice
+      #   options:
+      #   - no
+      #   - yes
+      figure_type:
+        description: Which type of scenario do you want to run?
+        required: true
+        type: choice
+        default: Appendix figures
+        options:
+        - Defaults to 2100
+        - Constant temperatures to 2100
+        - To 2300
+      agg_lvls:
+        description: Which aggregation levels do you want to run? Enter "all", "none", "slr", any/all of "national", "modelaverage", "impacttype", and/or "impactyear" (do not enter quotation marks and if more than one, separate with a comma)
+        type: string
+        default: "all"
+      out_list:
+        description: Do you want to save a list with model provenance info?
+        required: true
+        type: choice
+        default: no
         options:
         - no
         - yes
-      sector:
-        type: string
-        description: Which sectors do you want to run? Enter "all", "gcm", "slr", or specific sector name
-        default: "all"
+      tempScenario:
+        description: If running scenarios to 2300, which temperature scenario do you want to use? "temp_0to6_to2300" = 0 to 6 degrees Celsius (CONUS) and "rff_temp_mean" = RFF mean temperature scenario (do not enter quotation marks)
+        required: true
+        type: choice
+        default: temp_0to6_to2300
+        options:
+        - temp_0to6_to2300
+        - rff_temp_mean
+      # max_year:
+      #   type: numeric
+      #   description: What is the maximum year?
+      #   required: true
+      #   default: 2100
+      #   options:
+      #   - Defaults
+      #   - Constant temperatures
+      #   - Through 2300
 
 
 jobs:
@@ -38,9 +77,13 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "ref_name    = ${{ github.ref_name }}"
-          echo "doScenarios = ${{ inputs.doScenarios }}"
-          echo "sector      = ${{ inputs.sector }}"
+          echo "ref_name     = ${{ github.ref_name }}"
+          echo "sector       = ${{ inputs.sector }}"
+          echo "figure_type  = ${{ inputs.figure_type }}"
+          echo "tempScenario = ${{ inputs.tempScenario }}"
+          echo "agg_lvls     = ${{ inputs.agg_lvls }}"
+          echo "out_list     = ${{ inputs.out_list }}"
+          # echo "max_year   = ${{ inputs.max_year }}"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -55,10 +98,7 @@ jobs:
             any::devtools
             any::openxlsx
             any::ggpubr
-
-
       ### Install FrEDI from new branch and get results
-      ### Install FrEDI from ref branch and get results
       - name: Test results
         # if: |
         #   inputs.doScenarios == 'true'
@@ -69,119 +109,138 @@ jobs:
             require(devtools)
             require(openxlsx)
             require(ggpubr)
-
             ###### Workflow Inputs ######
             # doScenarios <- "${{ inputs.doScenarios }}" %in% c("true", "yes")
             newBranch   <- "${{ github.ref_name }}"
             sectors0    <- "${{ inputs.sector }}"
+            figure_type <- "${{ inputs.figure_type  }}"
+            scenario0   <- "${{ inputs.tempScenario }}"
+            agg_lvls0   <- "${{ inputs.agg_lvls }}"
+            outList0    <- "${{ inputs.out_list }}"
+            # max_year    <- "${{ inputs.max_year }}"
+            # "got here1" |> print()
+
+            ###### Functions ######
+            loadCode  <- function(files0){for(file_i in files0){file_i |> source(); rm(file_i)}}
 
             ###### Paths ######
             ### Main repo path, FrEDI project path, scripts path
-            rPath0   <- ".";
-            # pPath0   <- rPath0 |> file.path("FrEDI")
-            pPath0   <- rPath0
+            rPath0      <- ".";
+            # pPath0      <- rPath0 |> file.path("FrEDI")
+            pPath0      <- rPath0
+            # "got here1" |> print()
 
             ### Load scripts and testing functions
-            sPath0   <- pPath0 |> file.path("scripts")
-            tPath0   <- pPath0 |> file.path("testing")
-            sFiles0  <- sPath0 |> list.files(full.names=TRUE)
-            tFiles0  <- tPath0 |> list.files(full.names=TRUE)
-            for(file_i in sFiles0){file_i |> source(); rm(file_i)}
-            for(file_i in tFiles0){file_i |> source(); rm(file_i)}
-
-            ### Where to save results
-            oPath0   <- pPath0 |> file.path("data_tests")
-            oFileNew <- oPath0 |> file.path("newResults.rda")
-            oFileRef <- oPath0 |> file.path("refResults.rda")
+            sPath0      <- pPath0 |> file.path("scripts")
+            tPath0      <- pPath0 |> file.path("testing")
+            sFiles0     <- sPath0 |> list.files(full.names=TRUE)
+            tFiles0     <- tPath0 |> list.files(full.names=TRUE)
+            rmd_file    <- tFiles0[grepl(".*md",tFiles0)]
+            tFiles0     <- tFiles0[!grepl(".*md",tFiles0)]
+            # for(file_i in tFiles0){file_i |> source(); rm(file_i)}
+            sFiles0 |> loadCode()
+            tFiles0 |> loadCode()
 
             ### Check if path exists and, if not, create it
-            exists0  <- oPath0 |> dir.exists()
-            if(!exists0) oPath0 |> dir.create(recursive=TRUE)
+            ### Where to save results
+            oPath0      <- pPath0 |> file.path("data_tests")
+            exists0     <- oPath0 |> dir.exists()
+            if(!exists0) {oPath0 |> dir.create(recursive=TRUE)}
+            # "got here5" |> print()
 
             ###### Repo Info ######
-            urlRepo   <- "https://github.com/USEPA/FrEDI"
+            urlRepo     <- "https://github.com/USEPA/FrEDI"
             c(newBranch) |> print()
-
             ###### ** Install FrEDI from New Branch ######
-            ### Install FrEDI from new branch
-            devtools::install_github(
-              repo=urlRepo, ref=newBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
-            ) ### End install_github
-            require(FrEDI)
+            pPath0 |> devtools::load_all()
 
-            ###### Sectors & Years ######
-            ### Format sector names
+            ###### Values ######
+            ### Figure Type
+            agg_lvls0   <- agg_lvls0  |> standardize_actionStrings()
+            allCols0    <- "none" %in% (agg_lvls0 |> tolower())
+
+            ### Figure Type
+            figTypeLC   <- figure_type  |> tolower()
+            doConstant  <- figTypeLC |> str_detect("constant")
+            doDefaults  <- figTypeLC |> str_detect("default")
+            do2300      <- figTypeLC |> str_detect("2300")
+
+
+            ### Max Year
+            max_year0   <- case_when(do2300 ~ 2300, .default = 2100)
+
+            ### Sectors
             sectors0 |> print()
-            sectors0   <- sectors0 |> str_split(pattern=",") |> unlist() |> trimws()
-            sectorsLC0 <- sectors0 |> tolower()
-            doAll      <- "all" %in% sectorsLC0
-            doGcm      <- "gcm" %in% sectorsLC0
-            doSlr      <- "slr" %in% sectorsLC0
-            if     (doAll) sectors <- NULL else if (doGcm) sectors <- FrEDI::get_sectorInfo(gcmOnly=T) else if
-            (doSlr) sectors <- FrEDI::get_sectorInfo(slrOnly=T) else
-            sectors <- sectors0
-            sectors |> print()
+            sectors    <- sectors0 |> get_action_sectors()
+            sectors  |> print()
 
             ### Which years to report on for GCM, SLR sectors
-            gcmYears0 <- c(2010, 2090)
-            slrYears0 <- c(2050, 2090)
-
+            gcmYears0   <- c(2010, 2090)
+            slrYears0   <- c(2050, 2090)
 
             ###### Run Scenarios ######
             ###### ** Setup Scenarios ######
-            ### CONUS temps
-            conusTemps  <- list(
-              temps      = c(0:10),
-              tempLabels = c(0:10),
-              tempType   = "conus",
-              prefix     = "Other_Integer"
-            ) ### End list
-            ### Global temps
-            globalTemps <- list(
-              temps      = c(1.487, 2.198),
-              tempLabels = c(1.5, 2),
-              tempType   = "global",
-              prefix     = "preI_global"
-            ) ### End list
-            ### Temps list
-            tempsList   <- list(conus=conusTemps, global=globalTemps)
-            rm(conusTemps, globalTemps)
+            ### Run defaults
+            if(doDefaults) {
+               defPath        <- oPath0 |> file.path("defaultResults") |> paste0(".", "rda")
+               defaultResults <- run_fredi(sectorList=sectors, aggLevels=agg_lvls0, allCols=allCols0)
+               defaultResults |> save(file=defPath)
+               oPath0 |> list.files() |> print()
+            } ### End if(!doDefaults)
 
-            ###### ** Run Scenarios ######
-            ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
-            ### Run scenarios
-            dfResults <- run_constantTempScenarios(
-              sectors  = sectors,
-              tempList = tempsList,
-              gcmYears = gcmYears0,
-              slrYears = slrYears0,
-              aggOnly  = FALSE,
-              loadCode = "project",
-              silent   = TRUE ,
-              testing  = FALSE,
-              fpath    = pPath0,
-              saveFile = TRUE ,
-              outPath  = oPath0,
-              return   = FALSE
-            ) ### End run_constantTempScenarios
-            "Finished running scenarios..." |> print()
-            oPath0 |> list.files() |> print()
-            rm(dfResults)
+            ### Run to 2300
+            if(do2300) {
+               ### rDataList$scenarioData$testScenarios calc_import_pop
+                 defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+                 sortCols0      <- c("area", "region", "state", "year")
+                 scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c(scenario0)
+                 scenNames0     <- c("temp", "gdp", "pop")
+                 inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+                 inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+                 inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+                 resultsT02300  <- run_fredi(inputsList=inputs0, sectorList=sectors, aggLevels=agg_lvls0, allCols=allCols0, outputList=outList0)
+                 resultsT02300  |> save(file=defPath)
+                 oPath0 |> list.files() |> print()
+            } ### End if(!doDefaults)
+
+            ### Constant temps
+            if(doConstant) {
+              ### CONUS temps, Global temps
+              conusTemps  <- list(temps=c(0:10)        , tempLabels=c(0:10)  , tempType="conus" , prefix="Other_Integer")
+              globalTemps <- list(temps=c(1.487, 2.198), tempLabels=c(1.5, 2), tempType="global", prefix="preI_global")
+              ### Temps list
+              tempsList   <- list(conus=conusTemps, global=globalTemps)
+              rm(conusTemps, globalTemps)
+
+              ###### ** Run Scenarios ######
+              ### aggOnly=Whether to only include sectors for which "includeaggregate==1" in Fig 7 plots
+              ### Run scenarios
+              dfResults <- run_constantTempScenarios(
+                sectors  = sectors,
+                tempList = tempsList,
+                gcmYears = gcmYears0,
+                slrYears = slrYears0,
+                aggOnly  = FALSE,
+                loadCode = "project",
+                silent   = TRUE ,
+                testing  = FALSE,
+                fpath    = pPath0,
+                saveFile = TRUE ,
+                outPath  = oPath0,
+                return   = FALSE
+              ) ### End run_constantTempScenarios
+              rm(dfResults)
+            } ### End if(doConstant)
 
             ###### Return ######
             "Finished running report scenarios." |> print()
+            oPath0 |> list.files() |> print()
           '
-
-
       - name: Upload Scenario Results
-        if: |
-          inputs.doScenarios == 'true'
+        # if: |
+        #   inputs.doScenarios == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: scenario_results
           path: |
             ./data_tests/*
-
-
-

@@ -2,16 +2,21 @@ inst/doc
 /doc/
 /Meta/
 
+*.Rproj
 .Rproj.user/*
 .Rproj.user
 .Rhistory
+*.RData
+/inst/extdata/sysdata
 
 analysis/*
 
 *.html
+*.zip
 .github/*.html
 
 data_tests/*
+*.db
 
 ../docs/
 docs
@@ -22,6 +27,5 @@ FrEDI/.Rproj.user/*
 FrEDI/.Rproj.user
 FrEDI/.Rhistory
 # FrEDI/data_tests/report_figures/*
-
 
 

@@ -154,8 +154,13 @@ import_inputs <- function(
   doSV       <- "sv"      %in% module0
   doFredi    <- doMain | doSV
   doMethane  <- "methane" %in% module0
-  dListSub0  <- doFredi |> ifelse("frediData", "package")
-  dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+  #dListSub0  <- doFredi |> ifelse("frediData", "package")
+  #dListName0 <- doFredi |> ifelse("rDataList", "listMethane")
+
+
+  ##### Connect to FrEDI Database
+  conn <-  FrEDI:::load_frediDB()
+
 
   ###### Load Data from FrEDI ######
   ### Get objects from FrEDI name space
@@ -163,9 +168,16 @@ import_inputs <- function(
   ### Get state info: co_states
   # co_info   <- "co_inputInfo"  |> get_frediDataObj("frediData"   )
   # co_states <- "co_states"     |> get_frediDataObj("frediData"   )
-  co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
-  df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
+  # co_info   <- "co_inputInfo"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # co_states <- "co_states"     |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  # df_ratios <- "popRatiosData" |> get_frediDataObj("scenarioData")
+
+  co_info   <- DBI::dbReadTable(conn, "co_inputInfo")
+  co_states <- DBI::dbReadTable(conn, "co_states")
+  scenDat   <- DBI::dbReadTable(conn,"scenarioData")
+  scenDat   <- unserialize(scenDat$value |> unlist())
+  df_ratios <-scenDat["popRatiosData"]
 
   ###### Input Names ######
   ### Input names, output names
@@ -263,7 +275,7 @@ import_inputs <- function(
   ### Get list with expected name of column containing values
   # idCols     <- get_import_inputs_idCols (popArea=popArea)
   # valCols    <- get_import_inputs_valCols(popArea=popArea)
-  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> get_import_inputs_idCols()}) |> set_names(inNames)
+  idCols     <- inNames |> map(function(name0, area0=popArea){name0 |> FrEDI:::get_import_inputs_idCols()}) |> set_names(inNames)
   valCols    <- co_info |> pull(valueCol) |> as.list() |> set_names(inNames)
   # valCols |> unlist() |> print(); idCols  |> unlist() |> print()
 
@@ -278,7 +290,7 @@ import_inputs <- function(
     inputName = inNames,
     fileName  = inputsList
   ) |>
-    pmap(run_fun_tryInput) |>
+    pmap(FrEDI:::run_fun_tryInput) |>
     set_names(inNames)
   # inputsList |> print()
 
@@ -294,7 +306,7 @@ import_inputs <- function(
     tempType  = tempType |> rep(nInputs),
     popArea   = popArea  |> rep(nInputs)
   ) |>
-    pmap(check_input_data) |>
+    pmap(.f = check_input_data,con = conn) |>
     set_names(inNames)
 
 
@@ -305,6 +317,8 @@ import_inputs <- function(
   ###### Return ######
   ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
+  ### Disconnect from DB
+  dbDisconnect(conn)
   gc()
   return(inputsList)
 }

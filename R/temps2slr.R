@@ -65,7 +65,7 @@
 ###
 
 temps2slr <- function(
-    temps, years
+    temps, years, conn
 ){
   ###### Messages ######
   msg1    <- "\t"
@@ -89,13 +89,15 @@ temps2slr <- function(
   ### Reference year 2000 and equilibrium temperature offset for 2000
   ### Assign reference year from config file (max_year)
   # fredi_config        <- "fredi_config" |> get_frediDataObj("frediData")
-  fredi_config        <- rDataList[["fredi_config"]]
+  fredi_config    <- DBI::dbReadTable(conn,"fredi_config")
+  fredi_config    <- unserialize(fredi_config$value |> unlist())
   temps2slr_constants <- fredi_config[["temps2slr"]]
+
   # temps2slr_constants |> list2env(envir = environment())
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
   #### Reference year is 2000
-  co_modelTypes <- "co_modelTypes" |> get_frediDataObj("frediData") |> filter(modelType_id == "slr")
+  co_modelTypes <- DBI::dbReadTable(conn,"co_modelTypes") |> filter(modelType_id == "slr")
   ref_year0     <- co_modelTypes |> pull(modelRefYear)
 
   ###### Other constants ######
@@ -134,12 +136,12 @@ temps2slr <- function(
   ### Check for 2020 (year0)
   ### If 2020 not found, check for values above and below 2000
   checkRefYear <- (ref_year0 %in% years0)
-  checkRefYear <- (!checkRefYear) |> ifelse(min0 < ref_year0 & max0 > ref_year0, checkRefYear)
+  checkRefYear <- (any(!checkRefYear)) |> ifelse(min0 < ref_year0 & max0 > ref_year0, checkRefYear)
 
   ### If 2020 is still not found, message the user and exit
   ###To-do exit gracefully within tempbin()
   ### Else, if there is a valid temperature series: Calculate temperatures
-  if(!checkRefYear) {
+  if(any(!checkRefYear)) {
     message("\t", "Warning:")
     message("\t\t", "In 'temps2slr()': Missing values for the reference year ", ref_year0 , ".")
     message("\t\t\t", "The reference year ", ref_year0 , " must be present in the input (or the input must have values above and below the reference year).")
@@ -177,6 +179,7 @@ temps2slr <- function(
   ###### Series ######
   ### Calculate base values
   ### Equilibrium temps
+
   df_x  <- df_x1 |> (function(k){
     for(i in ind_x){
       if(i == 1){

@@ -32,8 +32,6 @@ navbar:
       menu:
         - text: "Example #1: Run FrEDI with default parameters"
           href: articles/Example1.html
-        - text: "Example #2: Run FrEDI_SV with default parameters"
-          href: articles/Example2.html
     - text: Functions
       href: "reference/index.html"
     - text: News
