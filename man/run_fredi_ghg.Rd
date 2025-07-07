@@ -2,19 +2,21 @@
 % Please edit documentation in R/run_fredi_ghg.R
 \name{run_fredi_ghg}
 \alias{run_fredi_ghg}
-\title{Project annual average impacts from methane, NOx, and ozone.}
+\title{Project annual impacts from GHG changes}
 \usage{
 run_fredi_ghg(
   inputsList = list(gdp = NULL, pop = NULL, ch4 = NULL, nox = NULL, o3 = NULL),
+  aggLevels = c("none"),
   elasticity = 1,
   maxYear = 2100,
-  thru2300 = FALSE,
   outputList = FALSE,
   allCols = FALSE
 )
 }
 \arguments{
 \item{inputsList=list(gdp=NULL, pop=NULL, ch4=NULL, nox=NULL, o3=NULL)}{A list with named elements (\code{gdp}, \code{pop}, \code{ch4}, \code{nox}, and/or \code{o3}), each containing data frames of custom scenarios for gross domestic product (GDP), state-level population, ozone concentration, methane concentration, and NOx emissions, respectively, over a continuous period. Values should start in 2020 or earlier. Values for each scenario type must be within reasonable ranges. For more information, see \code{\link[=import_inputs]{import_inputs()}}.}
+
+\item{aggLevels="none"}{Levels of aggregation at which to summarize data: one or more of \code{c("national","conus", "modelaverage", "impacttype", "all", "none")}. Defaults to no levels (i.e., \code{aggLevels = "none"}).}
 
 \item{elasticity=1}{A numeric value indicating an elasticity to use for adjusting VSL (defaults to \code{elasticity = 1}).}
 
@@ -38,7 +40,7 @@ If \code{outputList=TRUE}, \code{run_fredi_ghg()} returns a list object containi
 }
 }
 \description{
-This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere.
+This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. As of FrEDI v5.0, this function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
 }
 \details{
 This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere. This module (also referred to as the \strong{concentration-driven module} or \strong{FrEDI-GHG}. \strong{FrEDI-GHG} is an optional supplement to the main FrEDI function \code{\link[=run_fredi]{run_fredi()}}, and is driven by changes in GHG concentrations, rather than by changes in temperature or sea-level rise. The outputs of \strong{FrEDI-GHG} complement the damages output from main FrEDI and allow users to explore how these additional GHG-related impacts will be distributed across CONUS regions.
@@ -138,7 +140,7 @@ example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch
 
 }
 \references{
-Environmental Protection Agency (EPA). (Forthcoming). Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at \url{https://epa.gov/cira/FrEDI/}.
+Environmental Protection Agency (EPA). 2025. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC. Available at https://epa.gov/cira/FrEDI/.
 
 McDuffie, E. E., Sarofim, M. C., Raich, W., Jackson, M., Roman, H., Seltzer, K., Henderson, B. H., Shindell, D. T., Collins, M., Anderton, J., Barr, S., & Fann, N. (2023). The Social Cost of Ozone-Related Mortality Impacts From Methane Emissions. Earth’s Future, 11(9), e2023EF003853.
 }

@@ -6,6 +6,7 @@
 \usage{
 aggregate_impacts(
   data,
+  conn,
   aggLevels = c("national", "modelaverage", "impacttype", "impactyear"),
   columns = c("physical_impacts", "annual_impacts"),
   groupByCols = c(c(c(c("sector", "variant", "impactType", "impactYear"), "region",

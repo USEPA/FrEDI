@@ -12,13 +12,6 @@ name: 2b. Run Comparison
 on:
   workflow_dispatch:
     inputs:
-      agg_types:
-        type: choice
-        description: Aggregate across impact types?
-        required: true
-        options:
-        - no
-        - yes
       doCompare:
         type: choice
         description: Do you want to compare FrEDI results with those from another branch?
@@ -45,8 +38,7 @@ jobs:
 
       - name: Send input status
         run: |
-          echo "agg_types   = ${{ inputs.agg_types }}"
-          echo "doCompare  = ${{ inputs.agg_types }}"
+          echo "doCompare   = ${{ inputs.doCompare }}"
           echo "ref_name    = ${{ github.ref_name }}"
           echo "ref_branch  = ${{ inputs.ref_branch }}"
 
@@ -75,7 +67,7 @@ jobs:
             any::kableExtra
             any::rmarkdown
             any::DT
-      ### Install FrEDI from new branch and get results
+      ### Install FrEDI from comp branch and get results
       ### Install FrEDI from ref branch and get results
       - name: Test results
         # if: |
@@ -89,17 +81,16 @@ jobs:
             require(ggpubr)
 
             ###### Workflow Inputs ######
-            aggTypes  <- "${{ inputs.agg_types  }}"
-            doCompare <- "${{ inputs.doCompare  }}"
-            newBranch <- "${{ github.ref_name   }}"
-            refBranch <- "${{ inputs.ref_branch }}"
+            doCompare  <- "${{ inputs.doCompare }}"
+            compBranch <- "${{ github.ref_name }}"
+            refBranch  <- "${{ inputs.ref_branch }}"
 
-           ###### Format Inputs ######
+            ###### Format Inputs ######
             ### Conditionals
             doTests   <- doCompare %in% c("true", "yes")
-            aggAll    <- aggTypes  %in% c("true", "yes")
+            #aggAll    <- aggTypes  %in% c("true", "yes")
             ### If aggAll, aggregate, national, model averages, impact years
-            if (aggAll){ aggLevels <- c("all")} else{          aggLevels <- c("national", "modelaverage", "impactyear")}
+            #if (aggAll){ aggLevels <- c("all")} else{aggLevels <- c("national", "modelaverage", "impactyear")}
 
 
             ###### Paths ######
@@ -107,21 +98,23 @@ jobs:
             rPath0    <- ".";
             # pPath0    <- rPath0 |> file.path("FrEDI")
             pPath0    <- rPath0
+            ###### ** Load FrEDI Code ######
+            pPath0 |> devtools::load_all()
 
             ### Load scripts and testing functions
             sPath0    <- pPath0 |> file.path("scripts")
             tPath0    <- pPath0 |> file.path("testing")
             sFiles0   <- sPath0 |> list.files(full.names=TRUE)
             tFiles0   <- tPath0 |> list.files(full.names=TRUE)
-            rmd_file <- tFiles0[grepl(".Rmd",tFiles0)]
-            tFiles0 <- tFiles0[!grepl(".Rmd",tFiles0)]
+            rmd_file <- tFiles0[grepl(".rmd",tFiles0)]
+            tFiles0 <- tFiles0[!grepl(".rmd",tFiles0)]
             for(file_i in sFiles0){file_i |> source(); rm(file_i)}
             for(file_i in tFiles0){file_i |> source(); rm(file_i)}
 
 
             ### Where to save results
             oPath0    <- pPath0 |> file.path("data_tests")
-            oFileNew  <- oPath0 |> file.path("newResults.rds")
+            oFilecomp  <- oPath0 |> file.path("compResults.rds")
             oFileRef  <- oPath0 |> file.path("refResults.rds")
 
             ### Check if path exists and, if not, create it
@@ -130,7 +123,7 @@ jobs:
 
             ### Repo Info
             urlRepo   <- "https://github.com/USEPA/FrEDI"
-            c(newBranch, refBranch) |> print()
+            c(compBranch, refBranch) |> print()
 
 
 
@@ -140,44 +133,71 @@ jobs:
             ###### ** Install FrEDI from Reference Branch ######
             ### Install FrEDI from ref branch
             if(doTests) {
-              devtools::install_github(
-                repo=urlRepo, ref=refBranch,
-                # subdir="FrEDI",
-                dependencies=F, upgrade="never", force=T, type="source"
-              ) ### End install_github
+            devtools::install_github(
+            repo=urlRepo, ref=refBranch,
+            # subdir="FrEDI",
+            dependencies=F, upgrade="never", force=T, type="source"
+            ) ### End install_github
             } ### End if(installRef)
 
             ###### ** Run FrEDI from Reference Branch ######
             ### Load library, run FrEDI
             if(doTests) {
-              library(FrEDI)
-              dfRef <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
-              dfRef |> saveRDS(file=oFileRef)
-              "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
-              oPath0 |> list.files() |> print()
-              ### Detach FrEDI package
-              package:FrEDI |> detach(unload=TRUE)
+            package:FrEDI |> detach(unload=TRUE)
+            library(FrEDI)
+            ### Prepare Inputs
+            defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+            sortCols0      <- c("area", "region", "state", "year")
+            scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c("temp_0to6_to2300")
+            scenNames0     <- c("temp", "gdp", "pop")
+            inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+            inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+            inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+
+            ### Run FrEDI
+            dfRef <- run_fredi(inputsList=inputs0,aggLevels="all",outputList = TRUE,thru2300 = T)
+            dfRef |> saveRDS(file=oFileRef)
+            "Finished running FrEDI on " |> paste0(refBranch, " branch.") |> print()
+            oPath0 |> list.files() |> print()
+            ### Detach FrEDI package
+            package:FrEDI |> detach(unload=TRUE)
             } ### End if(doTests)
 
-            ###### ** Install FrEDI from New Branch ######
-            ### Install FrEDI from new branch
+            ###### ** Install FrEDI from comp Branch ######
+            ### Install FrEDI from comp branch
             devtools::install_github(
-              repo=urlRepo, ref=newBranch,
-              dependencies=F, upgrade="never", force=T, type="source"
+            repo=urlRepo, ref=compBranch,
+            dependencies=F, upgrade="never", force=T, type="source"
             ) ### End install_github
 
-            ###### ** Run FrEDI from New Branch ######
+            ###### ** Run FrEDI from comp Branch ######
             ### Load library, run FrEDI
             library(FrEDI)
-            dfNew <- run_fredi(aggLevels=aggLevels,outputList = TRUE)
-            dfNew |> saveRDS(file=oFileNew)
-            "Finished running FrEDI on " |> paste0(newBranch, " branch.") |> print()
+            ###### ** Load FrEDI Code ######
+            pPath0 |> devtools::load_all()
+            ### Prepare Inputs
+            defPath        <- oPath0 |> file.path("resultsTo2300") |> paste0(".", "rda")
+            sortCols0      <- c("area", "region", "state", "year")
+            scenarios0     <- c("rff_gdp_mean", "rff_pop_mean") |> c("temp_0to6_to2300")
+            scenNames0     <- c("temp", "gdp", "pop")
+            inputs0        <- "testScenarios" |> get_frediDataObj(listSub="scenarioData")
+            inputs0        <- inputs0[(inputs0 |> names()) %in% scenarios0] |> set_names(scenNames0)
+            inputs0[["pop"]] <- inputs0[["pop"]] |> calc_import_pop(popArea="national", module="fredi")
+
+            dfcomp <- run_fredi(inputsList=inputs0,aggLevels="all",outputList = TRUE,thru2300 = T)
+            dfcomp |> saveRDS(file=oFilecomp)
+            "Finished running FrEDI on " |> paste0(compBranch, " branch.") |> print()
             oPath0 |> list.files() |> print()
 
 
             ###### Compare Test results########
             rmarkdown::render(input = rmd_file,
-                              output_dir = oPath0 )
+                          output_dir = oPath0,
+                          params = list(
+                            ref = refBranch,
+                            comp = compBranch
+                          ))
+
 
             ###### Return ######
             "Finished running R script." |> print()

@@ -101,21 +101,43 @@ run_fredi_sv <- function(
   rDataType     <- "rds"
   impactsPath   <- pkgPath |> file.path("extdata", "sv", "impactLists")
 
+
+  ### Load Database
+  conn <-  load_frediDB()
+
   ###### ** Load Data Objects ######
   ### Get FrEDI data objects
   # fredi_config  <- "fredi_config"  |> get_frediDataObj("frediData")
-  fredi_config  <- rDataList[["fredi_config"]]
-  # co_sectors    <- svDataList[["sectorInfo"]] |> select(c("sector", "modelType"))
-  co_inputInfo  <- "co_inputInfo"  |> get_frediDataObj("frediData")
-  co_modTypes   <- "co_modelTypes" |> get_frediDataObj("frediData")
-  co_states     <- "co_states"     |> get_frediDataObj("frediData")
-  temp_default  <- "temp_default"  |> get_frediDataObj("frediData")
-  pop_default   <- "pop_default"   |> get_frediDataObj("stateData")
-
-  ### Assign config files
-  # fredi_config |> list2env(envir = environment())
+  #fredi_config  <- rDataList[["fredi_config"]]
+  fredi_config    <- DBI::dbReadTable(conn,"fredi_config")
+  fredi_config    <- unserialize(fredi_config$value |> unlist())
   for(name_i in fredi_config |> names()) {name_i |> assign(fredi_config[[name_i]]); rm(name_i)}
 
+  # co_sectors    <- svDataList[["sectorInfo"]] |> select(c("sector", "modelType"))
+  #co_inputInfo  <- "co_inputInfo"  |> get_frediDataObj("frediData")
+  #co_modTypes   <- "co_modelTypes" |> get_frediDataObj("frediData")
+  #co_states     <- "co_states"     |> get_frediDataObj("frediData")
+  #temp_default  <- "temp_default"  |> get_frediDataObj("frediData")
+  #pop_default   <- "pop_default"   |> get_frediDataObj("stateData")
+
+  co_inputInfo  <- DBI::dbReadTable(conn,"co_inputInfo")
+  co_modTypes   <- DBI::dbReadTable(conn,"co_modelTypes")
+  co_states     <- DBI::dbReadTable(conn, "co_states")
+
+  scenarioData    <- DBI::dbReadTable(conn,"scenarioData")
+  scenarioData    <- unserialize(scenarioData$value |> unlist())
+  temp_default  <- scenarioData[["gcam_default"]]
+  pop_default   <- scenarioData[["pop_default"]]
+
+  ### SVData Lists
+  svDataList    <- DBI::dbReadTable(conn,"svDataList")
+  svDataList    <- unserialize(svDataList$value |> unlist())
+
+  svPopList    <- DBI::dbReadTable(conn,"svPopList")
+  svPopList    <- unserialize(svPopList$value |> unlist())
+
+  format_styles    <- DBI::dbReadTable(conn,"format_styles")
+  format_styles    <- unserialize(format_styles$value |> unlist())
   ### Group types
   c_svGroupTypes <- svDataList$c_svGroupTypes
   minYear    <- minYear0
@@ -171,7 +193,8 @@ run_fredi_sv <- function(
   c_popWtCol      <- sectorInfo |> filter(sector == c_sector) |> pull(popWeightCol) |> tolower()
   c_modelType     <- sectorInfo |> filter(sector == c_sector) |> pull(modelType) |> tolower()
   # df_validGroups  <- svDemoInfo |> get_validGroups(df1 = svValidTypes, col0 = c_popWtCol)
-  df_validGroups  <- c_popWtCol |> get_validGroups()
+  df_validGroups  <- c_popWtCol |> get_validGroups(df0  = svDataList[["svDemoInfo"  ]], ### svDemoInfo
+                                                   df1  = svDataList[["svValidTypes"]])
 
 
   ###### ** Model Types List ######
@@ -180,15 +203,14 @@ run_fredi_sv <- function(
   modTypesIn0  <- co_modTypes   |> filter(modelType_id %in% modTypes0 ) |> pull(inputName) |> unique()
   doSlr        <- ("slr" %in% modTypes0)
   doGcm        <- ("gcm" %in% modTypes0)
-  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0)
-  else      modTypesIn <- modTypesIn0
+  if(doSlr) modTypesIn <- c("temp") |> c(modTypesIn0) else      modTypesIn <- modTypesIn0
   modInputs0   <- c("pop") |> c(modTypesIn)
 
   ###### Inputs List ######
   ###### ** Input Info ######
   paste0(msg1, "Checking scenarios...") |> message()
   ### Add info to data
-  co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
+  #co_inputInfo <- "co_inputInfo" |> get_frediDataObj("frediData")
   co_inputInfo <- co_inputInfo |> mutate(ref_year = c(1995, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(min_year = c(2000, 2000, 2010, 2010))
   co_inputInfo <- co_inputInfo |> mutate(max_year = maxYear)
@@ -196,11 +218,12 @@ run_fredi_sv <- function(
   # co_inputInfo |> glimpse()
 
   ### Initialize subset
+  ### Initialize subset
   df_inputInfo <- co_inputInfo
 
   ### Input info
   inNames0     <- co_inputInfo |> pull(inputName)
-
+  # inNames0 |> print()
 
   ###### ** Input Defaults ######
   inputDefs    <- inNames0 |> map(function(name0){
@@ -208,7 +231,9 @@ run_fredi_sv <- function(
     doTemp0  <- "temp" %in% name0
     doSlr0   <- "slr"  %in% name0
     defName0 <- (doTemp0 | doSlr0) |> ifelse("gcam", name0) |> paste0("_default")
-    df0      <- defName0 |> get_frediDataObj("scenarioData")
+    scenarioData   <- DBI::dbReadTable(conn,"scenarioData")
+    scenarioData   <- unserialize(scenarioData$value |> unlist())
+    df0      <- scenarioData[[defName0]]
     ### Format data
     if(doTemp0) df0 <- df0 |> select(c("year", "temp_C_conus")) |> rename_at(c("temp_C_conus"), ~"temp_C")
     if(doSlr0 ) df0 <- df0 |> select(c("year", "slr_cm"      ))
@@ -461,7 +486,8 @@ run_fredi_sv <- function(
   df_popProj <- pop_df |> get_countyPop(
     years   = yearsBy5,
     xCol0   = "year",     ### X column in df0
-    yCol0   = "state_pop" ### Y column in df0
+    yCol0   = "state_pop", ### Y column in df0
+    funList = svPopList[["popProjList"]]
   ) ### End get_countyPop
 
 
@@ -588,6 +614,7 @@ run_fredi_sv <- function(
   ###### Return Object ######
   ### Message, clear unused memory, return
   msg1 |> paste0("Finished.") |> message()
+  dbDisconnect(conn)
   gc()
   return(listResults)
 }

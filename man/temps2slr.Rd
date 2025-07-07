@@ -4,7 +4,7 @@
 \alias{temps2slr}
 \title{Convert global temperature change in degrees Celsius to global mean sea level rise (GMSL) in centimeters}
 \usage{
-temps2slr(temps, years)
+temps2slr(temps, years, conn)
 }
 \arguments{
 \item{temps}{A numeric vector of global temperatures in degrees Celsius. The temperature series and corresponding years must begin in 2000 or earlier.}
