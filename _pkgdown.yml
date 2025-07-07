@@ -36,6 +36,10 @@ navbar:
       href: "reference/index.html"
     - text: News
       href: "news/index.html"
+    - text: Technical Documentation (TD)
+      href: "../documentation/Technical_Documentation_for_FrEDI.pdf"
+    - text: TD Appendix
+      href: "../documentation/Technical_Documentation_FrEDI_Appendices.pdf"
   right:
     - icon: fa-github fa-lg
       href: "https://github.com/USEPA/FrEDI"

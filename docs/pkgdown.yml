@@ -1,14 +1,13 @@
-pandoc: '3.2'
-pkgdown: 2.0.9
+pandoc: 3.1.11
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   About: About.html
-  contributing: contributing.html
-  Example1: Example1.html
-  manual: manual.html
-  References: References.html
-last_built: 2025-02-18T16:37Z
+  articles/contributing: contributing.html
+  articles/Example1: Example1.html
+  articles/manual: manual.html
+  articles/References: References.html
+last_built: 2025-07-07T17:15Z
 urls:
   reference: https://usepa.github.io/FrEDI/reference
   article: https://usepa.github.io/FrEDI/articles
-

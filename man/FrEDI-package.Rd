@@ -100,15 +100,17 @@ Useful links:
 Authors:
 \itemize{
   \item Erin McDuffie \email{mcduffie.erin.e@epa.gov} (\href{https://orcid.org/0000-0002-6845-6077}{ORCID}) (emcduffie) [contributor]
-  \item Marcus Sarofim \email{mcduffie.erin.e@epa.gov} (\href{https://orcid.org/0000-0001-7753-1676}{ORCID}) (emcduffie) [contributor]
+  \item Marcus Sarofim \email{sarofim.marcus@epa.gov} (\href{https://orcid.org/0000-0001-7753-1676}{ORCID}) [contributor]
   \item Karen Noiva (\href{https://orcid.org/0000-0002-4412-5302}{ORCID}) (knoiva-indecon) [contributor]
+  \item Tony Gardella (\href{https://orcid.org/0000-0003-4380-3412}{ORCID}) (tonygard-indecon) [contributor]
 }
 
 Other contributors:
 \itemize{
-  \item Tony Gardella (\href{https://orcid.org/0000-0003-4380-3412}{ORCID}) (tonygard-indecon) [contributor]
-  \item Will Maddock (\href{https://orcid.org/0000-0002-6107-0315}{ORCID}) (maddockw) [contributor]
+  \item Will Maddock (\href{https://orcid.org/0009-0009-4854-5759}{ORCID}) (maddockw) [contributor]
   \item Hugh Easton (\href{https://orcid.org/0009-0008-0104-6891}{ORCID}) (heaston-indecon) [contributor]
+  \item Jacqueline Willwerth (\href{https://orcid.org/0000-0002-6107-0315}{ORCID}) (jwillwerth) [contributor]
+  \item Ben Jeweler (\href{https://orcid.org/0009-0004-3364-2875}{ORCID}) (Bjeweler) [contributor]
 }
 
 }

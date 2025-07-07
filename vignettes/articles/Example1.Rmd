@@ -115,15 +115,12 @@ popAreaflag  <- "state"
 temptypeflag <- "global" 
 
 ### Use the import_inputs() helper function to format the input trajectories for use in FrEDI
-inputs_list <- import_inputs(
-  inputsList=list(
-    temp = tempInputFile,
+inputs_list <- import_inputs(inputsList=list(
+     temp = tempInputFile,
     slr  = slrInputFile,
     gdp  = gdpInputFile,
     pop  = popInputFile
-  ),
-  temptype = temptypeflag,
-  popArea  = popAreaflag
+  ), temptype = temptypeflag, popArea  = popAreaflag
 ) ### End import_inputs
 inputs_list |> glimpse()
 ```
@@ -230,12 +227,14 @@ df_primary <- output_df |>
 ### Aggregate across impact types for each sector, calculate billions and round values to nearest dollar
 ### - Convert to billions of dollars
 ### - Round values to nearest dollar
+conn <- FrEDI:::load_frediDB()
 df_sumTypes <- df_primary |> 
   aggregate_impacts(
+    conn = conn,
     aggLevels = c("impacttype"), 
-    columns   = c("annual_impacts")
+    columns   = c("annual_impacts"),
   )
-
+dbDisconnect(conn)
 ### Option: write output
 ### Write Full Dataframe to CSV (or feather)
 # write.csv(output_df, './output/example_output.csv')
