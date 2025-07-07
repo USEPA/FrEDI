@@ -26,8 +26,6 @@ navbar:
          href: articles/manual.html
        - text: "Contributing to FrEDI"
          href: articles/contributing.html
-    - text: Documentation
-      href: "articles/References.html"
     - text: Examples
       menu:
         - text: "Example #1: Run FrEDI with default parameters"
@@ -36,6 +34,8 @@ navbar:
       href: "reference/index.html"
     - text: News
       href: "news/index.html"
+    - text: References & Applications
+      href: "articles/References.html"
     - text: Technical Documentation (TD)
       href: "../documentation/Technical_Documentation_for_FrEDI.pdf"
     - text: TD Appendix

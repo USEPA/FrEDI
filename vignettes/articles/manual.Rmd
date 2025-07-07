@@ -1,6 +1,5 @@
 ---
 title: "Installing & Running FrEDI"
-date: "August, 2024"
 description: >
   Getting Started with FrEDI.
 output: rmarkdown::html_vignette

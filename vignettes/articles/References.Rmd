@@ -1,6 +1,5 @@
 ---
 title: "Documentation & Applications"
-date: "October, 2023"
 description: >
   FrEDI publications and previous applications.
 output: rmarkdown::html_vignette

@@ -1,6 +1,5 @@
 ---
 title: "Example #1"
-date: "November 2024"
 description: >
   Running & Analyzing results from FrEDI's default scenario.
 #output: rmarkdown::html_vignette

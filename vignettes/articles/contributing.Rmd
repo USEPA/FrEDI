@@ -1,6 +1,5 @@
 ---
 title: "Contributing to FrEDI"
-date: "June, 2023"
 description: >
   How to Contribute to FrEDI.
 output: rmarkdown::html_vignette
