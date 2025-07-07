@@ -42,7 +42,7 @@ FrEDI works by first taking user-defined projections of U.S. population, gross d
 
 <br>
 
-**Recommended Citation:**  Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001. Available:<a href="/documentation/fredi_tech_documentation_5.0.pdf">here</a> <br>
+**Recommended Citation:**  Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001. Available:<a href="./../documentation/Technical_Documentation_FrEDI.pdf">here</a> <br>
 
 ------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ FrEDI currently estimates impacts that occur within the physical borders of 48 s
 
 ### FrEDI Impact Sectors & Units
 
-FrEDI currently projects monetized impacts across more than 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors. FrEDI includes economic impacts (in units of \$2015 USD) for all sectors and physical endpoints (e.g., morbidity, mortality, response costs, etc.) for nine sectors.
+FrEDI currently projects monetized impacts across more than 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors. FrEDI includes economic impacts (in units of \$2015 USD) for all sectors and physical endpoints (e.g., morbidity, mortality, response costs, etc.) for select sectors.
 
 For a current list of FrEDI sectors, run:
 
