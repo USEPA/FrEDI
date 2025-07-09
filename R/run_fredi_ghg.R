@@ -4,7 +4,7 @@
 #'
 #'
 #' @description
-#' This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. As of FrEDI v5.0, this function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
+#' This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. This function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
 #'
 #'
 #'

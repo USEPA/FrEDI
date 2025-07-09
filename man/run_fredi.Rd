@@ -186,5 +186,5 @@ run6 <- run_fredi(thru2300=TRUE)
 
 }
 \references{
-Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at \url{https://epa.gov/cira/FrEDI/}.
+Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001.
 }

@@ -40,7 +40,7 @@ If \code{outputList=TRUE}, \code{run_fredi_ghg()} returns a list object containi
 }
 }
 \description{
-This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. As of FrEDI v5.0, this function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
+This function allows users to estimate the economic and physical impacts associated with changes of atmospheric GHG concentrations. This function calculates the projected change in mortality and morbidity associated with exposure to ozone that is produced by atmospheric methane.
 }
 \details{
 This function allows users to estimate impacts from changes in atmospheric concentrations of greenhouse gases (GHG) in the atmosphere. This module (also referred to as the \strong{concentration-driven module} or \strong{FrEDI-GHG}. \strong{FrEDI-GHG} is an optional supplement to the main FrEDI function \code{\link[=run_fredi]{run_fredi()}}, and is driven by changes in GHG concentrations, rather than by changes in temperature or sea-level rise. The outputs of \strong{FrEDI-GHG} complement the damages output from main FrEDI and allow users to explore how these additional GHG-related impacts will be distributed across CONUS regions.

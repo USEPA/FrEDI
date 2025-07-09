@@ -164,7 +164,7 @@
 #'
 #'
 #'
-#' @references Environmental Protection Agency (EPA). 2021. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-21-004, EPA, Washington, DC. Available at <https://epa.gov/cira/FrEDI/>.
+#' @references Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001.
 #'
 #'
 #' @export

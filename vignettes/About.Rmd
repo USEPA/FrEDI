@@ -41,7 +41,7 @@ FrEDI works by first taking user-defined projections of U.S. population, gross d
 
 <br>
 
-**Recommended Citation:**  Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001. Available:<a href="../documentation/Technical_Documentation_for_FrEDI.pdf">here</a> <br>
+**Recommended Citation:**  Environmental Protection Agency (EPA). 2024. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). EPA 430-R-24-001. Available:<a href="../../documentation/Technical_Documentation_for_FrEDI.pdf">here</a> <br>
 
 ------------------------------------------------------------------------
 
@@ -55,11 +55,11 @@ FrEDI fills an important gap in assessing U.S. impacts from changes in temperatu
 
 **FrEDI draws upon a wide range of existing scientific literature.** FrEDI currently draws upon over 30 existing peer-reviewed studies and impact models and uses an impacts-by-degree temperature binning approach [(Sarofim et al., 2021)](https://link.springer.com/article/10.1007/s10584-021-03048-6), to estimate the relationship between future degrees of warming and impacts across more than 20 impact category sectors ([Hartin et al., 2023](https://egusphere.copernicus.org/preprints/2023/egusphere-2023-114/)). Many of these sectoral studies have been adapted from EPA’s [CIRA](https://www.epa.gov/cira) project, which began in 2008 to assess and compare the impacts of temperature changes in the U.S. using a consistent set of physical models and scenarios. External studies (for example from the [CIL](https://impactlab.org/)) are now also integrated into FrEDI in cases where the underlying studies can provide regional physical or economic impacts by degree of warming (or cm of sea level rise) and can be scaled to account for future GDP or population, or sector-specific conditions.
 
-**FrEDI is peer-reviewed and developed as an open-source R package.** This Framework and its <a href="../documentation/Technical_Documentation_for_FrEDI.pdf">Technical Documentation</a> have been subject to a public review comment period and an independent external peer review, following guidance in the EPA Peer-Review Handbook for Influential Scientific Information (ISI). Information on the peer-review is available in the [EPA Science Inventory](https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=351316&Lab=OAP&simplesearch=0&showcriteria=2&sortby=pubDate&searchall=fredi&timstype=&datebeginpublishedpresented=02/14/2021).
+**FrEDI is peer-reviewed and developed as an open-source R package.** This Framework and its <a href="../../documentation/Technical_Documentation_for_FrEDI.pdf">Technical Documentation</a> have been subject to a public review comment period and an independent external peer review, following guidance in the EPA Peer-Review Handbook for Influential Scientific Information (ISI). Information on the peer-review is available in the [EPA Science Inventory](https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=351316&Lab=OAP&simplesearch=0&showcriteria=2&sortby=pubDate&searchall=fredi&timstype=&datebeginpublishedpresented=02/14/2021).
 
 **FrEDI is customizable and fast.** As shown in Figure 1, the user first provides custom projections for mean surface temperature, U.S. population, and GDP. Within a few minutes FrEDI then outputs a timeseries of annual physical and economic impacts across its multiple dimensions (see Examples page). This framework does not include natural variability and is therefore designed to quantify impacts, with the same level of accuracy, under any level of future temperature change.
 
-**FrEDI is continually improved to reflect the current state of impact science.** FrEDI currently includes temperature-impact relationships for over 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors and includes the capacity to differentiate these sectoral impacts across multiple geographic regions within the U.S., demographics, and various adaptation scenarios. As described in the <a href="../documentation/Technical_Documentation_for_FrEDI.pdf">Technical Documentation</a>, FrEDI is continually updated to incorporate new studies with the common framework to reflect the latest available science on impacts within U.S. borders. <br> <br>
+**FrEDI is continually improved to reflect the current state of impact science.** FrEDI currently includes temperature-impact relationships for over 20 health, infrastructure, electricity, agriculture, recreation, and ecosystem-related sectors and includes the capacity to differentiate these sectoral impacts across multiple geographic regions within the U.S., demographics, and various adaptation scenarios. As described in the <a href="../../documentation/Technical_Documentation_for_FrEDI.pdf">Technical Documentation</a>, FrEDI is continually updated to incorporate new studies with the common framework to reflect the latest available science on impacts within U.S. borders. <br> <br>
 
 ------------------------------------------------------------------------
 
@@ -142,7 +142,7 @@ For a current list of FrEDI sectors, run:
 FrEDI_sector_info <- FrEDI::get_sectorInfo(description = T)
 ```
 
-For details about each sector and the underlying damage functions, see the [FrEDI Technical Documentation](https://epa.gov/cira/FrEDI/)
+For details about each sector and the underlying damage functions, see the <a href="../../documentation/Technical_Documentation_for_FrEDI.pdf">Technical Documentation</a>
 
 ### FrEDI Variants & Adaptation Options
 
