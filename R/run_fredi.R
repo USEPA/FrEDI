@@ -184,12 +184,14 @@ run_fredi <- function(
     thru2300   = FALSE, ### Whether to run FrEDI through 2300
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
-    silent     = TRUE   ### Whether to message the user
+    silent     = TRUE,   ### Whether to message the user
+    national   = TRUE ### WHether to run national level FrEDI
 ){
   ###### Load Objects ######
   ###### ** Create DB connection #####
-  conn <-  load_frediDB()
+  conn <-  load_frediDB(national)
 
+  ### REad in correct Data
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   #fredi_config <- rDataList[["fredi_config"]]
@@ -568,16 +570,35 @@ run_fredi <- function(
   ###### ** Get Scalar Info ######
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> ungroup()
+  if(national){
+    df_results   <- seScenario |> 
+                    initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> 
+                    ungroup() |>
+                    filter(postal == 'NAT')
+  } else{
+    df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> ungroup()
+    
+  }
+
 
   ###### ** Calculate Scaled Impacts ######
   ### Get scaled impacts
-  df_impacts   <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> ungroup()
-
+  if(national){
+    df_impacts       <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> 
+      ungroup() |> 
+      filter(postal == 'NAT')
+  } else{
+    df_impacts       <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> ungroup()
+  }
+ 
   ###### ** Calculate Total Impacts ######
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
-
+  if(national){
+    df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
+  }else{
+    df_results   <- df_results_nat |> calc_impacts_fredi(df1=df_impacts_nat, conn = conn) |> ungroup()
+  }
+  
 
 
   ###### Refactor Data ######
@@ -660,7 +681,7 @@ run_fredi <- function(
 
   ###### Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
-  if(doAgg) {
+  if(doAgg & !national) {
     paste0("Aggregating impacts", "...") |> message()
     # aggLevels |> length(); doAgg |> print()
     group0     <- groupCols0
