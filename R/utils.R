@@ -536,7 +536,13 @@ create_nationalScenario <- function(
 ){
   ### If national population is NULL, calculate national population
   nullNpop <- natPop0 |> is.null()
-  if(nullNpop) natPop0 <- pop0 |> calc_nationalPop()
+  if(nullNpop){
+    natPop0 <- pop0 |> calc_nationalPop()
+  }else{
+    natPop0 <- pop0 |> mutate(
+      national_pop = pop
+    )
+  }
   ### Select columns
   colsG0   <- c("year", "gdp_usd")
   colsP0   <- c("region", "state", "postal", "year", "pop")
@@ -549,7 +555,9 @@ create_nationalScenario <- function(
   ### Calculate GDP per capita
   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
   ### Join nat0 with state population by year
-  nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
+  if(nullNpop){
+    nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
+  } 
   ### Arrange by colsP0
   arrange0 <- colsP0 |> get_matches(y=c("pop"), matches=F)
   nat0     <- nat0 |> arrange_at(vars(arrange0))

@@ -557,7 +557,15 @@ run_fredi <- function(
   ### Convert region to region IDs
   pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
   ### Calculate national population and update national scenario
-  seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+  if(national){
+    natPop0=1
+  }
+  
+  seScenario   <- create_nationalScenario(
+                    gdp0 = gdp_df,
+                    pop0 =pop_df,
+                    natPop0=1
+                   )
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
@@ -571,8 +579,11 @@ run_fredi <- function(
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
   if(national){
-    df_results   <- seScenario |> 
-                    initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> 
+    df_results   <-  initialize_resultsDf(
+                      df_se = seScenario,
+                      sectors=sectorIds, 
+                      elasticity=elasticity,
+                      conn = conn) |> 
                     ungroup() |>
                     filter(postal == 'NAT')
   } else{
@@ -596,7 +607,7 @@ run_fredi <- function(
   if(national){
     df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
   }else{
-    df_results   <- df_results_nat |> calc_impacts_fredi(df1=df_impacts_nat, conn = conn) |> ungroup()
+    df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
   }
   
 
