@@ -559,12 +559,14 @@ run_fredi <- function(
   ### Calculate national population and update national scenario
   if(national){
     natPop0=1
-  }
+  }else(
+    natPop0=NULL
+  )
   
   seScenario   <- create_nationalScenario(
                     gdp0 = gdp_df,
                     pop0 =pop_df,
-                    natPop0=1
+                    natPop0=natPop0
                    )
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()

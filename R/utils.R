@@ -1190,7 +1190,6 @@ get_scalarAdjValues <- function(
 ){
   ###### Multipliers
   none0       <- "none"
-
   ###### Format data
   ### - Add adjName column
   ### - Separate data
@@ -1205,7 +1204,7 @@ get_scalarAdjValues <- function(
   df_other    <- data |> filter(!(adjName %in% none0))
   # df_none |> dim() |> print(); df_other |> dim() |> print()
   rm(data)
-
+  gc()
   ### Number of rows
   hasNone0    <- df_none  |> nrow()
   hasOther0   <- df_other |> nrow()
@@ -1222,7 +1221,7 @@ get_scalarAdjValues <- function(
     data     <- data     |> rbind(df_none)
     rm(df_none)
   } ### End if(hasNone0 )
-
+  gc()
   ### Other values:
   if(hasOther0) {
     ###### Format scalar data
@@ -1236,9 +1235,13 @@ get_scalarAdjValues <- function(
     mutate0     <- c("year0")
     ### Filter
     scalars     <- scalars |> filter(scalarType %in% filter0)
+    gc()
     scalars     <- scalars |> select(-all_of(drop0))
+    gc()
     scalars     <- scalars |> rename_at(c(renameAt0), ~renameTo0)
+    gc()
     scalars     <- scalars |> mutate_at(c(mutate0), as.character)
+    gc()
     rm(filter0, renameAt0, renameTo0, mutate0, drop0)
     # data |> glimpse(); scalars |> glimpse()
     # scalars |> pull("national_or_regional") |> unique() |> print()
@@ -1251,6 +1254,7 @@ get_scalarAdjValues <- function(
     scalarsReg  <- scalars  |> filter(!(national_or_regional %in% natStr0)) |> select(-any_of(dropReg))
     natScalars  <- scalarsNat |> pull(all_of(adjName0)) |> unique()
     regScalars  <- scalarsReg |> pull(all_of(adjName0)) |> unique()
+    gc()
     # natScalars |> print(); regScalars |> print()
     # scalarsNat |> glimpse(); scalarsReg |> glimpse()
     # df_other |> dim() |> print()
@@ -1259,7 +1263,7 @@ get_scalarAdjValues <- function(
     # list(df_other, dfOthNat, dfOthReg) |> map(nrow) |> unlist() |> print()
     # dfOthNat |> glimpse(); dfOthReg |> glimpse()
     rm(natStr0, dropReg, dropNat, df_other)
-
+    gc()
     ### Join adjustments with data
     ### Number of rows
     hasNat      <- dfOthNat |> nrow()
@@ -1267,11 +1271,13 @@ get_scalarAdjValues <- function(
     ### National values
     if(hasNat) {
       join0    <- dfOthNat |> names() |> get_matches(scalarsNat |> names())
+      gc()
       dfOthNat <- dfOthNat |> left_join(scalarsNat, by=join0)
       # dfOthNat |> dim() |> print()
       # dfOthNat |> glimpse()
       data     <- data     |> rbind(dfOthNat)
       rm(join0, scalarsNat, dfOthNat)
+      gc()
     } ### End if(hasNat)
 
     ### Regional values
@@ -1282,6 +1288,7 @@ get_scalarAdjValues <- function(
       # dfOthReg |> glimpse()
       data     <- data     |> rbind(dfOthReg)
       rm(join0, scalarsReg, dfOthReg)
+      gc()
     } ### End if(hasReg)
   } ### End if(hasOther0)
 
@@ -1314,7 +1321,6 @@ initialize_resultsDf <- function(
   ###### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Formatting initial results", "...") |> message()
-
   ###### State Columns
   stateCols0 <- c("state", "postal")
   popCol0    <- c("pop")
@@ -1330,8 +1336,9 @@ initialize_resultsDf <- function(
   stateData    <- unserialize(stateData$value |> unlist())
   df_scalars      <- stateData[["df_scalars"]]
   df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
+  gc()
   df_scalars <- df_scalars |> update_popScalars(df_se, popCol=popCol0)
-
+  gc()
   ###### Scalar Info ######
   ### Get info
   df_info    <- sectors |> get_co_sectorsInfo(
@@ -1340,7 +1347,7 @@ initialize_resultsDf <- function(
     addModels  = FALSE, ### Whether to include models
     colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
   ) ### End get_co_sectorsInfo()
-
+ gc()
   ### Format info
   drop0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType") |> paste0("_label")
   # df_info |> glimpse(); select0 |> print()
@@ -1348,7 +1355,8 @@ initialize_resultsDf <- function(
   df_info    <- df_info |> select(-any_of(drop0))
   df_info    <- df_info |> distinct()
   rm(drop0)
-
+  gc()
+  
   ### Model Types
   types0     <- df_info |> pull(modelType) |> unique() |> tolower()
   has_slr    <- "slr" %in% types0
@@ -1357,42 +1365,50 @@ initialize_resultsDf <- function(
   ### Format region
   df_info    <- df_info |> mutate(region = region |> str_replace("\\.", ""))
   df_info    <- df_info |> mutate(region = region |> str_replace(" ", ""))
-
+  gc()
+  
   ###### Initialize Results ######
   ### Initialized results: Join sector info with socioeconomic scenario
   # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
   join0      <- df_info |> names() |> get_matches(df_se |> names())
   df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
   rm(join0)
-
+  gc()
+  
   ###### Update Scalar Info ######
   ### Update scalar info
   ### Physical scalars
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physScalar")
+  gc()
   ### Physical adjustment
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physAdj")
+  gc()
   ### Damage adjustment
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="damageAdj")
+  gc()
   ### Economic scalar
   # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econScalar")
+  gc()
   ### Economic multiplier
   # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econMultiplier")
   # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
-
+  gc()
   ###### Economic Adjustment Values ######
   ### Get economic adjustment values
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
   df0        <- df0 |> get_scalarAdjValues(conn = conn, scalars=df_scalars, scalarType0="econMultiplier")
+  gc()
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
 
   ###### Calculate Scalars ######
   ### Calculate scalars
+  gc()
   df0        <- df0 |> calcScalars(elasticity=elasticity)
-
+  
   ###### SLR Scalars for Years > 2090 ######
   ### Scalars for SLR past 2090
   do_slr     <- has_slr & (maxYr0 > refYear0)
