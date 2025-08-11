@@ -971,12 +971,22 @@ get_co_sectorsInfo <- function(
   renameAt0   <- c("modelType")
   co_modTypes <- co_modTypes |> rename_at(c(renameAt0 |> paste0("_id")), ~c(renameAt0))
   rm(renameAt0)
-
   ### Join with co_variants, co_impactTypes, co_impactYears
   join0   <- c("sector_id")
   join1   <- c("modelType")
   df0     <- co_sectors |> left_join(co_variants, by=join0)
-  df0     <- df0        |> left_join(co_impTypes, by=join0, relationship="many-to-many")
+  df0     <- df0        |> full_join(co_impTypes, by=c(join0), relationship="many-to-many")
+  ### Cleanup dmgAdj issue
+  df0     <- df0 |>
+    mutate(
+      damageAdjName = case_when(
+        is.na(damageAdjName.x) ~ damageAdjName.y,
+        damageAdjName.y == "byVariant" ~ damageAdjName.x,
+        .default = damageAdjName.y
+      )
+    ) |>
+    select(-damageAdjName.x,-damageAdjName.y)
+  
   df0     <- df0        |> left_join(co_impYears, by=join0, relationship="many-to-many")
   df0     <- df0        |> left_join(co_modTypes, by=c(join1), relationship="many-to-many")
   rm(join0, join1)
