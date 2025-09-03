@@ -282,12 +282,17 @@ check_regions <- function(
 
   # co_region <- "co_regions" |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
   # co_states <- "co_states"  |> get_frediDataObj(listSub=dListSub0, listName=dListName0)
+  if(doMethane){
   ghgData    <- DBI::dbReadTable(con,"ghgData")
   ghgData    <- unserialize(ghgData$value |> unlist())
 
   co_region <- ghgData$ghgData$co_regions
   co_states <- ghgData$ghgData$co_states
-
+  } else {
+    co_states <- DBI::dbReadTable(con,"co_states")
+    co_region <- DBI::dbReadTable(con,"co_regions")
+  }
+  
   ### Join regions and states and filter to appropriate values
   join0     <- c("us_area", "region")
   select0   <- c("region", "region_label")
