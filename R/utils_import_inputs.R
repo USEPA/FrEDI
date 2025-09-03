@@ -289,10 +289,11 @@ check_regions <- function(
   co_region <- ghgData$ghgData$co_regions
   co_states <- ghgData$ghgData$co_states
   } else {
-    co_states <- DBI::dbReadTable(con,"co_states")
-    co_region <- DBI::dbReadTable(con,"co_regions")
+    co_states <- DBI::dbReadTable(con,"co_states") |> mutate(us_area = "CONUS")
+    co_region <- DBI::dbReadTable(con,"co_regions") |> mutate(us_area = "CONUS") |> rename("region" = region_id)
   }
   
+  #browser()
   ### Join regions and states and filter to appropriate values
   join0     <- c("us_area", "region")
   select0   <- c("region", "region_label")
@@ -891,6 +892,7 @@ check_input_data <- function(
     if(doCheck0) {
       regStr0  <- case_when(doReg0 ~ "region", .default = "state") |> paste0("s")
       msg_reg  <- paste0("Checking that all ", regStr0, " are present...")
+      #browser()
       paste0(msg1_i, msg_reg) |> message()
       inputDf  <- inputDf   |> check_regions(popArea=popArea, module=module, msgLevel=msgLevel + 1,con = con)
       regPass  <- !(inputDf |> is.null())
