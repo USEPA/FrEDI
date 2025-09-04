@@ -318,7 +318,7 @@ import_inputs <- function(
   ### Message, clear unused memory, return
   msgN |> paste0(msg0, "Finished.") |> message()
   ### Disconnect from DB
-  dbDisconnect(conn)
+  DBI::dbDisconnect(conn)
   gc()
   return(inputsList)
 }
