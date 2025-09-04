@@ -573,6 +573,7 @@ plot_basicBoxWhisker2 <- function(
     sectors_i = sectorList[[name_i]]
   ){
     df0 |> plot_basicBoxWhisker(
+      df1       = df1,
       yCol0     = yCol0,
       sectors0  = sectors_i,
       title0    = title0,
