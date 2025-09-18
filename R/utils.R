@@ -1597,7 +1597,7 @@ get_slrScaledImpacts <- function(
   ####### Columns & Values ######
   ### State columns
   stateCols0 <- c("state", "postal")
-
+  #browser()
   ###### Get rDataList Objects #######
   ### Get objects from rDataLsit
   #df_ext0    <- "slrExtremes" |> get_frediDataObj("stateData")
@@ -1606,6 +1606,8 @@ get_slrScaledImpacts <- function(
   stateDat   <- unserialize(stateDat$value |> unlist())
   df_ext0    <- stateDat |> pluck("slrExtremes")
   df_imp0    <- stateDat |> pluck("slrImpacts")
+  
+  
   ###### Format Data #######
   ### Filter to appropriate model types
   ### Filter to appropriate driver values
@@ -1615,6 +1617,24 @@ get_slrScaledImpacts <- function(
   ### Grab info
   select0    <- c("modelUnitValue", "year")
   df1        <- df1 |> select(all_of(select0))
+  
+  ### Find modelMaxOutput for each sector
+  modMax <- df_imp0 |>
+            select(sector, model) |> 
+            unique() |>
+            separate(col = model, 
+                     into = c("slr","unit"),
+                     sep = "cm"
+            ) |>
+            mutate(unit = "cm") |>
+            group_by(sector,unit) |>
+            summarise(modelMaxOutput = max(as.numeric(slr))) |>
+            select(-unit)
+  
+  df0 <- df0 |>
+         select(-modelMaxOutput) |>
+         left_join(modMax)
+            
   rm(select0)
 
   ### Get max model value, max year, unique sectors, and scenario IDS
@@ -1685,13 +1705,13 @@ get_slrScaledImpacts <- function(
     # ### Join with df1
     # df_ext0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse()
     join0       <- c("year")
-    df_ext0     <- df1 |> left_join(df_ext0, by=join0)
+    df_ext1     <- df1 |> left_join(df_ext0, by=join0)
     df_imp0     <- df1 |> left_join(df_imp0, by=join0)
     # df_ext0 |> glimpse(); df_imp0 |> glimpse();
 
     ###### Scaled Impacts >= Max
     ### Filter to appropriate years
-    df_max0     <- df_ext0 |> filter(modelUnitValue >= driverValue_ref)
+    df_max0     <- df_ext1 |> filter(modelUnitValue >= driverValue_ref)
     maxYrs0     <- df_max0 |> pull(year) |> unique()
     nrow_max    <- maxYrs0 |> length()
     rm(df_ext0)
