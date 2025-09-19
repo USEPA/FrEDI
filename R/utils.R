@@ -1607,7 +1607,6 @@ get_slrScaledImpacts <- function(
   df_ext0    <- stateDat |> pluck("slrExtremes")
   df_imp0    <- stateDat |> pluck("slrImpacts")
   
-  
   ###### Format Data #######
   ### Filter to appropriate model types
   ### Filter to appropriate driver values
@@ -1712,8 +1711,8 @@ get_slrScaledImpacts <- function(
     ###### Scaled Impacts >= Max
     ### Filter to appropriate years
     df_max0     <- df_ext1 |> filter(modelUnitValue >= driverValue_ref)
-    maxYrs0     <- df_max0 |> pull(year) |> unique()
-    nrow_max    <- maxYrs0 |> length()
+    maxYrs1     <- df_max0 |> select(year,sector) |> distinct()
+    nrow_max    <- maxYrs1 |> length()
     rm(df_ext0)
 
     ### Calculate scaled impacts for values > slrMax0
@@ -1727,7 +1726,17 @@ get_slrScaledImpacts <- function(
     ###### Scaled Impacts < Max
     ### Get impacts and create scenario ID for values <= slrMax0
     ### Join with slrImpacts
-    df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs0))
+    #browser()
+    
+    no_maxyr <- maxYrs1 |>
+      mutate(value = 1) |>
+      group_by(sector) |>
+      complete(year = min(df1$year):max(df1$year)) |>
+      filter(is.na(value)) |>
+      select(-value)
+    
+    df_slr0     <- no_maxyr |> left_join(df_imp0) |> ungroup()
+    #df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs0))
     nrow_slr    <- df_slr0 |> nrow()
     rm(df_imp0)
 
@@ -1749,6 +1758,7 @@ get_slrScaledImpacts <- function(
       mutate0   <- c("lower_model", "upper_model")
       # slrVals0 <- df1      |> rename_at(c(cols0), ~cols1)
       # slrVals0 <- slrVals0 |> interp_slr_byYear()
+      #browser()
       slrVals0 <- df1      |> interp_slr_byYear(conn = conn, yCol="modelUnitValue")
       slrVals0 <- slrVals0 |> mutate_at(c(mutate0), function(y){y |> str_replace(" ", "")})
 
@@ -2422,12 +2432,11 @@ fredi_slrInterp <- function(
   bounds0        <- c("lower", "upper")
   mutate0        <- c("model", "slr")
   slrMutCols     <- c("lower_model", "upper_model")
-
   ### Info names
   data_xAdj      <- slr_x
   names_slrAdj   <- data_xAdj |> names()
   rm(slr_x)
-
+  #browser()
   # other_slrCols  <- names_slrAdj |> (function(x){x[!(x %in% c("year"))]})()
   other_slrCols  <- names_slrAdj |> get_matches(y=c("year"), matches=FALSE)
   join_slrCols   <- groupByCols |> c("year") ### sectorprimary, includeaggregate
@@ -2446,9 +2455,9 @@ fredi_slrInterp <- function(
 
   ### Join with slrInfo and convert columns to character
   # join0          <- c("year", "modelType")
-  join0          <- c("year")
+  join0          <- c("year","modelUnitValue")
   data_xAdj      <- data_xAdj |> mutate(equal_models = lower_model == upper_model)
-  data_x         <- data_x    |> left_join(data_xAdj, by=join0)
+  data_x        <- data_x    |> left_join(data_xAdj, by=join0)
   rm(join0, data_xAdj)
 
   ### Filter to conditions
