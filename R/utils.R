@@ -1617,6 +1617,9 @@ get_slrScaledImpacts <- function(
   select0    <- c("modelUnitValue", "year")
   df1        <- df1 |> select(all_of(select0))
   
+  
+  #browser()
+  
   ### Find modelMaxOutput for each sector
   modMax <- df_imp0 |>
             select(sector, model) |> 
@@ -1706,19 +1709,23 @@ get_slrScaledImpacts <- function(
     join0       <- c("year")
     df_ext1     <- df1 |> left_join(df_ext0, by=join0)
     df_imp0     <- df1 |> left_join(df_imp0, by=join0)
+    write_csv(df_ext1,"extrapolate_df_nat.csv")
+    write_csv(df_imp0,"interpolate_df_nat.csv")
+    
     # df_ext0 |> glimpse(); df_imp0 |> glimpse();
 
     ###### Scaled Impacts >= Max
     ### Filter to appropriate years
     df_max0     <- df_ext1 |> filter(modelUnitValue >= driverValue_ref)
     maxYrs1     <- df_max0 |> select(year,sector) |> distinct()
-    nrow_max    <- maxYrs1 |> length()
+    nrow_max    <- maxYrs1$year |> length()
     rm(df_ext0)
 
     ### Calculate scaled impacts for values > slrMax0
     if(nrow_max) {
       df_max0  <- df_max0 |> mutate(deltaDriver    = modelUnitValue    - driverValue_ref)
       df_max0  <- df_max0 |> mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
+      write_csv(df_max0, "scaled_impacts_aboveMax_nat.csv")
     } else{
       df_max0  <- df_max0 |> mutate(scaled_impacts = NA)
     } ### End if(nrow_max)
@@ -1727,7 +1734,7 @@ get_slrScaledImpacts <- function(
     ### Get impacts and create scenario ID for values <= slrMax0
     ### Join with slrImpacts
     #browser()
-    
+    if(nrow_max >0 ){
     no_maxyr <- maxYrs1 |>
       mutate(value = 1) |>
       group_by(sector) |>
@@ -1736,6 +1743,10 @@ get_slrScaledImpacts <- function(
       select(-value)
     
     df_slr0     <- no_maxyr |> left_join(df_imp0) |> ungroup()
+    } else{
+      df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs1))
+    }
+
     #df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs0))
     nrow_slr    <- df_slr0 |> nrow()
     rm(df_imp0)
@@ -1759,6 +1770,7 @@ get_slrScaledImpacts <- function(
       # slrVals0 <- df1      |> rename_at(c(cols0), ~cols1)
       # slrVals0 <- slrVals0 |> interp_slr_byYear()
       #browser()
+      
       slrVals0 <- df1      |> interp_slr_byYear(conn = conn, yCol="modelUnitValue")
       slrVals0 <- slrVals0 |> mutate_at(c(mutate0), function(y){y |> str_replace(" ", "")})
 
@@ -2121,19 +2133,35 @@ interp_slr_byYear <- function(
   ### Messaging
   if(silent |> is.null()){silent <- T}
   msgUser    <- !silent
+  
 
   ###### Get Data Objects ######
   #co_models  <- "co_models" |> get_frediDataObj("frediData")
   #slr_df     <- "slr_cm"    |> get_frediDataObj("frediData")
   co_models  <- DBI::dbReadTable(conn, "co_models")
   slr_df     <- DBI::dbReadTable(conn, "slr_cm")
-
+ 
+  #browser()
   ###### Assign data ######
   ### SLR scenario info
-  co_slrs    <- co_models |> filter(modelType=="slr") |> rename(model=model_label)
-  slr_levels <- c("0cm" ) |> c(co_slrs |> pull(model_id))
-  slr_labels <- c("0 cm") |> c(co_slrs |> pull(model))
-  slr_orders <- slr_levels |> factor(levels=slr_levels) |> as.numeric()
+  co_slrs_2014    <- co_models |> 
+                filter(modelType=="slr") |>
+                rename(model=model_label) |>
+                mutate(scenario_type ="slr_cm_2014")
+          
+  
+  co_models_200   <- co_slrs_2014 |>
+    filter(model_id != "250cm") |>
+    mutate(modelMaxOutput = 200,
+           maxUnitValue = 200,
+           scenario_type ="slr_cm_2022" )
+          
+  co_slrs <- bind_rows(co_slrs_2014,co_models_200)
+  
+    
+  slr_levels <- c("0cm" ) |> c(co_slrs |> pull(model_id)) |> unique()
+  slr_labels <- c("0 cm") |> c(co_slrs |> pull(model)) |> unique()
+  slr_orders <- slr_levels  |> factor(levels=slr_levels) |> as.numeric()
   slr_min    <- (slr_orders |> min(na.rm=T)) #+ 1
   slr_max    <-  slr_orders |> max(na.rm=T)
 
@@ -2166,7 +2194,7 @@ interp_slr_byYear <- function(
 
   ###### Prepare data ######
   ### Filter to appropriate years
-  data    <- data |> filter(year %in% df_slr_years)
+  #data    <- data |> filter(year %in% df_slr_years)
   n_years <- data |> nrow()
   ### Figure if years are missing
   dataYrs <- data |> pull(year)
@@ -2174,37 +2202,57 @@ interp_slr_byYear <- function(
   ###### Standard Columns ######
   ### JoinCols
   join0   <- c("year", "model_level")
-  select0 <- c("year") |> c(newColName_y, newColRef_y) |> c("model")
-  select1 <- c("year") |> c(newColName_y) |> c("lower_model", "upper_model", "lower_slr", "upper_slr")
+  select0 <- c("year") |> c(newColName_y, newColRef_y) |> c("model","scenario_type")
+  select1 <- c("year") |> c(newColName_y) |> c("lower_model", "upper_model", "lower_slr", "upper_slr","scenario_type")
   ### Format data
   slr_df  <- slr_df |> rename(yValue_ref = driverValue)
   ### Join
   # df_new  <- data |> left_join(slr_df, by = c("year", "modelType"))
+  
   df_new  <- data |> left_join(slr_df, by = c("year"))
+  
+  df_new_na <- df_new |> filter(is.na(model)) 
+  
+  df_new_max_year <- df_new |>  filter(!is.na(model)) |>filter(year == max(year)) |> select(-year,-yValue)
+  
+  df_new1 <- cross_join(df_new_na,df_new_max_year,suffix = c("_y", "")) |> select(-contains("_y"))
+  
+  
+  df_new <- df_new |> filter(!is.na(model)) |>
+            bind_rows(df_new1)
   ### Filter to specific observations
-  df_lo   <- df_new |> filter(yValue_ref <= yValue)
-  df_hi   <- df_new |> filter(yValue_ref >= yValue)
-  ### Get unique years
-  yrs_lo  <- df_lo |> pull(year) |> unique() |> sort()
-  yrs_hi  <- df_hi |> pull(year) |> unique() |> sort()
-  ### Figure out which years are missing
-  nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
-  nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
-  ### Create tibbles of missing years
-  dfNaLo  <- tibble(year = yrs_lo, model_level = slr_min) |> left_join(df_new, by = join0)
-  dfNaHi  <- tibble(year = yrs_lo, model_level = slr_max) |> left_join(df_new, by = join0)
-  ### Bind missing years back in
-  df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
-  df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
-  ### Drop values
-  rm(yrs_lo, yrs_hi, nas_lo, nas_hi, dfNaLo, dfNaHi); rm(df_new)
+  df_lo   <- df_new |> 
+    group_by(scenario_type,year) |> 
+    arrange(desc(model_level)) |> 
+    distinct(model_level, .keep_all = TRUE) |> 
+    slice(2)
+  
+  df_hi   <- df_new |> 
+    group_by(scenario_type,year) |> 
+    arrange(desc(model_level)) |> 
+    distinct(model_level, .keep_all = TRUE) |>slice(1)
+  
+  # ### Get unique years
+  # yrs_lo  <- df_lo |> pull(year) |> unique() |> sort()
+  # yrs_hi  <- df_hi |> pull(year) |> unique() |> sort()
+  # ### Figure out which years are missing
+  # nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
+  # nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
+  # ### Create tibbles of missing years
+  # dfNaLo  <- tibble(year = nas_lo, model_level = slr_min, scenario_type = ) |> left_join(df_new, by = join0)
+  # dfNaHi  <- tibble(year = nas_hi, model_level = slr_max) |> left_join(df_new, by = join0)
+  # ### Bind missing years back in
+  # df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
+  # df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
+  # ### Drop values
+  # rm(yrs_lo, yrs_hi, nas_lo, nas_hi, dfNaLo, dfNaHi); rm(df_new)
 
   ### Summarize values
   ### Columns
-  group0  <- c("year")
+  group0  <- c("year", "scenario_type")
   sum0    <- c("model_level")
   join0   <- c("year")
-  join1   <- join0 |> c(sum0)
+  join1   <- join0 |> c(sum0,"scenario_type")
   rename0 <- c("yValue_ref", "model")
   rename1 <- c("lower_slr", "lower_model")
   rename2 <- c("upper_slr", "upper_model")
@@ -2215,7 +2263,7 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), max, na.rm=T) |> ungroup()
   ### - Join
   df_lo <- data  |> left_join(df_lo, by=join0)
-  df_lo <- df_lo |> left_join(slr_df , by=c(join1))
+  df_lo <- df_lo |> left_join(df_new , by=c(join1,"yValue"))
   ### - Select & rename
   df_lo <- df_lo |> select(all_of(select0))
   df_lo <- df_lo |> rename_at(c(rename0), ~rename1)
@@ -2227,7 +2275,7 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), min, na.rm=T) |> ungroup()
   ### - Join
   df_hi <- data  |> left_join(df_hi, by=join0)
-  df_hi <- df_hi |> left_join(slr_df , by=c(join1))
+  df_hi <- df_hi |> left_join(df_new , by=c(join1,"yValue"))
   ### - Select & rename
   df_hi <- df_hi |> select(all_of(select0))
   df_hi <- df_hi |> rename_at(c(rename0), ~rename2)
@@ -2236,10 +2284,10 @@ interp_slr_byYear <- function(
   rm(slr_df)
 
   ### Join all
-  join0 <- c("year") |> c(newColName_y)
+  join0 <- c("year") |> c(newColName_y, "scenario_type")
   data  <- df_lo |> left_join(df_hi, by=join0)
   data  <- data  |> select(all_of(select1))
-  rm(df_lo, df_hi)
+  #rm(df_lo, df_hi)
 
   ### Add adjustment
   data  <- data |> mutate(denom_slr  = upper_slr - lower_slr  )
@@ -2253,9 +2301,14 @@ interp_slr_byYear <- function(
   ### Rename yValue and return
   data <- data |> rename_at(c(newColName_y), ~oldColName_y)
 
+  #browser()
+  ### Keep points when we are interpolating
+  data_interpolating <- data |>
+                      group_by(scenario_type,year) |>
+                       filter(modelUnitValue <= upper_slr)
   ### Return
   gc()
-  return(data)
+  return(data_interpolating)
 
 }
 
@@ -2441,6 +2494,7 @@ fredi_slrInterp <- function(
   other_slrCols  <- names_slrAdj |> get_matches(y=c("year"), matches=FALSE)
   join_slrCols   <- groupByCols |> c("year") ### sectorprimary, includeaggregate
   ### Other columns
+  #browser()
   # dropCols0      <- c("model", "model_label")
   dropCols0      <- c("model")
   otherCols0     <- c("modelType", "denom_slr", "numer_slr", "adj_slr")
@@ -2457,7 +2511,18 @@ fredi_slrInterp <- function(
   # join0          <- c("year", "modelType")
   join0          <- c("year","modelUnitValue")
   data_xAdj      <- data_xAdj |> mutate(equal_models = lower_model == upper_model)
-  data_x        <- data_x    |> left_join(data_xAdj, by=join0)
+  
+  #### 
+  data_x_scenario <- data_x |>
+                     mutate(
+                       scenario_type = case_when(
+                         sector == "CoastalProperties" ~ "slr_cm_2022",
+                         .default = "slr_cm_2014"
+                       )
+                     )
+  
+  data_x        <- data_x_scenario    |> left_join(data_xAdj, by=c(join0,"scenario_type"))
+  
   rm(join0, data_xAdj)
 
   ### Filter to conditions
