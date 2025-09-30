@@ -1698,7 +1698,7 @@ get_slrScaledImpacts <- function(
   hasSlr0    <- df_hasSlr |> nrow()
   hasNoSlr0  <- df_noSlr  |> nrow()
   # df_ext0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse(); df_hasSlr |> glimpse(); df_noSlr |> dim()
-
+  #browser()
   ### Initialize impacts
   df0        <- tibble()
 
@@ -1722,7 +1722,7 @@ get_slrScaledImpacts <- function(
     rm(df_ext0)
 
     ### Calculate scaled impacts for values > slrMax0
-    if(nrow_max) {
+    if(nrow_max >0) {
       df_max0  <- df_max0 |> mutate(deltaDriver    = modelUnitValue    - driverValue_ref)
       df_max0  <- df_max0 |> mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
       write_csv(df_max0, "scaled_impacts_aboveMax_nat.csv")
@@ -1776,7 +1776,10 @@ get_slrScaledImpacts <- function(
 
       ### Interpolate
       # df_slr0 |> glimpse()
-      df_slr0  <- df_slr0 |> fredi_slrInterp(slr_x=slrVals0, groupByCols=group0)
+      df_slr0  <-     fredi_slrInterp(data_x = df_slr0,
+                                             slr_x=slrVals0, 
+                                             groupByCols=group0)
+      
       # rm(group0, slr_names, slrVals0); rm(cols0, cols1)
     } else{
       df_slr0  <- df_slr0 |> mutate(scaled_impacts = NA)
@@ -2178,7 +2181,7 @@ interp_slr_byYear <- function(
 
   ### Character vector of model names
   c_slrs0      <- slr_labels
-
+  #browser()
   ### Check that years are unique
   data_years   <- data |> pull(year) |> unique()
   n_data_years <- data_years |> length()
@@ -2221,16 +2224,10 @@ interp_slr_byYear <- function(
   df_new <- df_new |> filter(!is.na(model)) |>
             bind_rows(df_new1)
   ### Filter to specific observations
-  df_lo   <- df_new |> 
-    group_by(scenario_type,year) |> 
-    arrange(desc(model_level)) |> 
-    distinct(model_level, .keep_all = TRUE) |> 
-    slice(2)
+
   
-  df_hi   <- df_new |> 
-    group_by(scenario_type,year) |> 
-    arrange(desc(model_level)) |> 
-    distinct(model_level, .keep_all = TRUE) |>slice(1)
+  df_lo   <- df_new |> filter(yValue_ref <= yValue)
+  df_hi   <- df_new |> filter(yValue_ref >= yValue)
   
   # ### Get unique years
   # yrs_lo  <- df_lo |> pull(year) |> unique() |> sort()
@@ -2303,12 +2300,10 @@ interp_slr_byYear <- function(
 
   #browser()
   ### Keep points when we are interpolating
-  data_interpolating <- data |>
-                      group_by(scenario_type,year) |>
-                       filter(modelUnitValue <= upper_slr)
+  
   ### Return
   gc()
-  return(data_interpolating)
+  return(data)
 
 }
 
