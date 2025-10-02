@@ -293,7 +293,6 @@ check_regions <- function(
     co_region <- DBI::dbReadTable(con,"co_regions") |> mutate(us_area = "CONUS") |> rename("region" = region_id)
   }
   
-  #browser()
   ### Join regions and states and filter to appropriate values
   join0     <- c("us_area", "region")
   select0   <- c("region", "region_label")
