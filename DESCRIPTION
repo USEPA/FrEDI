@@ -15,7 +15,7 @@ Authors@R: c(person("Corinne", "Hartin",
                      email   = "sarofim.marcus@epa.gov",
                      role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0001-7753-1676"
-                                 ),
+                                 )),
              person("Karen","Noiva",
                      role    = c("aut","ctb"),
                      comment = c(ORCID = "0000-0002-4412-5302", 
