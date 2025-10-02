@@ -1709,8 +1709,7 @@ get_slrScaledImpacts <- function(
     join0       <- c("year")
     df_ext1     <- df1 |> left_join(df_ext0, by=join0)
     df_imp0     <- df1 |> left_join(df_imp0, by=join0)
-    write_csv(df_ext1,"extrapolate_df_nat.csv")
-    write_csv(df_imp0,"interpolate_df_nat.csv")
+
     
     # df_ext0 |> glimpse(); df_imp0 |> glimpse();
 
@@ -1725,7 +1724,6 @@ get_slrScaledImpacts <- function(
     if(nrow_max >0) {
       df_max0  <- df_max0 |> mutate(deltaDriver    = modelUnitValue    - driverValue_ref)
       df_max0  <- df_max0 |> mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
-      write_csv(df_max0, "scaled_impacts_aboveMax_nat.csv")
     } else{
       df_max0  <- df_max0 |> mutate(scaled_impacts = NA)
     } ### End if(nrow_max)
