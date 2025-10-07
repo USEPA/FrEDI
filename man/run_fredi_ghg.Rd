@@ -140,7 +140,7 @@ example1 <- run_fredi_ghg(inputsList=list(gdp=gdpDefault, pop=popDefault, ch4=ch
 
 }
 \references{
-Environmental Protection Agency (EPA). 2025. Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC. Available at https://epa.gov/cira/FrEDI/.
+Environmental Protection Agency (EPA). Technical Documentation on The Framework for Evaluating Damages and Impacts (FrEDI). Technical Report EPA 430-R-24-001, EPA, Washington, DC
 
 McDuffie, E. E., Sarofim, M. C., Raich, W., Jackson, M., Roman, H., Seltzer, K., Henderson, B. H., Shindell, D. T., Collins, M., Anderton, J., Barr, S., & Fann, N. (2023). The Social Cost of Ozone-Related Mortality Impacts From Methane Emissions. Earth’s Future, 11(9), e2023EF003853.
 }

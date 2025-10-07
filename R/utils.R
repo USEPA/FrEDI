@@ -1635,8 +1635,9 @@ get_slrScaledImpacts <- function(
   
   df0 <- df0 |>
          select(-modelMaxOutput) |>
-         left_join(modMax)
-            
+         left_join(modMax, by= "sector")
+  
+  
   rm(select0)
 
   ### Get max model value, max year, unique sectors, and scenario IDS

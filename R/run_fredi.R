@@ -25,6 +25,8 @@
 #' @param allCols=FALSE A `TRUE/FALSE` value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to `aggLevels = "none"` to properly return the intermediate columns. Defaults to `allCols = FALSE`).
 #'
 #' @param silent=TRUE A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
+#' 
+#' @param national=FALSE A `TRUE/FALSE` value indicating to run state level calculations (by default) or national level calculations.National level calculations apply national representative damage functions per sector to improve FrEDI's computational efficiency and produce impacts that are within 1% of those sector impacts calculated using state-level functions that are then aggregated to the national level using the aggLevels helper function.
 #'
 #'
 #'
@@ -185,12 +187,12 @@ run_fredi <- function(
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
     silent     = TRUE,   ### Whether to message the user
-    national   = TRUE ### WHether to run national level FrEDI
+    national   = FALSE ### Whether to run national level FrEDI
 ){
+  
   ###### Load Objects ######
   ###### ** Create DB connection #####
   conn <-  load_frediDB(national)
-
   ### REad in correct Data
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
@@ -694,7 +696,7 @@ run_fredi <- function(
 
   ###### Aggregation ######
   ### For regular use (i.e., not impactYears), simplify the data: groupCols0
-  if(doAgg & !national) {
+  if(doAgg) {
     paste0("Aggregating impacts", "...") |> message()
     # aggLevels |> length(); doAgg |> print()
     group0     <- groupCols0
