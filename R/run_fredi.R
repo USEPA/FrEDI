@@ -484,7 +484,7 @@ run_fredi <- function(
   # inNames |> print()
   hasInputs    <- inNames      |> length()
   # df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
-
+  
   ### Iterate over list and format values
   if(hasInputs) {
     inputsList   <- list(
@@ -509,6 +509,7 @@ run_fredi <- function(
 
   ### Update inputs with defaults if values are missing
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
+    paste0("Input scenarios not provided, using default scenarios...") |> message()
     ### Filter to list
     list0    <- list0[names0]
     ### List names
