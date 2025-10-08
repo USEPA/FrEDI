@@ -25,6 +25,8 @@
 #' @param allCols=FALSE A `TRUE/FALSE` value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to `aggLevels = "none"` to properly return the intermediate columns. Defaults to `allCols = FALSE`).
 #'
 #' @param silent=TRUE A `TRUE/FALSE` value indicating the level of messaging desired by the user (default=`TRUE`).
+#' 
+#' @param national=FALSE A `TRUE/FALSE` value indicating to run state level calculations (by default) or national level calculations.National level calculations apply national representative damage functions per sector to improve FrEDI's computational efficiency and produce impacts that are within 1% of those sector impacts calculated using state-level functions that are then aggregated to the national level using the aggLevels helper function.
 #'
 #'
 #'
@@ -184,12 +186,14 @@ run_fredi <- function(
     thru2300   = FALSE, ### Whether to run FrEDI through 2300
     outputList = FALSE, ### Whether to return input arguments as well as results. [If TRUE], returns a list instead of a data frame
     allCols    = FALSE, ### Whether to include additional columns in output
-    silent     = TRUE   ### Whether to message the user
+    silent     = TRUE,   ### Whether to message the user
+    national   = FALSE ### Whether to run national level FrEDI
 ){
+  
   ###### Load Objects ######
   ###### ** Create DB connection #####
-  conn <-  load_frediDB()
-
+  conn <-  load_frediDB(national)
+  ### REad in correct Data
   ### Assign data objects to objects in this namespace
   ### Assign FrEDI config
   #fredi_config <- rDataList[["fredi_config"]]
@@ -480,7 +484,7 @@ run_fredi <- function(
   # inNames |> print()
   hasInputs    <- inNames      |> length()
   # df_inputInfo <- co_inputInfo |> filter(inputName %in% inNames )
-
+  
   ### Iterate over list and format values
   if(hasInputs) {
     inputsList   <- list(
@@ -505,6 +509,7 @@ run_fredi <- function(
 
   ### Update inputs with defaults if values are missing
   inputsList   <- inNames0 |> (function(names0, list0=inputDefs, list1=inputsList){
+    paste0("Input scenarios not provided, using default scenarios...") |> message()
     ### Filter to list
     list0    <- list0[names0]
     ### List names
@@ -555,7 +560,17 @@ run_fredi <- function(
   ### Convert region to region IDs
   pop_df       <- pop_df |> mutate(region = region |> str_replace_all("\\.|_|-| ", ""))
   ### Calculate national population and update national scenario
-  seScenario   <- gdp_df |> create_nationalScenario(pop0 = pop_df)
+  if(national){
+    natPop0=1
+  }else(
+    natPop0=NULL
+  )
+  
+  seScenario   <- create_nationalScenario(
+                    gdp0 = gdp_df,
+                    pop0 =pop_df,
+                    natPop0=natPop0
+                   )
   # return(seScenario)
   # seScenario |> pull(region) |> unique() |> print()
   rm(gdp_df, pop_df)
@@ -568,16 +583,38 @@ run_fredi <- function(
   ###### ** Get Scalar Info ######
   ### Calculate physical scalars and economic multipliers then calculate scalars
   paste0("Calculating impacts...") |> message()
-  df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> ungroup()
+  if(national){
+    df_results   <-  initialize_resultsDf(
+                      df_se = seScenario,
+                      sectors=sectorIds, 
+                      elasticity=elasticity,
+                      conn = conn) |> 
+                    ungroup() |>
+                    filter(postal == 'NAT')
+  } else{
+    df_results   <- seScenario |> initialize_resultsDf(sectors=sectorIds, elasticity=elasticity,conn = conn) |> ungroup()
+    
+  }
+
 
   ###### ** Calculate Scaled Impacts ######
   ### Get scaled impacts
-  df_impacts   <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> ungroup()
-
+  if(national){
+    df_impacts       <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> 
+      ungroup() |> 
+      filter(postal == 'NAT')
+  } else{
+    df_impacts       <- calc_scaled_impacts_fredi(sectors0 = sectorIds, drivers0 = df_drivers, conn = conn) |> ungroup()
+  }
+ 
   ###### ** Calculate Total Impacts ######
   ### Get impacts
-  df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
-
+  if(national){
+    df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
+  }else{
+    df_results   <- df_results |> calc_impacts_fredi(df1=df_impacts, conn = conn) |> ungroup()
+  }
+  
 
 
   ###### Refactor Data ######

@@ -12,7 +12,8 @@ inst/doc
 analysis/*
 
 *.html
-*.zip
+
+
 .github/*.html
 
 data_tests/*

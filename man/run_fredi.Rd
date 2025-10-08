@@ -13,7 +13,8 @@ run_fredi(
   thru2300 = FALSE,
   outputList = FALSE,
   allCols = FALSE,
-  silent = TRUE
+  silent = TRUE,
+  national = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ run_fredi(
 \item{allCols=FALSE}{A \code{TRUE/FALSE} value indicating whether to include intermediate column values in results (e.g., physical and economic multipliers). Used in testing. Note that aggregation levels must be set to \code{aggLevels = "none"} to properly return the intermediate columns. Defaults to \code{allCols = FALSE}).}
 
 \item{silent=TRUE}{A \code{TRUE/FALSE} value indicating the level of messaging desired by the user (default=\code{TRUE}).}
+
+\item{national=FALSE}{A \code{TRUE/FALSE} value indicating to run state level calculations (by default) or national level calculations.National level calculations apply national representative damage functions per sector to improve FrEDI's computational efficiency and produce impacts that are within 1\% of those sector impacts calculated using state-level functions that are then aggregated to the national level using the aggLevels helper function.}
 }
 \value{
 If \code{outputList=FALSE}, the output of \code{\link[=run_fredi]{run_fredi()}} is a data frame object (described above) containing annual average impacts over the analysis period, for each sector, variant, impact type, impact year, region, state, and model (GCM name for temperature-driven sectors and \code{"Interpolation"} for SLR-driven sectors).

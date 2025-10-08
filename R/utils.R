@@ -536,7 +536,13 @@ create_nationalScenario <- function(
 ){
   ### If national population is NULL, calculate national population
   nullNpop <- natPop0 |> is.null()
-  if(nullNpop) natPop0 <- pop0 |> calc_nationalPop()
+  if(nullNpop){
+    natPop0 <- pop0 |> calc_nationalPop()
+  }else{
+    natPop0 <- pop0 |> mutate(
+      national_pop = pop
+    )
+  }
   ### Select columns
   colsG0   <- c("year", "gdp_usd")
   colsP0   <- c("region", "state", "postal", "year", "pop")
@@ -549,7 +555,9 @@ create_nationalScenario <- function(
   ### Calculate GDP per capita
   nat0     <- nat0 |> mutate(gdp_percap = gdp_usd / national_pop)
   ### Join nat0 with state population by year
-  nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
+  if(nullNpop){
+    nat0     <- nat0 |> left_join(pop0, by=join0, relationship="many-to-many")
+  } 
   ### Arrange by colsP0
   arrange0 <- colsP0 |> get_matches(y=c("pop"), matches=F)
   nat0     <- nat0 |> arrange_at(vars(arrange0))
@@ -963,12 +971,22 @@ get_co_sectorsInfo <- function(
   renameAt0   <- c("modelType")
   co_modTypes <- co_modTypes |> rename_at(c(renameAt0 |> paste0("_id")), ~c(renameAt0))
   rm(renameAt0)
-
   ### Join with co_variants, co_impactTypes, co_impactYears
   join0   <- c("sector_id")
   join1   <- c("modelType")
   df0     <- co_sectors |> left_join(co_variants, by=join0)
-  df0     <- df0        |> left_join(co_impTypes, by=join0, relationship="many-to-many")
+  df0     <- df0        |> full_join(co_impTypes, by=c(join0), relationship="many-to-many")
+  ### Cleanup dmgAdj issue
+  df0     <- df0 |>
+    mutate(
+      damageAdjName = case_when(
+        is.na(damageAdjName.x) ~ damageAdjName.y,
+        damageAdjName.y == "byVariant" ~ damageAdjName.x,
+        .default = damageAdjName.y
+      )
+    ) |>
+    select(-damageAdjName.x,-damageAdjName.y)
+  
   df0     <- df0        |> left_join(co_impYears, by=join0, relationship="many-to-many")
   df0     <- df0        |> left_join(co_modTypes, by=c(join1), relationship="many-to-many")
   rm(join0, join1)
@@ -1172,7 +1190,6 @@ get_scalarAdjValues <- function(
 ){
   ###### Multipliers
   none0       <- "none"
-
   ###### Format data
   ### - Add adjName column
   ### - Separate data
@@ -1187,7 +1204,7 @@ get_scalarAdjValues <- function(
   df_other    <- data |> filter(!(adjName %in% none0))
   # df_none |> dim() |> print(); df_other |> dim() |> print()
   rm(data)
-
+  gc()
   ### Number of rows
   hasNone0    <- df_none  |> nrow()
   hasOther0   <- df_other |> nrow()
@@ -1204,7 +1221,7 @@ get_scalarAdjValues <- function(
     data     <- data     |> rbind(df_none)
     rm(df_none)
   } ### End if(hasNone0 )
-
+  gc()
   ### Other values:
   if(hasOther0) {
     ###### Format scalar data
@@ -1218,9 +1235,13 @@ get_scalarAdjValues <- function(
     mutate0     <- c("year0")
     ### Filter
     scalars     <- scalars |> filter(scalarType %in% filter0)
+    gc()
     scalars     <- scalars |> select(-all_of(drop0))
+    gc()
     scalars     <- scalars |> rename_at(c(renameAt0), ~renameTo0)
+    gc()
     scalars     <- scalars |> mutate_at(c(mutate0), as.character)
+    gc()
     rm(filter0, renameAt0, renameTo0, mutate0, drop0)
     # data |> glimpse(); scalars |> glimpse()
     # scalars |> pull("national_or_regional") |> unique() |> print()
@@ -1233,6 +1254,7 @@ get_scalarAdjValues <- function(
     scalarsReg  <- scalars  |> filter(!(national_or_regional %in% natStr0)) |> select(-any_of(dropReg))
     natScalars  <- scalarsNat |> pull(all_of(adjName0)) |> unique()
     regScalars  <- scalarsReg |> pull(all_of(adjName0)) |> unique()
+    gc()
     # natScalars |> print(); regScalars |> print()
     # scalarsNat |> glimpse(); scalarsReg |> glimpse()
     # df_other |> dim() |> print()
@@ -1241,7 +1263,7 @@ get_scalarAdjValues <- function(
     # list(df_other, dfOthNat, dfOthReg) |> map(nrow) |> unlist() |> print()
     # dfOthNat |> glimpse(); dfOthReg |> glimpse()
     rm(natStr0, dropReg, dropNat, df_other)
-
+    gc()
     ### Join adjustments with data
     ### Number of rows
     hasNat      <- dfOthNat |> nrow()
@@ -1249,11 +1271,13 @@ get_scalarAdjValues <- function(
     ### National values
     if(hasNat) {
       join0    <- dfOthNat |> names() |> get_matches(scalarsNat |> names())
+      gc()
       dfOthNat <- dfOthNat |> left_join(scalarsNat, by=join0)
       # dfOthNat |> dim() |> print()
       # dfOthNat |> glimpse()
       data     <- data     |> rbind(dfOthNat)
       rm(join0, scalarsNat, dfOthNat)
+      gc()
     } ### End if(hasNat)
 
     ### Regional values
@@ -1264,6 +1288,7 @@ get_scalarAdjValues <- function(
       # dfOthReg |> glimpse()
       data     <- data     |> rbind(dfOthReg)
       rm(join0, scalarsReg, dfOthReg)
+      gc()
     } ### End if(hasReg)
   } ### End if(hasOther0)
 
@@ -1296,7 +1321,6 @@ initialize_resultsDf <- function(
   ###### Messaging
   msg1       <- msg0 |> paste0("\t")
   paste0(msg1, "Formatting initial results", "...") |> message()
-
   ###### State Columns
   stateCols0 <- c("state", "postal")
   popCol0    <- c("pop")
@@ -1312,8 +1336,9 @@ initialize_resultsDf <- function(
   stateData    <- unserialize(stateData$value |> unlist())
   df_scalars      <- stateData[["df_scalars"]]
   df_scalars <- df_scalars |> filter(year >= minYr0, year <= maxYr0)
+  gc()
   df_scalars <- df_scalars |> update_popScalars(df_se, popCol=popCol0)
-
+  gc()
   ###### Scalar Info ######
   ### Get info
   df_info    <- sectors |> get_co_sectorsInfo(
@@ -1322,7 +1347,7 @@ initialize_resultsDf <- function(
     addModels  = FALSE, ### Whether to include models
     colTypes   = c("ids", "extra") ### Types of columns to include: IDs, labels, or extra. If only labels, will return labels without the "_label"
   ) ### End get_co_sectorsInfo()
-
+ gc()
   ### Format info
   drop0      <- c("sector", "variant", "impactType", "impactYear", "region") |> c(stateCols0) |> c("modelType") |> paste0("_label")
   # df_info |> glimpse(); select0 |> print()
@@ -1330,7 +1355,8 @@ initialize_resultsDf <- function(
   df_info    <- df_info |> select(-any_of(drop0))
   df_info    <- df_info |> distinct()
   rm(drop0)
-
+  gc()
+  
   ### Model Types
   types0     <- df_info |> pull(modelType) |> unique() |> tolower()
   has_slr    <- "slr" %in% types0
@@ -1339,42 +1365,50 @@ initialize_resultsDf <- function(
   ### Format region
   df_info    <- df_info |> mutate(region = region |> str_replace("\\.", ""))
   df_info    <- df_info |> mutate(region = region |> str_replace(" ", ""))
-
+  gc()
+  
   ###### Initialize Results ######
   ### Initialized results: Join sector info with socioeconomic scenario
   # df_se |> glimpse(); df_info |> glimpse(); # df_scalars |> glimpse()
   join0      <- df_info |> names() |> get_matches(df_se |> names())
   df0        <- df_info |> left_join(df_se, by=join0, relationship="many-to-many")
   rm(join0)
-
+  gc()
+  
   ###### Update Scalar Info ######
   ### Update scalar info
   ### Physical scalars
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physScalar")
+  gc()
   ### Physical adjustment
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="physAdj")
+  gc()
   ### Damage adjustment
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="damageAdj")
+  gc()
   ### Economic scalar
   # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econScalar")
+  gc()
   ### Economic multiplier
   # df0 |> glimpse(); df_scalars |> glimpse()
   df0        <- df0 |> match_scalarValues(conn = conn, scalars=df_scalars, scalarType="econMultiplier")
   # df0 |> glimpse(); df0 |> pull(region) |> unique() |> print()
-
+  gc()
   ###### Economic Adjustment Values ######
   ### Get economic adjustment values
   renameAt0  <- c("econMultiplierAdj") |> paste0(c("Name", "Value"))
   renameTo0  <- renameAt0 |> str_replace("Multiplier", "")
   df0        <- df0 |> get_scalarAdjValues(conn = conn, scalars=df_scalars, scalarType0="econMultiplier")
+  gc()
   df0        <- df0 |> rename_at(c(renameAt0), ~renameTo0)
   rm(renameAt0, renameTo0)
 
   ###### Calculate Scalars ######
   ### Calculate scalars
+  gc()
   df0        <- df0 |> calcScalars(elasticity=elasticity)
-
+  
   ###### SLR Scalars for Years > 2090 ######
   ### Scalars for SLR past 2090
   do_slr     <- has_slr & (maxYr0 > refYear0)
@@ -1563,7 +1597,7 @@ get_slrScaledImpacts <- function(
   ####### Columns & Values ######
   ### State columns
   stateCols0 <- c("state", "postal")
-
+  #browser()
   ###### Get rDataList Objects #######
   ### Get objects from rDataLsit
   #df_ext0    <- "slrExtremes" |> get_frediDataObj("stateData")
@@ -1572,6 +1606,7 @@ get_slrScaledImpacts <- function(
   stateDat   <- unserialize(stateDat$value |> unlist())
   df_ext0    <- stateDat |> pluck("slrExtremes")
   df_imp0    <- stateDat |> pluck("slrImpacts")
+  
   ###### Format Data #######
   ### Filter to appropriate model types
   ### Filter to appropriate driver values
@@ -1581,6 +1616,28 @@ get_slrScaledImpacts <- function(
   ### Grab info
   select0    <- c("modelUnitValue", "year")
   df1        <- df1 |> select(all_of(select0))
+  
+  
+  #browser()
+  
+  ### Find modelMaxOutput for each sector
+  modMax <- df_imp0 |>
+            select(sector, model) |> 
+            unique() |>
+            separate(col = model, 
+                     into = c("slr","unit"),
+                     sep = "cm"
+            ) |>
+            mutate(unit = "cm") |>
+            group_by(sector,unit) |>
+            summarise(modelMaxOutput = max(as.numeric(slr))) |>
+            select(-unit)
+  
+  df0 <- df0 |>
+         select(-modelMaxOutput) |>
+         left_join(modMax, by= "sector")
+  
+  
   rm(select0)
 
   ### Get max model value, max year, unique sectors, and scenario IDS
@@ -1642,7 +1699,7 @@ get_slrScaledImpacts <- function(
   hasSlr0    <- df_hasSlr |> nrow()
   hasNoSlr0  <- df_noSlr  |> nrow()
   # df_ext0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse(); df_hasSlr |> glimpse(); df_noSlr |> dim()
-
+  #browser()
   ### Initialize impacts
   df0        <- tibble()
 
@@ -1651,19 +1708,21 @@ get_slrScaledImpacts <- function(
     # ### Join with df1
     # df_ext0 |> glimpse(); df_imp0 |> glimpse(); df1 |> glimpse()
     join0       <- c("year")
-    df_ext0     <- df1 |> left_join(df_ext0, by=join0)
+    df_ext1     <- df1 |> left_join(df_ext0, by=join0)
     df_imp0     <- df1 |> left_join(df_imp0, by=join0)
+
+    
     # df_ext0 |> glimpse(); df_imp0 |> glimpse();
 
     ###### Scaled Impacts >= Max
     ### Filter to appropriate years
-    df_max0     <- df_ext0 |> filter(modelUnitValue >= driverValue_ref)
-    maxYrs0     <- df_max0 |> pull(year) |> unique()
-    nrow_max    <- maxYrs0 |> length()
+    df_max0     <- df_ext1 |> filter(modelUnitValue >= driverValue_ref)
+    maxYrs1     <- df_max0 |> select(year,sector) |> distinct()
+    nrow_max    <- maxYrs1$year |> length()
     rm(df_ext0)
 
     ### Calculate scaled impacts for values > slrMax0
-    if(nrow_max) {
+    if(nrow_max >0) {
       df_max0  <- df_max0 |> mutate(deltaDriver    = modelUnitValue    - driverValue_ref)
       df_max0  <- df_max0 |> mutate(scaled_impacts = impacts_intercept + impacts_slope * deltaDriver)
     } else{
@@ -1673,7 +1732,21 @@ get_slrScaledImpacts <- function(
     ###### Scaled Impacts < Max
     ### Get impacts and create scenario ID for values <= slrMax0
     ### Join with slrImpacts
-    df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs0))
+    #browser()
+    if(nrow_max >0 ){
+    no_maxyr <- maxYrs1 |>
+      mutate(value = 1) |>
+      group_by(sector) |>
+      complete(year = min(df1$year):max(df1$year)) |>
+      filter(is.na(value)) |>
+      select(-value)
+    
+    df_slr0     <- no_maxyr |> left_join(df_imp0) |> ungroup()
+    } else{
+      df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs1))
+    }
+
+    #df_slr0     <- df_imp0 |> filter(!(year %in% maxYrs0))
     nrow_slr    <- df_slr0 |> nrow()
     rm(df_imp0)
 
@@ -1695,12 +1768,17 @@ get_slrScaledImpacts <- function(
       mutate0   <- c("lower_model", "upper_model")
       # slrVals0 <- df1      |> rename_at(c(cols0), ~cols1)
       # slrVals0 <- slrVals0 |> interp_slr_byYear()
+      #browser()
+      
       slrVals0 <- df1      |> interp_slr_byYear(conn = conn, yCol="modelUnitValue")
       slrVals0 <- slrVals0 |> mutate_at(c(mutate0), function(y){y |> str_replace(" ", "")})
 
       ### Interpolate
       # df_slr0 |> glimpse()
-      df_slr0  <- df_slr0 |> fredi_slrInterp(slr_x=slrVals0, groupByCols=group0)
+      df_slr0  <-     fredi_slrInterp(data_x = df_slr0,
+                                             slr_x=slrVals0, 
+                                             groupByCols=group0)
+      
       # rm(group0, slr_names, slrVals0); rm(cols0, cols1)
     } else{
       df_slr0  <- df_slr0 |> mutate(scaled_impacts = NA)
@@ -2057,19 +2135,35 @@ interp_slr_byYear <- function(
   ### Messaging
   if(silent |> is.null()){silent <- T}
   msgUser    <- !silent
+  
 
   ###### Get Data Objects ######
   #co_models  <- "co_models" |> get_frediDataObj("frediData")
   #slr_df     <- "slr_cm"    |> get_frediDataObj("frediData")
   co_models  <- DBI::dbReadTable(conn, "co_models")
   slr_df     <- DBI::dbReadTable(conn, "slr_cm")
-
+ 
+  #browser()
   ###### Assign data ######
   ### SLR scenario info
-  co_slrs    <- co_models |> filter(modelType=="slr") |> rename(model=model_label)
-  slr_levels <- c("0cm" ) |> c(co_slrs |> pull(model_id))
-  slr_labels <- c("0 cm") |> c(co_slrs |> pull(model))
-  slr_orders <- slr_levels |> factor(levels=slr_levels) |> as.numeric()
+  co_slrs_2014    <- co_models |> 
+                filter(modelType=="slr") |>
+                rename(model=model_label) |>
+                mutate(scenario_type ="slr_cm_2014")
+          
+  
+  co_models_200   <- co_slrs_2014 |>
+    filter(model_id != "250cm") |>
+    mutate(modelMaxOutput = 200,
+           maxUnitValue = 200,
+           scenario_type ="slr_cm_2022" )
+          
+  co_slrs <- bind_rows(co_slrs_2014,co_models_200)
+  
+    
+  slr_levels <- c("0cm" ) |> c(co_slrs |> pull(model_id)) |> unique()
+  slr_labels <- c("0 cm") |> c(co_slrs |> pull(model)) |> unique()
+  slr_orders <- slr_levels  |> factor(levels=slr_levels) |> as.numeric()
   slr_min    <- (slr_orders |> min(na.rm=T)) #+ 1
   slr_max    <-  slr_orders |> max(na.rm=T)
 
@@ -2086,7 +2180,7 @@ interp_slr_byYear <- function(
 
   ### Character vector of model names
   c_slrs0      <- slr_labels
-
+  #browser()
   ### Check that years are unique
   data_years   <- data |> pull(year) |> unique()
   n_data_years <- data_years |> length()
@@ -2102,7 +2196,7 @@ interp_slr_byYear <- function(
 
   ###### Prepare data ######
   ### Filter to appropriate years
-  data    <- data |> filter(year %in% df_slr_years)
+  #data    <- data |> filter(year %in% df_slr_years)
   n_years <- data |> nrow()
   ### Figure if years are missing
   dataYrs <- data |> pull(year)
@@ -2110,37 +2204,51 @@ interp_slr_byYear <- function(
   ###### Standard Columns ######
   ### JoinCols
   join0   <- c("year", "model_level")
-  select0 <- c("year") |> c(newColName_y, newColRef_y) |> c("model")
-  select1 <- c("year") |> c(newColName_y) |> c("lower_model", "upper_model", "lower_slr", "upper_slr")
+  select0 <- c("year") |> c(newColName_y, newColRef_y) |> c("model","scenario_type")
+  select1 <- c("year") |> c(newColName_y) |> c("lower_model", "upper_model", "lower_slr", "upper_slr","scenario_type")
   ### Format data
   slr_df  <- slr_df |> rename(yValue_ref = driverValue)
   ### Join
   # df_new  <- data |> left_join(slr_df, by = c("year", "modelType"))
+  
   df_new  <- data |> left_join(slr_df, by = c("year"))
+  
+  df_new_na <- df_new |> filter(is.na(model)) 
+  
+  df_new_max_year <- df_new |>  filter(!is.na(model)) |>filter(year == max(year)) |> select(-year,-yValue)
+  
+  df_new1 <- cross_join(df_new_na,df_new_max_year,suffix = c("_y", "")) |> select(-contains("_y"))
+  
+  
+  df_new <- df_new |> filter(!is.na(model)) |>
+            bind_rows(df_new1)
   ### Filter to specific observations
+
+  
   df_lo   <- df_new |> filter(yValue_ref <= yValue)
   df_hi   <- df_new |> filter(yValue_ref >= yValue)
-  ### Get unique years
-  yrs_lo  <- df_lo |> pull(year) |> unique() |> sort()
-  yrs_hi  <- df_hi |> pull(year) |> unique() |> sort()
-  ### Figure out which years are missing
-  nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
-  nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
-  ### Create tibbles of missing years
-  dfNaLo  <- tibble(year = yrs_lo, model_level = slr_min) |> left_join(df_new, by = join0)
-  dfNaHi  <- tibble(year = yrs_lo, model_level = slr_max) |> left_join(df_new, by = join0)
-  ### Bind missing years back in
-  df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
-  df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
-  ### Drop values
-  rm(yrs_lo, yrs_hi, nas_lo, nas_hi, dfNaLo, dfNaHi); rm(df_new)
+  
+  # ### Get unique years
+  # yrs_lo  <- df_lo |> pull(year) |> unique() |> sort()
+  # yrs_hi  <- df_hi |> pull(year) |> unique() |> sort()
+  # ### Figure out which years are missing
+  # nas_lo  <- dataYrs[!(dataYrs %in% yrs_lo)]
+  # nas_hi  <- dataYrs[!(dataYrs %in% yrs_hi)]
+  # ### Create tibbles of missing years
+  # dfNaLo  <- tibble(year = nas_lo, model_level = slr_min, scenario_type = ) |> left_join(df_new, by = join0)
+  # dfNaHi  <- tibble(year = nas_hi, model_level = slr_max) |> left_join(df_new, by = join0)
+  # ### Bind missing years back in
+  # df_lo   <- df_lo |> rbind(dfNaLo) |> arrange_at(c(join0[1]))
+  # df_hi   <- df_hi |> rbind(dfNaHi) |> arrange_at(c(join0[1]))
+  # ### Drop values
+  # rm(yrs_lo, yrs_hi, nas_lo, nas_hi, dfNaLo, dfNaHi); rm(df_new)
 
   ### Summarize values
   ### Columns
-  group0  <- c("year")
+  group0  <- c("year", "scenario_type")
   sum0    <- c("model_level")
   join0   <- c("year")
-  join1   <- join0 |> c(sum0)
+  join1   <- join0 |> c(sum0,"scenario_type")
   rename0 <- c("yValue_ref", "model")
   rename1 <- c("lower_slr", "lower_model")
   rename2 <- c("upper_slr", "upper_model")
@@ -2151,7 +2259,7 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), max, na.rm=T) |> ungroup()
   ### - Join
   df_lo <- data  |> left_join(df_lo, by=join0)
-  df_lo <- df_lo |> left_join(slr_df , by=c(join1))
+  df_lo <- df_lo |> left_join(df_new , by=c(join1,"yValue"))
   ### - Select & rename
   df_lo <- df_lo |> select(all_of(select0))
   df_lo <- df_lo |> rename_at(c(rename0), ~rename1)
@@ -2163,7 +2271,7 @@ interp_slr_byYear <- function(
     summarize_at(c(sum0), min, na.rm=T) |> ungroup()
   ### - Join
   df_hi <- data  |> left_join(df_hi, by=join0)
-  df_hi <- df_hi |> left_join(slr_df , by=c(join1))
+  df_hi <- df_hi |> left_join(df_new , by=c(join1,"yValue"))
   ### - Select & rename
   df_hi <- df_hi |> select(all_of(select0))
   df_hi <- df_hi |> rename_at(c(rename0), ~rename2)
@@ -2172,10 +2280,10 @@ interp_slr_byYear <- function(
   rm(slr_df)
 
   ### Join all
-  join0 <- c("year") |> c(newColName_y)
+  join0 <- c("year") |> c(newColName_y, "scenario_type")
   data  <- df_lo |> left_join(df_hi, by=join0)
   data  <- data  |> select(all_of(select1))
-  rm(df_lo, df_hi)
+  #rm(df_lo, df_hi)
 
   ### Add adjustment
   data  <- data |> mutate(denom_slr  = upper_slr - lower_slr  )
@@ -2189,6 +2297,9 @@ interp_slr_byYear <- function(
   ### Rename yValue and return
   data <- data |> rename_at(c(newColName_y), ~oldColName_y)
 
+  #browser()
+  ### Keep points when we are interpolating
+  
   ### Return
   gc()
   return(data)
@@ -2368,16 +2479,16 @@ fredi_slrInterp <- function(
   bounds0        <- c("lower", "upper")
   mutate0        <- c("model", "slr")
   slrMutCols     <- c("lower_model", "upper_model")
-
   ### Info names
   data_xAdj      <- slr_x
   names_slrAdj   <- data_xAdj |> names()
   rm(slr_x)
-
+  #browser()
   # other_slrCols  <- names_slrAdj |> (function(x){x[!(x %in% c("year"))]})()
   other_slrCols  <- names_slrAdj |> get_matches(y=c("year"), matches=FALSE)
   join_slrCols   <- groupByCols |> c("year") ### sectorprimary, includeaggregate
   ### Other columns
+  #browser()
   # dropCols0      <- c("model", "model_label")
   dropCols0      <- c("model")
   otherCols0     <- c("modelType", "denom_slr", "numer_slr", "adj_slr")
@@ -2392,9 +2503,20 @@ fredi_slrInterp <- function(
 
   ### Join with slrInfo and convert columns to character
   # join0          <- c("year", "modelType")
-  join0          <- c("year")
+  join0          <- c("year","modelUnitValue")
   data_xAdj      <- data_xAdj |> mutate(equal_models = lower_model == upper_model)
-  data_x         <- data_x    |> left_join(data_xAdj, by=join0)
+  
+  #### 
+  data_x_scenario <- data_x |>
+                     mutate(
+                       scenario_type = case_when(
+                         sector == "CoastalProperties" ~ "slr_cm_2022",
+                         .default = "slr_cm_2014"
+                       )
+                     )
+  
+  data_x        <- data_x_scenario    |> left_join(data_xAdj, by=c(join0,"scenario_type"))
+  
   rm(join0, data_xAdj)
 
   ### Filter to conditions
